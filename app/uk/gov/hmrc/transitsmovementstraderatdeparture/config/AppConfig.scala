@@ -25,6 +25,10 @@ class AppConfig @Inject()(config: Configuration, servicesConfig: ServicesConfig)
 
   val authBaseUrl: String = servicesConfig.baseUrl("auth")
 
+  val enrolmentKey: String   = config.get[String]("keys.enrolmentKey")
+
   val auditingEnabled: Boolean = config.get[Boolean]("auditing.enabled")
   val graphiteHost: String     = config.get[String]("microservice.metrics.graphite.host")
+  val lockRepositoryTtl: Int = config.get[Int]("mongodb.lockRepository.timeToLiveInSeconds")
+
 }
