@@ -16,16 +16,90 @@
 
 package uk.gov.hmrc.transitsmovementstraderatdeparture.controllers
 
+import cats.data.NonEmptyList
 import javax.inject.Inject
-import play.api.mvc.{Action, AnyContent}
-import uk.gov.hmrc.transitsmovementstraderatdeparture.models.DepartureId
+import play.api.Logger
+import play.api.mvc.{Action, AnyContent, ControllerComponents}
+import uk.gov.hmrc.play.bootstrap.controller.BackendController
+import uk.gov.hmrc.transitsmovementstraderatdeparture.controllers.actions.AuthenticateGetOptionalDepartureForWriteActionProvider
+import uk.gov.hmrc.transitsmovementstraderatdeparture.models.MessageStatus.SubmissionSucceeded
+import uk.gov.hmrc.transitsmovementstraderatdeparture.models.{DepartureId, DepartureStatus, Message, MessageType, SubmissionProcessingResult}
+import uk.gov.hmrc.transitsmovementstraderatdeparture.services.{DepartureService, SubmitMessageService}
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 import scala.xml.NodeSeq
 
-class DeparturesController@Inject()()(implicit ec: ExecutionContext) {
+class DeparturesController @Inject()(
+    cc: ControllerComponents,
+    authenticatedOptionalDeparture: AuthenticateGetOptionalDepartureForWriteActionProvider,
+    departureService: DepartureService,
+    submitMessageService: SubmitMessageService)
+  (implicit ec: ExecutionContext) extends BackendController(cc) {
 
-  def post: Action[NodeSeq] = ???
+  private val allMessageUnsent: NonEmptyList[Message] => Boolean =
+    _.map(_.optStatus).forall {
+      case Some(messageStatus) if messageStatus != SubmissionSucceeded => true
+      case _                                                           => false
+    }
+
+  def post: Action[NodeSeq] = authenticatedOptionalDeparture().async(parse.xml) {
+    implicit request =>
+      request.departure match {
+        case Some(departure) if allMessageUnsent(departure.messages) =>
+          departureService
+            .makeMessageWithStatus(departure.nextMessageCorrelationId, MessageType.DepartureDeclaration)(request.body)
+            .map {
+              message =>
+                submitMessageService
+                  .submitMessage(departure.departureId, departure.nextMessageCorrelationId, message, DepartureStatus.DepartureSubmitted)
+                  .map {
+                    case SubmissionProcessingResult.SubmissionSuccess =>
+                      Accepted("Message accepted")
+                        .withHeaders("Location" -> routes.DeparturesController.get(departure.departureId).url)
+
+                    case SubmissionProcessingResult.SubmissionFailureInternal => {
+                      println("internal fail")
+                      InternalServerError
+                    }
+
+                    case SubmissionProcessingResult.SubmissionFailureExternal =>
+                      BadGateway
+                  }
+            }
+            .getOrElse {
+              Logger.warn("Invalid data: missing either DatOfPreMES9, TimOfPreMES10 or DocNumHEA5")
+              Future.successful(BadRequest("Invalid data: missing either DatOfPreMES9, TimOfPreMES10 or DocNumHEA5"))
+            }
+
+        case _ =>
+          departureService.createDeparture(request.eoriNumber)(request.body) match {
+            case None =>
+              Logger.warn("Invalid data: missing either DatOfPreMES9, TimOfPreMES10 or DocNumHEA5")
+              Future.successful(BadRequest("Invalid data: missing either DatOfPreMES9, TimOfPreMES10 or DocNumHEA5"))
+            case Some(departureFuture) =>
+              departureFuture
+                .flatMap {
+                  departure =>
+                    submitMessageService.submitDeparture(departure).map {
+                      case SubmissionProcessingResult.SubmissionSuccess =>
+                        Accepted("Message accepted")
+                          .withHeaders("Location" -> routes.DeparturesController.get(departure.departureId).url)
+                      case SubmissionProcessingResult.SubmissionFailureExternal =>
+                        BadGateway
+                      case SubmissionProcessingResult.SubmissionFailureInternal =>
+                        println("internal fail")
+                        InternalServerError
+                    }
+                }
+                .recover {
+                  case _ => {
+                    println("general fail")
+                    InternalServerError
+                  }
+                }
+          }
+      }
+  }
 
   def get(departureId: DepartureId): Action[AnyContent] = ???
 }

@@ -18,7 +18,7 @@ package uk.gov.hmrc.transitsmovementstraderatdeparture.repositories
 
 import javax.inject.Inject
 import play.modules.reactivemongo.ReactiveMongoApi
-import uk.gov.hmrc.transitsmovementstraderatdeparture.models.Departure
+import uk.gov.hmrc.transitsmovementstraderatdeparture.models.{Departure, DepartureId, DepartureStatus, Message, MessageStatus}
 
 import scala.concurrent.Future
 import scala.util.Try
@@ -26,4 +26,11 @@ import scala.util.Try
 class DepartureRepository @Inject()(mongo: ReactiveMongoApi) {
 
   def insert(departure: Departure): Future[Try[Unit]] = ???
+
+  def addNewMessage(departureId: DepartureId, message: Message): Future[Try[Unit]] = ???
+
+  def setDepartureStateAndMessageState(departureId: DepartureId, messageId: Int, departureStatus: DepartureStatus, messageStatus: MessageStatus): Future[Try[Unit]] = ???
+
+  def setMessageState(departureId: DepartureId, messageId: Int, messageStatus: MessageStatus): Future[Try[Unit]] = ???
+
 }

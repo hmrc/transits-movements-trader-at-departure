@@ -31,4 +31,6 @@ class AppConfig @Inject()(config: Configuration, servicesConfig: ServicesConfig)
   val graphiteHost: String     = config.get[String]("microservice.metrics.graphite.host")
   val lockRepositoryTtl: Int = config.get[Int]("mongodb.lockRepository.timeToLiveInSeconds")
 
+  private val eisBaseUrl: String = servicesConfig.baseUrl("eis")
+  val eisUrl: String         = eisBaseUrl ++ config.get[String]("microservice.services.eis.uri")
 }

@@ -16,23 +16,28 @@
 
 package uk.gov.hmrc.transitsmovementstraderatdeparture.models
 
-import java.time.LocalDateTime
+import scala.xml.{Elem, Node, NodeSeq}
 
-import cats.data._
-import cats.implicits._
+case class TransitWrapper(xml: NodeSeq) {
 
-case class Departure(departureId: DepartureId,
-                     eoriNumber: String,
-                     referenceNumber: String,
-                     status: DepartureStatus,
-                     created: LocalDateTime,
-                     updated: LocalDateTime,
-                     nextMessageCorrelationId: Int,
-                     messages: NonEmptyList[Message]) {
+  override def toString: String = toXml.toString
 
-  lazy val nextMessageId: MessageId = MessageId.fromIndex(messages.length)
+  def toXml: Node = {
 
-  lazy val messagesWithId: NonEmptyList[(Message, MessageId)] =
-    messages.mapWithIndex(_ -> MessageId.fromIndex(_))
+    val transitWrapperNode: Node = {
+      <transitRequest
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:noNamespaceSchemaLocation="../../schema/request/request.xsd">
+      </transitRequest>
+    }
 
+    Elem(
+      transitWrapperNode.prefix,
+      transitWrapperNode.label,
+      transitWrapperNode.attributes,
+      transitWrapperNode.scope,
+      transitWrapperNode.child.isEmpty,
+      transitWrapperNode.child ++ xml: _*
+    )
+  }
 }

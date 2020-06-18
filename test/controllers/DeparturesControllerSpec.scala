@@ -20,18 +20,15 @@ import java.time.{LocalDate, LocalDateTime, LocalTime}
 
 import base.SpecBase
 import controllers.actions.{FakeAuthenticateActionProvider, FakeAuthenticatedGetOptionalDepartureForWriteActionProvider}
-import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
-import org.scalatest.{BeforeAndAfterEach, FreeSpec, MustMatchers, OptionValues}
-import org.scalatestplus.mockito.MockitoSugar
-import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import uk.gov.hmrc.transitsmovementstraderatdeparture.models.{Departure, DepartureId, DepartureStatus, Message, MessageType, MessageWithStatus, SubmissionProcessingResult}
+import org.scalatest.concurrent.IntegrationPatience
+import org.scalatest.BeforeAndAfterEach
+import uk.gov.hmrc.transitsmovementstraderatdeparture.models.{Departure, DepartureId, DepartureStatus, MessageType, MessageWithStatus, SubmissionProcessingResult}
 import uk.gov.hmrc.transitsmovementstraderatdeparture.repositories.{DepartureIdRepository, DepartureRepository}
 import org.mockito.Mockito._
 import org.scalacheck.Arbitrary.arbitrary
 import generators.ModelGenerators
 import org.mockito.Matchers.any
 import play.api.inject.bind
-import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{POST, header, route, running, status}
 import uk.gov.hmrc.transitsmovementstraderatdeparture.models.SubmissionProcessingResult.{SubmissionFailureExternal, SubmissionFailureInternal, SubmissionSuccess}
@@ -43,6 +40,7 @@ import uk.gov.hmrc.transitsmovementstraderatdeparture.models.MessageStatus.{Subm
 import cats.data.NonEmptyList
 import org.scalacheck.Arbitrary
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
+import uk.gov.hmrc.transitsmovementstraderatdeparture.utils.Format
 
 import scala.concurrent.Future
 import scala.util.Success
@@ -76,6 +74,11 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
 
   val requestXmlBody =
     <CC015B>
+      <DatOfPreMES9>{Format.dateFormatted(localDate)}</DatOfPreMES9>
+      <TimOfPreMES10>{Format.timeFormatted(localTime)}</TimOfPreMES10>
+      <HEAHEA>
+        <DocNumHEA5>abc</DocNumHEA5>
+      </HEAHEA>
     </CC015B>
 
     "/POST" - {
@@ -87,15 +90,14 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
           val mockSubmitMessageService = mock[SubmitMessageService]
 
           when(mockDepartureIdRepository.nextId()).thenReturn(Future.successful(initializedDeparture.departureId))
-          when(mockDepartureRepository.insert(initializedDeparture)).thenReturn(Future.successful(Success(())))
-          when(mockSubmitMessageService.submitDeparture(initializedDeparture)).thenReturn(Future.successful((SubmissionSuccess)))
+          when(mockDepartureRepository.insert(any())).thenReturn(Future.successful(Success(())))
+          when(mockSubmitMessageService.submitDeparture(any())(any())).thenReturn(Future.successful((SubmissionSuccess)))
 
-          val application = new GuiceApplicationBuilder()
+          val application = baseApplicationBuilder
             .overrides(
               bind[DepartureIdRepository].toInstance(mockDepartureIdRepository),
               bind[SubmitMessageService].toInstance(mockSubmitMessageService),
               bind[DepartureRepository].toInstance(mockDepartureRepository),
-              bind[AuthenticateActionProvider].to[FakeAuthenticateActionProvider],
               bind[AuthenticateGetOptionalDepartureForWriteActionProvider].toInstance(FakeAuthenticatedGetOptionalDepartureForWriteActionProvider())
             )
             .build()
@@ -107,7 +109,7 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
             val result = route(application, request).value
 
             status(result) mustEqual ACCEPTED
-            verify(mockSubmitMessageService, times(1)).submitDeparture(eqTo(initializedDeparture))
+            verify(mockSubmitMessageService, times(1)).submitDeparture(any())(any())
             header("Location", result).get must be(routes.DeparturesController.get(initializedDeparture.departureId).url)
           }
         }
@@ -117,7 +119,7 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
 
           when(mockDepartureIdRepository.nextId()).thenReturn(Future.failed(new Exception))
 
-          val application = new GuiceApplicationBuilder()
+          val application = baseApplicationBuilder
             .overrides(
               bind[DepartureIdRepository].toInstance(mockDepartureIdRepository),
               bind[AuthenticateGetOptionalDepartureForWriteActionProvider].toInstance(FakeAuthenticatedGetOptionalDepartureForWriteActionProvider()))
@@ -140,7 +142,7 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
           val departureId = DepartureId(1)
 
           when(mockDepartureIdRepository.nextId()).thenReturn(Future.successful(departureId))
-          when(mockSubmitMessageService.submitDeparture(any())).thenReturn(Future.successful(SubmissionFailureInternal))
+          when(mockSubmitMessageService.submitDeparture(any())(any())).thenReturn(Future.successful(SubmissionFailureInternal))
 
           val application = baseApplicationBuilder
             .overrides(
@@ -168,7 +170,7 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
           val departureId = DepartureId(1)
 
           when(mockDepartureIdRepository.nextId()).thenReturn(Future.successful(departureId))
-          when(mockSubmitMessageService.submitDeparture(any())).thenReturn(Future.successful(SubmissionFailureExternal))
+          when(mockSubmitMessageService.submitDeparture(any())(any())).thenReturn(Future.successful(SubmissionFailureExternal))
 
           val application = baseApplicationBuilder
             .overrides(
@@ -250,17 +252,15 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
           val mockDepartureRepository = mock[DepartureRepository]
           val mockSubmitMessageService = mock[SubmitMessageService]
 
-          when(mockSubmitMessageService.submitMessage(any())).thenReturn(Future.successful(SubmissionSuccess))
+          when(mockSubmitMessageService.submitMessage(any(),any(),any(),any())(any())).thenReturn(Future.successful(SubmissionSuccess))
 
-          val application = new GuiceApplicationBuilder()
+          val application = baseApplicationBuilder
             .overrides(
               bind[SubmitMessageService].toInstance(mockSubmitMessageService),
               bind[DepartureRepository].toInstance(mockDepartureRepository),
               bind[AuthenticateGetOptionalDepartureForWriteActionProvider].toInstance(FakeAuthenticatedGetOptionalDepartureForWriteActionProvider(failedToSubmitDeparture))
             )
             .build()
-
-          val newMessage = message.copy(messageCorrelationId = 2)
 
           running(application) {
 
@@ -269,7 +269,7 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
             val result = route(application, request).value
 
             status(result) mustEqual ACCEPTED
-            verify(mockSubmitMessageService, times(1)).submitMessage(eqTo(newMessage))
+            verify(mockSubmitMessageService, times(1)).submitMessage(any(), any(), any(), any())(any())
             header("Location", result).get must be(routes.DeparturesController.get(failedToSubmitDeparture.departureId).url)
           }
         }
@@ -287,7 +287,7 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
           val mockSubmitMessageService = mock[SubmitMessageService]
           val mockDepartureIdRepository  = mock[DepartureIdRepository]
 
-          when(mockSubmitMessageService.submitDeparture(any()))
+          when(mockSubmitMessageService.submitDeparture(any())(any()))
             .thenReturn(Future.successful(SubmissionProcessingResult.SubmissionSuccess))
 
           when(mockDepartureIdRepository.nextId()).thenReturn(Future.successful(expectedDeparture.departureId))
@@ -308,14 +308,14 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
 
             status(result) mustEqual ACCEPTED
             header("Location", result).value must be(routes.DeparturesController.get(expectedDeparture.departureId).url)
-            verify(mockSubmitMessageService, times(1)).submitDeparture(eqTo(expectedDeparture))
+            verify(mockSubmitMessageService, times(1)).submitDeparture(any())(any())
           }
         }
 
         "must return InternalServerError if there was an internal failure when saving and sending" in {
           val mockSubmitMessageService = mock[SubmitMessageService]
 
-          when(mockSubmitMessageService.submitMessage(any()))
+          when(mockSubmitMessageService.submitMessage(any(),any(),any(),any())(any()))
             .thenReturn(Future.successful(SubmissionProcessingResult.SubmissionFailureInternal))
 
           val application = baseApplicationBuilder
@@ -340,7 +340,7 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
         "must return BadGateway if there was an external failure when saving and sending" in {
           val mockSubmitMessageService = mock[SubmitMessageService]
 
-          when(mockSubmitMessageService.submitMessage(any()))
+          when(mockSubmitMessageService.submitMessage(any(),any(),any(),any())(any()))
             .thenReturn(Future.successful(SubmissionProcessingResult.SubmissionFailureExternal))
 
           val app = baseApplicationBuilder
