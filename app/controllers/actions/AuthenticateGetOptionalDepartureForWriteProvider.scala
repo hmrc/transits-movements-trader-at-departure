@@ -28,7 +28,6 @@ import services.XmlMessageParser
 import scala.concurrent.{ExecutionContext, Future}
 import scala.xml.NodeSeq
 
-//@ImplementedBy(classOf[AuthenticateGetOptionalDepartureForWriteActionProviderImpl])
 trait AuthenticateGetOptionalDepartureForWriteActionProvider {
   def apply(): ActionBuilder[AuthenticatedOptionalDepartureRequest, AnyContent]
 }

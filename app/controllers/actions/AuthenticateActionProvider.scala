@@ -16,12 +16,10 @@
 
 package controllers.actions
 
-import com.google.inject.ImplementedBy
 import javax.inject.Inject
 import models.request.AuthenticatedRequest
 import play.api.mvc.{ActionBuilder, AnyContent, DefaultActionBuilder}
 
-//@ImplementedBy(classOf[AuthenticateActionProviderImpl])
 trait AuthenticateActionProvider {
   def apply(): ActionBuilder[AuthenticatedRequest, AnyContent]
 }

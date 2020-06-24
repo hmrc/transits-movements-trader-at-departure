@@ -24,7 +24,7 @@ import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.controller.BackendController
 import actions.AuthenticateGetOptionalDepartureForWriteActionProvider
 import models.MessageStatus.SubmissionSucceeded
-import models.{DepartureId, DepartureStatus, Message, MessageType, SubmissionProcessingResult}
+import models.{DepartureId, DepartureStatus, Message, SubmissionProcessingResult}
 import services.{DepartureService, SubmitMessageService}
 
 import scala.concurrent.{ExecutionContext, Future}
