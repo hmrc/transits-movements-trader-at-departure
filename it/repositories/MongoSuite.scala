@@ -43,12 +43,12 @@ trait MongoSuite {
 
   def started(app: Application): Future[Unit] = {
 
-//    val arrivalMovementRepository = app.injector.instanceOf[DepartureRepository]
-//    val lockRepository = app.injector.instanceOf[LockRepository]
+    val departureRepository = app.injector.instanceOf[DepartureRepository]
+    val lockRepository = app.injector.instanceOf[LockRepository]
 
-//    val services = Seq(arrivalMovementRepository.started, lockRepository.started)
+    val services = Seq(departureRepository.started, lockRepository.started)
 
-//    Future.sequence(services).map(_ => ())
+    Future.sequence(services).map(_ => ())
 
     Future.successful(())
   }

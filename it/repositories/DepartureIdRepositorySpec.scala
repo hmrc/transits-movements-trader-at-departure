@@ -1,12 +1,11 @@
 package repositories
 
-import uk.gov.hmrc.transitsmovementstraderatdeparture.models.DepartureId
+import models.DepartureId
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.{FreeSpec, MustMatchers}
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.libs.json.Json
 import reactivemongo.play.json.collection.JSONCollection
-import uk.gov.hmrc.transitsmovementstraderatdeparture.repositories.DepartureIdRepository
 import reactivemongo.play.json.ImplicitBSONHandlers.JsObjectDocumentWriter
 
 import scala.concurrent.ExecutionContext.Implicits.global

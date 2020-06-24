@@ -19,11 +19,9 @@ package generators
 import java.time.{LocalDate, LocalDateTime}
 
 import org.scalacheck.Arbitrary.arbitrary
-import org.scalacheck.Arbitrary
-import org.scalacheck.Gen
 import org.scalacheck.{Arbitrary, Gen}
-import uk.gov.hmrc.transitsmovementstraderatdeparture.models.MessageStatus.SubmissionPending
-import uk.gov.hmrc.transitsmovementstraderatdeparture.models.{Departure, DepartureId, DepartureStatus, MessageType, MessageWithStatus}
+import models.MessageStatus.SubmissionPending
+import models.{Departure, DepartureId, DepartureStatus, MessageType, MessageWithStatus, MessageWithoutStatus}
 
 trait ModelGenerators extends BaseGenerators with JavaTimeGenerators {
 
@@ -41,11 +39,23 @@ trait ModelGenerators extends BaseGenerators with JavaTimeGenerators {
   implicit lazy val arbitraryMessageWithStateXml: Arbitrary[MessageWithStatus] = {
     Arbitrary {
       for {
-        dateTime    <- arbitrary[LocalDateTime]
+        date        <- datesBetween(pastDate, dateNow)
+        time        <- timesBetween(pastDate, dateNow)
         xml         <- Gen.const(<blankXml>message</blankXml>)
         messageType <- Gen.oneOf(MessageType.values)
         status = SubmissionPending
-      } yield MessageWithStatus(dateTime, messageType, xml, status, 1)
+      } yield MessageWithStatus(LocalDateTime.of(date, time), messageType, xml, status, 1)
+    }
+  }
+
+  implicit lazy val arbitraryMessageWithoutStateXml: Arbitrary[MessageWithoutStatus] = {
+    Arbitrary {
+      for {
+        date        <- datesBetween(pastDate, dateNow)
+        time        <- timesBetween(pastDate, dateNow)
+        xml         <- Gen.const(<blankXml>message</blankXml>)
+        messageType <- Gen.oneOf(MessageType.values)
+      } yield MessageWithoutStatus(LocalDateTime.of(date, time), messageType, xml, 1)
     }
   }
 
@@ -64,6 +74,6 @@ trait ModelGenerators extends BaseGenerators with JavaTimeGenerators {
         created <- arbitrary[LocalDateTime]
         updated <- arbitrary[LocalDateTime]
         messages <- nonEmptyListOfMaxLength[MessageWithStatus](2)
-      } yield Departure(id, eN, rN, status, created, updated, messages.length + 1, messages)
+      } yield models.Departure(id, eN, rN, status, created, updated, messages.length + 1, messages)
     }
 }

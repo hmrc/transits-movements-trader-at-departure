@@ -14,16 +14,14 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.transitsmovementstraderatdeparture.controllers
+package controllers
 
 import java.time.{LocalDate, LocalDateTime, LocalTime}
 
 import base.SpecBase
-import controllers.actions.{FakeAuthenticateActionProvider, FakeAuthenticatedGetOptionalDepartureForWriteActionProvider}
+import controllers.actions.{AuthenticateGetOptionalDepartureForWriteActionProvider, FakeAuthenticatedGetOptionalDepartureForWriteActionProvider}
 import org.scalatest.concurrent.IntegrationPatience
 import org.scalatest.BeforeAndAfterEach
-import uk.gov.hmrc.transitsmovementstraderatdeparture.models.{Departure, DepartureId, DepartureStatus, MessageType, MessageWithStatus, SubmissionProcessingResult}
-import uk.gov.hmrc.transitsmovementstraderatdeparture.repositories.{DepartureIdRepository, DepartureRepository}
 import org.mockito.Mockito._
 import org.scalacheck.Arbitrary.arbitrary
 import generators.ModelGenerators
@@ -31,16 +29,16 @@ import org.mockito.Matchers.any
 import play.api.inject.bind
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{POST, header, route, running, status}
-import uk.gov.hmrc.transitsmovementstraderatdeparture.models.SubmissionProcessingResult.{SubmissionFailureExternal, SubmissionFailureInternal, SubmissionSuccess}
-import uk.gov.hmrc.transitsmovementstraderatdeparture.services.SubmitMessageService
 import play.api.test.Helpers._
-import org.mockito.Matchers.{eq => eqTo}
-import uk.gov.hmrc.transitsmovementstraderatdeparture.controllers.actions.{AuthenticateActionProvider, AuthenticateGetOptionalDepartureForWriteActionProvider}
-import uk.gov.hmrc.transitsmovementstraderatdeparture.models.MessageStatus.{SubmissionFailed, SubmissionPending, SubmissionSucceeded}
 import cats.data.NonEmptyList
+import models.MessageStatus.{SubmissionFailed, SubmissionPending, SubmissionSucceeded}
+import models.SubmissionProcessingResult.{SubmissionFailureExternal, SubmissionFailureInternal, SubmissionSuccess}
+import models.{Departure, DepartureId, DepartureStatus, MessageType, MessageWithStatus, SubmissionProcessingResult}
 import org.scalacheck.Arbitrary
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
-import uk.gov.hmrc.transitsmovementstraderatdeparture.utils.Format
+import repositories.{DepartureIdRepository, DepartureRepository}
+import services.SubmitMessageService
+import utils.Format
 
 import scala.concurrent.Future
 import scala.util.Success
@@ -77,7 +75,7 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
       <DatOfPreMES9>{Format.dateFormatted(localDate)}</DatOfPreMES9>
       <TimOfPreMES10>{Format.timeFormatted(localTime)}</TimOfPreMES10>
       <HEAHEA>
-        <DocNumHEA5>abc</DocNumHEA5>
+        <RefNumHEA4>abc</RefNumHEA4>
       </HEAHEA>
     </CC015B>
 

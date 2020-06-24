@@ -17,9 +17,8 @@
 package controllers.actions
 
 import javax.inject.Inject
+import models.request.AuthenticatedRequest
 import play.api.mvc.{ActionBuilder, ActionRefiner, AnyContent, DefaultActionBuilder, Request, Result}
-import uk.gov.hmrc.transitsmovementstraderatdeparture.controllers.actions.AuthenticateActionProvider
-import uk.gov.hmrc.transitsmovementstraderatdeparture.models.request.AuthenticatedRequest
 
 import scala.concurrent.{ExecutionContext, Future}
 

@@ -16,12 +16,10 @@
 
 package controllers.actions
 
+import models.Departure
+import models.request.{AuthenticatedOptionalDepartureRequest, AuthenticatedRequest}
 import play.api.mvc.{ActionBuilder, AnyContent, BodyParser, Request, Result}
 import play.api.test.Helpers.stubBodyParser
-import uk.gov.hmrc.transitsmovementstraderatdeparture.controllers.actions.AuthenticateGetOptionalDepartureForWriteActionProvider
-import uk.gov.hmrc.transitsmovementstraderatdeparture.models.Departure
-import uk.gov.hmrc.transitsmovementstraderatdeparture.models.request.AuthenticatedOptionalDepartureRequest
-import uk.gov.hmrc.transitsmovementstraderatdeparture.models.request.AuthenticatedRequest
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
