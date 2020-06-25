@@ -34,6 +34,11 @@ trait SpecBase extends FreeSpec with MustMatchers with MockitoSugar with ScalaFu
 
   protected def baseApplicationBuilder: GuiceApplicationBuilder =
     new GuiceApplicationBuilder()
+      .configure(
+//        "microservice.services.teams-and-repositories.port" -> wireMock.stubPort,
+//        "play.http.requestHandler" -> "play.api.http.DefaultHttpRequestHandler",
+        "metrics.jvm" -> false
+      )
       .overrides(
         bind[AuthenticateActionProvider].to[FakeAuthenticateActionProvider]
       )

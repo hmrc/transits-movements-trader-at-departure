@@ -38,7 +38,6 @@ class SubmitMessageService @Inject()(departureRepository: DepartureRepository, m
         Future.successful(SubmissionProcessingResult.SubmissionFailureInternal)
 
       case Success(_) => {
-        println("going in")
         messageConnector
           .post(departureId, message, OffsetDateTime.now)
           .flatMap {

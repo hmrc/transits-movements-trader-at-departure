@@ -21,7 +21,8 @@ import java.time.{LocalDate, LocalDateTime}
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.{Arbitrary, Gen}
 import models.MessageStatus.SubmissionPending
-import models.{Departure, DepartureId, DepartureStatus, MessageType, MessageWithStatus, MessageWithoutStatus}
+import models.SubmissionProcessingResult.{SubmissionFailure, SubmissionFailureExternal, SubmissionFailureInternal}
+import models.{Departure, DepartureId, DepartureStatus, MessageId, MessageType, MessageWithStatus, MessageWithoutStatus, SubmissionProcessingResult}
 
 trait ModelGenerators extends BaseGenerators with JavaTimeGenerators {
 
@@ -35,6 +36,11 @@ trait ModelGenerators extends BaseGenerators with JavaTimeGenerators {
       } yield DepartureId(id)
     }
   }
+
+  implicit lazy val arbitraryMessageId: Arbitrary[MessageId] =
+    Arbitrary {
+      intsAboveValue(0).map(MessageId.fromIndex)
+    }
 
   implicit lazy val arbitraryMessageWithStateXml: Arbitrary[MessageWithStatus] = {
     Arbitrary {
@@ -76,4 +82,14 @@ trait ModelGenerators extends BaseGenerators with JavaTimeGenerators {
         messages <- nonEmptyListOfMaxLength[MessageWithStatus](2)
       } yield models.Departure(id, eN, rN, status, created, updated, messages.length + 1, messages)
     }
+
+  implicit lazy val arbitraryFailure: Arbitrary[SubmissionFailure] =
+    Arbitrary(Gen.oneOf(SubmissionFailureInternal, SubmissionFailureExternal))
+
+  implicit lazy val arbitrarySubmissionResult: Arbitrary[SubmissionProcessingResult] =
+    Arbitrary(Gen.oneOf(SubmissionProcessingResult.values))
+
+  implicit lazy val arbitraryMessageType: Arbitrary[MessageType] =
+    Arbitrary(Gen.oneOf(MessageType.values))
+
 }

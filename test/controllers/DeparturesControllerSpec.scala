@@ -41,7 +41,6 @@ import services.SubmitMessageService
 import utils.Format
 
 import scala.concurrent.Future
-import scala.util.Success
 
 class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with ModelGenerators with BeforeAndAfterEach with IntegrationPatience {
 
@@ -88,7 +87,7 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
           val mockSubmitMessageService = mock[SubmitMessageService]
 
           when(mockDepartureIdRepository.nextId()).thenReturn(Future.successful(initializedDeparture.departureId))
-          when(mockDepartureRepository.insert(any())).thenReturn(Future.successful(Success(())))
+          when(mockDepartureRepository.insert(any())).thenReturn(Future.successful(()))
           when(mockSubmitMessageService.submitDeparture(any())(any())).thenReturn(Future.successful((SubmissionSuccess)))
 
           val application = baseApplicationBuilder

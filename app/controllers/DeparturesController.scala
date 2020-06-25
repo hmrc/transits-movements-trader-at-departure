@@ -59,7 +59,6 @@ class DeparturesController @Inject()(
                         .withHeaders("Location" -> routes.DeparturesController.get(departure.departureId).url)
 
                     case SubmissionProcessingResult.SubmissionFailureInternal => {
-                      println("internal fail")
                       InternalServerError
                     }
 
@@ -88,13 +87,11 @@ class DeparturesController @Inject()(
                       case SubmissionProcessingResult.SubmissionFailureExternal =>
                         BadGateway
                       case SubmissionProcessingResult.SubmissionFailureInternal =>
-                        println("internal fail")
                         InternalServerError
                     }
                 }
                 .recover {
                   case _ => {
-                    println("general fail")
                     InternalServerError
                   }
                 }

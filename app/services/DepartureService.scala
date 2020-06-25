@@ -41,6 +41,7 @@ class DepartureService @Inject()(departureIdRepository: DepartureIdRepository)(i
     for {
       _        <- correctRootNodeR(MessageType.DepartureDeclaration)
       dateTime <- dateTimeOfPrepR
+      reference <- referenceR
       message  <- makeMessageWithStatus(1, MessageType.DepartureDeclaration)
     } yield {
       departureIdRepository
@@ -49,7 +50,7 @@ class DepartureService @Inject()(departureIdRepository: DepartureIdRepository)(i
           Departure(
             _,
             eori,
-            "reference",
+            reference,
             Initialized,
             dateTime,
             dateTime,
