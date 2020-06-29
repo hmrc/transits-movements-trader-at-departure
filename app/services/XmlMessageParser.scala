@@ -66,6 +66,6 @@ object XmlMessageParser {
     ReaderT[Option, NodeSeq, String](xml =>
       (xml \ "HEAHEA" \ "RefNumHEA4").text match {
         case refString if !refString.isEmpty => Some(refString)
-        case _                               => None
+        case _  => None
       })
 }

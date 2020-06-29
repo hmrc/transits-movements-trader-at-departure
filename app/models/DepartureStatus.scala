@@ -59,7 +59,8 @@ object DepartureStatus extends Enumerable.Implicits {
   val values = Seq(
     Initialized,
     DepartureSubmitted,
-    DepartureAccepted
+    DepartureAccepted,
+    DepartureRejected
   )
 
   implicit val enumerable: Enumerable[DepartureStatus] =

@@ -20,7 +20,7 @@ import javax.inject.Inject
 import models.request.AuthenticatedRequest
 import play.api.Logger
 import play.api.mvc.{ActionRefiner, Request, Result}
-import play.api.mvc.Results.Unauthorized
+import play.api.mvc.Results.{Unauthorized,Forbidden}
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisationException, AuthorisedFunctions, Enrolment, InsufficientEnrolments}
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 import uk.gov.hmrc.http.HeaderCarrier
@@ -47,6 +47,9 @@ private[actions] class AuthenticateAction @Inject()(override val authConnector: 
         Future.successful(Right(AuthenticatedRequest(request, eoriNumber)))
     }
     }.recover {
+    case e: InsufficientEnrolments =>
+      Logger.warn(s"Failed to authorise with the following exception: $e")
+      Left(Forbidden)
     case e: AuthorisationException =>
       Logger.warn(s"Failed to authorise with the following exception: $e")
       Left(Unauthorized)

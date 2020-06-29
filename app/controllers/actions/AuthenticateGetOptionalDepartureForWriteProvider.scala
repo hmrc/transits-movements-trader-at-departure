@@ -51,8 +51,8 @@ class AuthenticateGetOptionalDepartureForWriteAction(departureRepository: Depart
       case body: NodeSeq =>
         XmlMessageParser.referenceR(body) match {
           case None =>
-            Logger.warn("Invalid mrn specified in request")
-            Future.successful(BadRequest("Invalid mrn specified in request"))
+            Logger.warn("Invalid reference specified in request")
+            Future.successful(BadRequest("Invalid reference specified in request"))
 
           case Some(reference) => {
             departureRepository.get(request.eoriNumber, reference).flatMap {

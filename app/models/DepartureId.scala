@@ -35,7 +35,7 @@ object DepartureId {
           .getOrElse(JsError("Error in converting JsNumber to an Int"))
 
       case e =>
-        JsError(s"Error in deserialization of Json value to an ArrivalId, expected JsNumber got ${e.getClass}")
+        JsError(s"Error in deserialization of Json value to an DepartureId, expected JsNumber got ${e.getClass}")
     }
 
     override def writes(o: DepartureId): JsNumber = JsNumber(o.index)

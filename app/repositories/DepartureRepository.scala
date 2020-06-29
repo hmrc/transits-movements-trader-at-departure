@@ -82,7 +82,7 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi)(implicit ec: Execut
               le =>
                 if (le.updatedExisting) Success(()) else Failure(new Exception(s"Could not find departure $departureId"))
             }
-            .getOrElse(Failure(new Exception("Failed to update arrival")))
+            .getOrElse(Failure(new Exception("Failed to update departure")))
         }
     }
   }
