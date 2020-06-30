@@ -1,3 +1,5 @@
 # microservice specific routes
 
-GET        /hello-world             uk.gov.hmrc.transitsmovementstraderatdeparture.controllers.MicroserviceHelloWorldController.hello
+POST       /movements/departures                    controllers.DeparturesController.post
+
+GET        /movements/departures/:departureId       controllers.DeparturesController.get(departureId: DepartureId)

@@ -6,17 +6,31 @@ import sbt._
 object AppDependencies {
 
   val compile = Seq(
-
-    "uk.gov.hmrc"             %% "simple-reactivemongo"     % "7.27.0-play-26",
-    "uk.gov.hmrc"             %% "bootstrap-play-26"        % "1.8.0"
+    "org.reactivemongo"       %% "play2-reactivemongo" % "0.18.6-play26",
+    "uk.gov.hmrc"             %% "bootstrap-play-26"   % "1.8.0",
+    "org.typelevel"           %% "cats-core"           % "2.0.0"
   )
 
   val test = Seq(
-    "uk.gov.hmrc"             %% "bootstrap-play-26"        % "1.8.0" % Test classifier "tests",
-    "org.scalatest"           %% "scalatest"                % "3.0.8"                 % "test",
-    "com.typesafe.play"       %% "play-test"                % current                 % "test",
-    "org.pegdown"             %  "pegdown"                  % "1.6.0"                 % "test, it",
-    "org.scalatestplus.play"  %% "scalatestplus-play"       % "3.1.2"                 % "test, it"
+    "org.mockito"            % "mockito-all"         % "2.0.2-beta",
+    "org.scalatest"          %% "scalatest"          % "3.0.8",
+    "com.typesafe.play"      %% "play-test"          % current,
+    "org.pegdown"            % "pegdown"             % "1.6.0",
+    "org.scalatestplus.play" %% "scalatestplus-play" % "3.1.2",
+    "org.scalacheck"         %% "scalacheck"         % "1.14.1",
+    "com.github.tomakehurst" % "wiremock-standalone" % "2.17.0"
+  ).map(_ % "test, it")
+
+  val akkaVersion     = "2.5.23"
+  val akkaHttpVersion = "10.0.15"
+
+  val overrides = Seq(
+    "com.typesafe.akka" %% "akka-stream"    % akkaVersion,
+    "com.typesafe.akka" %% "akka-protobuf"  % akkaVersion,
+    "com.typesafe.akka" %% "akka-slf4j"     % akkaVersion,
+    "com.typesafe.akka" %% "akka-actor"     % akkaVersion,
+    "com.typesafe.akka" %% "akka-http-core" % akkaHttpVersion
   )
+
 
 }
