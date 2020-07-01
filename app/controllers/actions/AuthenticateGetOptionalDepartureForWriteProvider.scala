@@ -16,7 +16,6 @@
 
 package controllers.actions
 
-import com.google.inject.ImplementedBy
 import javax.inject.Inject
 import play.api.mvc.{ActionBuilder, ActionFunction, AnyContent, Result}
 import models.request.{AuthenticatedOptionalDepartureRequest, AuthenticatedRequest}

@@ -33,9 +33,11 @@ import play.api.test.Helpers._
 import cats.data.NonEmptyList
 import models.MessageStatus.{SubmissionFailed, SubmissionPending, SubmissionSucceeded}
 import models.SubmissionProcessingResult.{SubmissionFailureExternal, SubmissionFailureInternal, SubmissionSuccess}
+import models.response.ResponseDeparture
 import models.{Departure, DepartureId, DepartureStatus, MessageType, MessageWithStatus, SubmissionProcessingResult}
 import org.scalacheck.Arbitrary
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
+import play.api.libs.json.Json
 import repositories.{DepartureIdRepository, DepartureRepository}
 import services.SubmitMessageService
 import utils.Format
@@ -61,6 +63,7 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
   val initializedDeparture = Departure(
     departureId = newDepartureId,
     eoriNumber = "eori",
+    movementReferenceNumber = None,
     referenceNumber = "referenceNumber",
     status = DepartureStatus.Initialized,
     created = localDateTime,
@@ -403,6 +406,78 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
     }
 
     "/:departureId GET" - {
-      
+
+      "must return Ok with the retrieved departure" in {
+        val mockDepartureRepository = mock[DepartureRepository]
+
+        val application = baseApplicationBuilder
+          .overrides(bind[DepartureRepository].toInstance(mockDepartureRepository))
+          .build()
+
+        val departure = Arbitrary.arbitrary[Departure].sample.value.copy(eoriNumber = "eori")
+        when(mockDepartureRepository.get(any())).thenReturn(Future.successful(Some(departure)))
+
+        running(application) {
+          val request = FakeRequest(GET, routes.DeparturesController.get(DepartureId(1)).url)
+
+          val result = route(application, request).value
+
+          status(result) mustEqual OK
+          contentAsJson(result) mustEqual Json.toJson(ResponseDeparture.build(departure))
+        }
+      }
+
+      "must return Not Found if departure doesn't exist" in {
+        val mockDepartureRepository = mock[DepartureRepository]
+
+        val application = baseApplicationBuilder
+          .overrides(bind[DepartureRepository].toInstance(mockDepartureRepository))
+          .build()
+
+        when(mockDepartureRepository.get(any())).thenReturn(Future.successful(None))
+
+        running(application) {
+          val request = FakeRequest(GET, routes.DeparturesController.get(DepartureId(1)).url)
+          val result = route(application, request).value
+
+          status(result) mustEqual NOT_FOUND
+        }
+      }
+
+      "must return Not Found if departure eori doesn't match" in {
+        val mockDepartureRepository = mock[DepartureRepository]
+
+        val application = baseApplicationBuilder
+          .overrides(bind[DepartureRepository].toInstance(mockDepartureRepository))
+          .build()
+
+        val departure = Arbitrary.arbitrary[Departure].sample.value.copy(eoriNumber = "eori2")
+        when(mockDepartureRepository.get(any())).thenReturn(Future.successful(Some(departure)))
+
+        running(application) {
+          val request = FakeRequest(GET, routes.DeparturesController.get(DepartureId(1)).url)
+          val result = route(application, request).value
+
+          status(result) mustEqual NOT_FOUND
+        }
+      }
+
+      "must return an INTERNAL_SERVER_ERROR when we cannot retrieve the departure" in {
+        val mockDepartureRepository = mock[DepartureRepository]
+
+        when(mockDepartureRepository.get(any()))
+          .thenReturn(Future.failed(new Exception))
+
+        val application = baseApplicationBuilder
+          .overrides(bind[DepartureRepository].toInstance(mockDepartureRepository))
+          .build()
+
+        running(application) {
+          val request = FakeRequest(GET, routes.DeparturesController.get(DepartureId(1)).url)
+          val result = route(application, request).value
+
+          status(result) mustEqual INTERNAL_SERVER_ERROR
+        }
+      }
     }
 }

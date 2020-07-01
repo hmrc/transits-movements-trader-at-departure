@@ -50,6 +50,7 @@ class DepartureService @Inject()(departureIdRepository: DepartureIdRepository)(i
           Departure(
             _,
             eori,
+            None,
             reference,
             Initialized,
             dateTime,

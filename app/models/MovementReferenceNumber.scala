@@ -1,0 +1,40 @@
+/*
+ * Copyright 2020 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package models
+
+import play.api.libs.json._
+
+final case class MovementReferenceNumber(value: String)
+
+object MovementReferenceNumber {
+
+  implicit lazy val reads: Reads[MovementReferenceNumber] = __.read[String].map(MovementReferenceNumber.apply)
+  implicit lazy val writes: Writes[MovementReferenceNumber] = Writes {
+    mrn =>
+      JsString(mrn.value)
+  }
+
+  implicit lazy val optReads: Reads[Option[MovementReferenceNumber]] = __.readNullable[MovementReferenceNumber]
+  implicit lazy val optWrites: Writes[Option[MovementReferenceNumber]] = Writes {
+    optMrn =>
+      optMrn match {
+        case Some(mrn) => JsString(mrn.value)
+        case None => JsNull
+      }
+  }
+
+}

@@ -22,9 +22,11 @@ import models.MessageType.DepartureDeclaration
 import play.api.Logger
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.controller.BackendController
-import actions.AuthenticateGetOptionalDepartureForWriteActionProvider
+import actions.{AuthenticateGetOptionalDepartureForWriteActionProvider, AuthenticatedGetDepartureForReadActionProvider}
 import models.MessageStatus.SubmissionSucceeded
+import models.response.ResponseDeparture
 import models.{DepartureId, DepartureStatus, Message, SubmissionProcessingResult}
+import play.api.libs.json.Json
 import services.{DepartureService, SubmitMessageService}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -33,6 +35,7 @@ import scala.xml.NodeSeq
 class DeparturesController @Inject()(
     cc: ControllerComponents,
     authenticatedOptionalDeparture: AuthenticateGetOptionalDepartureForWriteActionProvider,
+    authenticatedDepartureForRead: AuthenticatedGetDepartureForReadActionProvider,
     departureService: DepartureService,
     submitMessageService: SubmitMessageService)
   (implicit ec: ExecutionContext) extends BackendController(cc) {
@@ -99,5 +102,8 @@ class DeparturesController @Inject()(
       }
   }
 
-  def get(departureId: DepartureId): Action[AnyContent] = ???
+  def get(departureId: DepartureId): Action[AnyContent] = authenticatedDepartureForRead(departureId) {
+    implicit request =>
+      Ok(Json.toJsObject(ResponseDeparture.build(request.departure)))
+  }
 }

@@ -17,7 +17,7 @@
 package config
 
 import com.google.inject.AbstractModule
-import controllers.actions.{AuthenticateActionProvider, AuthenticateActionProviderImpl, AuthenticateGetOptionalDepartureForWriteActionProvider, AuthenticateGetOptionalDepartureForWriteActionProviderImpl}
+import controllers.actions.{AuthenticateActionProvider, AuthenticateActionProviderImpl, AuthenticateGetOptionalDepartureForWriteActionProvider, AuthenticateGetOptionalDepartureForWriteActionProviderImpl, AuthenticatedGetDepartureForReadActionProvider, AuthenticatedGetDepartureForReadActionProviderImpl}
 import repositories.{DepartureIdRepository, DepartureRepository}
 
 class Module extends AbstractModule {
@@ -28,6 +28,7 @@ class Module extends AbstractModule {
     bind(classOf[DepartureRepository]).asEagerSingleton()
     bind(classOf[DepartureIdRepository]).asEagerSingleton()
     bind(classOf[AuthenticateGetOptionalDepartureForWriteActionProvider]).to(classOf[AuthenticateGetOptionalDepartureForWriteActionProviderImpl])
+    bind(classOf[AuthenticatedGetDepartureForReadActionProvider]).to(classOf[AuthenticatedGetDepartureForReadActionProviderImpl])
   }
 
 }
