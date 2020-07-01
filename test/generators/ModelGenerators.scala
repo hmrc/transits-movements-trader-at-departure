@@ -22,7 +22,7 @@ import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.{Arbitrary, Gen}
 import models.MessageStatus.SubmissionPending
 import models.SubmissionProcessingResult.{SubmissionFailure, SubmissionFailureExternal, SubmissionFailureInternal}
-import models.{Departure, DepartureId, DepartureStatus, MessageId, MessageType, MessageWithStatus, MessageWithoutStatus, SubmissionProcessingResult}
+import models.{Departure, DepartureId, DepartureStatus, MessageId, MessageType, MessageWithStatus, MessageWithoutStatus, MovementReferenceNumber, SubmissionProcessingResult}
 
 trait ModelGenerators extends BaseGenerators with JavaTimeGenerators {
 
@@ -36,6 +36,15 @@ trait ModelGenerators extends BaseGenerators with JavaTimeGenerators {
       } yield DepartureId(id)
     }
   }
+
+  implicit lazy val arbitraryMovementReferenceNumber: Arbitrary[MovementReferenceNumber] =
+    Arbitrary {
+      for {
+        year    <- Gen.choose(0, 99).map(y => f"$y%02d")
+        country <- Gen.pick(2, 'A' to 'Z')
+        serial  <- Gen.pick(13, ('A' to 'Z') ++ ('0' to '9'))
+      } yield MovementReferenceNumber(year ++ country.mkString ++ serial.mkString)
+    }
 
   implicit lazy val arbitraryMessageId: Arbitrary[MessageId] =
     Arbitrary {
@@ -75,12 +84,13 @@ trait ModelGenerators extends BaseGenerators with JavaTimeGenerators {
       for {
         id <- arbitrary[DepartureId]
         eN <- arbitrary[String]
+        mrn <- arbitrary[MovementReferenceNumber]
         rN <- arbitrary[String]
         status <- arbitrary[DepartureStatus]
         created <- arbitrary[LocalDateTime]
         updated <- arbitrary[LocalDateTime]
         messages <- nonEmptyListOfMaxLength[MessageWithStatus](2)
-      } yield models.Departure(id, eN, rN, status, created, updated, messages.length + 1, messages)
+      } yield models.Departure(id, eN, Some(mrn), rN, status, created, updated, messages.length + 1, messages)
     }
 
   implicit lazy val arbitraryFailure: Arbitrary[SubmissionFailure] =

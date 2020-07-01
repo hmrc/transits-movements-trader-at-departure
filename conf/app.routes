@@ -3,3 +3,5 @@
 POST       /movements/departures                    controllers.DeparturesController.post
 
 GET        /movements/departures/:departureId       controllers.DeparturesController.get(departureId: DepartureId)
+
+GET        /movements/departures/:departureId/messages  controllers.MessagesController.getMessages(departureId: DepartureId)

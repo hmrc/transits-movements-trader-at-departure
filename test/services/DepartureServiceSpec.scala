@@ -65,6 +65,7 @@ class DepartureServiceSpec extends SpecBase with IntegrationPatience {
 
       val expectedDeparture = Departure(
         departureId = id,
+        movementReferenceNumber = None,
         referenceNumber = ref,
         eoriNumber = eori,
         status = DepartureStatus.Initialized,
