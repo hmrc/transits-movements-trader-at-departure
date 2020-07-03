@@ -293,7 +293,7 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
         }
       }
 
-      "must return Accepted when saved as a new arrival movement when there has been a successful message in an older one" in {
+      "must return Accepted when saved as a new departure declaration when there has been a successful message in an older one" in {
         val messages = NonEmptyList.of(
           message.copy(status = SubmissionPending, messageCorrelationId = 1),
           message.copy(status = SubmissionFailed, messageCorrelationId = 2),
@@ -401,7 +401,7 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
         }
       }
 
-      "must return BadRequest if the message is not an arrival notification" in {
+      "must return BadRequest if the message is not a departure declaration" in {
         val application =
           baseApplicationBuilder
             .overrides(

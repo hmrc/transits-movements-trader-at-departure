@@ -60,8 +60,8 @@ class MessageSenderSpec extends AnyFreeSpec with Matchers with ScalaCheckPropert
       val genMessageCorrelationId = intWithMaxLength(2)
 
       forAll(arbitrary[DepartureId], genMessageCorrelationId) {
-        (arrivalId, messageCorrelation) =>
-          val messageSender = MessageSender(arrivalId, messageCorrelation)
+        (departureId, messageCorrelation) =>
+          val messageSender = MessageSender(departureId, messageCorrelation)
 
           messageSender.toString.length mustBe 35
       }

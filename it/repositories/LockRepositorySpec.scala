@@ -31,46 +31,46 @@ class LockRepositorySpec
     with ModelGenerators {
 
   "lock" - {
-    "must lock an arrivalId when it is not already locked" in {
+    "must lock an departureId when it is not already locked" in {
       database.flatMap(_.drop()).futureValue
 
       val app = new GuiceApplicationBuilder().build()
 
-      val arrivalId = DepartureId(1)
+      val departureId = DepartureId(1)
 
       running(app) {
         started(app).futureValue
 
         val repository = app.injector.instanceOf[LockRepository]
 
-        val result = repository.lock(arrivalId).futureValue
+        val result = repository.lock(departureId).futureValue
 
         result mustEqual true
 
-        val selector = Json.obj("_id" -> arrivalId)
+        val selector = Json.obj("_id" -> departureId)
         val lock = database.flatMap {
           db =>
             db.collection[JSONCollection](LockRepository.collectionName).find(selector, None).one[JsObject]
         }.futureValue
 
-        lock.value("_id").validate[DepartureId] mustEqual JsSuccess(arrivalId)
+        lock.value("_id").validate[DepartureId] mustEqual JsSuccess(departureId)
       }
     }
 
-    "must not lock an arrivalId that is already locked" in {
+    "must not lock an departureId that is already locked" in {
       database.flatMap(_.drop()).futureValue
 
       val app = new GuiceApplicationBuilder().build()
 
-      val arrivalId = DepartureId(1)
+      val departureId = DepartureId(1)
 
       running(app) {
         started(app).futureValue
 
         val repository = app.injector.instanceOf[LockRepository]
 
-        val result1 = repository.lock(arrivalId).futureValue
-        val result2 = repository.lock(arrivalId).futureValue
+        val result1 = repository.lock(departureId).futureValue
+        val result2 = repository.lock(departureId).futureValue
 
         result1 mustEqual true
         result2 mustEqual false
@@ -84,17 +84,17 @@ class LockRepositorySpec
 
       val app = new GuiceApplicationBuilder().build()
 
-      val arrivalId = DepartureId(1)
+      val departureId = DepartureId(1)
 
       running(app) {
         started(app).futureValue
 
         val repository = app.injector.instanceOf[LockRepository]
 
-        repository.lock(arrivalId).futureValue
-        repository.unlock(arrivalId).futureValue
+        repository.lock(departureId).futureValue
+        repository.unlock(departureId).futureValue
 
-        val selector = Json.obj("_id" -> arrivalId)
+        val selector = Json.obj("_id" -> departureId)
         val remainingLock = database.flatMap {
           db =>
             db.collection[JSONCollection](LockRepository.collectionName).find(selector, None).one[JsObject]
@@ -109,14 +109,14 @@ class LockRepositorySpec
 
       val app = new GuiceApplicationBuilder().build()
 
-      val arrivalId = DepartureId(1)
+      val departureId = DepartureId(1)
 
       running(app) {
         started(app).futureValue
 
         val repository = app.injector.instanceOf[LockRepository]
 
-        repository.unlock(arrivalId).futureValue
+        repository.unlock(departureId).futureValue
       }
     }
   }
@@ -127,18 +127,18 @@ class LockRepositorySpec
 
       val app = new GuiceApplicationBuilder().build()
 
-      val arrivalId = DepartureId(1)
+      val departureId = DepartureId(1)
 
       running(app) {
         started(app).futureValue
 
         val repository = app.injector.instanceOf[LockRepository]
 
-        val result = repository.lock(arrivalId).futureValue
+        val result = repository.lock(departureId).futureValue
 
         result mustEqual true
 
-        val selector = Json.obj("_id" -> arrivalId, "created" -> Json.obj("$type" -> "date"))
+        val selector = Json.obj("_id" -> departureId, "created" -> Json.obj("$type" -> "date"))
 
         val lock = database.flatMap(_.collection[JSONCollection](LockRepository.collectionName).find(selector, None).one[JsObject]).futureValue
 

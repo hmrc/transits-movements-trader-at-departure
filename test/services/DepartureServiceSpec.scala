@@ -40,7 +40,7 @@ import scala.concurrent.Future
 class DepartureServiceSpec extends SpecBase with IntegrationPatience {
 
   "createDeparture" - {
-    "creates an arrival movement with an internal ref number and a mrn, date and time of creation from the message submitted with a message id of 1 and next correlation id of 2" in {
+    "creates a departure declaration with an internal ref number and a mrn, date and time of creation from the message submitted with a message id of 1 and next correlation id of 2" in {
       val dateOfPrep = LocalDate.now()
       val timeOfPrep = LocalTime.of(1, 1)
       val dateTime   = LocalDateTime.of(dateOfPrep, timeOfPrep)

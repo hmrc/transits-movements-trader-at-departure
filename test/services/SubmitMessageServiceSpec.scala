@@ -79,9 +79,9 @@ class SubmitMessageServiceSpec extends SpecBase with ModelGenerators {
   )
 
   val departureWithOneMessage: Gen[Departure] = for {
-    arrival <- arbitrary[Departure]
+    departure <- arbitrary[Departure]
   } yield {
-    arrival.copy(
+    departure.copy(
       eoriNumber = "eori",
       status = DepartureStatus.DepartureSubmitted,
       messages = NonEmptyList.one(message),
