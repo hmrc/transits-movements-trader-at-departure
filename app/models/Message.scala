@@ -18,7 +18,12 @@ package models
 
 import java.time.LocalDateTime
 
-import play.api.libs.json.{JsResult, JsValue, Json, OFormat, OWrites, Reads}
+import play.api.libs.json.JsResult
+import play.api.libs.json.JsValue
+import play.api.libs.json.Json
+import play.api.libs.json.OFormat
+import play.api.libs.json.OWrites
+import play.api.libs.json.Reads
 import utils.NodeSeqFormat
 
 import scala.xml.NodeSeq
@@ -30,15 +35,12 @@ sealed trait Message {
   def optStatus: Option[MessageStatus]
 }
 
-final case class MessageWithStatus(dateTime: LocalDateTime,
-                                           messageType: MessageType,
-                                           message: NodeSeq,
-                                           status: MessageStatus,
-                                           messageCorrelationId: Int)
-  extends Message { def optStatus = Some(status) }
+final case class MessageWithStatus(dateTime: LocalDateTime, messageType: MessageType, message: NodeSeq, status: MessageStatus, messageCorrelationId: Int)
+    extends Message { def optStatus = Some(status) }
 
-final case class MessageWithoutStatus(dateTime: LocalDateTime, messageType: MessageType, message: NodeSeq, messageCorrelationId: Int)
-  extends Message { def optStatus = None }
+final case class MessageWithoutStatus(dateTime: LocalDateTime, messageType: MessageType, message: NodeSeq, messageCorrelationId: Int) extends Message {
+  def optStatus = None
+}
 
 object Message extends NodeSeqFormat with MongoDateTimeFormats {
 

@@ -25,8 +25,15 @@ import cats.data.NonEmptyList
 import connectors.MessageConnector
 import generators.ModelGenerators
 import models.MessageStatus.SubmissionPending
-import models.{Departure, DepartureId, DepartureStatus, MessageId, MessageStatus, MessageType, MessageWithStatus, SubmissionProcessingResult}
-import org.mockito.Matchers.{eq => eqTo, _}
+import models.Departure
+import models.DepartureId
+import models.DepartureStatus
+import models.MessageId
+import models.MessageStatus
+import models.MessageType
+import models.MessageWithStatus
+import models.SubmissionProcessingResult
+import org.mockito.ArgumentMatchers.{eq => eqTo, _}
 import org.mockito.Mockito.when
 import org.mockito.Mockito._
 import org.scalacheck.Arbitrary.arbitrary
@@ -39,7 +46,8 @@ import uk.gov.hmrc.http.HttpResponse
 import utils.Format
 
 import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, Future}
+import scala.concurrent.Await
+import scala.concurrent.Future
 import scala.util.Failure
 import scala.util.Success
 
@@ -101,10 +109,10 @@ class SubmitMessageServiceSpec extends SpecBase with ModelGenerators {
 
         val service = application.injector.instanceOf[SubmitMessageService]
 
-        val departureId       = arbitrary[DepartureId].sample.value
+        val departureId     = arbitrary[DepartureId].sample.value
         val messageId       = arbitrary[MessageId].sample.value
-        val message = arbitrary[MessageWithStatus].sample.value
-        val departureStatus   = DepartureStatus.DepartureSubmitted
+        val message         = arbitrary[MessageWithStatus].sample.value
+        val departureStatus = DepartureStatus.DepartureSubmitted
 
         val result = service.submitMessage(departureId, messageId.index, message, departureStatus)
 
@@ -113,9 +121,9 @@ class SubmitMessageServiceSpec extends SpecBase with ModelGenerators {
         verify(mockDepartureRepository, times(1)).addNewMessage(eqTo(departureId), eqTo(message))
         verify(mockMessageConnector, times(1)).post(eqTo(departureId), eqTo(message), any())(any())
         verify(mockDepartureRepository, times(1)).setDepartureStateAndMessageState(eqTo(departureId),
-          eqTo(messageId.index),
-          eqTo(DepartureStatus.DepartureSubmitted),
-          eqTo(MessageStatus.SubmissionSucceeded))
+                                                                                   eqTo(messageId.index),
+                                                                                   eqTo(DepartureStatus.DepartureSubmitted),
+                                                                                   eqTo(MessageStatus.SubmissionSucceeded))
 
       }
 
@@ -123,7 +131,7 @@ class SubmitMessageServiceSpec extends SpecBase with ModelGenerators {
 
     "return SubmissionProcessingResult.SubmissionSuccess when the message is successfully saved and submitted, but the state of message is not updated" in {
       val mockDepartureRepository = mock[DepartureRepository]
-      val mockMessageConnector          = mock[MessageConnector]
+      val mockMessageConnector    = mock[MessageConnector]
 
       when(mockDepartureRepository.addNewMessage(any(), any())).thenReturn(Future.successful(Success(())))
       when(mockDepartureRepository.setDepartureStateAndMessageState(any(), any(), any(), any())).thenReturn(Future.successful(None))
@@ -140,10 +148,10 @@ class SubmitMessageServiceSpec extends SpecBase with ModelGenerators {
 
         val service = application.injector.instanceOf[SubmitMessageService]
 
-        val departureId       = arbitrary[DepartureId].sample.value
+        val departureId     = arbitrary[DepartureId].sample.value
         val messageId       = arbitrary[MessageId].sample.value
-        val message = arbitrary[MessageWithStatus].sample.value
-        val departureStatus   = DepartureStatus.DepartureSubmitted
+        val message         = arbitrary[MessageWithStatus].sample.value
+        val departureStatus = DepartureStatus.DepartureSubmitted
 
         val result = service.submitMessage(departureId, messageId.index, message, departureStatus)
 
@@ -151,16 +159,16 @@ class SubmitMessageServiceSpec extends SpecBase with ModelGenerators {
         verify(mockDepartureRepository, times(1)).addNewMessage(eqTo(departureId), eqTo(message))
         verify(mockMessageConnector, times(1)).post(eqTo(departureId), eqTo(message), any())(any())
         verify(mockDepartureRepository, times(1)).setDepartureStateAndMessageState(eqTo(departureId),
-          eqTo(messageId.index),
-          eqTo(DepartureStatus.DepartureSubmitted),
-          eqTo(MessageStatus.SubmissionSucceeded))
+                                                                                   eqTo(messageId.index),
+                                                                                   eqTo(DepartureStatus.DepartureSubmitted),
+                                                                                   eqTo(MessageStatus.SubmissionSucceeded))
       }
 
     }
 
     "return SubmissionProcessingResult.SubmissionFailureInternal when the message is not saved" in {
       val mockDepartureRepository = mock[DepartureRepository]
-      val mockMessageConnector          = mock[MessageConnector]
+      val mockMessageConnector    = mock[MessageConnector]
 
       when(mockDepartureRepository.addNewMessage(any(), any())).thenReturn(Future.successful(Failure(new Exception)))
 
@@ -176,8 +184,8 @@ class SubmitMessageServiceSpec extends SpecBase with ModelGenerators {
 
         val departureId     = arbitrary[DepartureId].sample.value
         val messageId       = arbitrary[MessageId].sample.value
-        val message = arbitrary[MessageWithStatus].sample.value
-        val departureStatus   = arbitrary[DepartureStatus].sample.value
+        val message         = arbitrary[MessageWithStatus].sample.value
+        val departureStatus = arbitrary[DepartureStatus].sample.value
 
         val result = service.submitMessage(departureId, messageId.index, message, departureStatus)
 
@@ -188,8 +196,8 @@ class SubmitMessageServiceSpec extends SpecBase with ModelGenerators {
     }
 
     "return SubmissionProcessingResult.SubmissionFailureExternal when the message successfully saves, but is not submitted and set the message state to SubmissionFailed" in {
-      val mockDepartureRepository       = mock[DepartureRepository]
-      val mockMessageConnector          = mock[MessageConnector]
+      val mockDepartureRepository = mock[DepartureRepository]
+      val mockMessageConnector    = mock[MessageConnector]
 
       when(mockDepartureRepository.addNewMessage(any(), any())).thenReturn(Future.successful(Success(())))
       when(mockMessageConnector.post(any(), any(), any())(any())).thenReturn(Future.failed(new Exception))
@@ -260,8 +268,8 @@ class SubmitMessageServiceSpec extends SpecBase with ModelGenerators {
     }
 
     "return SubmissionProcessingResult.SubmissionSuccess when the message is successfully saved and submitted, but the state of message is not updated" in {
-      val mockDepartureRepository       = mock[DepartureRepository]
-      val mockMessageConnector          = mock[MessageConnector]
+      val mockDepartureRepository = mock[DepartureRepository]
+      val mockMessageConnector    = mock[MessageConnector]
 
       when(mockDepartureRepository.insert(any())).thenReturn(Future.successful(()))
       when(mockMessageConnector.post(any(), any(), any())(any())).thenReturn(Future.successful(HttpResponse(ACCEPTED)))
@@ -284,16 +292,16 @@ class SubmitMessageServiceSpec extends SpecBase with ModelGenerators {
         verify(mockDepartureRepository, times(1)).insert(eqTo(departure))
         verify(mockMessageConnector, times(1)).post(eqTo(departure.departureId), eqTo(message), any())(any())
         verify(mockDepartureRepository, times(1)).setDepartureStateAndMessageState(eqTo(departure.departureId),
-          eqTo(messageId.index),
-          eqTo(DepartureStatus.DepartureSubmitted),
-          eqTo(MessageStatus.SubmissionSucceeded))
+                                                                                   eqTo(messageId.index),
+                                                                                   eqTo(DepartureStatus.DepartureSubmitted),
+                                                                                   eqTo(MessageStatus.SubmissionSucceeded))
       }
 
     }
 
     "return SubmissionProcessingResult.SubmissionFailureInternal when the message is not saved" in {
-      val mockDepartureRepository       = mock[DepartureRepository]
-      val mockMessageConnector          = mock[MessageConnector]
+      val mockDepartureRepository = mock[DepartureRepository]
+      val mockMessageConnector    = mock[MessageConnector]
 
       when(mockDepartureRepository.insert(any())).thenReturn(Future.failed(new Exception))
 
@@ -316,8 +324,8 @@ class SubmitMessageServiceSpec extends SpecBase with ModelGenerators {
     }
 
     "return SubmissionProcessingResult.SubmissionFailureExternal when the message successfully saves, but is not submitted and set the message state to SubmissionFailed" in {
-      val mockDepartureRepository       = mock[DepartureRepository]
-      val mockMessageConnector          = mock[MessageConnector]
+      val mockDepartureRepository = mock[DepartureRepository]
+      val mockMessageConnector    = mock[MessageConnector]
 
       when(mockDepartureRepository.insert(any())).thenReturn(Future.successful(()))
       when(mockMessageConnector.post(any(), any(), any())(any())).thenReturn(Future.failed(new Exception))

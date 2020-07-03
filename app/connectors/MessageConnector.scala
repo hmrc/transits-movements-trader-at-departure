@@ -20,14 +20,21 @@ import java.time.OffsetDateTime
 import java.util.UUID
 
 import com.google.inject.Inject
-import uk.gov.hmrc.http.{HeaderCarrier, HttpReads, HttpResponse}
+import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.HttpReads
+import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.http.logging.Authorization
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import config.AppConfig
-import models.{DepartureId, MessageSender, MessageType, MessageWithStatus, TransitWrapper}
+import models.DepartureId
+import models.MessageSender
+import models.MessageType
+import models.MessageWithStatus
+import models.TransitWrapper
 import utils.Format
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 
 class MessageConnector @Inject()(config: AppConfig, http: HttpClient)(implicit ec: ExecutionContext) {
 

@@ -18,7 +18,8 @@ package generators
 
 import java.time._
 
-import org.scalacheck.{Arbitrary, Gen}
+import org.scalacheck.Arbitrary
+import org.scalacheck.Gen
 
 trait JavaTimeGenerators {
 

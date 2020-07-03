@@ -60,7 +60,7 @@ object Departure {
         (__ \ "updated").read(MongoDateTimeFormats.localDateTimeRead) and
         (__ \ "nextMessageCorrelationId").read[Int] and
         (__ \ "messages").read[NonEmptyList[Message]]
-      )(Departure.apply _)
+    )(Departure.apply _)
 
   implicit def writesDeparture(implicit write: Writes[LocalDateTime]): OWrites[Departure] =
     (
@@ -73,6 +73,6 @@ object Departure {
         (__ \ "updated").write(write) and
         (__ \ "nextMessageCorrelationId").write[Int] and
         (__ \ "messages").write[NonEmptyList[Message]]
-      )(unlift(Departure.unapply))
+    )(unlift(Departure.unapply))
 
 }

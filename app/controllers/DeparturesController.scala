@@ -20,25 +20,32 @@ import cats.data.NonEmptyList
 import javax.inject.Inject
 import models.MessageType.DepartureDeclaration
 import play.api.Logger
-import play.api.mvc.{Action, AnyContent, ControllerComponents}
+import play.api.mvc.Action
+import play.api.mvc.AnyContent
+import play.api.mvc.ControllerComponents
 import uk.gov.hmrc.play.bootstrap.controller.BackendController
-import actions.{AuthenticateGetOptionalDepartureForWriteActionProvider, AuthenticatedGetDepartureForReadActionProvider}
+import actions.AuthenticateGetOptionalDepartureForWriteActionProvider
+import actions.AuthenticatedGetDepartureForReadActionProvider
 import models.MessageStatus.SubmissionSucceeded
 import models.response.ResponseDeparture
-import models.{DepartureId, DepartureStatus, Message, SubmissionProcessingResult}
+import models.DepartureId
+import models.DepartureStatus
+import models.Message
+import models.SubmissionProcessingResult
 import play.api.libs.json.Json
-import services.{DepartureService, SubmitMessageService}
+import services.DepartureService
+import services.SubmitMessageService
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 import scala.xml.NodeSeq
 
-class DeparturesController @Inject()(
-    cc: ControllerComponents,
-    authenticatedOptionalDeparture: AuthenticateGetOptionalDepartureForWriteActionProvider,
-    authenticatedDepartureForRead: AuthenticatedGetDepartureForReadActionProvider,
-    departureService: DepartureService,
-    submitMessageService: SubmitMessageService)
-  (implicit ec: ExecutionContext) extends BackendController(cc) {
+class DeparturesController @Inject()(cc: ControllerComponents,
+                                     authenticatedOptionalDeparture: AuthenticateGetOptionalDepartureForWriteActionProvider,
+                                     authenticatedDepartureForRead: AuthenticatedGetDepartureForReadActionProvider,
+                                     departureService: DepartureService,
+                                     submitMessageService: SubmitMessageService)(implicit ec: ExecutionContext)
+    extends BackendController(cc) {
 
   private val allMessageUnsent: NonEmptyList[Message] => Boolean =
     _.map(_.optStatus).forall {

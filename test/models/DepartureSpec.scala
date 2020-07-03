@@ -26,8 +26,8 @@ class DepartureSpec extends SpecBase with ScalaCheckDrivenPropertyChecks with Mo
 
   val departureGenerator: Gen[Departure] =
     for {
-      messages <- nonEmptyListOfMaxLength[MessageWithStatus](20)
-      departure  <- arbitrary[Departure].map(_.copy(messages = messages))
+      messages  <- nonEmptyListOfMaxLength[MessageWithStatus](20)
+      departure <- arbitrary[Departure].map(_.copy(messages = messages))
     } yield departure
 
   "nextMessageId returns a MessageId which has value that is 1 larger than the number of messages" in {

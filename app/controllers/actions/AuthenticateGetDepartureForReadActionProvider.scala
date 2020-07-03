@@ -17,7 +17,7 @@
 package controllers.actions
 
 import javax.inject.Inject
-import models.{DepartureId}
+import models.DepartureId
 import models.request.DepartureRequest
 import play.api.mvc.ActionBuilder
 import play.api.mvc.AnyContent
@@ -28,10 +28,10 @@ trait AuthenticatedGetDepartureForReadActionProvider {
 }
 
 class AuthenticatedGetDepartureForReadActionProviderImpl @Inject()(
-                                                                  authenticate: AuthenticateActionProvider,
-                                                                  getDeparture: AuthenticatedGetDepartureActionProvider,
-                                                                  buildDefault: DefaultActionBuilder
-                                                                ) extends AuthenticatedGetDepartureForReadActionProvider {
+  authenticate: AuthenticateActionProvider,
+  getDeparture: AuthenticatedGetDepartureActionProvider,
+  buildDefault: DefaultActionBuilder
+) extends AuthenticatedGetDepartureForReadActionProvider {
 
   def apply(departureId: DepartureId): ActionBuilder[DepartureRequest, AnyContent] =
     buildDefault andThen authenticate() andThen getDeparture(departureId)

@@ -19,19 +19,27 @@ package controllers.actions
 import javax.inject.Inject
 import models.request.AuthenticatedRequest
 import play.api.Logger
-import play.api.mvc.{ActionRefiner, Request, Result}
-import play.api.mvc.Results.{Unauthorized,Forbidden}
-import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisationException, AuthorisedFunctions, Enrolment, InsufficientEnrolments}
+import play.api.mvc.ActionRefiner
+import play.api.mvc.Request
+import play.api.mvc.Result
+import play.api.mvc.Results.Unauthorized
+import play.api.mvc.Results.Forbidden
+import uk.gov.hmrc.auth.core.AuthConnector
+import uk.gov.hmrc.auth.core.AuthorisationException
+import uk.gov.hmrc.auth.core.AuthorisedFunctions
+import uk.gov.hmrc.auth.core.Enrolment
+import uk.gov.hmrc.auth.core.InsufficientEnrolments
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.HeaderCarrierConverter
 import config.AppConfig
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 
 private[actions] class AuthenticateAction @Inject()(override val authConnector: AuthConnector, config: AppConfig)(
   implicit val executionContext: ExecutionContext)
-  extends ActionRefiner[Request, AuthenticatedRequest]
+    extends ActionRefiner[Request, AuthenticatedRequest]
     with AuthorisedFunctions {
 
   private val enrolmentIdentifierKey: String = "VATRegNoTURN"
@@ -46,7 +54,7 @@ private[actions] class AuthenticateAction @Inject()(override val authConnector: 
         } yield identifier.value).getOrElse(throw InsufficientEnrolments(s"Unable to retrieve enrolment for $enrolmentIdentifierKey"))
         Future.successful(Right(AuthenticatedRequest(request, eoriNumber)))
     }
-    }.recover {
+  }.recover {
     case e: InsufficientEnrolments =>
       Logger.warn(s"Failed to authorise with the following exception: $e")
       Left(Forbidden)

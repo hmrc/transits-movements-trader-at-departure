@@ -22,22 +22,25 @@ import java.time.OffsetDateTime
 import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.matching.StringValuePattern
 import generators.ModelGenerators
-import models.{DepartureId, MessageStatus, MessageType, MessageWithStatus}
+import models.DepartureId
+import models.MessageStatus
+import models.MessageType
+import models.MessageWithStatus
 import org.scalacheck.Gen
-import org.scalatest.FreeSpec
-import org.scalatest.MustMatchers
 import org.scalatest.OptionValues
 import org.scalatest.concurrent.IntegrationPatience
 import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.freespec.AnyFreeSpec
+import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import uk.gov.hmrc.http.HeaderCarrier
 
 class MessageConnectorSpec
-  extends FreeSpec
+    extends AnyFreeSpec
     with MockitoSugar
     with ScalaFutures
-    with MustMatchers
+    with Matchers
     with IntegrationPatience
     with WiremockSuite
     with ScalaCheckPropertyChecks
@@ -78,7 +81,7 @@ class MessageConnectorSpec
             )
         )
 
-        val postValue = MessageWithStatus(LocalDateTime.now(), messageType, <CC007A>test</CC007A>, MessageStatus.SubmissionPending, 1)
+        val postValue   = MessageWithStatus(LocalDateTime.now(), messageType, <CC007A>test</CC007A>, MessageStatus.SubmissionPending, 1)
         val departureId = DepartureId(123)
 
         val result = connector.post(departureId, postValue, OffsetDateTime.now())
@@ -108,7 +111,7 @@ class MessageConnectorSpec
             )
         )
 
-        val postValue = MessageWithStatus(LocalDateTime.now(), messageType, <CC007A>test</CC007A>, MessageStatus.SubmissionPending, 1)
+        val postValue   = MessageWithStatus(LocalDateTime.now(), messageType, <CC007A>test</CC007A>, MessageStatus.SubmissionPending, 1)
         val departureId = DepartureId(123)
 
         val result = connector.post(departureId, postValue, OffsetDateTime.now())

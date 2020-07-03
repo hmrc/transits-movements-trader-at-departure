@@ -16,7 +16,9 @@
 
 package models
 
-import scala.xml.{Elem, Node, NodeSeq}
+import scala.xml.Elem
+import scala.xml.Node
+import scala.xml.NodeSeq
 
 case class TransitWrapper(xml: NodeSeq) {
 

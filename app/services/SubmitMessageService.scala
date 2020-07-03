@@ -23,11 +23,18 @@ import play.api.Logger
 import uk.gov.hmrc.http.HeaderCarrier
 import cats.implicits._
 import connectors.MessageConnector
-import models.{Departure, DepartureId, DepartureStatus, MessageStatus, MessageWithStatus, SubmissionProcessingResult}
+import models.Departure
+import models.DepartureId
+import models.DepartureStatus
+import models.MessageStatus
+import models.MessageWithStatus
+import models.SubmissionProcessingResult
 import repositories.DepartureRepository
 
-import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Failure, Success}
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
+import scala.util.Failure
+import scala.util.Success
 
 class SubmitMessageService @Inject()(departureRepository: DepartureRepository, messageConnector: MessageConnector)(implicit ec: ExecutionContext) {
 
@@ -57,9 +64,7 @@ class SubmitMessageService @Inject()(departureRepository: DepartureRepository, m
             case error => {
               Logger.warn(s"Existing Movement - Call to EIS failed with the following Exception: ${error.getMessage}")
 
-              departureRepository.setMessageState(departureId,
-                messageId,
-                message.status.transition(SubmissionProcessingResult.SubmissionFailureInternal)) map {
+              departureRepository.setMessageState(departureId, messageId, message.status.transition(SubmissionProcessingResult.SubmissionFailureInternal)) map {
                 _ =>
                   SubmissionProcessingResult.SubmissionFailureExternal
               }
@@ -80,7 +85,10 @@ class SubmitMessageService @Inject()(departureRepository: DepartureRepository, m
             .flatMap {
               _ =>
                 departureRepository
-                  .setDepartureStateAndMessageState(departure.departureId, messageId.index, DepartureStatus.DepartureSubmitted, MessageStatus.SubmissionSucceeded)
+                  .setDepartureStateAndMessageState(departure.departureId,
+                                                    messageId.index,
+                                                    DepartureStatus.DepartureSubmitted,
+                                                    MessageStatus.SubmissionSucceeded)
                   .map {
                     _ =>
                       SubmissionProcessingResult.SubmissionSuccess
@@ -95,8 +103,8 @@ class SubmitMessageService @Inject()(departureRepository: DepartureRepository, m
                 Logger.warn(s"New Movement - Call to EIS failed with the following Exception: ${error.getMessage}")
 
                 departureRepository.setMessageState(departure.departureId,
-                  messageId.index,
-                  message.status.transition(SubmissionProcessingResult.SubmissionFailureInternal)) map {
+                                                    messageId.index,
+                                                    message.status.transition(SubmissionProcessingResult.SubmissionFailureInternal)) map {
                   _ =>
                     SubmissionProcessingResult.SubmissionFailureExternal
                 }

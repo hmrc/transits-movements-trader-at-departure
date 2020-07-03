@@ -18,16 +18,17 @@ package controllers
 
 import javax.inject.Inject
 import models.DepartureId
-import play.api.mvc.{Action, AnyContent, ControllerComponents}
+import play.api.mvc.Action
+import play.api.mvc.AnyContent
+import play.api.mvc.ControllerComponents
 import uk.gov.hmrc.play.bootstrap.controller.BackendController
 
 import scala.concurrent.ExecutionContext
 
 class MessagesController @Inject()(
-                                    cc: ControllerComponents
-                                  )(implicit ec: ExecutionContext)
-  extends BackendController(cc) {
-
+  cc: ControllerComponents
+)(implicit ec: ExecutionContext)
+    extends BackendController(cc) {
 
   def getMessages(departure: DepartureId): Action[AnyContent] = ???
-  }
+}

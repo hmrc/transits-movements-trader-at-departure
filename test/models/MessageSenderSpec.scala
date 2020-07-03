@@ -19,13 +19,13 @@ package models
 import generators.ModelGenerators
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalatest.EitherValues
-import org.scalatest.FreeSpec
-import org.scalatest.MustMatchers
 import org.scalatest.OptionValues
+import org.scalatest.freespec.AnyFreeSpec
+import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.mvc.PathBindable
 
-class MessageSenderSpec extends FreeSpec with MustMatchers with ScalaCheckPropertyChecks with OptionValues with EitherValues with ModelGenerators {
+class MessageSenderSpec extends AnyFreeSpec with Matchers with ScalaCheckPropertyChecks with OptionValues with EitherValues with ModelGenerators {
 
   "Message Sender" - {
 

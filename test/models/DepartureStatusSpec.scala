@@ -64,10 +64,10 @@ class DepartureStatusSpec extends SpecBase with ScalaCheckDrivenPropertyChecks w
   }
 
   "DepartureStatus.values must contain" - {
-    "Initialized" in { DepartureStatus.values.contains(DepartureStatus.Initialized)}
-    "DepartureSubmitted" in { DepartureStatus.values.contains(DepartureStatus.DepartureSubmitted)}
-    "DepartureAccepted" in { DepartureStatus.values.contains(DepartureStatus.DepartureAccepted)}
-    "DepartureRejected" in { DepartureStatus.values.contains(DepartureStatus.DepartureRejected)}
+    "Initialized" in { DepartureStatus.values.contains(DepartureStatus.Initialized) }
+    "DepartureSubmitted" in { DepartureStatus.values.contains(DepartureStatus.DepartureSubmitted) }
+    "DepartureAccepted" in { DepartureStatus.values.contains(DepartureStatus.DepartureAccepted) }
+    "DepartureRejected" in { DepartureStatus.values.contains(DepartureStatus.DepartureRejected) }
   }
 
 }

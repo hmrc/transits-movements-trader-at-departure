@@ -18,8 +18,15 @@ package generators
 
 import cats.data.NonEmptyList
 import org.scalacheck.Arbitrary.arbitrary
-import org.scalacheck.Gen.{alphaNumChar, alphaStr, choose, chooseNum, listOfN, numChar}
-import org.scalacheck.{Arbitrary, Gen, Shrink}
+import org.scalacheck.Gen.alphaNumChar
+import org.scalacheck.Gen.alphaStr
+import org.scalacheck.Gen.choose
+import org.scalacheck.Gen.chooseNum
+import org.scalacheck.Gen.listOfN
+import org.scalacheck.Gen.numChar
+import org.scalacheck.Arbitrary
+import org.scalacheck.Gen
+import org.scalacheck.Shrink
 
 trait BaseGenerators {
 

@@ -33,7 +33,7 @@ object MovementReferenceNumber {
     optMrn =>
       optMrn match {
         case Some(mrn) => JsString(mrn.value)
-        case None => JsNull
+        case None      => JsNull
       }
   }
 

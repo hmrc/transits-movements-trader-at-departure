@@ -16,9 +16,8 @@
 
 package models.request
 
-import models.Departure
 import play.api.mvc.WrappedRequest
 import models.Departure
 
 case class AuthenticatedOptionalDepartureRequest[A](request: AuthenticatedRequest[A], departure: Option[Departure], eoriNumber: String)
-  extends WrappedRequest[A](request)
+    extends WrappedRequest[A](request)

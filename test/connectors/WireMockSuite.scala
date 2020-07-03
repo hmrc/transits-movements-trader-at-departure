@@ -36,8 +36,8 @@ trait WiremockSuite extends BeforeAndAfterAll with BeforeAndAfterEach {
   protected lazy val app: Application =
     new GuiceApplicationBuilder()
       .configure(
-          "metrics.jvm" -> false,
-                 portConfigKey -> server.port().toString
+        "metrics.jvm" -> false,
+        portConfigKey -> server.port().toString
       )
       .overrides(bindings: _*)
       .build()

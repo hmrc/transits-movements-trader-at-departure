@@ -18,13 +18,18 @@ package controllers.actions
 
 import javax.inject.Inject
 import models.DepartureId
-import models.request.{AuthenticatedRequest, DepartureRequest}
+import models.request.AuthenticatedRequest
+import models.request.DepartureRequest
 import play.api.Logger
-import play.api.mvc.{ActionRefiner, Request, Result}
-import play.api.mvc.Results.{InternalServerError, NotFound}
+import play.api.mvc.ActionRefiner
+import play.api.mvc.Request
+import play.api.mvc.Result
+import play.api.mvc.Results.InternalServerError
+import play.api.mvc.Results.NotFound
 import repositories.DepartureRepository
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 
 private[actions] class GetDepartureActionProvider @Inject()(
   repository: DepartureRepository

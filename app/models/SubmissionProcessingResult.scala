@@ -32,4 +32,3 @@ object SubmissionProcessingResult {
     SubmissionFailureExternal
   )
 }
-

@@ -21,10 +21,13 @@ import cats.implicits._
 import com.google.inject.Inject
 import models.DepartureStatus.Initialized
 import models.MessageStatus.SubmissionPending
-import models.{Departure, MessageType, MessageWithStatus}
+import models.Departure
+import models.MessageType
+import models.MessageWithStatus
 import repositories.DepartureIdRepository
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 import scala.xml.NodeSeq
 
 class DepartureService @Inject()(departureIdRepository: DepartureIdRepository)(implicit ec: ExecutionContext) {
@@ -39,10 +42,10 @@ class DepartureService @Inject()(departureIdRepository: DepartureIdRepository)(i
 
   def createDeparture(eori: String): ReaderT[Option, NodeSeq, Future[Departure]] =
     for {
-      _        <- correctRootNodeR(MessageType.DepartureDeclaration)
-      dateTime <- dateTimeOfPrepR
+      _         <- correctRootNodeR(MessageType.DepartureDeclaration)
+      dateTime  <- dateTimeOfPrepR
       reference <- referenceR
-      message  <- makeMessageWithStatus(1, MessageType.DepartureDeclaration)
+      message   <- makeMessageWithStatus(1, MessageType.DepartureDeclaration)
     } yield {
       departureIdRepository
         .nextId()
