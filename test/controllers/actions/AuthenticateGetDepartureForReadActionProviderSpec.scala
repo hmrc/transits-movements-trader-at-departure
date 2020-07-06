@@ -17,30 +17,41 @@
 package controllers.actions
 
 import generators.ModelGenerators
-import models.{Departure, DepartureId}
-import org.mockito.Matchers._
+import models.Departure
+import models.DepartureId
+import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import org.scalacheck.Arbitrary.arbitrary
-import org.scalatest.{FreeSpec, Matchers, MustMatchers, OptionValues}
+import org.scalatest.OptionValues
+import org.scalatest.freespec.AnyFreeSpec
+import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.mvc.{Action, AnyContent, AnyContentAsEmpty, Results}
+import play.api.mvc.Action
+import play.api.mvc.AnyContent
+import play.api.mvc.AnyContentAsEmpty
+import play.api.mvc.Results
 import play.api.test.FakeRequest
-import play.api.test.Helpers.{contentAsString, status}
+import play.api.test.Helpers.contentAsString
+import play.api.test.Helpers.status
 import repositories.DepartureRepository
-import uk.gov.hmrc.auth.core.{AuthConnector, Enrolment, EnrolmentIdentifier, Enrolments}
+import uk.gov.hmrc.auth.core.AuthConnector
+import uk.gov.hmrc.auth.core.Enrolment
+import uk.gov.hmrc.auth.core.EnrolmentIdentifier
+import uk.gov.hmrc.auth.core.Enrolments
 import play.api.test.Helpers._
 
 import scala.concurrent.Future
 
-class AuthenticateGetDepartureForReadActionProviderSpec extends FreeSpec
-  with MustMatchers
-  with MockitoSugar
-  with ScalaCheckPropertyChecks
-  with ModelGenerators
-  with OptionValues {
+class AuthenticateGetDepartureForReadActionProviderSpec
+    extends AnyFreeSpec
+    with Matchers
+    with MockitoSugar
+    with ScalaCheckPropertyChecks
+    with ModelGenerators
+    with OptionValues {
 
   val applicationBuilder = new GuiceApplicationBuilder()
     .configure("metrics.jvm" -> false)
@@ -91,7 +102,7 @@ class AuthenticateGetDepartureForReadActionProviderSpec extends FreeSpec
         val departure = arbitrary[Departure].sample.value copy (eoriNumber = eoriNumber)
 
         val mockAuthConnector: AuthConnector = mock[AuthConnector]
-        val mockDepartureRepository    = mock[DepartureRepository]
+        val mockDepartureRepository          = mock[DepartureRepository]
 
         when(mockAuthConnector.authorise[Enrolments](any(), any())(any(), any()))
           .thenReturn(Future.successful(validEnrolments))
@@ -117,7 +128,7 @@ class AuthenticateGetDepartureForReadActionProviderSpec extends FreeSpec
         val departure = arbitrary[Departure].sample.value copy (eoriNumber = "invalid EORI number")
 
         val mockAuthConnector: AuthConnector = mock[AuthConnector]
-        val mockDepartureRepository    = mock[DepartureRepository]
+        val mockDepartureRepository          = mock[DepartureRepository]
 
         when(mockAuthConnector.authorise[Enrolments](any(), any())(any(), any()))
           .thenReturn(Future.successful(validEnrolments))
@@ -142,7 +153,7 @@ class AuthenticateGetDepartureForReadActionProviderSpec extends FreeSpec
         val departureId = arbitrary[DepartureId].sample.value
 
         val mockAuthConnector: AuthConnector = mock[AuthConnector]
-        val mockDepartureRepository    = mock[DepartureRepository]
+        val mockDepartureRepository          = mock[DepartureRepository]
 
         when(mockAuthConnector.authorise[Enrolments](any(), any())(any(), any()))
           .thenReturn(Future.successful(validEnrolments))
@@ -166,7 +177,7 @@ class AuthenticateGetDepartureForReadActionProviderSpec extends FreeSpec
         val departureId = arbitrary[DepartureId].sample.value
 
         val mockAuthConnector: AuthConnector = mock[AuthConnector]
-        val mockDepartureRepository    = mock[DepartureRepository]
+        val mockDepartureRepository          = mock[DepartureRepository]
 
         when(mockAuthConnector.authorise[Enrolments](any(), any())(any(), any()))
           .thenReturn(Future.successful(validEnrolments))

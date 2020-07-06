@@ -16,13 +16,25 @@
 
 package generators
 
-import java.time.{LocalDate, LocalDateTime}
+import java.time.LocalDate
+import java.time.LocalDateTime
 
 import org.scalacheck.Arbitrary.arbitrary
-import org.scalacheck.{Arbitrary, Gen}
+import org.scalacheck.Arbitrary
+import org.scalacheck.Gen
 import models.MessageStatus.SubmissionPending
-import models.SubmissionProcessingResult.{SubmissionFailure, SubmissionFailureExternal, SubmissionFailureInternal}
-import models.{Departure, DepartureId, DepartureStatus, MessageId, MessageType, MessageWithStatus, MessageWithoutStatus, MovementReferenceNumber, SubmissionProcessingResult}
+import models.SubmissionProcessingResult.SubmissionFailure
+import models.SubmissionProcessingResult.SubmissionFailureExternal
+import models.SubmissionProcessingResult.SubmissionFailureInternal
+import models.Departure
+import models.DepartureId
+import models.DepartureStatus
+import models.MessageId
+import models.MessageType
+import models.MessageWithStatus
+import models.MessageWithoutStatus
+import models.MovementReferenceNumber
+import models.SubmissionProcessingResult
 
 trait ModelGenerators extends BaseGenerators with JavaTimeGenerators {
 
@@ -82,13 +94,13 @@ trait ModelGenerators extends BaseGenerators with JavaTimeGenerators {
   implicit lazy val arbitraryDeparture: Arbitrary[Departure] =
     Arbitrary {
       for {
-        id <- arbitrary[DepartureId]
-        eN <- arbitrary[String]
-        mrn <- arbitrary[MovementReferenceNumber]
-        rN <- arbitrary[String]
-        status <- arbitrary[DepartureStatus]
-        created <- arbitrary[LocalDateTime]
-        updated <- arbitrary[LocalDateTime]
+        id       <- arbitrary[DepartureId]
+        eN       <- arbitrary[String]
+        mrn      <- arbitrary[MovementReferenceNumber]
+        rN       <- arbitrary[String]
+        status   <- arbitrary[DepartureStatus]
+        created  <- arbitrary[LocalDateTime]
+        updated  <- arbitrary[LocalDateTime]
         messages <- nonEmptyListOfMaxLength[MessageWithStatus](2)
       } yield models.Departure(id, eN, Some(mrn), rN, status, created, updated, messages.length + 1, messages)
     }

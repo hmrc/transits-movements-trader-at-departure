@@ -17,11 +17,17 @@
 package controllers.actions
 
 import models.Departure
-import models.request.{AuthenticatedOptionalDepartureRequest, AuthenticatedRequest}
-import play.api.mvc.{ActionBuilder, AnyContent, BodyParser, Request, Result}
+import models.request.AuthenticatedOptionalDepartureRequest
+import models.request.AuthenticatedRequest
+import play.api.mvc.ActionBuilder
+import play.api.mvc.AnyContent
+import play.api.mvc.BodyParser
+import play.api.mvc.Request
+import play.api.mvc.Result
 import play.api.test.Helpers.stubBodyParser
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class FakeAuthenticatedGetOptionalDepartureForWriteActionProvider(departure: Option[Departure]) extends AuthenticateGetOptionalDepartureForWriteActionProvider {
@@ -30,8 +36,8 @@ class FakeAuthenticatedGetOptionalDepartureForWriteActionProvider(departure: Opt
       override def parser: BodyParser[AnyContent] = stubBodyParser()
 
       override def invokeBlock[A](request: Request[A], block: AuthenticatedOptionalDepartureRequest[A] => Future[Result]): Future[Result] = {
-        val eoriNumber                                  = departure.fold("eori")(_.eoriNumber)
-        val authReq                                     = AuthenticatedRequest(request, eoriNumber)
+        val eoriNumber                                    = departure.fold("eori")(_.eoriNumber)
+        val authReq                                       = AuthenticatedRequest(request, eoriNumber)
         val req: AuthenticatedOptionalDepartureRequest[A] = AuthenticatedOptionalDepartureRequest(authReq, departure, eoriNumber)
         block(req)
       }
@@ -48,4 +54,3 @@ object FakeAuthenticatedGetOptionalDepartureForWriteActionProvider {
   def apply(): FakeAuthenticatedGetOptionalDepartureForWriteActionProvider =
     new FakeAuthenticatedGetOptionalDepartureForWriteActionProvider(None)
 }
-

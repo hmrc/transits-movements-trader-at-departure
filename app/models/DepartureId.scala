@@ -16,14 +16,17 @@
 
 package models
 
-import play.api.libs.json.{Format, JsError, JsNumber, JsResult, JsSuccess, JsValue}
+import play.api.libs.json.Format
+import play.api.libs.json.JsError
+import play.api.libs.json.JsNumber
+import play.api.libs.json.JsResult
+import play.api.libs.json.JsSuccess
+import play.api.libs.json.JsValue
 import play.api.mvc.PathBindable
 
 import scala.util.Try
 
-case class DepartureId(index: Int) {
-
-}
+case class DepartureId(index: Int) {}
 
 object DepartureId {
   implicit val formatsDepartureId: Format[DepartureId] = new Format[DepartureId] {

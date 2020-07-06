@@ -16,29 +16,27 @@
 
 package models
 
-import models.MessageReceivedEvent.DepartureRejected
-
 sealed trait DepartureStatus {
   def transition(messageReceived: MessageReceivedEvent): DepartureStatus
 }
 
-object DepartureStatus extends Enumerable.Implicits {
+object DepartureStatus extends Enumerable.Implicits with MongoDateTimeFormats {
 
   case object Initialized extends DepartureStatus {
     override def transition(messageReceived: MessageReceivedEvent): DepartureStatus = messageReceived match {
-      case MessageReceivedEvent.DepartureSubmitted  => DepartureSubmitted
-      case MessageReceivedEvent.DepartureAccepted   => DepartureAccepted
-      case MessageReceivedEvent.DepartureRejected   => DepartureRejected
-      case _                                        => throw new Exception(s"Tried to transition from Initialized to $messageReceived.")
+      case MessageReceivedEvent.DepartureSubmitted => DepartureSubmitted
+      case MessageReceivedEvent.DepartureAccepted  => DepartureAccepted
+      case MessageReceivedEvent.DepartureRejected  => DepartureRejected
+      case _                                       => throw new Exception(s"Tried to transition from Initialized to $messageReceived.")
     }
   }
 
   case object DepartureSubmitted extends DepartureStatus {
     override def transition(messageReceived: MessageReceivedEvent): DepartureStatus = messageReceived match {
-      case MessageReceivedEvent.DepartureSubmitted    => DepartureSubmitted
-      case MessageReceivedEvent.DepartureAccepted     => DepartureAccepted
-      case MessageReceivedEvent.DepartureRejected     => DepartureRejected
-      case _                                          => throw new Exception(s"Tried to transition from DepartureSubmitted to $messageReceived.")
+      case MessageReceivedEvent.DepartureSubmitted => DepartureSubmitted
+      case MessageReceivedEvent.DepartureAccepted  => DepartureAccepted
+      case MessageReceivedEvent.DepartureRejected  => DepartureRejected
+      case _                                       => throw new Exception(s"Tried to transition from DepartureSubmitted to $messageReceived.")
     }
   }
 
@@ -52,7 +50,7 @@ object DepartureStatus extends Enumerable.Implicits {
   case object DepartureRejected extends DepartureStatus {
     override def transition(messageReceived: MessageReceivedEvent): DepartureStatus = messageReceived match {
       case MessageReceivedEvent.DepartureRejected => DepartureRejected
-      case _                                    => throw new Exception(s"Tried to transition from ArrivalRejected to $messageReceived.")
+      case _                                      => throw new Exception(s"Tried to transition from ArrivalRejected to $messageReceived.")
     }
   }
 

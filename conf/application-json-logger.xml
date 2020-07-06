@@ -6,6 +6,9 @@
     </appender>
 
     <logger name="uk.gov" level="${logger.uk.gov:-WARN}"/>
+    <logger name="helpers.XmlBuilderHelper" level="${logger.XmlBuilderService:-INFO}"/>
+    <logger name="controllers.DeparturesController" level="${logger.DeparturesController:-ERROR}"/>
+    <logger name="controllers.MessagesController" level="${logger.MessagesController:-ERROR}"/>
 
     <root level="${logger.application:-WARN}">
         <appender-ref ref="STDOUT"/>

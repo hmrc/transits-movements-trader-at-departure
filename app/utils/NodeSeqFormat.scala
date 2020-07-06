@@ -16,9 +16,16 @@
 
 package utils
 
-import play.api.libs.json.{JsError, JsResult, JsString, JsSuccess, JsValue, Reads, Writes}
+import play.api.libs.json.JsError
+import play.api.libs.json.JsResult
+import play.api.libs.json.JsString
+import play.api.libs.json.JsSuccess
+import play.api.libs.json.JsValue
+import play.api.libs.json.Reads
+import play.api.libs.json.Writes
 
-import scala.xml.{NodeSeq, XML}
+import scala.xml.NodeSeq
+import scala.xml.XML
 
 trait NodeSeqFormat {
   implicit val writesNodeSeq: Writes[NodeSeq] = new Writes[NodeSeq] {

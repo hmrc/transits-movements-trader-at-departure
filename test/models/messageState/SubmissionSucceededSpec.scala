@@ -20,11 +20,11 @@ import generators.ModelGenerators
 import models.MessageStatus.SubmissionSucceeded
 import models.SubmissionProcessingResult
 import org.scalacheck.Arbitrary
-import org.scalatest.FreeSpec
-import org.scalatest.MustMatchers
+import org.scalatest.freespec.AnyFreeSpec
+import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
-class SubmissionSucceededSpec extends FreeSpec with MustMatchers with ScalaCheckPropertyChecks with ModelGenerators {
+class SubmissionSucceededSpec extends AnyFreeSpec with Matchers with ScalaCheckPropertyChecks with ModelGenerators {
 
   "SubmissionSucceeded must transition" - {
 

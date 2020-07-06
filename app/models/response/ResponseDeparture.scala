@@ -19,8 +19,12 @@ package models.response
 import java.time.LocalDateTime
 
 import controllers.routes
-import models.{Departure, DepartureId, DepartureStatus, MovementReferenceNumber}
-import play.api.libs.json.{Json, OWrites}
+import models.Departure
+import models.DepartureId
+import models.DepartureStatus
+import models.MovementReferenceNumber
+import play.api.libs.json.Json
+import play.api.libs.json.OWrites
 
 case class ResponseDeparture(departureId: DepartureId,
                              location: String,

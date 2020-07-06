@@ -17,16 +17,25 @@
 package repositories
 
 import javax.inject.Inject
-import models.{Departure, DepartureId, DepartureStatus, Message, MessageStatus, MongoDateTimeFormats}
+import models.Departure
+import models.DepartureId
+import models.DepartureStatus
+import models.Message
+import models.MessageStatus
+import models.MongoDateTimeFormats
 import play.api.libs.json.Json
 import play.modules.reactivemongo.ReactiveMongoApi
 import reactivemongo.api.commands.WriteResult
-import reactivemongo.api.indexes.{Index, IndexType}
+import reactivemongo.api.indexes.Index
+import reactivemongo.api.indexes.IndexType
 import reactivemongo.play.json.collection.JSONCollection
 import reactivemongo.play.json.ImplicitBSONHandlers.JsObjectDocumentWriter
 
-import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Failure, Success, Try}
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
+import scala.util.Failure
+import scala.util.Success
+import scala.util.Try
 
 class DepartureRepository @Inject()(mongo: ReactiveMongoApi)(implicit ec: ExecutionContext) extends MongoDateTimeFormats {
 
@@ -87,14 +96,17 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi)(implicit ec: Execut
     }
   }
 
-  def setDepartureStateAndMessageState(departureId: DepartureId, messageId: Int, departureStatus: DepartureStatus, messageStatus: MessageStatus): Future[Option[Unit]] = {
+  def setDepartureStateAndMessageState(departureId: DepartureId,
+                                       messageId: Int,
+                                       departureStatus: DepartureStatus,
+                                       messageStatus: MessageStatus): Future[Option[Unit]] = {
 
     val selector = Json.obj("_id" -> departureId)
 
     val modifier = Json.obj(
       "$set" -> Json.obj(
-        s"messages.${messageId}.status" -> messageStatus.toString,
-        "status"                              -> departureStatus.toString
+        s"messages.$messageId.status" -> messageStatus.toString,
+        "status"                      -> departureStatus.toString
       )
     )
 
@@ -158,7 +170,7 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi)(implicit ec: Execut
   def get(eoriNumber: String, reference: String): Future[Option[Departure]] = {
     val selector = Json.obj(
       "referenceNumber" -> reference,
-      "eoriNumber"              -> eoriNumber
+      "eoriNumber"      -> eoriNumber
     )
 
     collection.flatMap {

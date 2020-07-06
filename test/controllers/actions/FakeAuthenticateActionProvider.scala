@@ -18,13 +18,19 @@ package controllers.actions
 
 import javax.inject.Inject
 import models.request.AuthenticatedRequest
-import play.api.mvc.{ActionBuilder, ActionRefiner, AnyContent, DefaultActionBuilder, Request, Result}
+import play.api.mvc.ActionBuilder
+import play.api.mvc.ActionRefiner
+import play.api.mvc.AnyContent
+import play.api.mvc.DefaultActionBuilder
+import play.api.mvc.Request
+import play.api.mvc.Result
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 
 class FakeAuthenticateActionProvider @Inject()(defaultActionBuilder: DefaultActionBuilder, auth: FakeAuthenticateAction)(
   implicit executionContext: ExecutionContext)
-  extends AuthenticateActionProvider {
+    extends AuthenticateActionProvider {
 
   override def apply(): ActionBuilder[AuthenticatedRequest, AnyContent] =
     defaultActionBuilder andThen auth

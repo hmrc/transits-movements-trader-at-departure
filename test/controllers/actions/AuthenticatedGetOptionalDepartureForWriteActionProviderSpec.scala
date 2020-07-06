@@ -18,28 +18,38 @@ package controllers.actions
 
 import generators.ModelGenerators
 import models.Departure
-import org.mockito.Matchers.{eq => eqTo, _}
+import org.mockito.ArgumentMatchers.{eq => eqTo, _}
 import org.mockito.Mockito._
 import org.scalacheck.Arbitrary.arbitrary
-import org.scalatest.{FreeSpec, MustMatchers, OptionValues}
+import org.scalatest.OptionValues
+import org.scalatest.freespec.AnyFreeSpec
+import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.libs.json.{JsBoolean, JsString}
-import play.api.mvc.{Action, AnyContent, ControllerComponents, Results}
+import play.api.libs.json.JsBoolean
+import play.api.libs.json.JsString
+import play.api.mvc.Action
+import play.api.mvc.AnyContent
+import play.api.mvc.ControllerComponents
+import play.api.mvc.Results
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import repositories.{DepartureRepository, LockRepository}
-import uk.gov.hmrc.auth.core.{AuthConnector, Enrolment, EnrolmentIdentifier, Enrolments}
+import repositories.DepartureRepository
+import repositories.LockRepository
+import uk.gov.hmrc.auth.core.AuthConnector
+import uk.gov.hmrc.auth.core.Enrolment
+import uk.gov.hmrc.auth.core.EnrolmentIdentifier
+import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.play.bootstrap.controller.BackendController
 
 import scala.concurrent.Future
 import scala.xml.NodeSeq
 
-class AuthenticatedGetOptionalDepartureForWriteActionProviderSpec
-    extends FreeSpec
-    with MustMatchers
+class AuthenticatedGetArrivalForWriteActionProviderSpec
+    extends AnyFreeSpec
+    with Matchers
     with MockitoSugar
     with ScalaCheckPropertyChecks
     with ModelGenerators
@@ -51,9 +61,9 @@ class AuthenticatedGetOptionalDepartureForWriteActionProviderSpec
     </HEAHEA>
   </CC015B>)
 
-  def baseApplication: GuiceApplicationBuilder = new GuiceApplicationBuilder()
-    .configure("metrics.jvm" -> false)
-
+  def baseApplication: GuiceApplicationBuilder =
+    new GuiceApplicationBuilder()
+      .configure("metrics.jvm" -> false)
 
   class Harness(authOptionalGet: AuthenticateGetOptionalDepartureForWriteActionProvider, cc: ControllerComponents) extends BackendController(cc) {
 
@@ -107,7 +117,7 @@ class AuthenticatedGetOptionalDepartureForWriteActionProviderSpec
       "must not lock and does not return a departure when one does not exist" in {
 
         val mockAuthConnector: AuthConnector = mock[AuthConnector]
-        val mockDepartureRepository    = mock[DepartureRepository]
+        val mockDepartureRepository          = mock[DepartureRepository]
 
         when(mockAuthConnector.authorise[Enrolments](any(), any())(any(), any()))
           .thenReturn(Future.successful(validEnrolments))
@@ -134,7 +144,7 @@ class AuthenticatedGetOptionalDepartureForWriteActionProviderSpec
         val departure = arbitrary[Departure].sample.value copy (eoriNumber = eoriNumber)
 
         val mockAuthConnector: AuthConnector = mock[AuthConnector]
-        val mockDepartureRepository    = mock[DepartureRepository]
+        val mockDepartureRepository          = mock[DepartureRepository]
         val mockLockRepository               = mock[LockRepository]
 
         when(mockAuthConnector.authorise[Enrolments](any(), any())(any(), any()))
@@ -168,7 +178,7 @@ class AuthenticatedGetOptionalDepartureForWriteActionProviderSpec
         val departure = arbitrary[Departure].sample.value copy (eoriNumber = eoriNumber)
 
         val mockAuthConnector: AuthConnector = mock[AuthConnector]
-        val mockDepartureRepository    = mock[DepartureRepository]
+        val mockDepartureRepository          = mock[DepartureRepository]
         val mockLockRepository               = mock[LockRepository]
 
         when(mockAuthConnector.authorise[Enrolments](any(), any())(any(), any()))
@@ -240,7 +250,7 @@ class AuthenticatedGetOptionalDepartureForWriteActionProviderSpec
 
         val mockLockRepository               = mock[LockRepository]
         val mockAuthConnector: AuthConnector = mock[AuthConnector]
-        val mockDepartureRepository    = mock[DepartureRepository]
+        val mockDepartureRepository          = mock[DepartureRepository]
 
         when(mockAuthConnector.authorise[Enrolments](any(), any())(any(), any()))
           .thenReturn(Future.successful(validEnrolments))

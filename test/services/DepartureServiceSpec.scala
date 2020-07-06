@@ -22,7 +22,12 @@ import java.time.LocalTime
 
 import base.SpecBase
 import cats.data.NonEmptyList
-import models.{Departure, DepartureId, DepartureStatus, MessageStatus, MessageType, MessageWithStatus}
+import models.Departure
+import models.DepartureId
+import models.DepartureStatus
+import models.MessageStatus
+import models.MessageType
+import models.MessageWithStatus
 import models.MessageStatus.SubmissionPending
 import org.mockito.Mockito.when
 import org.scalatest.concurrent.IntegrationPatience
@@ -35,7 +40,7 @@ import scala.concurrent.Future
 class DepartureServiceSpec extends SpecBase with IntegrationPatience {
 
   "createDeparture" - {
-    "creates an arrival movement with an internal ref number and a mrn, date and time of creation from the message submitted with a message id of 1 and next correlation id of 2" in {
+    "creates a departure declaration with an internal ref number and a mrn, date and time of creation from the message submitted with a message id of 1 and next correlation id of 2" in {
       val dateOfPrep = LocalDate.now()
       val timeOfPrep = LocalTime.of(1, 1)
       val dateTime   = LocalDateTime.of(dateOfPrep, timeOfPrep)
@@ -82,7 +87,6 @@ class DepartureServiceSpec extends SpecBase with IntegrationPatience {
 
     "returns None when the root node is not <CC007A>" in {
 
-      val id         = DepartureId(1)
       val ref        = "ref"
       val eori       = "eoriNumber"
       val dateOfPrep = LocalDate.now()
@@ -109,9 +113,9 @@ class DepartureServiceSpec extends SpecBase with IntegrationPatience {
 
     "returns a message with the Departure Declaration xml payload" in {
 
-      val dateOfPrep = LocalDate.now()
-      val timeOfPrep = LocalTime.of(1, 1)
-      val ref = "ref"
+      val dateOfPrep  = LocalDate.now()
+      val timeOfPrep  = LocalTime.of(1, 1)
+      val ref         = "ref"
       val application = baseApplicationBuilder.build()
 
       val service = application.injector.instanceOf[DepartureService]

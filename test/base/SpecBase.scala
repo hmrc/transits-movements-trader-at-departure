@@ -16,9 +16,12 @@
 
 package base
 
-import controllers.actions.{AuthenticateActionProvider, FakeAuthenticateActionProvider}
-import org.scalatest.{FreeSpec, MustMatchers, OptionValues}
+import controllers.actions.AuthenticateActionProvider
+import controllers.actions.FakeAuthenticateActionProvider
+import org.scalatest.OptionValues
 import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.freespec.AnyFreeSpec
+import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
@@ -26,7 +29,7 @@ import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
 import uk.gov.hmrc.http.HeaderCarrier
 
-trait SpecBase extends FreeSpec with MustMatchers with MockitoSugar with ScalaFutures with OptionValues {
+trait SpecBase extends AnyFreeSpec with Matchers with MockitoSugar with ScalaFutures with OptionValues {
 
   implicit val hc: HeaderCarrier = HeaderCarrier()
 

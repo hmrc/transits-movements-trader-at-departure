@@ -17,14 +17,22 @@
 package controllers.actions
 
 import javax.inject.Inject
-import play.api.mvc.{ActionBuilder, ActionFunction, AnyContent, Result}
-import models.request.{AuthenticatedOptionalDepartureRequest, AuthenticatedRequest}
+import play.api.mvc.ActionBuilder
+import play.api.mvc.ActionFunction
+import play.api.mvc.AnyContent
+import play.api.mvc.Result
+import models.request.AuthenticatedOptionalDepartureRequest
+import models.request.AuthenticatedRequest
 import play.api.Logger
-import play.api.mvc.Results.{BadRequest, InternalServerError, Locked}
-import repositories.{DepartureRepository, LockRepository}
+import play.api.mvc.Results.BadRequest
+import play.api.mvc.Results.InternalServerError
+import play.api.mvc.Results.Locked
+import repositories.DepartureRepository
+import repositories.LockRepository
 import services.XmlMessageParser
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 import scala.xml.NodeSeq
 
 trait AuthenticateGetOptionalDepartureForWriteActionProvider {
@@ -32,11 +40,11 @@ trait AuthenticateGetOptionalDepartureForWriteActionProvider {
 }
 
 class AuthenticateGetOptionalDepartureForWriteActionProviderImpl @Inject()(
-       authenticate: AuthenticateActionProvider,
-       departureRepository: DepartureRepository,
-       lockRepository: LockRepository,
-       ec: ExecutionContext
-   ) extends AuthenticateGetOptionalDepartureForWriteActionProvider {
+  authenticate: AuthenticateActionProvider,
+  departureRepository: DepartureRepository,
+  lockRepository: LockRepository,
+  ec: ExecutionContext
+) extends AuthenticateGetOptionalDepartureForWriteActionProvider {
 
   def apply(): ActionBuilder[AuthenticatedOptionalDepartureRequest, AnyContent] =
     authenticate() andThen new AuthenticateGetOptionalDepartureForWriteAction(departureRepository, lockRepository, ec)
@@ -44,7 +52,8 @@ class AuthenticateGetOptionalDepartureForWriteActionProviderImpl @Inject()(
 
 class AuthenticateGetOptionalDepartureForWriteAction(departureRepository: DepartureRepository,
                                                      lockRepository: LockRepository,
-                                                     implicit protected val executionContext: ExecutionContext) extends ActionFunction[AuthenticatedRequest, AuthenticatedOptionalDepartureRequest] {
+                                                     implicit protected val executionContext: ExecutionContext)
+    extends ActionFunction[AuthenticatedRequest, AuthenticatedOptionalDepartureRequest] {
   override def invokeBlock[A](request: AuthenticatedRequest[A], block: AuthenticatedOptionalDepartureRequest[A] => Future[Result]): Future[Result] =
     request.body match {
       case body: NodeSeq =>

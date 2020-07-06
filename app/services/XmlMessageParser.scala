@@ -16,7 +16,9 @@
 
 package services
 
-import java.time.{LocalDate, LocalDateTime, LocalTime}
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
 import cats.data.ReaderT
 import scala.util.Try
 import scala.xml.NodeSeq
@@ -66,6 +68,6 @@ object XmlMessageParser {
     ReaderT[Option, NodeSeq, String](xml =>
       (xml \ "HEAHEA" \ "RefNumHEA4").text match {
         case refString if !refString.isEmpty => Some(refString)
-        case _  => None
-      })
+        case _                               => None
+    })
 }

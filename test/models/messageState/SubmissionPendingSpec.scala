@@ -22,12 +22,12 @@ import models.MessageStatus.SubmissionPending
 import models.MessageStatus.SubmissionSucceeded
 import models.SubmissionProcessingResult
 import models.SubmissionProcessingResult.SubmissionFailure
-import org.scalatest.FreeSpec
-import org.scalatest.MustMatchers
 import org.scalacheck.Arbitrary.arbitrary
+import org.scalatest.freespec.AnyFreeSpec
+import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
-class SubmissionPendingSpec extends FreeSpec with MustMatchers with ScalaCheckDrivenPropertyChecks with ModelGenerators {
+class SubmissionPendingSpec extends AnyFreeSpec with Matchers with ScalaCheckDrivenPropertyChecks with ModelGenerators {
 
   "SubmissionPending must transition" - {
 

@@ -17,7 +17,7 @@
 package models.request
 
 import models.Departure
-import play.api.mvc.{Request, WrappedRequest}
+import play.api.mvc.Request
+import play.api.mvc.WrappedRequest
 
 case class DepartureRequest[A](request: Request[A], departure: Departure) extends WrappedRequest[A](request)
-
