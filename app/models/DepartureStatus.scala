@@ -25,7 +25,7 @@ object DepartureStatus extends Enumerable.Implicits with MongoDateTimeFormats {
   case object Initialized extends DepartureStatus {
     override def transition(messageReceived: MessageReceivedEvent): DepartureStatus = messageReceived match {
       case MessageReceivedEvent.DepartureSubmitted => DepartureSubmitted
-      case MessageReceivedEvent.DepartureAccepted  => DepartureAccepted
+      case MessageReceivedEvent.MRNAllocated       => DepartureAccepted
       case MessageReceivedEvent.DepartureRejected  => DepartureRejected
       case _                                       => throw new Exception(s"Tried to transition from Initialized to $messageReceived.")
     }
@@ -34,7 +34,7 @@ object DepartureStatus extends Enumerable.Implicits with MongoDateTimeFormats {
   case object DepartureSubmitted extends DepartureStatus {
     override def transition(messageReceived: MessageReceivedEvent): DepartureStatus = messageReceived match {
       case MessageReceivedEvent.DepartureSubmitted => DepartureSubmitted
-      case MessageReceivedEvent.DepartureAccepted  => DepartureAccepted
+      case MessageReceivedEvent.MRNAllocated       => DepartureAccepted
       case MessageReceivedEvent.DepartureRejected  => DepartureRejected
       case _                                       => throw new Exception(s"Tried to transition from DepartureSubmitted to $messageReceived.")
     }
@@ -42,8 +42,8 @@ object DepartureStatus extends Enumerable.Implicits with MongoDateTimeFormats {
 
   case object DepartureAccepted extends DepartureStatus {
     override def transition(messageRecieved: MessageReceivedEvent): DepartureStatus = messageRecieved match {
-      case MessageReceivedEvent.DepartureAccepted => DepartureAccepted
-      case _                                      => throw new Exception(s"Tried to transition from DepartureAccepted to $messageRecieved.")
+      case MessageReceivedEvent.MRNAllocated => DepartureAccepted
+      case _                                 => throw new Exception(s"Tried to transition from DepartureAccepted to $messageRecieved.")
     }
   }
 

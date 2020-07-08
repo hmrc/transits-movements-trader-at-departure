@@ -29,7 +29,7 @@ class DepartureStatusSpec extends SpecBase with ScalaCheckDrivenPropertyChecks w
     }
 
     "to DepartureAccepted when receiving a DepartureAccepted event" in {
-      DepartureStatus.Initialized.transition(MessageReceivedEvent.DepartureAccepted) mustEqual DepartureStatus.DepartureAccepted
+      DepartureStatus.Initialized.transition(MessageReceivedEvent.MRNAllocated) mustEqual DepartureStatus.DepartureAccepted
     }
 
     "to DepartureRejected when receiving a DepartureRejected event" in {
@@ -43,7 +43,7 @@ class DepartureStatusSpec extends SpecBase with ScalaCheckDrivenPropertyChecks w
     }
 
     "to DepartureAccepted when receiving a DepartureAccepted event" in {
-      DepartureStatus.DepartureSubmitted.transition(MessageReceivedEvent.DepartureAccepted) mustEqual DepartureStatus.DepartureAccepted
+      DepartureStatus.DepartureSubmitted.transition(MessageReceivedEvent.MRNAllocated) mustEqual DepartureStatus.DepartureAccepted
     }
 
     "to DepartureRejected when receiving a DepartureRejected event" in {
@@ -53,7 +53,7 @@ class DepartureStatusSpec extends SpecBase with ScalaCheckDrivenPropertyChecks w
 
   "DepartureAccepted must transition" - {
     "to DepartureAccepted when receiving a DepartureAccepted event" in {
-      DepartureStatus.DepartureAccepted.transition(MessageReceivedEvent.DepartureAccepted) mustEqual DepartureStatus.DepartureAccepted
+      DepartureStatus.DepartureAccepted.transition(MessageReceivedEvent.MRNAllocated) mustEqual DepartureStatus.DepartureAccepted
     }
   }
 

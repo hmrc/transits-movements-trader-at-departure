@@ -16,7 +16,8 @@
 
 package repositories
 
-import config.AppConfig
+import java.time.LocalDateTime
+
 import javax.inject.Inject
 import models.Departure
 import models.DepartureId
@@ -192,6 +193,36 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfi
     collection.flatMap {
       _.find(selector, None)
         .one[Departure]
+    }
+  }
+
+  def addResponseMessage(departureId: DepartureId, message: Message, status: DepartureStatus): Future[Try[Unit]] = {
+    val selector = Json.obj(
+      "_id" -> departureId
+    )
+
+    val modifier =
+      Json.obj(
+        "$set" -> Json.obj(
+          "updated"     -> message.dateTime,
+          "lastUpdated" -> LocalDateTime.now,
+          "status"      -> status.toString
+        ),
+        "$push" -> Json.obj(
+          "messages" -> Json.toJson(message)
+        )
+      )
+
+    collection.flatMap {
+      _.findAndUpdate(selector, modifier)
+        .map {
+          _.lastError
+            .map {
+              le =>
+                if (le.updatedExisting) Success(()) else Failure(new Exception(s"Could not find departure $departureId"))
+            }
+            .getOrElse(Failure(new Exception("Failed to update departure")))
+        }
     }
   }
 }

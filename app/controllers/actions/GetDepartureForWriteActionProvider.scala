@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-package models
+package controllers.actions
 
-sealed trait MessageReceivedEvent
+import javax.inject.Inject
+import models.DepartureId
+import models.request.DepartureRequest
+import play.api.mvc.ActionBuilder
+import play.api.mvc.AnyContent
 
-object MessageReceivedEvent {
+class GetDepartureForWriteActionProvider @Inject()(
+  lock: LockActionProvider,
+  getDeparture: GetDepartureActionProvider
+) {
 
-  case object DepartureSubmitted extends MessageReceivedEvent
-  case object DepartureRejected  extends MessageReceivedEvent
-  case object MRNAllocated       extends MessageReceivedEvent
-
-  val values: Seq[MessageReceivedEvent] = Seq(
-    DepartureSubmitted,
-    DepartureRejected,
-    MRNAllocated
-  )
+  def apply(departureId: DepartureId): ActionBuilder[DepartureRequest, AnyContent] =
+    lock(departureId) andThen getDeparture(departureId)
 }
