@@ -10,9 +10,9 @@ This mircoservice is in (Beta)[https://www.gov.uk/help/beta]. The signature may 
 
 
 ### Prerequisites    Speak to John/Rob
-- Scala 2.12.x
+- Scala 2.12.11
 - Java 8
-- sbt > 1.3.7
+- sbt > 1.3.13
 - [Service Manager](https://github.com/hmrc/service-manager)
 
 ### Development Setup
