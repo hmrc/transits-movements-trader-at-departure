@@ -30,6 +30,7 @@ import play.api.Logger
 import play.api.mvc.Action
 import play.api.mvc.ControllerComponents
 import services.SaveMessageService
+import services.XmlMessageParser
 import uk.gov.hmrc.play.bootstrap.controller.BackendController
 
 import scala.concurrent.ExecutionContext
@@ -45,7 +46,7 @@ class NCTSMessageController @Inject()(cc: ControllerComponents, getDeparture: Ge
       val xml: NodeSeq = request.request.body
 
       val messageResponse: Option[MessageResponse] = request.headers.get("X-Message-Type") match {
-        case Some(MessageType.MRNAllocated.code)        => Some(MRNAllocatedResponse)
+        case Some(MessageType.MrnAllocated.code)        => Some(MRNAllocatedResponse)
         case Some(MessageType.DeclarationRejected.code) => Some(DepartureRejectedResponse)
         case invalidResponse =>
           Logger.warn(s"Received the following invalid response for X-Message-Type: $invalidResponse")
@@ -54,24 +55,46 @@ class NCTSMessageController @Inject()(cc: ControllerComponents, getDeparture: Ge
 
       messageResponse match {
         case Some(response) =>
-          val newState         = request.departure.status.transition(response.messageReceived)
-          val processingResult = saveMessageService.validateXmlAndSaveMessage(xml, messageSender, response, newState)
-          processingResult map {
-            case SubmissionSuccess => Ok
-            case SubmissionFailureInternal =>
-              val message = "Internal Submission Failure " + processingResult
-              Logger.warn(message)
-              InternalServerError(message)
-            case SubmissionFailureExternal =>
-              val message = "External Submission Failure " + processingResult
-              Logger.warn(message)
-              BadRequest(message)
+          val newState = request.departure.status.transition(response.messageReceived)
+          response.messageType match {
+            case MessageType.MrnAllocated =>
+              XmlMessageParser.mrnR(xml) match {
+                case None =>
+                  val message = "Missing MRN"
+                  Logger.warn(message)
+                  Future.successful(BadRequest(message))
+                case Some(mrn) =>
+                  val processingResult = saveMessageService.validateXmlSaveMessageUpdateMrn(xml, messageSender, response, newState, mrn)
+                  processingResult map {
+                    case SubmissionSuccess => Ok
+                    case SubmissionFailureInternal =>
+                      val message = "Internal Submission Failure " + processingResult
+                      Logger.warn(message)
+                      InternalServerError(message)
+                    case SubmissionFailureExternal =>
+                      val message = "External Submission Failure " + processingResult
+                      Logger.warn(message)
+                      BadRequest(message)
+                  }
+              }
+            case _ =>
+              val processingResult = saveMessageService.validateXmlAndSaveMessage(xml, messageSender, response, newState)
+              processingResult map {
+                case SubmissionSuccess => Ok
+                case SubmissionFailureInternal =>
+                  val message = "Internal Submission Failure " + processingResult
+                  Logger.warn(message)
+                  InternalServerError(message)
+                case SubmissionFailureExternal =>
+                  val message = "External Submission Failure " + processingResult
+                  Logger.warn(message)
+                  BadRequest(message)
+              }
           }
         case None =>
           val message = "No response from downstream NCTS";
           Logger.warn(message)
           Future.successful(BadRequest(message))
       }
-
   }
 }

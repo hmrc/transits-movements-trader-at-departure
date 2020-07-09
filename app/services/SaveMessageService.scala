@@ -20,6 +20,7 @@ import com.google.inject.Inject
 import models.DepartureStatus
 import models.MessageResponse
 import models.MessageSender
+import models.MovementReferenceNumber
 import models.SubmissionProcessingResult
 import models.SubmissionProcessingResult.SubmissionFailureExternal
 import models.SubmissionProcessingResult.SubmissionFailureInternal
@@ -46,6 +47,29 @@ class SaveMessageService @Inject()(departureRepository: DepartureRepository, dep
           case Some(message) =>
             departureRepository
               .addResponseMessage(messageSender.departureId, message, departureStatus)
+              .map {
+                case Success(_) => SubmissionSuccess
+                case Failure(_) => SubmissionFailureInternal
+              }
+          case None => Future.successful(SubmissionFailureExternal)
+        }
+      case Failure(e) => {
+        Logger.warn(s"Failure to validate against XSD. Exception: ${e.getMessage}")
+        Future.successful(SubmissionFailureExternal)
+      }
+    }
+
+  def validateXmlSaveMessageUpdateMrn(messageXml: NodeSeq,
+                                      messageSender: MessageSender,
+                                      messageResponse: MessageResponse,
+                                      departureStatus: DepartureStatus,
+                                      mrn: MovementReferenceNumber): Future[SubmissionProcessingResult] =
+    xmlValidationService.validate(messageXml.toString(), messageResponse.xsdFile) match {
+      case Success(_) =>
+        departureService.makeMessage(messageSender.messageCorrelationId, messageResponse.messageType)(messageXml) match {
+          case Some(message) =>
+            departureRepository
+              .setMrnAndAddResponseMessage(messageSender.departureId, message, departureStatus, mrn)
               .map {
                 case Success(_) => SubmissionSuccess
                 case Failure(_) => SubmissionFailureInternal

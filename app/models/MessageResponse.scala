@@ -26,8 +26,8 @@ sealed trait MessageResponse {
 }
 
 case object MRNAllocatedResponse extends MessageResponse {
-  override val messageReceived: MessageReceivedEvent = MessageReceivedEvent.MRNAllocated
-  override val messageType: MessageType              = MessageType.MRNAllocated
+  override val messageReceived: MessageReceivedEvent = MessageReceivedEvent.MrnAllocated
+  override val messageType: MessageType              = MessageType.MrnAllocated
   override val xsdFile: XSDFile                      = MRNAllocatedXSD
 }
 

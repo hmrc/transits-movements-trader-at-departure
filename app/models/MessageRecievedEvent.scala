@@ -22,11 +22,11 @@ object MessageReceivedEvent {
 
   case object DepartureSubmitted extends MessageReceivedEvent
   case object DepartureRejected  extends MessageReceivedEvent
-  case object MRNAllocated       extends MessageReceivedEvent
+  case object MrnAllocated       extends MessageReceivedEvent
 
   val values: Seq[MessageReceivedEvent] = Seq(
     DepartureSubmitted,
     DepartureRejected,
-    MRNAllocated
+    MrnAllocated
   )
 }

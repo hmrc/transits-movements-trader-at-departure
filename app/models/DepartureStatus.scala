@@ -25,7 +25,7 @@ object DepartureStatus extends Enumerable.Implicits with MongoDateTimeFormats {
   case object Initialized extends DepartureStatus {
     override def transition(messageReceived: MessageReceivedEvent): DepartureStatus = messageReceived match {
       case MessageReceivedEvent.DepartureSubmitted => DepartureSubmitted
-      case MessageReceivedEvent.MRNAllocated       => DepartureAccepted
+      case MessageReceivedEvent.MrnAllocated       => MrnAllocated
       case MessageReceivedEvent.DepartureRejected  => DepartureRejected
       case _                                       => throw new Exception(s"Tried to transition from Initialized to $messageReceived.")
     }
@@ -34,15 +34,15 @@ object DepartureStatus extends Enumerable.Implicits with MongoDateTimeFormats {
   case object DepartureSubmitted extends DepartureStatus {
     override def transition(messageReceived: MessageReceivedEvent): DepartureStatus = messageReceived match {
       case MessageReceivedEvent.DepartureSubmitted => DepartureSubmitted
-      case MessageReceivedEvent.MRNAllocated       => DepartureAccepted
+      case MessageReceivedEvent.MrnAllocated       => MrnAllocated
       case MessageReceivedEvent.DepartureRejected  => DepartureRejected
       case _                                       => throw new Exception(s"Tried to transition from DepartureSubmitted to $messageReceived.")
     }
   }
 
-  case object DepartureAccepted extends DepartureStatus {
+  case object MrnAllocated extends DepartureStatus {
     override def transition(messageRecieved: MessageReceivedEvent): DepartureStatus = messageRecieved match {
-      case MessageReceivedEvent.MRNAllocated => DepartureAccepted
+      case MessageReceivedEvent.MrnAllocated => MrnAllocated
       case _                                 => throw new Exception(s"Tried to transition from DepartureAccepted to $messageRecieved.")
     }
   }
@@ -57,7 +57,7 @@ object DepartureStatus extends Enumerable.Implicits with MongoDateTimeFormats {
   val values = Seq(
     Initialized,
     DepartureSubmitted,
-    DepartureAccepted,
+    MrnAllocated,
     DepartureRejected
   )
 

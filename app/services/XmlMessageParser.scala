@@ -19,11 +19,14 @@ package services
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
+
 import cats.data.ReaderT
+
 import scala.util.Try
 import scala.xml.NodeSeq
 import cats.implicits._
 import models.MessageType
+import models.MovementReferenceNumber
 import utils.Format
 
 object XmlMessageParser {
@@ -68,6 +71,13 @@ object XmlMessageParser {
     ReaderT[Option, NodeSeq, String](xml =>
       (xml \ "HEAHEA" \ "RefNumHEA4").text match {
         case refString if !refString.isEmpty => Some(refString)
+        case _                               => None
+    })
+
+  val mrnR: ReaderT[Option, NodeSeq, MovementReferenceNumber] =
+    ReaderT[Option, NodeSeq, MovementReferenceNumber](xml =>
+      (xml \ "HEAHEA" \ "DocNumHEA5").text match {
+        case mrnString if !mrnString.isEmpty => Some(MovementReferenceNumber(mrnString))
         case _                               => None
     })
 }

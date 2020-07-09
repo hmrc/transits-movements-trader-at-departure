@@ -25,6 +25,7 @@ import models.DepartureStatus
 import models.Message
 import models.MessageStatus
 import models.MongoDateTimeFormats
+import models.MovementReferenceNumber
 import play.api.libs.json.Json
 import play.modules.reactivemongo.ReactiveMongoApi
 import reactivemongo.api.commands.WriteResult
@@ -204,9 +205,38 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfi
     val modifier =
       Json.obj(
         "$set" -> Json.obj(
-          "updated"     -> message.dateTime,
-          "lastUpdated" -> LocalDateTime.now,
-          "status"      -> status.toString
+          "updated" -> message.dateTime,
+          "status"  -> status.toString
+        ),
+        "$push" -> Json.obj(
+          "messages" -> Json.toJson(message)
+        )
+      )
+
+    collection.flatMap {
+      _.findAndUpdate(selector, modifier)
+        .map {
+          _.lastError
+            .map {
+              le =>
+                if (le.updatedExisting) Success(()) else Failure(new Exception(s"Could not find departure $departureId"))
+            }
+            .getOrElse(Failure(new Exception("Failed to update departure")))
+        }
+    }
+  }
+
+  def setMrnAndAddResponseMessage(departureId: DepartureId, message: Message, status: DepartureStatus, mrn: MovementReferenceNumber): Future[Try[Unit]] = {
+    val selector = Json.obj(
+      "_id" -> departureId
+    )
+
+    val modifier =
+      Json.obj(
+        "$set" -> Json.obj(
+          "updated"                 -> message.dateTime,
+          "movementReferenceNumber" -> mrn,
+          "status"                  -> status.toString
         ),
         "$push" -> Json.obj(
           "messages" -> Json.toJson(message)
