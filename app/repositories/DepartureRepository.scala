@@ -16,6 +16,7 @@
 
 package repositories
 
+import config.AppConfig
 import javax.inject.Inject
 import models.Departure
 import models.DepartureId
@@ -26,9 +27,12 @@ import models.MongoDateTimeFormats
 import play.api.libs.json.Json
 import play.modules.reactivemongo.ReactiveMongoApi
 import reactivemongo.api.commands.WriteResult
-import reactivemongo.api.indexes.Index
+import reactivemongo.bson.BSONDocument
+import reactivemongo.api.bson.collection.BSONSerializationPack
+import reactivemongo.api.indexes.Index.Aux
 import reactivemongo.api.indexes.IndexType
 import reactivemongo.play.json.collection.JSONCollection
+import utils.IndexUtils
 import reactivemongo.play.json.ImplicitBSONHandlers.JsObjectDocumentWriter
 
 import scala.concurrent.ExecutionContext
@@ -37,17 +41,29 @@ import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
 
-class DepartureRepository @Inject()(mongo: ReactiveMongoApi)(implicit ec: ExecutionContext) extends MongoDateTimeFormats {
+class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfig)(implicit ec: ExecutionContext) extends MongoDateTimeFormats {
 
-  private val index = Index(
+  private val index: Aux[BSONSerializationPack.type] = IndexUtils.index(
     key = Seq("eoriNumber" -> IndexType.Ascending),
     name = Some("eori-number-index")
+  )
+
+  private val cacheTtl = appConfig.cacheTtl
+
+  private val lastUpdatedIndex: Aux[BSONSerializationPack.type] = IndexUtils.index(
+    key = Seq("lastUpdated" -> IndexType.Ascending),
+    name = Some("last-updated-index"),
+    options = BSONDocument("expireAfterSeconds" -> cacheTtl)
   )
 
   val started: Future[Unit] = {
     collection
       .flatMap {
-        _.indexesManager.ensure(index)
+        jsonCollection =>
+          for {
+            _   <- jsonCollection.indexesManager.ensure(index)
+            res <- jsonCollection.indexesManager.ensure(lastUpdatedIndex)
+          } yield res
       }
       .map(_ => ())
   }
