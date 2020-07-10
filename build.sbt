@@ -67,5 +67,3 @@ lazy val testSettings = Seq(
     baseDirectory.value / "test" / "resources"
   )
 )
-
-dependencyOverrides ++= AppDependencies.overrides
