@@ -18,6 +18,7 @@ package repositories
 
 import java.time.LocalDateTime
 
+import config.AppConfig
 import javax.inject.Inject
 import models.Departure
 import models.DepartureId
