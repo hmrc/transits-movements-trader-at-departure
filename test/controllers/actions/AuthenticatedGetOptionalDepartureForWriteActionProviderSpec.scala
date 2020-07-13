@@ -47,7 +47,7 @@ import uk.gov.hmrc.play.bootstrap.controller.BackendController
 import scala.concurrent.Future
 import scala.xml.NodeSeq
 
-class AuthenticatedGetArrivalForWriteActionProviderSpec
+class AuthenticatedGetOptionalDepartureForWriteActionProviderSpec
     extends AnyFreeSpec
     with Matchers
     with MockitoSugar

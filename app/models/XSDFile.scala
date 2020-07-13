@@ -16,17 +16,9 @@
 
 package models
 
-sealed trait MessageReceivedEvent
+abstract class XSDFile(val filePath: String)
 
-object MessageReceivedEvent {
-
-  case object DepartureSubmitted extends MessageReceivedEvent
-  case object DepartureRejected  extends MessageReceivedEvent
-  case object MrnAllocated       extends MessageReceivedEvent
-
-  val values: Seq[MessageReceivedEvent] = Seq(
-    DepartureSubmitted,
-    DepartureRejected,
-    MrnAllocated
-  )
+object XSDFile {
+  object MRNAllocatedXSD      extends XSDFile("/xsd/CC028A.xsd")
+  object DepartureRejectedXSD extends XSDFile("/xsd/CC016A.xsd")
 }

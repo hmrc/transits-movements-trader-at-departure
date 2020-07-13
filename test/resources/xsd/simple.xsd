@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<xs:schema xmlns:xs='http://www.w3.org/2001/XMLSchema' version="1.00">
+
+
+    <xs:element name="messages">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element ref="message" minOccurs='1' maxOccurs='1'/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="message">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element ref="testString" minOccurs='0' maxOccurs='1'/>
+                <xs:element ref="testNumber" minOccurs='0' maxOccurs='1'/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="testString" type='xs:string'/>
+    <xs:element name="testNumber" type='xs:int'/>
+</xs:schema>

@@ -24,6 +24,7 @@ import models.MessageStatus.SubmissionPending
 import models.Departure
 import models.MessageType
 import models.MessageWithStatus
+import models.MessageWithoutStatus
 import repositories.DepartureIdRepository
 
 import scala.concurrent.ExecutionContext
@@ -62,4 +63,11 @@ class DepartureService @Inject()(departureIdRepository: DepartureIdRepository)(i
             NonEmptyList.one(message)
           ))
     }
+
+  def makeMessage(messageCorrelationId: Int, messageType: MessageType): ReaderT[Option, NodeSeq, MessageWithoutStatus] =
+    for {
+      _          <- correctRootNodeR(messageType)
+      dateTime   <- dateTimeOfPrepR
+      xmlMessage <- ReaderT[Option, NodeSeq, NodeSeq](Option.apply)
+    } yield MessageWithoutStatus(dateTime, messageType, xmlMessage, messageCorrelationId)
 }
