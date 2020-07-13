@@ -22,6 +22,7 @@ import java.time.LocalTime
 
 import base.SpecBase
 import models.MessageType
+import models.MovementReferenceNumber
 import utils.Format
 
 class XmlMessageParserSpec extends SpecBase {
@@ -207,6 +208,34 @@ class XmlMessageParserSpec extends SpecBase {
         </CC015B>
 
       XmlMessageParser.dateTimeOfPrepR(movement) must not be (defined)
+
+    }
+
+  }
+
+  "mrnR" - {
+    "returns the mrn from the DocNumHEA5 node" in {
+      val mrn = MovementReferenceNumber("MRN")
+
+      val movement =
+        <CC007A>
+          <HEAHEA>
+            <DocNumHEA5>{mrn.value}</DocNumHEA5>
+          </HEAHEA>
+        </CC007A>
+
+      XmlMessageParser.mrnR(movement).value mustEqual mrn
+
+    }
+
+    "returns None if DocNumHEA5 node is missing" in {
+      val movement =
+        <CC007A>
+          <HEAHEA>
+          </HEAHEA>
+        </CC007A>
+
+      XmlMessageParser.mrnR(movement) must not be (defined)
 
     }
 

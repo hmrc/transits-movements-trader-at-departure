@@ -28,7 +28,7 @@ class DepartureStatusSpec extends SpecBase with ScalaCheckDrivenPropertyChecks w
       DepartureStatus.Initialized.transition(MessageReceivedEvent.DepartureSubmitted) mustEqual DepartureStatus.DepartureSubmitted
     }
 
-    "to DepartureAccepted when receiving a DepartureAccepted event" in {
+    "to MrnAllocated when receiving a MrnAllocated event" in {
       DepartureStatus.Initialized.transition(MessageReceivedEvent.MrnAllocated) mustEqual DepartureStatus.MrnAllocated
     }
 
@@ -42,7 +42,7 @@ class DepartureStatusSpec extends SpecBase with ScalaCheckDrivenPropertyChecks w
       DepartureStatus.DepartureSubmitted.transition(MessageReceivedEvent.DepartureSubmitted) mustEqual DepartureStatus.DepartureSubmitted
     }
 
-    "to DepartureAccepted when receiving a DepartureAccepted event" in {
+    "to MrnAllocated when receiving a MrnAllocated event" in {
       DepartureStatus.DepartureSubmitted.transition(MessageReceivedEvent.MrnAllocated) mustEqual DepartureStatus.MrnAllocated
     }
 
@@ -51,8 +51,8 @@ class DepartureStatusSpec extends SpecBase with ScalaCheckDrivenPropertyChecks w
     }
   }
 
-  "DepartureAccepted must transition" - {
-    "to DepartureAccepted when receiving a DepartureAccepted event" in {
+  "MrnAllocated must transition" - {
+    "to DepartureAccepted when receiving a MrnAllocated event" in {
       DepartureStatus.MrnAllocated.transition(MessageReceivedEvent.MrnAllocated) mustEqual DepartureStatus.MrnAllocated
     }
   }
@@ -66,7 +66,7 @@ class DepartureStatusSpec extends SpecBase with ScalaCheckDrivenPropertyChecks w
   "DepartureStatus.values must contain" - {
     "Initialized" in { DepartureStatus.values.contains(DepartureStatus.Initialized) }
     "DepartureSubmitted" in { DepartureStatus.values.contains(DepartureStatus.DepartureSubmitted) }
-    "DepartureAccepted" in { DepartureStatus.values.contains(DepartureStatus.MrnAllocated) }
+    "MrnAllocated" in { DepartureStatus.values.contains(DepartureStatus.MrnAllocated) }
     "DepartureRejected" in { DepartureStatus.values.contains(DepartureStatus.DepartureRejected) }
   }
 

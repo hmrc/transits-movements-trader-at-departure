@@ -6,7 +6,7 @@ import cats.data.NonEmptyList
 import generators.ModelGenerators
 import models.DepartureStatus.{DepartureSubmitted, Initialized}
 import models.MessageStatus.{SubmissionPending, SubmissionSucceeded}
-import models.{Departure, DepartureId, DepartureStatus, MessageId, MessageType, MessageWithStatus, MessageWithoutStatus, MongoDateTimeFormats}
+import models.{Departure, DepartureId, DepartureStatus, MessageId, MessageType, MessageWithStatus, MessageWithoutStatus, MongoDateTimeFormats, MovementReferenceNumber}
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import org.scalactic.source
@@ -16,17 +16,14 @@ import org.scalatest.exceptions.{StackDepthException, TestFailedException}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import play.api.Application
-import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
-import play.api.test.Helpers._
 import reactivemongo.play.json.ImplicitBSONHandlers.JsObjectDocumentWriter
 import reactivemongo.play.json.collection.JSONCollection
 import utils.Format
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.reflect.ClassTag
-import scala.util.Failure
+import scala.util.{Failure, Success}
 class DepartureRepositorySpec extends AnyFreeSpec with TryValues with OptionValues with ModelGenerators with Matchers with ScalaFutures with MongoSuite with GuiceOneAppPerSuite with IntegrationPatience  with MongoDateTimeFormats {
 
   private val service = app.injector.instanceOf[DepartureRepository]
@@ -334,6 +331,142 @@ class DepartureRepositorySpec extends AnyFreeSpec with TryValues with OptionValu
       }
     }
 
+    "addResponseMessage" - {
+      "must add a message, update the status of a document and update the timestamp" in {
+        database.flatMap(_.drop()).futureValue
+
+        val departure = arbitrary[Departure].sample.value
+
+        val dateOfPrep = LocalDate.now()
+        val timeOfPrep = LocalTime.of(1, 1)
+        val messageBody =
+          <CC016A>
+            <DatOfPreMES9>{Format.dateFormatted(dateOfPrep)}</DatOfPreMES9>
+            <TimOfPreMES10>{Format.timeFormatted(timeOfPrep)}</TimOfPreMES10>
+          </CC016A>
+
+        val declarationRejectedMessage =
+          MessageWithoutStatus(LocalDateTime.of(dateOfPrep, timeOfPrep), MessageType.DeclarationRejected, messageBody, departure.nextMessageCorrelationId)
+        val newState = DepartureStatus.DepartureRejected
+
+        service.insert(departure).futureValue
+        val addMessageResult = service.addResponseMessage(departure.departureId, declarationRejectedMessage, newState).futureValue
+
+        val selector = Json.obj("_id" -> departure.departureId)
+
+        val result = database.flatMap {
+          result =>
+            result.collection[JSONCollection](DepartureRepository.collectionName).find(selector, None).one[Departure]
+        }.futureValue
+
+        val updatedDeparture = result.value
+
+        addMessageResult mustBe a[Success[_]]
+        updatedDeparture.nextMessageCorrelationId - departure.nextMessageCorrelationId mustBe 0
+        updatedDeparture.updated mustEqual declarationRejectedMessage.dateTime
+        updatedDeparture.status mustEqual newState
+        updatedDeparture.messages.size - departure.messages.size mustEqual 1
+        updatedDeparture.messages.last mustEqual declarationRejectedMessage
+    }
+      "must fail if the departure cannot be found" in {
+        database.flatMap(_.drop()).futureValue
+
+        val departure = arbitrary[Departure].sample.value copy (status = DepartureStatus.DepartureSubmitted, departureId = DepartureId(1))
+
+        val dateOfPrep = LocalDate.now()
+        val timeOfPrep = LocalTime.of(1, 1)
+        val messageBody =
+          <CC025A>
+            <DatOfPreMES9>{Format.dateFormatted(dateOfPrep)}</DatOfPreMES9>
+            <TimOfPreMES10>{Format.timeFormatted(timeOfPrep)}</TimOfPreMES10>
+            <HEAHEA>
+              <DocNumHEA5>MRN</DocNumHEA5>
+            </HEAHEA>
+          </CC025A>
+
+        val declarationRejected =
+          MessageWithoutStatus(LocalDateTime.of(dateOfPrep, timeOfPrep), MessageType.DeclarationRejected, messageBody, messageCorrelationId = 1)
+        val newState = DepartureStatus.DepartureRejected
+
+        service.insert(departure).futureValue
+        val result = service.addResponseMessage(DepartureId(2), declarationRejected, newState).futureValue
+
+        result mustBe a[Failure[_]]
+      }
   }
 
-}
+    "setMrnAndAddResponseMessage" - {
+      "must add a message, update the status of a document, update the timestamp, and update the MRN" in {
+        database.flatMap(_.drop()).futureValue
+
+        val departure = arbitrary[Departure].sample.value
+
+        val mrn = "mrn"
+        val dateOfPrep = LocalDate.now()
+        val timeOfPrep = LocalTime.of(1, 1)
+        val messageBody =
+          <CC028A>
+            <DatOfPreMES9>{Format.dateFormatted(dateOfPrep)}</DatOfPreMES9>
+            <TimOfPreMES10>{Format.timeFormatted(timeOfPrep)}</TimOfPreMES10>
+            <HEAHEA>
+              <DocNumHEA5>{mrn}</DocNumHEA5>
+            </HEAHEA>
+          </CC028A>
+
+        val mrnAllocatedMessage =
+          MessageWithoutStatus(LocalDateTime.of(dateOfPrep, timeOfPrep), MessageType.MrnAllocated, messageBody, departure.nextMessageCorrelationId)
+        val newState = DepartureStatus.MrnAllocated
+
+        service.insert(departure).futureValue
+        val addMessageResult = service.setMrnAndAddResponseMessage(departure.departureId, mrnAllocatedMessage, newState, MovementReferenceNumber(mrn)).futureValue
+
+        val selector = Json.obj("_id" -> departure.departureId)
+
+        val result = database.flatMap {
+          result =>
+            result.collection[JSONCollection](DepartureRepository.collectionName).find(selector, None).one[Departure]
+        }.futureValue
+
+        val updatedDeparture = result.value
+
+        addMessageResult mustBe a[Success[_]]
+        updatedDeparture.nextMessageCorrelationId - departure.nextMessageCorrelationId mustBe 0
+        updatedDeparture.updated mustEqual mrnAllocatedMessage.dateTime
+        updatedDeparture.status mustEqual newState
+        updatedDeparture.movementReferenceNumber mustEqual Some(MovementReferenceNumber(mrn))
+        updatedDeparture.messages.size - departure.messages.size mustEqual 1
+        updatedDeparture.messages.last mustEqual mrnAllocatedMessage
+      }
+
+      "must fail if the departure cannot be found" in {
+        database.flatMap(_.drop()).futureValue
+
+        val departure = arbitrary[Departure].sample.value copy (status = DepartureStatus.DepartureSubmitted, departureId = DepartureId(1))
+
+        val mrn = "mrn"
+        val dateOfPrep = LocalDate.now()
+        val timeOfPrep = LocalTime.of(1, 1)
+        val messageBody =
+          <CC028A>
+            <DatOfPreMES9>{Format.dateFormatted(dateOfPrep)}</DatOfPreMES9>
+            <TimOfPreMES10>{Format.timeFormatted(timeOfPrep)}</TimOfPreMES10>
+            <HEAHEA>
+              <DocNumHEA5>{mrn}</DocNumHEA5>
+            </HEAHEA>
+          </CC028A>
+
+        val mrnAllocatedMessage =
+          MessageWithoutStatus(LocalDateTime.of(dateOfPrep, timeOfPrep), MessageType.MrnAllocated, messageBody, departure.nextMessageCorrelationId)
+        val newState = DepartureStatus.DepartureRejected
+
+        service.insert(departure).futureValue
+        val addMessageResult = service.setMrnAndAddResponseMessage(DepartureId(2), mrnAllocatedMessage, newState, MovementReferenceNumber(mrn)).futureValue
+
+        addMessageResult mustBe a[Failure[_]]
+      }
+
+    }
+  }
+
+
+  }

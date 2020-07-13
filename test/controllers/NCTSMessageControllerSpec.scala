@@ -66,7 +66,7 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
     "eori",
     Some(MovementReferenceNumber("mrn")),
     "ref",
-    DepartureStatus.MrnAllocated,
+    DepartureStatus.DepartureSubmitted,
     LocalDateTime.of(dateOfPrep, timeOfPrep),
     LocalDateTime.of(dateOfPrep, timeOfPrep),
     1,
@@ -189,6 +189,7 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
 
           val result = route(application, request).value
 
+          println("test")
           println(contentAsString(result))
           status(result) mustEqual OK
         }
