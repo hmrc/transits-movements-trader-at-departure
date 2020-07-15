@@ -27,9 +27,10 @@ sealed trait MessageType extends IeMetadata {
 
 object MessageType extends Enumerable.Implicits {
 
-  case object DepartureDeclaration extends IeMetadata("IE015", "CC015B") with MessageType
-  case object MrnAllocated         extends IeMetadata("IE028", "CC028A") with MessageType
-  case object DeclarationRejected  extends IeMetadata("IE016", "CC016A") with MessageType
+  case object PositiveAcknowledgement extends IeMetadata("IE928", "CC928A") with MessageType
+  case object DepartureDeclaration    extends IeMetadata("IE015", "CC015B") with MessageType
+  case object MrnAllocated            extends IeMetadata("IE028", "CC028A") with MessageType
+  case object DeclarationRejected     extends IeMetadata("IE016", "CC016A") with MessageType
 
   val values: Seq[MessageType] = Seq(DepartureDeclaration, MrnAllocated, DeclarationRejected)
 

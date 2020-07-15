@@ -18,6 +18,7 @@ package models
 
 import models.XSDFile.DepartureRejectedXSD
 import models.XSDFile.MRNAllocatedXSD
+import models.XSDFile.PositiveAcknowledgementXSD
 
 sealed trait MessageResponse {
   val messageReceived: MessageReceivedEvent
@@ -35,4 +36,10 @@ case object DepartureRejectedResponse extends MessageResponse {
   override val messageReceived: MessageReceivedEvent = MessageReceivedEvent.DepartureRejected
   override val messageType: MessageType              = MessageType.DeclarationRejected
   override val xsdFile: XSDFile                      = DepartureRejectedXSD
+}
+
+case object PositiveAcknowledgementResponse extends MessageResponse {
+  override val messageReceived: MessageReceivedEvent = MessageReceivedEvent.PositiveAcknowledgement
+  override val messageType: MessageType              = MessageType.PositiveAcknowledgement
+  override val xsdFile: XSDFile                      = PositiveAcknowledgementXSD
 }

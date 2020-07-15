@@ -33,10 +33,18 @@ object DepartureStatus extends Enumerable.Implicits with MongoDateTimeFormats {
 
   case object DepartureSubmitted extends DepartureStatus {
     override def transition(messageReceived: MessageReceivedEvent): DepartureStatus = messageReceived match {
-      case MessageReceivedEvent.DepartureSubmitted => DepartureSubmitted
-      case MessageReceivedEvent.MrnAllocated       => MrnAllocated
-      case MessageReceivedEvent.DepartureRejected  => DepartureRejected
-      case _                                       => throw new Exception(s"Tried to transition from DepartureSubmitted to $messageReceived.")
+      case MessageReceivedEvent.DepartureSubmitted      => DepartureSubmitted
+      case MessageReceivedEvent.PositiveAcknowledgement => PositiveAcknowledgement
+      case MessageReceivedEvent.DepartureRejected       => DepartureRejected
+      case _                                            => throw new Exception(s"Tried to transition from DepartureSubmitted to $messageReceived.")
+    }
+  }
+
+  case object PositiveAcknowledgement extends DepartureStatus {
+    override def transition(messageReceived: MessageReceivedEvent): DepartureStatus = messageReceived match {
+      case MessageReceivedEvent.PositiveAcknowledgement => PositiveAcknowledgement
+      case MessageReceivedEvent.MrnAllocated            => MrnAllocated
+      case _                                            => throw new Exception(s"Tried to transition from PositiveAcknowledgement to $messageReceived")
     }
   }
 
