@@ -73,6 +73,18 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
     NonEmptyList.one(message)
   )
 
+  private val acknowledgedDeparture = Departure(
+    departureId,
+    "eori",
+    Some(MovementReferenceNumber("mrn")),
+    "ref",
+    DepartureStatus.PositiveAcknowledgement,
+    LocalDateTime.of(dateOfPrep, timeOfPrep),
+    LocalDateTime.of(dateOfPrep, timeOfPrep),
+    1,
+    NonEmptyList.one(message)
+  )
+
   private val requestMrnAllocatedBody =
     <CC028A>
       <DatOfPreMES9>{Format.dateFormatted(dateOfPrep)}</DatOfPreMES9>
@@ -115,7 +127,7 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
     "when a lock can be acquired" - {
 
       "must return OK, when the service validates and save the message (mrnAllocated)" in {
-        when(mockDepartureRepository.get(any())).thenReturn(Future.successful(Some(departure)))
+        when(mockDepartureRepository.get(any())).thenReturn(Future.successful(Some(acknowledgedDeparture)))
         when(mockSaveMessageService.validateXmlSaveMessageUpdateMrn(any(), any(), any(), any(), any()))
           .thenReturn(Future.successful(SubmissionProcessingResult.SubmissionSuccess))
         when(mockLockRepository.lock(any())).thenReturn(Future.successful(true))
@@ -141,7 +153,7 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
 
       "must return BadRequest, when the service is unable to find a mrn before attempting to save the message (mrnAllocated)" in {
 
-        when(mockDepartureRepository.get(any())).thenReturn(Future.successful(Some(departure)))
+        when(mockDepartureRepository.get(any())).thenReturn(Future.successful(Some(acknowledgedDeparture)))
         when(mockSaveMessageService.validateXmlSaveMessageUpdateMrn(any(), any(), any(), any(), any()))
           .thenReturn(Future.successful(SubmissionProcessingResult.SubmissionSuccess))
         when(mockLockRepository.lock(any())).thenReturn(Future.successful(true))

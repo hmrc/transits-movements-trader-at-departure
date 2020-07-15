@@ -42,12 +42,18 @@ class DepartureStatusSpec extends SpecBase with ScalaCheckDrivenPropertyChecks w
       DepartureStatus.DepartureSubmitted.transition(MessageReceivedEvent.DepartureSubmitted) mustEqual DepartureStatus.DepartureSubmitted
     }
 
-    "to MrnAllocated when receiving a MrnAllocated event" in {
-      DepartureStatus.DepartureSubmitted.transition(MessageReceivedEvent.MrnAllocated) mustEqual DepartureStatus.MrnAllocated
+    "to PositiveAcknowledgement when receiving a PositiveAcknowledgement event" in {
+      DepartureStatus.DepartureSubmitted.transition(MessageReceivedEvent.PositiveAcknowledgement) mustEqual DepartureStatus.PositiveAcknowledgement
     }
 
     "to DepartureRejected when receiving a DepartureRejected event" in {
       DepartureStatus.DepartureSubmitted.transition(MessageReceivedEvent.DepartureRejected) mustEqual DepartureStatus.DepartureRejected
+    }
+  }
+
+  "PositiveAcknowledement must transition" - {
+    "to MrnAllocated when recieving a MrnAllocated event" in {
+      DepartureStatus.PositiveAcknowledgement.transition(MessageReceivedEvent.MrnAllocated) mustEqual DepartureStatus.MrnAllocated
     }
   }
 
