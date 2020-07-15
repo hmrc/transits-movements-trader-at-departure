@@ -223,11 +223,6 @@ class SaveMessageServiceSpec extends SpecBase with BeforeAndAfterEach {
           <CUSOFFDEPEPT></CUSOFFDEPEPT>
         </CC028A>
 
-      println(MRNAllocatedXSD)
-      println(MRNAllocatedXSD.filePath)
-      println(getClass.getResource(MRNAllocatedXSD.filePath))
-      println(MrnAllocatedResponse.messageType.code)
-
       val result = saveMessageService
         .validateXmlSaveMessageUpdateMrn(mrnAllocated, messageSender, MrnAllocatedResponse, DepartureStatus.MrnAllocated, MovementReferenceNumber(mrn))
         .futureValue

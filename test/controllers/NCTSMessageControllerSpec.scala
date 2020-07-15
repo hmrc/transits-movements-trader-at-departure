@@ -201,8 +201,6 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
 
           val result = route(application, request).value
 
-          println("test")
-          println(contentAsString(result))
           status(result) mustEqual OK
         }
       }
