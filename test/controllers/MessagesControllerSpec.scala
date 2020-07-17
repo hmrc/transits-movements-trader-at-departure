@@ -114,9 +114,6 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
         val message   = Arbitrary.arbitrary[MessageWithStatus].sample.value.copy(status = SubmissionSucceeded)
         val departure = Arbitrary.arbitrary[Departure].sample.value.copy(messages = NonEmptyList.one(message), eoriNumber = "eori")
 
-        val expectedMessages  = ResponseMessage.build(departure.departureId, MessageId.fromMessageIdValue(1).value, message)
-        val expectedDeparture = ResponseDepartureWithMessages.build(departure).copy(messages = Seq(expectedMessages))
-
         val mockDepartureRepository = mock[DepartureRepository]
         when(mockDepartureRepository.get(any()))
           .thenReturn(Future.successful(Some(departure)))
@@ -131,6 +128,9 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
           val result       = route(application, request).value
 
           status(result) mustEqual OK
+
+          val expectedMessages  = ResponseMessage.build(departure.departureId, MessageId.fromMessageIdValue(1).value, message)
+          val expectedDeparture = ResponseDepartureWithMessages.build(departure).copy(messages = Seq(expectedMessages))
 
           println(expectedDeparture.location)
 
