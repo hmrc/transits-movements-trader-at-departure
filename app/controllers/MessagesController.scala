@@ -16,8 +16,12 @@
 
 package controllers
 
+import controllers.actions.AuthenticatedGetDepartureForReadActionProvider
 import javax.inject.Inject
+import models.response.ResponseDepartureWithMessages
 import models.DepartureId
+import models.MessageId
+import play.api.libs.json.Json
 import play.api.mvc.Action
 import play.api.mvc.AnyContent
 import play.api.mvc.ControllerComponents
@@ -26,9 +30,15 @@ import uk.gov.hmrc.play.bootstrap.controller.BackendController
 import scala.concurrent.ExecutionContext
 
 class MessagesController @Inject()(
-  cc: ControllerComponents
+  cc: ControllerComponents,
+  authenticateForRead: AuthenticatedGetDepartureForReadActionProvider
 )(implicit ec: ExecutionContext)
     extends BackendController(cc) {
 
-  def getMessages(departure: DepartureId): Action[AnyContent] = ???
+  def getMessages(departureId: DepartureId): Action[AnyContent] = authenticateForRead(departureId) {
+    implicit request =>
+      Ok(Json.toJsObject(ResponseDepartureWithMessages.build(request.departure)))
+  }
+
+  def getMessage(departureId: DepartureId, messageId: MessageId): Action[AnyContent] = ???
 }
