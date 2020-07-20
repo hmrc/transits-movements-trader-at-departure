@@ -19,8 +19,10 @@ package controllers
 import controllers.actions.AuthenticatedGetDepartureForReadActionProvider
 import javax.inject.Inject
 import models.response.ResponseDepartureWithMessages
+import models.response.ResponseMessage
 import models.DepartureId
 import models.MessageId
+import models.MessageStatus.SubmissionFailed
 import play.api.libs.json.Json
 import play.api.mvc.Action
 import play.api.mvc.AnyContent
@@ -40,5 +42,12 @@ class MessagesController @Inject()(
       Ok(Json.toJsObject(ResponseDepartureWithMessages.build(request.departure)))
   }
 
-  def getMessage(departureId: DepartureId, messageId: MessageId): Action[AnyContent] = ???
+  def getMessage(departureId: DepartureId, messageId: MessageId): Action[AnyContent] = authenticateForRead(departureId) {
+    implicit request =>
+      val messages = request.departure.messages.toList
+
+      if (messages.isDefinedAt(messageId.index) && messages(messageId.index).optStatus != Some(SubmissionFailed))
+        Ok(Json.toJsObject(ResponseMessage.build(departureId, messageId, messages(messageId.index))))
+      else NotFound
+  }
 }

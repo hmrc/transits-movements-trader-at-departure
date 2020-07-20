@@ -264,4 +264,135 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
 
   }
 
+  "getMessage" - {
+    "must return Ok with the retrieved message and state SubmissionSuccessful" in {
+
+      val message   = Arbitrary.arbitrary[MessageWithStatus].sample.value.copy(status = SubmissionSucceeded)
+      val departure = Arbitrary.arbitrary[Departure].sample.value.copy(messages = NonEmptyList.one(message), eoriNumber = "eori")
+
+      val mockDepartureRepository = mock[DepartureRepository]
+      when(mockDepartureRepository.get(any()))
+        .thenReturn(Future.successful(Some(departure)))
+
+      val application =
+        baseApplicationBuilder
+          .overrides(bind[DepartureRepository].toInstance(mockDepartureRepository))
+          .build()
+
+      running(application) {
+        val request = FakeRequest(GET, routes.MessagesController.getMessage(departure.departureId, MessageId.fromIndex(0)).url)
+        val result  = route(application, request).value
+
+        status(result) mustEqual OK
+        contentAsJson(result) mustEqual Json.toJson(ResponseMessage.build(departure.departureId, MessageId.fromIndex(0), message))
+      }
+    }
+
+    "must return Ok with the retrieved message when it has no state" in {
+      val message   = Arbitrary.arbitrary[MessageWithoutStatus].sample.value
+      val departure = Arbitrary.arbitrary[Departure].sample.value.copy(messages = NonEmptyList.one(message), eoriNumber = "eori")
+
+      val mockDepartureRepository = mock[DepartureRepository]
+      when(mockDepartureRepository.get(any()))
+        .thenReturn(Future.successful(Some(departure)))
+
+      val application =
+        baseApplicationBuilder
+          .overrides(bind[DepartureRepository].toInstance(mockDepartureRepository))
+          .build()
+
+      running(application) {
+        val request = FakeRequest(GET, routes.MessagesController.getMessage(departure.departureId, MessageId.fromIndex(0)).url)
+        val result  = route(application, request).value
+
+        status(result) mustEqual OK
+        contentAsJson(result) mustEqual Json.toJson(ResponseMessage.build(departure.departureId, MessageId.fromIndex(0), message))
+      }
+    }
+
+    "must return NOT FOUND" - {
+      "when departure is not found" in {
+        val mockDepartureRepository = mock[DepartureRepository]
+        when(mockDepartureRepository.get(any()))
+          .thenReturn(Future.successful(None))
+
+        val application =
+          baseApplicationBuilder
+            .overrides(bind[DepartureRepository].toInstance(mockDepartureRepository))
+            .build()
+
+        running(application) {
+          val request = FakeRequest(GET, routes.MessagesController.getMessage(DepartureId(1), MessageId.fromIndex(0)).url)
+          val result  = route(application, request).value
+
+          status(result) mustEqual NOT_FOUND
+        }
+      }
+
+      "when message does not exist" in {
+        val message   = Arbitrary.arbitrary[MessageWithStatus].sample.value.copy(status = SubmissionSucceeded)
+        val departure = Arbitrary.arbitrary[Departure].sample.value.copy(messages = NonEmptyList.one(message), eoriNumber = "eori")
+
+        val mockDepartureRepository = mock[DepartureRepository]
+        when(mockDepartureRepository.get(any()))
+          .thenReturn(Future.successful(Some(departure)))
+
+        val application =
+          baseApplicationBuilder
+            .overrides(bind[DepartureRepository].toInstance(mockDepartureRepository))
+            .build()
+
+        running(application) {
+          val request = FakeRequest(GET, routes.MessagesController.getMessage(departure.departureId, MessageId.fromIndex(5)).url)
+          val result  = route(application, request).value
+
+          status(result) mustEqual NOT_FOUND
+        }
+      }
+
+      "when status is not equal to successful" in {
+        val message   = Arbitrary.arbitrary[MessageWithStatus].sample.value.copy(status = SubmissionFailed)
+        val departure = Arbitrary.arbitrary[Departure].sample.value.copy(messages = NonEmptyList.one(message), eoriNumber = "eori")
+
+        val mockDepartureRepository = mock[DepartureRepository]
+        when(mockDepartureRepository.get(any()))
+          .thenReturn(Future.successful(Some(departure)))
+
+        val application =
+          baseApplicationBuilder
+            .overrides(bind[DepartureRepository].toInstance(mockDepartureRepository))
+            .build()
+
+        running(application) {
+          val request = FakeRequest(GET, routes.MessagesController.getMessage(departure.departureId, MessageId.fromIndex(0)).url)
+          val result  = route(application, request).value
+
+          status(result) mustEqual NOT_FOUND
+        }
+      }
+
+      "when message belongs to a departure the user cannot access" in {
+        val message   = Arbitrary.arbitrary[MessageWithStatus].sample.value.copy(status = SubmissionSucceeded)
+        val departure = Arbitrary.arbitrary[Departure].sample.value.copy(messages = NonEmptyList.one(message), eoriNumber = "eori2")
+
+        val mockDepartureRepository = mock[DepartureRepository]
+        when(mockDepartureRepository.get(any()))
+          .thenReturn(Future.successful(Some(departure)))
+
+        val application =
+          baseApplicationBuilder
+            .overrides(bind[DepartureRepository].toInstance(mockDepartureRepository))
+            .build()
+
+        running(application) {
+          val request = FakeRequest(GET, routes.MessagesController.getMessage(departure.departureId, MessageId.fromIndex(0)).url)
+          val result  = route(application, request).value
+
+          status(result) mustEqual NOT_FOUND
+        }
+      }
+
+    }
+  }
+
 }
