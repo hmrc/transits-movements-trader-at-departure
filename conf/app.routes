@@ -6,4 +6,6 @@ GET        /movements/departures/:departureId                           controll
 
 GET        /movements/departures/:departureId/messages                  controllers.MessagesController.getMessages(departureId: DepartureId)
 
+GET        /movements/departures/:departureId/messages/:messageId       controllers.MessagesController.getMessage(departureId: DepartureId, messageId: MessageId)
+
 POST       /movements/departures/:messageSender/messages/eis            controllers.NCTSMessageController.post(messageSender: MessageSender)
