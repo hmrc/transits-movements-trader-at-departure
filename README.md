@@ -30,7 +30,7 @@ dependencyUpdatesReport | Writes a list of project dependencies to a file | ```$
 
 ## Related API documentation 
 
-- [Common Transit Convention Traders API definitions](https://developer.service.hmrc.gov.uk/api-documentation/docs/api/service/common-transit-convention-traders/1.0)
+- [Common Transit Convention Traders API specifications](https://developer.service.hmrc.gov.uk/api-documentation/docs/api/service/common-transit-convention-traders/1.0)
 
 ## Helpful information
 
