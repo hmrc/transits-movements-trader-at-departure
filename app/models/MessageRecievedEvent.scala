@@ -20,15 +20,17 @@ sealed trait MessageReceivedEvent
 
 object MessageReceivedEvent {
 
-  case object DepartureSubmitted      extends MessageReceivedEvent
-  case object DepartureRejected       extends MessageReceivedEvent
-  case object MrnAllocated            extends MessageReceivedEvent
-  case object PositiveAcknowledgement extends MessageReceivedEvent
+  case object DepartureSubmitted          extends MessageReceivedEvent
+  case object DepartureRejected           extends MessageReceivedEvent
+  case object MrnAllocated                extends MessageReceivedEvent
+  case object PositiveAcknowledgement     extends MessageReceivedEvent
+  case object ControlDecisionNotification extends MessageReceivedEvent
 
   val values: Seq[MessageReceivedEvent] = Seq(
     DepartureSubmitted,
     DepartureRejected,
     PositiveAcknowledgement,
-    MrnAllocated
+    MrnAllocated,
+    ControlDecisionNotification
   )
 }

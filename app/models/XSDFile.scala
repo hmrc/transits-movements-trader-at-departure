@@ -19,7 +19,8 @@ package models
 abstract class XSDFile(val filePath: String)
 
 object XSDFile {
-  object MRNAllocatedXSD            extends XSDFile("/xsd/CC028A.xsd")
-  object PositiveAcknowledgementXSD extends XSDFile("/xsd/CC928A.xsd")
-  object DepartureRejectedXSD       extends XSDFile("/xsd/CC016A.xsd")
+  object MRNAllocatedXSD                extends XSDFile("/xsd/CC028A.xsd")
+  object PositiveAcknowledgementXSD     extends XSDFile("/xsd/CC928A.xsd")
+  object DepartureRejectedXSD           extends XSDFile("/xsd/CC016A.xsd")
+  object ControlDecisionNotificationXSD extends XSDFile("/xsd/CC060A.xsd")
 }

@@ -58,8 +58,12 @@ class DepartureStatusSpec extends SpecBase with ScalaCheckDrivenPropertyChecks w
   }
 
   "MrnAllocated must transition" - {
-    "to DepartureAccepted when receiving a MrnAllocated event" in {
+    "to MrnAllocated when receiving a MrnAllocated event" in {
       DepartureStatus.MrnAllocated.transition(MessageReceivedEvent.MrnAllocated) mustEqual DepartureStatus.MrnAllocated
+    }
+
+    "to ControlDecisionNotification when receiving a ControlDecisionNotification event" in {
+      DepartureStatus.MrnAllocated.transition(MessageReceivedEvent.ControlDecisionNotification) mustEqual (DepartureStatus.ControlDecisionNotification)
     }
   }
 
@@ -69,11 +73,18 @@ class DepartureStatusSpec extends SpecBase with ScalaCheckDrivenPropertyChecks w
     }
   }
 
+  "ControlDecisionNotification must transition" - {
+    "to ControlDecisionNotification when receiving a ControlDecisionNotification event" in {
+      DepartureStatus.ControlDecisionNotification.transition(MessageReceivedEvent.ControlDecisionNotification) mustEqual DepartureStatus.ControlDecisionNotification
+    }
+  }
+
   "DepartureStatus.values must contain" - {
     "Initialized" in { DepartureStatus.values.contains(DepartureStatus.Initialized) }
     "DepartureSubmitted" in { DepartureStatus.values.contains(DepartureStatus.DepartureSubmitted) }
     "MrnAllocated" in { DepartureStatus.values.contains(DepartureStatus.MrnAllocated) }
     "DepartureRejected" in { DepartureStatus.values.contains(DepartureStatus.DepartureRejected) }
+    "ControlDecisionNotification" in { DepartureStatus.values.contains(DepartureStatus.ControlDecisionNotification) }
   }
 
 }
