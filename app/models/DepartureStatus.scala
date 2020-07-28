@@ -52,7 +52,7 @@ object DepartureStatus extends Enumerable.Implicits with MongoDateTimeFormats {
     override def transition(messageRecieved: MessageReceivedEvent): DepartureStatus = messageRecieved match {
       case MessageReceivedEvent.MrnAllocated                => MrnAllocated
       case MessageReceivedEvent.ControlDecisionNotification => ControlDecisionNotification
-      case _                                                => throw new Exception(s"Tried to transition from DepartureAccepted to $messageRecieved.")
+      case _                                                => throw new Exception(s"Tried to transition from MrnAllocated to $messageRecieved.")
     }
   }
 
