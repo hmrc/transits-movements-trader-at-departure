@@ -21,6 +21,7 @@ import javax.inject.Inject
 import models.SubmissionProcessingResult.SubmissionFailureExternal
 import models.SubmissionProcessingResult.SubmissionFailureInternal
 import models.SubmissionProcessingResult.SubmissionSuccess
+import models.ControlDecisionNotificationResponse
 import models.DepartureRejectedResponse
 import models.MessageResponse
 import models.MessageSender
@@ -47,9 +48,10 @@ class NCTSMessageController @Inject()(cc: ControllerComponents, getDeparture: Ge
       val xml: NodeSeq = request.request.body
 
       val messageResponse: Option[MessageResponse] = request.headers.get("X-Message-Type") match {
-        case Some(MessageType.PositiveAcknowledgement.code) => Some(PositiveAcknowledgementResponse)
-        case Some(MessageType.MrnAllocated.code)            => Some(MrnAllocatedResponse)
-        case Some(MessageType.DeclarationRejected.code)     => Some(DepartureRejectedResponse)
+        case Some(MessageType.PositiveAcknowledgement.code)     => Some(PositiveAcknowledgementResponse)
+        case Some(MessageType.MrnAllocated.code)                => Some(MrnAllocatedResponse)
+        case Some(MessageType.DeclarationRejected.code)         => Some(DepartureRejectedResponse)
+        case Some(MessageType.ControlDecisionNotification.code) => Some(ControlDecisionNotificationResponse)
         case invalidResponse =>
           Logger.warn(s"Received the following invalid response for X-Message-Type: $invalidResponse")
           None
