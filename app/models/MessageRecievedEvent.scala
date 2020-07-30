@@ -25,12 +25,14 @@ object MessageReceivedEvent {
   case object MrnAllocated                extends MessageReceivedEvent
   case object PositiveAcknowledgement     extends MessageReceivedEvent
   case object ControlDecisionNotification extends MessageReceivedEvent
+  case object NoReleaseForTransit         extends MessageReceivedEvent
 
   val values: Seq[MessageReceivedEvent] = Seq(
     DepartureSubmitted,
     DepartureRejected,
     PositiveAcknowledgement,
     MrnAllocated,
-    ControlDecisionNotification
+    ControlDecisionNotification,
+    NoReleaseForTransit
   )
 }

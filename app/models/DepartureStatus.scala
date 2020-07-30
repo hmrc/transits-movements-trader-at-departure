@@ -49,10 +49,11 @@ object DepartureStatus extends Enumerable.Implicits with MongoDateTimeFormats {
   }
 
   case object MrnAllocated extends DepartureStatus {
-    override def transition(messageRecieved: MessageReceivedEvent): DepartureStatus = messageRecieved match {
+    override def transition(messageReceived: MessageReceivedEvent): DepartureStatus = messageReceived match {
       case MessageReceivedEvent.MrnAllocated                => MrnAllocated
       case MessageReceivedEvent.ControlDecisionNotification => ControlDecisionNotification
-      case _                                                => throw new Exception(s"Tried to transition from MrnAllocated to $messageRecieved.")
+      case MessageReceivedEvent.NoReleaseForTransit         => NoReleaseForTransit
+      case _                                                => throw new Exception(s"Tried to transition from MrnAllocated to $messageReceived.")
     }
   }
 
@@ -66,7 +67,15 @@ object DepartureStatus extends Enumerable.Implicits with MongoDateTimeFormats {
   case object ControlDecisionNotification extends DepartureStatus {
     override def transition(messageRecieved: MessageReceivedEvent): DepartureStatus = messageRecieved match {
       case MessageReceivedEvent.ControlDecisionNotification => ControlDecisionNotification
+      case MessageReceivedEvent.NoReleaseForTransit         => NoReleaseForTransit
       case _                                                => throw new Exception(s"Tried to transition from ControlDecisionNotification to $messageRecieved")
+    }
+  }
+
+  case object NoReleaseForTransit extends DepartureStatus {
+    override def transition(messageReceived: MessageReceivedEvent): DepartureStatus = messageReceived match {
+      case MessageReceivedEvent.NoReleaseForTransit => NoReleaseForTransit
+      case _                                        => throw new Exception(s"Tried to transition from NoReleaseForTransit to $messageReceived")
     }
   }
 
@@ -75,7 +84,8 @@ object DepartureStatus extends Enumerable.Implicits with MongoDateTimeFormats {
     DepartureSubmitted,
     MrnAllocated,
     DepartureRejected,
-    ControlDecisionNotification
+    ControlDecisionNotification,
+    NoReleaseForTransit
   )
 
   implicit val enumerable: Enumerable[DepartureStatus] =

@@ -65,6 +65,10 @@ class DepartureStatusSpec extends SpecBase with ScalaCheckDrivenPropertyChecks w
     "to ControlDecisionNotification when receiving a ControlDecisionNotification event" in {
       DepartureStatus.MrnAllocated.transition(MessageReceivedEvent.ControlDecisionNotification) mustEqual (DepartureStatus.ControlDecisionNotification)
     }
+
+    "to NoReleaseForTransit when receiving a NoReleaseForTransit event" in {
+      DepartureStatus.MrnAllocated.transition(MessageReceivedEvent.NoReleaseForTransit) mustEqual DepartureStatus.NoReleaseForTransit
+    }
   }
 
   "DepartureRejected must transition" - {
@@ -77,6 +81,16 @@ class DepartureStatusSpec extends SpecBase with ScalaCheckDrivenPropertyChecks w
     "to ControlDecisionNotification when receiving a ControlDecisionNotification event" in {
       DepartureStatus.ControlDecisionNotification.transition(MessageReceivedEvent.ControlDecisionNotification) mustEqual DepartureStatus.ControlDecisionNotification
     }
+
+    "to NoReleaseForTransit when receiving a NoReleaseForTransit event" in {
+      DepartureStatus.ControlDecisionNotification.transition(MessageReceivedEvent.NoReleaseForTransit) mustEqual DepartureStatus.NoReleaseForTransit
+    }
+  }
+
+  "NoReleaseForTransit must transition" - {
+    "to NoReleaseForTransit when receiving a NoReleaseForTransit event" in {
+      DepartureStatus.ControlDecisionNotification.transition(MessageReceivedEvent.ControlDecisionNotification) mustEqual DepartureStatus.ControlDecisionNotification
+    }
   }
 
   "DepartureStatus.values must contain" - {
@@ -85,6 +99,7 @@ class DepartureStatusSpec extends SpecBase with ScalaCheckDrivenPropertyChecks w
     "MrnAllocated" in { DepartureStatus.values.contains(DepartureStatus.MrnAllocated) }
     "DepartureRejected" in { DepartureStatus.values.contains(DepartureStatus.DepartureRejected) }
     "ControlDecisionNotification" in { DepartureStatus.values.contains(DepartureStatus.ControlDecisionNotification) }
+    "NoReleaseForTransit" in { DepartureStatus.values.contains(DepartureStatus.NoReleaseForTransit) }
   }
 
 }
