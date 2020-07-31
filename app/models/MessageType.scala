@@ -33,6 +33,7 @@ object MessageType extends Enumerable.Implicits {
   case object DeclarationRejected         extends IeMetadata("IE016", "CC016A") with MessageType
   case object ControlDecisionNotification extends IeMetadata("IE060", "CC060A") with MessageType
   case object NoReleaseForTransit         extends IeMetadata("IE051", "CC051A") with MessageType
+  case object ReleaseForTransit           extends IeMetadata("IE029", "CC029A") with MessageType
 
   val values: Seq[MessageType] = Seq(DepartureDeclaration, MrnAllocated, DeclarationRejected)
 

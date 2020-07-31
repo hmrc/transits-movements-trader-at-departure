@@ -69,6 +69,10 @@ class DepartureStatusSpec extends SpecBase with ScalaCheckDrivenPropertyChecks w
     "to NoReleaseForTransit when receiving a NoReleaseForTransit event" in {
       DepartureStatus.MrnAllocated.transition(MessageReceivedEvent.NoReleaseForTransit) mustEqual DepartureStatus.NoReleaseForTransit
     }
+
+    "to ReleaseForTransit when receiving a ReleaseForTransit event" in {
+      DepartureStatus.MrnAllocated.transition(MessageReceivedEvent.ReleaseForTransit) mustEqual DepartureStatus.ReleaseForTransit
+    }
   }
 
   "DepartureRejected must transition" - {
@@ -84,6 +88,10 @@ class DepartureStatusSpec extends SpecBase with ScalaCheckDrivenPropertyChecks w
 
     "to NoReleaseForTransit when receiving a NoReleaseForTransit event" in {
       DepartureStatus.ControlDecisionNotification.transition(MessageReceivedEvent.NoReleaseForTransit) mustEqual DepartureStatus.NoReleaseForTransit
+    }
+
+    "to ReleaseForTransit when receiving a ReleaseForTransit event" in {
+      DepartureStatus.ControlDecisionNotification.transition(MessageReceivedEvent.ReleaseForTransit) mustEqual DepartureStatus.ReleaseForTransit
     }
   }
 
