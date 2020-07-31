@@ -29,6 +29,7 @@ import models.MessageType
 import models.MrnAllocatedResponse
 import models.NoReleaseForTransitResponse
 import models.PositiveAcknowledgementResponse
+import models.ReleaseForTransitResponse
 import play.api.Logger
 import play.api.mvc.Action
 import play.api.mvc.ControllerComponents
@@ -54,6 +55,7 @@ class NCTSMessageController @Inject()(cc: ControllerComponents, getDeparture: Ge
         case Some(MessageType.DeclarationRejected.code)         => Some(DepartureRejectedResponse)
         case Some(MessageType.ControlDecisionNotification.code) => Some(ControlDecisionNotificationResponse)
         case Some(MessageType.NoReleaseForTransit.code)         => Some(NoReleaseForTransitResponse)
+        case Some(MessageType.ReleaseForTransit.code)           => Some(ReleaseForTransitResponse)
         case invalidResponse =>
           Logger.warn(s"Received the following invalid response for X-Message-Type: $invalidResponse")
           None
