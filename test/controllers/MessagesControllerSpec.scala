@@ -108,6 +108,7 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
       localDateTime,
       localDateTime,
       message.messageCorrelationId,
+      NonEmptyList.one(message.copy(messageType = MessageType.MrnAllocated))
     )
   }
 

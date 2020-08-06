@@ -127,7 +127,7 @@ class DepartureStatusSpec extends SpecBase with ScalaCheckDrivenPropertyChecks w
     "Initialized" in { DepartureStatus.values.contains(DepartureStatus.Initialized) }
     "DepartureSubmitted" in { DepartureStatus.values.contains(DepartureStatus.DepartureSubmitted) }
     "MrnAllocated" in { DepartureStatus.values.contains(DepartureStatus.MrnAllocated) }
-    "PositiveAcknowledgement" in {DepartureStatus.values.contains(DepartureStatus.PositiveAcknowledgement)}
+    "PositiveAcknowledgement" in { DepartureStatus.values.contains(DepartureStatus.PositiveAcknowledgement) }
     "DepartureRejected" in { DepartureStatus.values.contains(DepartureStatus.DepartureRejected) }
     "ControlDecisionNotification" in { DepartureStatus.values.contains(DepartureStatus.ControlDecisionNotification) }
     "ReleaseForTransit" in { DepartureStatus.values.contains(DepartureStatus.ReleaseForTransit) }
