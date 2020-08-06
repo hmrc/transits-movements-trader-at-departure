@@ -101,7 +101,7 @@ trait ModelGenerators extends BaseGenerators with JavaTimeGenerators {
         status   <- arbitrary[DepartureStatus]
         created  <- arbitrary[LocalDateTime]
         updated  <- arbitrary[LocalDateTime]
-        messages <- nonEmptyListOfMaxLength[MessageWithStatus](2)
+        messages <- nonEmptyListOfMaxLength[MessageWithStatus](1)
       } yield models.Departure(id, eN, Some(mrn), rN, status, created, updated, messages.length + 1, messages)
     }
 

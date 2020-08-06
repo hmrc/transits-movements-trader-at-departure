@@ -22,6 +22,7 @@ import java.time.LocalTime
 
 import base.SpecBase
 import cats.data.NonEmptyList
+import connectors.MessageConnector
 import generators.ModelGenerators
 import models.Departure
 import models.DepartureId
@@ -31,12 +32,15 @@ import models.MessageType
 import models.MessageWithStatus
 import models.MessageWithoutStatus
 import models.MovementReferenceNumber
+import models.SubmissionProcessingResult
 import models.MessageStatus.SubmissionFailed
 import models.MessageStatus.SubmissionPending
 import models.MessageStatus.SubmissionSucceeded
 import models.response.ResponseDepartureWithMessages
 import models.response.ResponseMessage
 import org.mockito.ArgumentMatchers.any
+import org.mockito.Mockito.times
+import org.mockito.Mockito.verify
 import org.mockito.Mockito.when
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Arbitrary
@@ -52,8 +56,11 @@ import play.api.test.Helpers.contentAsJson
 import play.api.test.Helpers.route
 import play.api.test.Helpers.running
 import repositories.DepartureRepository
+import repositories.LockRepository
 import utils.Format
 import play.api.test.Helpers._
+import services.SubmitMessageService
+import org.mockito.ArgumentMatchers.{eq => eqTo}
 
 import scala.concurrent.Future
 
@@ -69,17 +76,17 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
   val mrn = arbitrary[MovementReferenceNumber].sample.value
 
   val requestXmlBody =
-    <CC028A>
+    <CC054A>
         <DatOfPreMES9>{Format.dateFormatted(localDate)}</DatOfPreMES9>
         <TimOfPreMES10>{Format.timeFormatted(localTime)}</TimOfPreMES10>
         <HEAHEA>
           <DocNumHEA5>{mrn.value}</DocNumHEA5>
         </HEAHEA>
-      </CC028A>
+      </CC054A>
 
   val message = MessageWithStatus(
     localDateTime,
-    MessageType.MrnAllocated,
+    MessageType.RequestOfRelease,
     requestXmlBody,
     SubmissionPending,
     2
@@ -105,6 +112,180 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
   }
 
   val departure = departureWithOneMessage.sample.value
+
+  "post" - {
+
+    "must return Accepted, add the message to the departure, send the message upstream and set the message state to SubmissionSucceeded" in {
+      val mockDepartureRepository  = mock[DepartureRepository]
+      val mockLockRepository       = mock[LockRepository]
+      val mockSubmitMessageService = mock[SubmitMessageService]
+
+      when(mockLockRepository.lock(any())).thenReturn(Future.successful(true))
+      when(mockLockRepository.unlock(any())).thenReturn(Future.successful(()))
+      when(mockDepartureRepository.get(any())).thenReturn(Future.successful(Some(departure)))
+
+      when(mockSubmitMessageService.submitMessage(any(), any(), any(), eqTo(DepartureStatus.RequestOfRelease))(any()))
+        .thenReturn(Future.successful(SubmissionProcessingResult.SubmissionSuccess))
+
+      val application = baseApplicationBuilder
+        .overrides(
+          bind[DepartureRepository].toInstance(mockDepartureRepository),
+          bind[LockRepository].toInstance(mockLockRepository),
+          bind[SubmitMessageService].toInstance(mockSubmitMessageService)
+        )
+        .build()
+
+      running(application) {
+        val request = FakeRequest(POST, routes.MessagesController.post(departure.departureId).url).withXmlBody(requestXmlBody)
+        val result  = route(application, request).value
+
+        status(result) mustEqual ACCEPTED
+        header("Location", result).value must be(routes.MessagesController.getMessage(departure.departureId, MessageId.fromIndex(1)).url)
+        verify(mockSubmitMessageService, times(1)).submitMessage(eqTo(departure.departureId), eqTo(1), eqTo(message), eqTo(DepartureStatus.RequestOfRelease))(
+          any())
+      }
+    }
+
+    "must return NotFound if there is no Departure for that DepartureId" in {
+      val mockDepartureRepository = mock[DepartureRepository]
+      val mockMessageConnector    = mock[MessageConnector]
+      val mockLockRepository      = mock[LockRepository]
+
+      when(mockLockRepository.lock(any())).thenReturn(Future.successful(true))
+      when(mockLockRepository.unlock(any())).thenReturn(Future.successful(()))
+      when(mockDepartureRepository.get(any())).thenReturn(Future.successful(None))
+
+      val application = baseApplicationBuilder
+        .overrides(
+          bind[LockRepository].toInstance(mockLockRepository),
+          bind[DepartureRepository].toInstance(mockDepartureRepository),
+          bind[MessageConnector].toInstance(mockMessageConnector)
+        )
+        .build()
+
+      running(application) {
+        val request = FakeRequest(POST, routes.MessagesController.post(DepartureId(1)).url).withXmlBody(requestXmlBody)
+
+        val result = route(application, request).value
+
+        status(result) mustEqual NOT_FOUND
+      }
+    }
+
+    "must return InternalServerError if there was an internal failure when saving and sending" in {
+      val mockDepartureRepository  = mock[DepartureRepository]
+      val mockLockRepository       = mock[LockRepository]
+      val mockSubmitMessageService = mock[SubmitMessageService]
+
+      when(mockLockRepository.lock(any())).thenReturn(Future.successful(true))
+      when(mockLockRepository.unlock(any())).thenReturn(Future.successful(()))
+      when(mockDepartureRepository.get(any())).thenReturn(Future.successful(Some(departure)))
+
+      when(mockSubmitMessageService.submitMessage(any(), any(), any(), any())(any()))
+        .thenReturn(Future.successful(SubmissionProcessingResult.SubmissionFailureInternal))
+
+      val application = baseApplicationBuilder
+        .overrides(
+          bind[DepartureRepository].toInstance(mockDepartureRepository),
+          bind[LockRepository].toInstance(mockLockRepository),
+          bind[SubmitMessageService].toInstance(mockSubmitMessageService)
+        )
+        .build()
+
+      running(application) {
+        val request = FakeRequest(POST, routes.MessagesController.post(departure.departureId).url).withXmlBody(requestXmlBody)
+
+        val result = route(application, request).value
+
+        status(result) mustEqual INTERNAL_SERVER_ERROR
+      }
+    }
+
+    "must return BadRequest if the payload is malformed" in {
+      val mockDepartureRepository = mock[DepartureRepository]
+      val mockLockRepository      = mock[LockRepository]
+
+      when(mockLockRepository.lock(any())).thenReturn(Future.successful(true))
+      when(mockLockRepository.unlock(any())).thenReturn(Future.successful(()))
+      when(mockDepartureRepository.get(any())).thenReturn(Future.successful(Some(departure)))
+
+      val application =
+        baseApplicationBuilder
+          .overrides(
+            bind[LockRepository].toInstance(mockLockRepository),
+            bind[DepartureRepository].toInstance(mockDepartureRepository)
+          )
+          .build()
+
+      running(application) {
+        val requestXmlBody = <CC054A><HEAHEA></HEAHEA></CC054A>
+
+        val request = FakeRequest(POST, routes.MessagesController.post(departure.departureId).url).withXmlBody(requestXmlBody)
+
+        val result = route(application, request).value
+
+        status(result) mustEqual BAD_REQUEST
+      }
+    }
+
+    "must return NotImplemented if the message is not supported" in {
+      val mockDepartureRepository = mock[DepartureRepository]
+      val mockMessageConnector    = mock[MessageConnector]
+      val mockLockRepository      = mock[LockRepository]
+
+      when(mockLockRepository.lock(any())).thenReturn(Future.successful(true))
+      when(mockLockRepository.unlock(any())).thenReturn(Future.successful(()))
+      when(mockDepartureRepository.get(any())).thenReturn(Future.successful(Some(departure)))
+
+      val application =
+        baseApplicationBuilder
+          .overrides(
+            bind[LockRepository].toInstance(mockLockRepository),
+            bind[DepartureRepository].toInstance(mockDepartureRepository),
+            bind[MessageConnector].toInstance(mockMessageConnector)
+          )
+          .build()
+
+      running(application) {
+        val requestXmlBody = <CC099A><HEAHEA></HEAHEA></CC099A>
+
+        val request = FakeRequest(POST, routes.MessagesController.post(departure.departureId).url).withXmlBody(requestXmlBody)
+
+        val result = route(application, request).value
+
+        status(result) mustEqual NOT_IMPLEMENTED
+      }
+    }
+
+    "must return BadGateway if there was an external failure when saving and sending" in {
+      val mockDepartureRepository  = mock[DepartureRepository]
+      val mockLockRepository       = mock[LockRepository]
+      val mockSubmitMessageService = mock[SubmitMessageService]
+
+      when(mockLockRepository.lock(any())).thenReturn(Future.successful(true))
+      when(mockLockRepository.unlock(any())).thenReturn(Future.successful(()))
+      when(mockDepartureRepository.get(any())).thenReturn(Future.successful(Some(departure)))
+
+      when(mockSubmitMessageService.submitMessage(any(), any(), any(), any())(any()))
+        .thenReturn(Future.successful(SubmissionProcessingResult.SubmissionFailureExternal))
+
+      val application = baseApplicationBuilder
+        .overrides(
+          bind[DepartureRepository].toInstance(mockDepartureRepository),
+          bind[LockRepository].toInstance(mockLockRepository),
+          bind[SubmitMessageService].toInstance(mockSubmitMessageService)
+        )
+        .build()
+
+      running(application) {
+        val request = FakeRequest(POST, routes.MessagesController.post(departure.departureId).url).withXmlBody(requestXmlBody)
+
+        val result = route(application, request).value
+
+        status(result) mustEqual BAD_GATEWAY
+      }
+    }
+  }
 
   "getMessages" - {
 

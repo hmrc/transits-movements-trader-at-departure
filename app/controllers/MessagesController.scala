@@ -17,25 +17,70 @@
 package controllers
 
 import controllers.actions.AuthenticatedGetDepartureForReadActionProvider
+import controllers.actions.AuthenticatedGetDepartureForWriteActionProvider
+import controllers.actions.GetDepartureForWriteActionProvider
 import javax.inject.Inject
 import models.response.ResponseDepartureWithMessages
 import models.response.ResponseMessage
 import models.DepartureId
+import models.DepartureStatus
 import models.MessageId
+import models.MessageType
+import models.SubmissionProcessingResult
 import models.MessageStatus.SubmissionFailed
+import models.request.DepartureRequest
+import play.api.Logger
 import play.api.libs.json.Json
 import play.api.mvc.Action
 import play.api.mvc.AnyContent
 import play.api.mvc.ControllerComponents
+import services.DepartureService
+import services.SubmitMessageService
 import uk.gov.hmrc.play.bootstrap.controller.BackendController
 
 import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
+import scala.xml.NodeSeq
 
 class MessagesController @Inject()(
   cc: ControllerComponents,
-  authenticateForRead: AuthenticatedGetDepartureForReadActionProvider
+  authenticateForRead: AuthenticatedGetDepartureForReadActionProvider,
+  authenticateForWrite: AuthenticatedGetDepartureForWriteActionProvider,
+  departureService: DepartureService,
+  submitMessageService: SubmitMessageService
 )(implicit ec: ExecutionContext)
     extends BackendController(cc) {
+
+  def post(departureId: DepartureId): Action[NodeSeq] = authenticateForWrite(departureId).async(parse.xml) {
+    implicit request: DepartureRequest[NodeSeq] =>
+      MessageType.getMessageType(request.body) match {
+        case Some(MessageType.RequestOfRelease) =>
+          departureService
+            .makeMessageWithStatus(request.departure.nextMessageCorrelationId, MessageType.RequestOfRelease)(request.body)
+            .map {
+              message =>
+                submitMessageService
+                  .submitMessage(departureId, request.departure.nextMessageId.index, message, DepartureStatus.RequestOfRelease)
+                  .map {
+                    case SubmissionProcessingResult.SubmissionSuccess =>
+                      Accepted("Message accepted")
+                        .withHeaders("Location" -> routes.MessagesController.getMessage(request.departure.departureId, request.departure.nextMessageId).url)
+
+                    case SubmissionProcessingResult.SubmissionFailureInternal =>
+                      InternalServerError
+
+                    case SubmissionProcessingResult.SubmissionFailureExternal =>
+                      BadGateway
+                  }
+            }
+            .getOrElse {
+              Logger.warn("Invalid data: missing either DatOfPreMES9, TimOfPreMES10 or DocNumHEA5")
+              Future.successful(BadRequest("Invalid data: missing either DatOfPreMES9, TimOfPreMES10 or DocNumHEA5"))
+            }
+        case _ =>
+          Future.successful(NotImplemented)
+      }
+  }
 
   def getMessages(departureId: DepartureId): Action[AnyContent] = authenticateForRead(departureId) {
     implicit request =>
