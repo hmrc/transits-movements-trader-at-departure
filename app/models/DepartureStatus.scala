@@ -101,6 +101,7 @@ object DepartureStatus extends Enumerable.Implicits with MongoDateTimeFormats {
   val values = Seq(
     Initialized,
     DepartureSubmitted,
+    PositiveAcknowledgement,
     MrnAllocated,
     DepartureRejected,
     ControlDecisionNotification,

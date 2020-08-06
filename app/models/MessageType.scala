@@ -37,7 +37,7 @@ object MessageType extends Enumerable.Implicits {
 
   case object RequestOfRelease extends IeMetadata("IE054", "CC054A") with MessageType
 
-  val values: Seq[MessageType] = Seq(DepartureDeclaration, MrnAllocated, DeclarationRejected, RequestOfRelease)
+  val values: Seq[MessageType] = Seq(PositiveAcknowledgement, DepartureDeclaration, MrnAllocated, DeclarationRejected, ControlDecisionNotification, NoReleaseForTransit, RequestOfRelease)
 
   def getMessageType: ReaderT[Option, NodeSeq, MessageType] =
     ReaderT[Option, NodeSeq, MessageType] {

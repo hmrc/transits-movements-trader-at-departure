@@ -312,7 +312,7 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
 
           val expectedMessages  = ResponseMessage.build(departure.departureId, MessageId.fromMessageIdValue(1).value, message)
           val expectedDeparture = ResponseDepartureWithMessages.build(departure).copy(messages = Seq(expectedMessages))
-          
+
           contentAsJson(result) mustEqual Json.toJson(expectedDeparture)
         }
       }
