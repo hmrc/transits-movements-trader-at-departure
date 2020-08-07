@@ -54,9 +54,9 @@ class MessagesController @Inject()(
   def post(departureId: DepartureId): Action[NodeSeq] = authenticateForWrite(departureId).async(parse.xml) {
     implicit request: DepartureRequest[NodeSeq] =>
       MessageType.getMessageType(request.body) match {
-        case Some(MessageType.RequestOfRelease) =>
+        case Some(x) => //TODO: was previously a specific message type. Need to replace to allow the default case to work.
           departureService
-            .makeMessageWithStatus(request.departure.nextMessageCorrelationId, MessageType.RequestOfRelease)(request.body)
+            .makeMessageWithStatus(request.departure.nextMessageCorrelationId, x)(request.body)
             .map {
               message =>
                 submitMessageService
