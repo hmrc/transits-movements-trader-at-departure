@@ -60,7 +60,7 @@ class MessagesController @Inject()(
             .map {
               message =>
                 submitMessageService
-                  .submitMessage(departureId, request.departure.nextMessageId.index, message, DepartureStatus.Initialized.)
+                  .submitMessage(departureId, request.departure.nextMessageId.index, message, DepartureStatus.Initialized)
                   .map {
                     case SubmissionProcessingResult.SubmissionSuccess =>
                       Accepted("Message accepted")
