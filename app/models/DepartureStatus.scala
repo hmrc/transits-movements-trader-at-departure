@@ -70,6 +70,7 @@ object DepartureStatus extends Enumerable.Implicits with MongoDateTimeFormats {
       case MessageReceivedEvent.ControlDecisionNotification => ControlDecisionNotification
       case MessageReceivedEvent.NoReleaseForTransit         => NoReleaseForTransit
       case MessageReceivedEvent.ReleaseForTransit           => ReleaseForTransit
+      case MessageReceivedEvent.RequestOfRelease            => RequestOfRelease
       case _                                                => throw new Exception(s"Tried to transition from ControlDecisionNotification to $messageRecieved")
     }
   }
@@ -88,14 +89,25 @@ object DepartureStatus extends Enumerable.Implicits with MongoDateTimeFormats {
     }
   }
 
+  case object RequestOfRelease extends DepartureStatus {
+    override def transition(messageReceived: MessageReceivedEvent): DepartureStatus = messageReceived match {
+      case MessageReceivedEvent.RequestOfRelease    => RequestOfRelease
+      case MessageReceivedEvent.NoReleaseForTransit => NoReleaseForTransit
+      case MessageReceivedEvent.ReleaseForTransit   => ReleaseForTransit
+      case _                                        => throw new Exception(s"Tried to transition from ReleaseForTransit to $messageReceived")
+    }
+  }
+
   val values = Seq(
     Initialized,
     DepartureSubmitted,
+    PositiveAcknowledgement,
     MrnAllocated,
     DepartureRejected,
     ControlDecisionNotification,
     NoReleaseForTransit,
-    ReleaseForTransit
+    ReleaseForTransit,
+    RequestOfRelease
   )
 
   implicit val enumerable: Enumerable[DepartureStatus] =

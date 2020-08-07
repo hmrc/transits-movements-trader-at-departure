@@ -5,6 +5,7 @@ POST       /movements/departures                                        controll
 GET        /movements/departures/:departureId                           controllers.DeparturesController.get(departureId: DepartureId)
 
 GET        /movements/departures/:departureId/messages                  controllers.MessagesController.getMessages(departureId: DepartureId)
+POST       /movements/departures/:departureId/messages                  controllers.MessagesController.post(departureId: DepartureId)
 
 GET        /movements/departures/:departureId/messages/:messageId       controllers.MessagesController.getMessage(departureId: DepartureId, messageId: MessageId)
 
