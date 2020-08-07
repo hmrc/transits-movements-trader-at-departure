@@ -125,8 +125,9 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
       when(mockLockRepository.unlock(any())).thenReturn(Future.successful(()))
       when(mockDepartureRepository.get(any())).thenReturn(Future.successful(Some(departure)))
 
-      when(mockSubmitMessageService.submitMessage(any(), any(), any(), eqTo(DepartureStatus.RequestOfRelease))(any()))
-        .thenReturn(Future.successful(SubmissionProcessingResult.SubmissionSuccess))
+      //TODO: Will be immediately reusable when IE014 is implemented.
+//      when(mockSubmitMessageService.submitMessage(any(), any(), any(), eqTo(DepartureStatus.RequestOfRelease))(any()))
+//        .thenReturn(Future.successful(SubmissionProcessingResult.SubmissionSuccess))
 
       val application = baseApplicationBuilder
         .overrides(
@@ -142,8 +143,9 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
 
         status(result) mustEqual ACCEPTED
         header("Location", result).value must be(routes.MessagesController.getMessage(departure.departureId, MessageId.fromIndex(1)).url)
-        verify(mockSubmitMessageService, times(1)).submitMessage(eqTo(departure.departureId), eqTo(1), eqTo(message), eqTo(DepartureStatus.RequestOfRelease))(
-          any())
+//TODO: Will be immediately reusable when IE014 is implemented
+        //        verify(mockSubmitMessageService, times(1)).submitMessage(eqTo(departure.departureId), eqTo(1), eqTo(message), eqTo(DepartureStatus.RequestOfRelease))(
+//          any())
       }
     }
 
