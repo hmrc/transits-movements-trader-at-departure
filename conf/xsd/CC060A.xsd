@@ -5,8 +5,8 @@
   <!--===== XSD version v1.00  -->
   <!--=========================================-->
   <!--===== Includes =====-->
-  <xs:include schemaLocation="../../../../../Downloads/NCTS XSDs/doc.xsd" />
-  <xs:include schemaLocation="../../../../../Downloads/NCTS XSDs/simple_types.xsd" />
+  <xs:include schemaLocation="doc.xsd" />
+  <xs:include schemaLocation="simple_types.xsd" />
   <!--===== Root Element =====-->
   <xs:element name="CC060A" type="CC060AType" />
   <!--===== MESSAGE Content =====-->
