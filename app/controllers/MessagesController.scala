@@ -54,13 +54,13 @@ class MessagesController @Inject()(
   def post(departureId: DepartureId): Action[NodeSeq] = authenticateForWrite(departureId).async(parse.xml) {
     implicit request: DepartureRequest[NodeSeq] =>
       MessageType.getMessageType(request.body) match {
-        case Some(MessageType.RequestOfRelease) =>
+        case Some(MessageType.DeclarationCancellationRequest) =>
           departureService
-            .makeMessageWithStatus(request.departure.nextMessageCorrelationId, MessageType.RequestOfRelease)(request.body)
+            .makeMessageWithStatus(request.departure.nextMessageCorrelationId, MessageType.DeclarationCancellationRequest)(request.body)
             .map {
               message =>
                 submitMessageService
-                  .submitMessage(departureId, request.departure.nextMessageId.index, message, DepartureStatus.RequestOfRelease)
+                  .submitMessage(departureId, request.departure.nextMessageId.index, message, DepartureStatus.DeclarationCancellationRequest)
                   .map {
                     case SubmissionProcessingResult.SubmissionSuccess =>
                       Accepted("Message accepted")

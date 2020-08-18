@@ -76,17 +76,17 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
   val mrn = arbitrary[MovementReferenceNumber].sample.value
 
   val requestXmlBody =
-    <CC054A>
+    <CC014A>
         <DatOfPreMES9>{Format.dateFormatted(localDate)}</DatOfPreMES9>
         <TimOfPreMES10>{Format.timeFormatted(localTime)}</TimOfPreMES10>
         <HEAHEA>
           <DocNumHEA5>{mrn.value}</DocNumHEA5>
         </HEAHEA>
-      </CC054A>
+      </CC014A>
 
   val message = MessageWithStatus(
     localDateTime,
-    MessageType.RequestOfRelease,
+    MessageType.DeclarationCancellationRequest,
     requestXmlBody,
     SubmissionPending,
     2
@@ -125,7 +125,7 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
       when(mockLockRepository.unlock(any())).thenReturn(Future.successful(()))
       when(mockDepartureRepository.get(any())).thenReturn(Future.successful(Some(departure)))
 
-      when(mockSubmitMessageService.submitMessage(any(), any(), any(), eqTo(DepartureStatus.RequestOfRelease))(any()))
+      when(mockSubmitMessageService.submitMessage(any(), any(), any(), eqTo(DepartureStatus.DeclarationCancellationRequest))(any()))
         .thenReturn(Future.successful(SubmissionProcessingResult.SubmissionSuccess))
 
       val application = baseApplicationBuilder
@@ -142,8 +142,10 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
 
         status(result) mustEqual ACCEPTED
         header("Location", result).value must be(routes.MessagesController.getMessage(departure.departureId, MessageId.fromIndex(1)).url)
-        verify(mockSubmitMessageService, times(1)).submitMessage(eqTo(departure.departureId), eqTo(1), eqTo(message), eqTo(DepartureStatus.RequestOfRelease))(
-          any())
+        verify(mockSubmitMessageService, times(1)).submitMessage(eqTo(departure.departureId),
+                                                                 eqTo(1),
+                                                                 eqTo(message),
+                                                                 eqTo(DepartureStatus.DeclarationCancellationRequest))(any())
       }
     }
 
@@ -219,7 +221,7 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
           .build()
 
       running(application) {
-        val requestXmlBody = <CC054A><HEAHEA></HEAHEA></CC054A>
+        val requestXmlBody = <CC014A><HEAHEA></HEAHEA></CC014A>
 
         val request = FakeRequest(POST, routes.MessagesController.post(departure.departureId).url).withXmlBody(requestXmlBody)
 
