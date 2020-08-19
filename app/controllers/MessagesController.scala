@@ -22,11 +22,7 @@ import controllers.actions.GetDepartureForWriteActionProvider
 import javax.inject.Inject
 import models.response.ResponseDepartureWithMessages
 import models.response.ResponseMessage
-import models.DepartureId
-import models.DepartureStatus
-import models.MessageId
-import models.MessageType
-import models.SubmissionProcessingResult
+import models.{DepartureId, DepartureStatus, MessageId, MessageReceivedEvent, MessageType, SubmissionProcessingResult}
 import models.MessageStatus.SubmissionFailed
 import models.request.DepartureRequest
 import play.api.Logger
@@ -54,13 +50,14 @@ class MessagesController @Inject()(
   def post(departureId: DepartureId): Action[NodeSeq] = authenticateForWrite(departureId).async(parse.xml) {
     implicit request: DepartureRequest[NodeSeq] =>
       MessageType.getMessageType(request.body) match {
-        case Some(MessageType.RequestOfRelease) =>
+        case Some(MessageType.DeclarationCancellationRequest) =>
           departureService
-            .makeMessageWithStatus(request.departure.nextMessageCorrelationId, MessageType.RequestOfRelease)(request.body)
+            .makeMessageWithStatus(request.departure.nextMessageCorrelationId, MessageType.DeclarationCancellationRequest)(request.body)
             .map {
-              message =>
+              message => {
+                val status = request.departure.status.transition(MessageReceivedEvent.DeclarationCancellationRequest)
                 submitMessageService
-                  .submitMessage(departureId, request.departure.nextMessageId.index, message, DepartureStatus.RequestOfRelease)
+                  .submitMessage(departureId, request.departure.nextMessageId.index, message, status)
                   .map {
                     case SubmissionProcessingResult.SubmissionSuccess =>
                       Accepted("Message accepted")
@@ -72,6 +69,8 @@ class MessagesController @Inject()(
                     case SubmissionProcessingResult.SubmissionFailureExternal =>
                       BadGateway
                   }
+              }
+
             }
             .getOrElse {
               Logger.warn("Invalid data: missing either DatOfPreMES9, TimOfPreMES10 or DocNumHEA5")

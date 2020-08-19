@@ -50,11 +50,12 @@ object DepartureStatus extends Enumerable.Implicits with MongoDateTimeFormats {
 
   case object MrnAllocated extends DepartureStatus {
     override def transition(messageReceived: MessageReceivedEvent): DepartureStatus = messageReceived match {
-      case MessageReceivedEvent.MrnAllocated                => MrnAllocated
-      case MessageReceivedEvent.ControlDecisionNotification => ControlDecisionNotification
-      case MessageReceivedEvent.NoReleaseForTransit         => NoReleaseForTransit
-      case MessageReceivedEvent.ReleaseForTransit           => ReleaseForTransit
-      case _                                                => throw new Exception(s"Tried to transition from MrnAllocated to $messageReceived.")
+      case MessageReceivedEvent.MrnAllocated                   => MrnAllocated
+      case MessageReceivedEvent.ControlDecisionNotification    => ControlDecisionNotification
+      case MessageReceivedEvent.NoReleaseForTransit            => NoReleaseForTransit
+      case MessageReceivedEvent.ReleaseForTransit              => ReleaseForTransit
+      case MessageReceivedEvent.DeclarationCancellationRequest => DeclarationCancellationRequest
+      case _                                                   => throw new Exception(s"Tried to transition from MrnAllocated to $messageReceived.")
     }
   }
 
@@ -70,7 +71,6 @@ object DepartureStatus extends Enumerable.Implicits with MongoDateTimeFormats {
       case MessageReceivedEvent.ControlDecisionNotification => ControlDecisionNotification
       case MessageReceivedEvent.NoReleaseForTransit         => NoReleaseForTransit
       case MessageReceivedEvent.ReleaseForTransit           => ReleaseForTransit
-      case MessageReceivedEvent.RequestOfRelease            => RequestOfRelease
       case _                                                => throw new Exception(s"Tried to transition from ControlDecisionNotification to $messageRecieved")
     }
   }
@@ -84,17 +84,16 @@ object DepartureStatus extends Enumerable.Implicits with MongoDateTimeFormats {
 
   case object ReleaseForTransit extends DepartureStatus {
     override def transition(messageReceived: MessageReceivedEvent): DepartureStatus = messageReceived match {
-      case MessageReceivedEvent.ReleaseForTransit => ReleaseForTransit
-      case _                                      => throw new Exception(s"Tried to transition from ReleaseForTransit to $messageReceived")
+      case MessageReceivedEvent.ReleaseForTransit              => ReleaseForTransit
+      case MessageReceivedEvent.DeclarationCancellationRequest => DeclarationCancellationRequest
+      case _                                                   => throw new Exception(s"Tried to transition from ReleaseForTransit to $messageReceived")
     }
   }
 
-  case object RequestOfRelease extends DepartureStatus {
+  case object DeclarationCancellationRequest extends DepartureStatus {
     override def transition(messageReceived: MessageReceivedEvent): DepartureStatus = messageReceived match {
-      case MessageReceivedEvent.RequestOfRelease    => RequestOfRelease
-      case MessageReceivedEvent.NoReleaseForTransit => NoReleaseForTransit
-      case MessageReceivedEvent.ReleaseForTransit   => ReleaseForTransit
-      case _                                        => throw new Exception(s"Tried to transition from ReleaseForTransit to $messageReceived")
+      case MessageReceivedEvent.DeclarationCancellationRequest => DeclarationCancellationRequest
+      case _                                                   => throw new Exception(s"Tried to transition from DeclarationCancellationRequest to $messageReceived")
     }
   }
 
@@ -107,7 +106,7 @@ object DepartureStatus extends Enumerable.Implicits with MongoDateTimeFormats {
     ControlDecisionNotification,
     NoReleaseForTransit,
     ReleaseForTransit,
-    RequestOfRelease
+    DeclarationCancellationRequest
   )
 
   implicit val enumerable: Enumerable[DepartureStatus] =

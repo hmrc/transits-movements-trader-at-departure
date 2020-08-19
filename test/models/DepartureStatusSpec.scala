@@ -73,6 +73,10 @@ class DepartureStatusSpec extends SpecBase with ScalaCheckDrivenPropertyChecks w
     "to ReleaseForTransit when receiving a ReleaseForTransit event" in {
       DepartureStatus.MrnAllocated.transition(MessageReceivedEvent.ReleaseForTransit) mustEqual DepartureStatus.ReleaseForTransit
     }
+
+    "to DeclarationCancellationRequest when receiving a DeclarationCancellationRequest event" in {
+      DepartureStatus.MrnAllocated.transition(MessageReceivedEvent.DeclarationCancellationRequest) mustEqual DepartureStatus.DeclarationCancellationRequest
+    }
   }
 
   "DepartureRejected must transition" - {
@@ -93,15 +97,15 @@ class DepartureStatusSpec extends SpecBase with ScalaCheckDrivenPropertyChecks w
     "to ReleaseForTransit when receiving a ReleaseForTransit event" in {
       DepartureStatus.ControlDecisionNotification.transition(MessageReceivedEvent.ReleaseForTransit) mustEqual DepartureStatus.ReleaseForTransit
     }
-
-    "to RequestOfRelease when receiving a RequestOfRelease event" in {
-      DepartureStatus.ControlDecisionNotification.transition(MessageReceivedEvent.RequestOfRelease) mustEqual DepartureStatus.RequestOfRelease
-    }
   }
 
   "ReleaseForTransit must transition" - {
     "to ReleaseForTransit when receiving a ReleaseForTransit event" in {
       DepartureStatus.ReleaseForTransit.transition(MessageReceivedEvent.ReleaseForTransit) mustEqual DepartureStatus.ReleaseForTransit
+    }
+
+    "to DeclarationCancellationRequest when receiving a DeclarationCancellationRequest event" in {
+      DepartureStatus.ReleaseForTransit.transition(MessageReceivedEvent.DeclarationCancellationRequest) mustEqual DepartureStatus.DeclarationCancellationRequest
     }
   }
 
@@ -111,15 +115,9 @@ class DepartureStatusSpec extends SpecBase with ScalaCheckDrivenPropertyChecks w
     }
   }
 
-  "RequestOfRelease must transition" - {
-    "to RequestOfRelease when receiving a RequestOfRelease event" in {
-      DepartureStatus.RequestOfRelease.transition(MessageReceivedEvent.RequestOfRelease) mustEqual DepartureStatus.RequestOfRelease
-    }
-    "to NoReleaseForTransit when receiving a NoReleaseForTransit event" in {
-      DepartureStatus.RequestOfRelease.transition(MessageReceivedEvent.NoReleaseForTransit) mustEqual DepartureStatus.NoReleaseForTransit
-    }
-    "to ReleaseForTransit when receiving a ReleaseForTransit event" in {
-      DepartureStatus.RequestOfRelease.transition(MessageReceivedEvent.ReleaseForTransit) mustEqual DepartureStatus.ReleaseForTransit
+  "DeclarationCancellationRequest must transition" - {
+    "to DeclarationCancellationRequest when receiving a DeclarationCancellationRequest event" in {
+      DepartureStatus.DeclarationCancellationRequest.transition(MessageReceivedEvent.DeclarationCancellationRequest) mustEqual DepartureStatus.DeclarationCancellationRequest
     }
   }
 
@@ -132,7 +130,7 @@ class DepartureStatusSpec extends SpecBase with ScalaCheckDrivenPropertyChecks w
     "ControlDecisionNotification" in { DepartureStatus.values.contains(DepartureStatus.ControlDecisionNotification) }
     "ReleaseForTransit" in { DepartureStatus.values.contains(DepartureStatus.ReleaseForTransit) }
     "NoReleaseForTransit" in { DepartureStatus.values.contains(DepartureStatus.NoReleaseForTransit) }
-    "RequestOfRelease" in { DepartureStatus.values.contains(DepartureStatus.RequestOfRelease) }
+    "DeclarationCancellationRequest" in { DepartureStatus.values.contains(DepartureStatus.DeclarationCancellationRequest) }
   }
 
 }
