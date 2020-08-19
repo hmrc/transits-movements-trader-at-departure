@@ -22,11 +22,7 @@ import controllers.actions.GetDepartureForWriteActionProvider
 import javax.inject.Inject
 import models.response.ResponseDepartureWithMessages
 import models.response.ResponseMessage
-import models.DepartureId
-import models.DepartureStatus
-import models.MessageId
-import models.MessageType
-import models.SubmissionProcessingResult
+import models.{DepartureId, DepartureStatus, MessageId, MessageReceivedEvent, MessageType, SubmissionProcessingResult}
 import models.MessageStatus.SubmissionFailed
 import models.request.DepartureRequest
 import play.api.Logger
@@ -58,9 +54,10 @@ class MessagesController @Inject()(
           departureService
             .makeMessageWithStatus(request.departure.nextMessageCorrelationId, MessageType.DeclarationCancellationRequest)(request.body)
             .map {
-              message =>
+              message => {
+                val status = request.departure.status.transition(MessageReceivedEvent.DeclarationCancellationRequest)
                 submitMessageService
-                  .submitMessage(departureId, request.departure.nextMessageId.index, message, DepartureStatus.DeclarationCancellationRequest)
+                  .submitMessage(departureId, request.departure.nextMessageId.index, message, status)
                   .map {
                     case SubmissionProcessingResult.SubmissionSuccess =>
                       Accepted("Message accepted")
@@ -72,6 +69,8 @@ class MessagesController @Inject()(
                     case SubmissionProcessingResult.SubmissionFailureExternal =>
                       BadGateway
                   }
+              }
+
             }
             .getOrElse {
               Logger.warn("Invalid data: missing either DatOfPreMES9, TimOfPreMES10 or DocNumHEA5")
