@@ -86,6 +86,7 @@ object DepartureStatus extends Enumerable.Implicits with MongoDateTimeFormats {
     override def transition(messageReceived: MessageReceivedEvent): DepartureStatus = messageReceived match {
       case MessageReceivedEvent.ReleaseForTransit              => ReleaseForTransit
       case MessageReceivedEvent.DeclarationCancellationRequest => DeclarationCancellationRequest
+      case MessageReceivedEvent.CancellationDecision           => CancellationDecision
       case _                                                   => throw new Exception(s"Tried to transition from ReleaseForTransit to $messageReceived")
     }
   }
@@ -93,7 +94,15 @@ object DepartureStatus extends Enumerable.Implicits with MongoDateTimeFormats {
   case object DeclarationCancellationRequest extends DepartureStatus {
     override def transition(messageReceived: MessageReceivedEvent): DepartureStatus = messageReceived match {
       case MessageReceivedEvent.DeclarationCancellationRequest => DeclarationCancellationRequest
+      case MessageReceivedEvent.CancellationDecision           => CancellationDecision
       case _                                                   => throw new Exception(s"Tried to transition from DeclarationCancellationRequest to $messageReceived")
+    }
+  }
+
+  case object CancellationDecision extends DepartureStatus {
+    override def transition(messageReceived: MessageReceivedEvent): DepartureStatus = messageReceived match {
+      case MessageReceivedEvent.CancellationDecision => CancellationDecision
+      case _                                         => throw new Exception(s"Tried to transition from CancellationDecision to $messageReceived")
     }
   }
 
@@ -106,7 +115,8 @@ object DepartureStatus extends Enumerable.Implicits with MongoDateTimeFormats {
     ControlDecisionNotification,
     NoReleaseForTransit,
     ReleaseForTransit,
-    DeclarationCancellationRequest
+    DeclarationCancellationRequest,
+    CancellationDecision
   )
 
   implicit val enumerable: Enumerable[DepartureStatus] =

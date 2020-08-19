@@ -59,3 +59,9 @@ case object ReleaseForTransitResponse extends MessageResponse {
   override val messageType: MessageType              = MessageType.ReleaseForTransit
   override val xsdFile: XSDFile                      = ReleaseForTransitXSD
 }
+
+case object CancellationDecisionResponse extends MessageResponse {
+  override val messageReceived: MessageReceivedEvent = MessageReceivedEvent.CancellationDecision
+  override val messageType: MessageType              = MessageType.CancellationDecision
+  override val xsdFile: XSDFile                      = CancellationDecisionXSD
+}

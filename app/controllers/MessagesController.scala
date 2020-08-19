@@ -22,7 +22,12 @@ import controllers.actions.GetDepartureForWriteActionProvider
 import javax.inject.Inject
 import models.response.ResponseDepartureWithMessages
 import models.response.ResponseMessage
-import models.{DepartureId, DepartureStatus, MessageId, MessageReceivedEvent, MessageType, SubmissionProcessingResult}
+import models.DepartureId
+import models.DepartureStatus
+import models.MessageId
+import models.MessageReceivedEvent
+import models.MessageType
+import models.SubmissionProcessingResult
 import models.MessageStatus.SubmissionFailed
 import models.request.DepartureRequest
 import play.api.Logger
@@ -54,22 +59,23 @@ class MessagesController @Inject()(
           departureService
             .makeMessageWithStatus(request.departure.nextMessageCorrelationId, MessageType.DeclarationCancellationRequest)(request.body)
             .map {
-              message => {
-                val status = request.departure.status.transition(MessageReceivedEvent.DeclarationCancellationRequest)
-                submitMessageService
-                  .submitMessage(departureId, request.departure.nextMessageId.index, message, status)
-                  .map {
-                    case SubmissionProcessingResult.SubmissionSuccess =>
-                      Accepted("Message accepted")
-                        .withHeaders("Location" -> routes.MessagesController.getMessage(request.departure.departureId, request.departure.nextMessageId).url)
+              message =>
+                {
+                  val status = request.departure.status.transition(MessageReceivedEvent.DeclarationCancellationRequest)
+                  submitMessageService
+                    .submitMessage(departureId, request.departure.nextMessageId.index, message, status)
+                    .map {
+                      case SubmissionProcessingResult.SubmissionSuccess =>
+                        Accepted("Message accepted")
+                          .withHeaders("Location" -> routes.MessagesController.getMessage(request.departure.departureId, request.departure.nextMessageId).url)
 
-                    case SubmissionProcessingResult.SubmissionFailureInternal =>
-                      InternalServerError
+                      case SubmissionProcessingResult.SubmissionFailureInternal =>
+                        InternalServerError
 
-                    case SubmissionProcessingResult.SubmissionFailureExternal =>
-                      BadGateway
-                  }
-              }
+                      case SubmissionProcessingResult.SubmissionFailureExternal =>
+                        BadGateway
+                    }
+                }
 
             }
             .getOrElse {
