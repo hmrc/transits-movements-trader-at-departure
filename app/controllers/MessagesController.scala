@@ -75,8 +75,8 @@ class MessagesController @Inject()(
                           case SubmissionProcessingResult.SubmissionFailureExternal =>
                             BadGateway
                         }
-                    case Left(message) =>
-                      Future.successful(BadRequest(message))
+                    case Left(error) =>
+                      Future.successful(BadRequest(error.reason))
                   }
                 }
             }

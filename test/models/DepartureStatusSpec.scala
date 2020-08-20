@@ -48,11 +48,11 @@ class DepartureStatusSpec extends SpecBase with ScalaCheckDrivenPropertyChecks w
   }
 
   "DepartureSubmitted must" - {
-    "transitionnto DepartureSubmitted when receiving a DepartureSubmitted event" in {
+    "transitionn to DepartureSubmitted when receiving a DepartureSubmitted event" in {
       DepartureStatus.DepartureSubmitted.transition(MessageReceivedEvent.DepartureSubmitted) mustEqual Right(DepartureStatus.DepartureSubmitted)
     }
 
-    "transitionnto PositiveAcknowledgement when receiving a PositiveAcknowledgement event" in {
+    "transitionn to PositiveAcknowledgement when receiving a PositiveAcknowledgement event" in {
       DepartureStatus.DepartureSubmitted.transition(MessageReceivedEvent.PositiveAcknowledgement) mustEqual Right(DepartureStatus.PositiveAcknowledgement)
     }
 

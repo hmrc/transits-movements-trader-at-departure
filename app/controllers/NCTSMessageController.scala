@@ -102,8 +102,8 @@ class NCTSMessageController @Inject()(cc: ControllerComponents, getDeparture: Ge
                       BadRequest(message)
                   }
               }
-            case Left(message) =>
-              Future.successful(BadRequest(message))
+            case Left(error) =>
+              Future.successful(BadRequest(error.reason))
           }
         case None =>
           val message = "No response from downstream NCTS";
