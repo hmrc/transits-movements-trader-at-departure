@@ -107,6 +107,10 @@ class DepartureStatusSpec extends SpecBase with ScalaCheckDrivenPropertyChecks w
     "to DeclarationCancellationRequest when receiving a DeclarationCancellationRequest event" in {
       DepartureStatus.ReleaseForTransit.transition(MessageReceivedEvent.DeclarationCancellationRequest) mustEqual DepartureStatus.DeclarationCancellationRequest
     }
+
+    "to CancellationDecision when receiving a CancellationDecision event" in {
+      DepartureStatus.ReleaseForTransit.transition(MessageReceivedEvent.CancellationDecision) mustEqual DepartureStatus.CancellationDecision
+    }
   }
 
   "NoReleaseForTransit must transition" - {
@@ -118,6 +122,10 @@ class DepartureStatusSpec extends SpecBase with ScalaCheckDrivenPropertyChecks w
   "DeclarationCancellationRequest must transition" - {
     "to DeclarationCancellationRequest when receiving a DeclarationCancellationRequest event" in {
       DepartureStatus.DeclarationCancellationRequest.transition(MessageReceivedEvent.DeclarationCancellationRequest) mustEqual DepartureStatus.DeclarationCancellationRequest
+    }
+
+    "to CancellationDecision when receiving a CancellationDecision event" in {
+      DepartureStatus.DeclarationCancellationRequest.transition(MessageReceivedEvent.CancellationDecision) mustEqual DepartureStatus.CancellationDecision
     }
   }
 
@@ -131,6 +139,7 @@ class DepartureStatusSpec extends SpecBase with ScalaCheckDrivenPropertyChecks w
     "ReleaseForTransit" in { DepartureStatus.values.contains(DepartureStatus.ReleaseForTransit) }
     "NoReleaseForTransit" in { DepartureStatus.values.contains(DepartureStatus.NoReleaseForTransit) }
     "DeclarationCancellationRequest" in { DepartureStatus.values.contains(DepartureStatus.DeclarationCancellationRequest) }
+    "CancellationDecision" in { DepartureStatus.values.contains(DepartureStatus.CancellationDecision) }
   }
 
 }
