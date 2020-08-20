@@ -84,6 +84,15 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
         </HEAHEA>
       </CC014A>
 
+  val outOfSequenceRequestXmlBody =
+    <CC015A>
+      <DatOfPreMES9>{Format.dateFormatted(localDate)}</DatOfPreMES9>
+      <TimOfPreMES10>{Format.timeFormatted(localTime)}</TimOfPreMES10>
+      <HEAHEA>
+        <DocNumHEA5>{mrn.value}</DocNumHEA5>
+      </HEAHEA>
+    </CC015A>
+
   val message = MessageWithStatus(
     localDateTime,
     MessageType.DeclarationCancellationRequest,

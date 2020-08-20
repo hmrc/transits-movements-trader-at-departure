@@ -17,92 +17,92 @@
 package models
 
 sealed trait DepartureStatus {
-  def transition(messageReceived: MessageReceivedEvent): DepartureStatus
+  def transition(messageReceived: MessageReceivedEvent): Either[String, DepartureStatus]
 }
 
 object DepartureStatus extends Enumerable.Implicits with MongoDateTimeFormats {
 
   case object Initialized extends DepartureStatus {
-    override def transition(messageReceived: MessageReceivedEvent): DepartureStatus = messageReceived match {
-      case MessageReceivedEvent.DepartureSubmitted => DepartureSubmitted
-      case MessageReceivedEvent.MrnAllocated       => MrnAllocated
-      case MessageReceivedEvent.DepartureRejected  => DepartureRejected
-      case _                                       => throw new Exception(s"Failed to transition from Initialized to $messageReceived.")
+    override def transition(messageReceived: MessageReceivedEvent): Either[String, DepartureStatus] = messageReceived match {
+      case MessageReceivedEvent.DepartureSubmitted => Right(DepartureSubmitted)
+      case MessageReceivedEvent.MrnAllocated       => Right(MrnAllocated)
+      case MessageReceivedEvent.DepartureRejected  => Right(DepartureRejected)
+      case _                                       => Left(s"Failed to transition from Initialized to $messageReceived.")
     }
   }
 
   case object DepartureSubmitted extends DepartureStatus {
-    override def transition(messageReceived: MessageReceivedEvent): DepartureStatus = messageReceived match {
-      case MessageReceivedEvent.DepartureSubmitted      => DepartureSubmitted
-      case MessageReceivedEvent.PositiveAcknowledgement => PositiveAcknowledgement
-      case MessageReceivedEvent.DepartureRejected       => DepartureRejected
-      case _                                            => throw new Exception(s"Failed to transition from DepartureSubmitted to $messageReceived.")
+    override def transition(messageReceived: MessageReceivedEvent): Either[String, DepartureStatus] = messageReceived match {
+      case MessageReceivedEvent.DepartureSubmitted      => Right(DepartureSubmitted)
+      case MessageReceivedEvent.PositiveAcknowledgement => Right(PositiveAcknowledgement)
+      case MessageReceivedEvent.DepartureRejected       => Right(DepartureRejected)
+      case _                                            => Left(s"Failed to transition from DepartureSubmitted to $messageReceived.")
     }
   }
 
   case object PositiveAcknowledgement extends DepartureStatus {
-    override def transition(messageReceived: MessageReceivedEvent): DepartureStatus = messageReceived match {
-      case MessageReceivedEvent.PositiveAcknowledgement => PositiveAcknowledgement
-      case MessageReceivedEvent.MrnAllocated            => MrnAllocated
-      case _                                            => throw new Exception(s"Failed to transition from PositiveAcknowledgement to $messageReceived")
+    override def transition(messageReceived: MessageReceivedEvent): Either[String, DepartureStatus] = messageReceived match {
+      case MessageReceivedEvent.PositiveAcknowledgement => Right(PositiveAcknowledgement)
+      case MessageReceivedEvent.MrnAllocated            => Right(MrnAllocated)
+      case _                                            => Left(s"Failed to transition from PositiveAcknowledgement to $messageReceived")
     }
   }
 
   case object MrnAllocated extends DepartureStatus {
-    override def transition(messageReceived: MessageReceivedEvent): DepartureStatus = messageReceived match {
-      case MessageReceivedEvent.MrnAllocated                   => MrnAllocated
-      case MessageReceivedEvent.ControlDecisionNotification    => ControlDecisionNotification
-      case MessageReceivedEvent.NoReleaseForTransit            => NoReleaseForTransit
-      case MessageReceivedEvent.ReleaseForTransit              => ReleaseForTransit
-      case MessageReceivedEvent.DeclarationCancellationRequest => DeclarationCancellationRequest
-      case _                                                   => throw new Exception(s"Failed to transition from MrnAllocated to $messageReceived.")
+    override def transition(messageReceived: MessageReceivedEvent): Either[String, DepartureStatus] = messageReceived match {
+      case MessageReceivedEvent.MrnAllocated                   => Right(MrnAllocated)
+      case MessageReceivedEvent.ControlDecisionNotification    => Right(ControlDecisionNotification)
+      case MessageReceivedEvent.NoReleaseForTransit            => Right(NoReleaseForTransit)
+      case MessageReceivedEvent.ReleaseForTransit              => Right(ReleaseForTransit)
+      case MessageReceivedEvent.DeclarationCancellationRequest => Right(DeclarationCancellationRequest)
+      case _                                                   => Left(s"Failed to transition from MrnAllocated to $messageReceived.")
     }
   }
 
   case object DepartureRejected extends DepartureStatus {
-    override def transition(messageReceived: MessageReceivedEvent): DepartureStatus = messageReceived match {
-      case MessageReceivedEvent.DepartureRejected => DepartureRejected
-      case _                                      => throw new Exception(s"Failed to transition from ArrivalRejected to $messageReceived.")
+    override def transition(messageReceived: MessageReceivedEvent): Either[String, DepartureStatus] = messageReceived match {
+      case MessageReceivedEvent.DepartureRejected => Right(DepartureRejected)
+      case _                                      => Left(s"Failed to transition from ArrivalRejected to $messageReceived.")
     }
   }
 
   case object ControlDecisionNotification extends DepartureStatus {
-    override def transition(messageRecieved: MessageReceivedEvent): DepartureStatus = messageRecieved match {
-      case MessageReceivedEvent.ControlDecisionNotification => ControlDecisionNotification
-      case MessageReceivedEvent.NoReleaseForTransit         => NoReleaseForTransit
-      case MessageReceivedEvent.ReleaseForTransit           => ReleaseForTransit
-      case _                                                => throw new Exception(s"Failed to transition from ControlDecisionNotification to $messageRecieved")
+    override def transition(messageRecieved: MessageReceivedEvent): Either[String, DepartureStatus] = messageRecieved match {
+      case MessageReceivedEvent.ControlDecisionNotification => Right(ControlDecisionNotification)
+      case MessageReceivedEvent.NoReleaseForTransit         => Right(NoReleaseForTransit)
+      case MessageReceivedEvent.ReleaseForTransit           => Right(ReleaseForTransit)
+      case _                                                => Left(s"Failed to transition from ControlDecisionNotification to $messageRecieved")
     }
   }
 
   case object NoReleaseForTransit extends DepartureStatus {
-    override def transition(messageReceived: MessageReceivedEvent): DepartureStatus = messageReceived match {
-      case MessageReceivedEvent.NoReleaseForTransit => NoReleaseForTransit
-      case _                                        => throw new Exception(s"Failed to transition from NoReleaseForTransit to $messageReceived")
+    override def transition(messageReceived: MessageReceivedEvent): Either[String, DepartureStatus] = messageReceived match {
+      case MessageReceivedEvent.NoReleaseForTransit => Right(NoReleaseForTransit)
+      case _                                        => Left(s"Failed to transition from NoReleaseForTransit to $messageReceived")
     }
   }
 
   case object ReleaseForTransit extends DepartureStatus {
-    override def transition(messageReceived: MessageReceivedEvent): DepartureStatus = messageReceived match {
-      case MessageReceivedEvent.ReleaseForTransit              => ReleaseForTransit
-      case MessageReceivedEvent.DeclarationCancellationRequest => DeclarationCancellationRequest
-      case MessageReceivedEvent.CancellationDecision           => CancellationDecision
-      case _                                                   => throw new Exception(s"Failed to transition from ReleaseForTransit to $messageReceived")
+    override def transition(messageReceived: MessageReceivedEvent): Either[String, DepartureStatus] = messageReceived match {
+      case MessageReceivedEvent.ReleaseForTransit              => Right(ReleaseForTransit)
+      case MessageReceivedEvent.DeclarationCancellationRequest => Right(DeclarationCancellationRequest)
+      case MessageReceivedEvent.CancellationDecision           => Right(CancellationDecision)
+      case _                                                   => Left(s"Failed to transition from ReleaseForTransit to $messageReceived")
     }
   }
 
   case object DeclarationCancellationRequest extends DepartureStatus {
-    override def transition(messageReceived: MessageReceivedEvent): DepartureStatus = messageReceived match {
-      case MessageReceivedEvent.DeclarationCancellationRequest => DeclarationCancellationRequest
-      case MessageReceivedEvent.CancellationDecision           => CancellationDecision
-      case _                                                   => throw new Exception(s"Failed to transition from DeclarationCancellationRequest to $messageReceived")
+    override def transition(messageReceived: MessageReceivedEvent): Either[String, DepartureStatus] = messageReceived match {
+      case MessageReceivedEvent.DeclarationCancellationRequest => Right(DeclarationCancellationRequest)
+      case MessageReceivedEvent.CancellationDecision           => Right(CancellationDecision)
+      case _                                                   => Left(s"Failed to transition from DeclarationCancellationRequest to $messageReceived")
     }
   }
 
   case object CancellationDecision extends DepartureStatus {
-    override def transition(messageReceived: MessageReceivedEvent): DepartureStatus = messageReceived match {
-      case MessageReceivedEvent.CancellationDecision => CancellationDecision
-      case _                                         => throw new Exception(s"Failed to transition from CancellationDecision to $messageReceived")
+    override def transition(messageReceived: MessageReceivedEvent): Either[String, DepartureStatus] = messageReceived match {
+      case MessageReceivedEvent.CancellationDecision => Right(CancellationDecision)
+      case _                                         => Left(s"Failed to transition from CancellationDecision to $messageReceived")
     }
   }
 
