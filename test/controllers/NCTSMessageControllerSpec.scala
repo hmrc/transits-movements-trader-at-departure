@@ -43,7 +43,6 @@ import play.api.test.Helpers._
 import repositories.DepartureRepository
 import repositories.LockRepository
 import services.SaveMessageService
-import services.XmlMessageParser
 import utils.Format
 
 import scala.concurrent.Future
@@ -93,6 +92,15 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
         <DocNumHEA5>mrn</DocNumHEA5>
       </HEAHEA>
     </CC028A>
+
+  private val requestCancellationDecisionBody =
+    <CC009A>
+      <DatOfPreMES9>{Format.dateFormatted(dateOfPrep)}</DatOfPreMES9>
+      <TimOfPreMES10>{Format.timeFormatted(timeOfPrep)}</TimOfPreMES10>
+      <HEAHEA>
+        <DocNumHEA5>mrn</DocNumHEA5>
+      </HEAHEA>
+    </CC009A>
 
   private val badRequestMrnAllocatedBody =
     <CC028A>
@@ -148,6 +156,25 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
 
           val result = route(application, request).value
           status(result) mustEqual OK
+        }
+      }
+
+      "must return BadRequest, when the valid message is out of sequence" in {
+        when(mockDepartureRepository.get(any())).thenReturn(Future.successful(Some(acknowledgedDeparture)))
+        when(mockLockRepository.lock(any())).thenReturn(Future.successful(true))
+        when(mockLockRepository.unlock(any())).thenReturn(Future.successful(()))
+
+        val application = baseApplicationBuilder
+          .overrides(bind[DepartureRepository].toInstance(mockDepartureRepository), bind[LockRepository].toInstance(mockLockRepository))
+          .build()
+
+        running(application) {
+          val request = FakeRequest(POST, routes.NCTSMessageController.post(messageSender).url)
+            .withXmlBody(requestCancellationDecisionBody)
+            .withHeaders("X-Message-Type" -> MessageType.CancellationDecision.code)
+
+          val result = route(application, request).value
+          status(result) mustEqual BAD_REQUEST
         }
       }
 

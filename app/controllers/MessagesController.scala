@@ -18,12 +18,10 @@ package controllers
 
 import controllers.actions.AuthenticatedGetDepartureForReadActionProvider
 import controllers.actions.AuthenticatedGetDepartureForWriteActionProvider
-import controllers.actions.GetDepartureForWriteActionProvider
 import javax.inject.Inject
 import models.response.ResponseDepartureWithMessages
 import models.response.ResponseMessage
 import models.DepartureId
-import models.DepartureStatus
 import models.MessageId
 import models.MessageReceivedEvent
 import models.MessageType
@@ -61,22 +59,26 @@ class MessagesController @Inject()(
             .map {
               message =>
                 {
-                  val status = request.departure.status.transition(MessageReceivedEvent.DeclarationCancellationRequest)
-                  submitMessageService
-                    .submitMessage(departureId, request.departure.nextMessageId.index, message, status)
-                    .map {
-                      case SubmissionProcessingResult.SubmissionSuccess =>
-                        Accepted("Message accepted")
-                          .withHeaders("Location" -> routes.MessagesController.getMessage(request.departure.departureId, request.departure.nextMessageId).url)
+                  request.departure.status.transition(MessageReceivedEvent.DeclarationCancellationRequest) match {
+                    case Right(status) =>
+                      submitMessageService
+                        .submitMessage(departureId, request.departure.nextMessageId.index, message, status)
+                        .map {
+                          case SubmissionProcessingResult.SubmissionSuccess =>
+                            Accepted("Message accepted")
+                              .withHeaders(
+                                "Location" -> routes.MessagesController.getMessage(request.departure.departureId, request.departure.nextMessageId).url)
 
-                      case SubmissionProcessingResult.SubmissionFailureInternal =>
-                        InternalServerError
+                          case SubmissionProcessingResult.SubmissionFailureInternal =>
+                            InternalServerError
 
-                      case SubmissionProcessingResult.SubmissionFailureExternal =>
-                        BadGateway
-                    }
+                          case SubmissionProcessingResult.SubmissionFailureExternal =>
+                            BadGateway
+                        }
+                    case Left(error) =>
+                      Future.successful(BadRequest(error.reason))
+                  }
                 }
-
             }
             .getOrElse {
               Logger.warn("Invalid data: missing either DatOfPreMES9, TimOfPreMES10 or DocNumHEA5")
