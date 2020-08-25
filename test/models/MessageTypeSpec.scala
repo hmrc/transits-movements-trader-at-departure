@@ -18,6 +18,15 @@ package models
 
 import base.SpecBase
 import generators.ModelGenerators
+import models.MessageType.CancellationDecision
+import models.MessageType.ControlDecisionNotification
+import models.MessageType.DeclarationCancellationRequest
+import models.MessageType.DeclarationRejected
+import models.MessageType.DepartureDeclaration
+import models.MessageType.MrnAllocated
+import models.MessageType.NoReleaseForTransit
+import models.MessageType.PositiveAcknowledgement
+import models.MessageType.ReleaseForTransit
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.libs.json.JsError
 import play.api.libs.json.JsNumber
@@ -27,6 +36,62 @@ import play.api.libs.json.Json
 import org.scalacheck.Arbitrary.arbitrary
 
 class MessageTypeSpec extends SpecBase with ScalaCheckDrivenPropertyChecks with ModelGenerators {
+
+  "MessageType.values must contain" - {
+    "PositiveAcknowledgement" in {
+      MessageType.values must contain(PositiveAcknowledgement)
+      PositiveAcknowledgement.code mustEqual "IE928"
+      PositiveAcknowledgement.rootNode mustEqual "CC928A"
+    }
+
+    "DepartureDeclaration" in {
+      MessageType.values must contain(DepartureDeclaration)
+      DepartureDeclaration.code mustEqual "IE015"
+      DepartureDeclaration.rootNode mustEqual "CC015B"
+    }
+
+    "MrnAllocated" in {
+      MessageType.values must contain(MrnAllocated)
+      MrnAllocated.code mustEqual "IE028"
+      MrnAllocated.rootNode mustEqual "CC028A"
+    }
+
+    "DeclarationRejected" in {
+      MessageType.values must contain(DeclarationRejected)
+      DeclarationRejected.code mustEqual "IE016"
+      DeclarationRejected.rootNode mustEqual "CC016A"
+    }
+
+    "ControlDecisionNotification" in {
+      MessageType.values must contain(ControlDecisionNotification)
+      ControlDecisionNotification.code mustEqual "IE060"
+      ControlDecisionNotification.rootNode mustEqual "CC060A"
+    }
+
+    "NoReleaseForTransit" in {
+      MessageType.values must contain(NoReleaseForTransit)
+      NoReleaseForTransit.code mustEqual "IE051"
+      NoReleaseForTransit.rootNode mustEqual "CC051A"
+    }
+
+    "ReleaseForTransit" in {
+      MessageType.values must contain(ReleaseForTransit)
+      ReleaseForTransit.code mustEqual "IE029"
+      ReleaseForTransit.rootNode mustEqual "CC029A"
+    }
+
+    "DeclarationCancellationRequest" in {
+      MessageType.values must contain(DeclarationCancellationRequest)
+      DeclarationCancellationRequest.code mustEqual "IE014"
+      DeclarationCancellationRequest.rootNode mustEqual "CC014A"
+    }
+
+    "CancellationDecision" in {
+      MessageType.values must contain(CancellationDecision)
+      CancellationDecision.code mustEqual "IE009"
+      CancellationDecision.rootNode mustEqual "CC009A"
+    }
+  }
 
   "Json reads and writes" - {
     "writes" in {

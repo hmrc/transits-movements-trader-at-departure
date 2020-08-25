@@ -45,6 +45,7 @@ object MessageType extends Enumerable.Implicits {
       DeclarationRejected,
       ControlDecisionNotification,
       NoReleaseForTransit,
+      ReleaseForTransit,
       DeclarationCancellationRequest,
       CancellationDecision
     )
