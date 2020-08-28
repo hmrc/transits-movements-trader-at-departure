@@ -28,6 +28,7 @@ import models.Departure
 import models.DepartureId
 import models.DepartureStatus
 import models.MessageId
+import models.MessageSender
 import models.MessageType
 import models.MessageWithStatus
 import models.MessageWithoutStatus
@@ -73,16 +74,28 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
   val localTime     = LocalTime.of(1, 1)
   val localDateTime = LocalDateTime.of(localDate, localTime)
 
-  val mrn = arbitrary[MovementReferenceNumber].sample.value
+  val departureId = arbitrary[DepartureId].sample.value
+  val mrn         = arbitrary[MovementReferenceNumber].sample.value
 
   val declarationCancellationRequestXmlBody =
     <CC014A>
-        <DatOfPreMES9>{Format.dateFormatted(localDate)}</DatOfPreMES9>
-        <TimOfPreMES10>{Format.timeFormatted(localTime)}</TimOfPreMES10>
-        <HEAHEA>
-          <DocNumHEA5>{mrn.value}</DocNumHEA5>
-        </HEAHEA>
-      </CC014A>
+      <SynVerNumMES2>123</SynVerNumMES2>
+      <DatOfPreMES9>{Format.dateFormatted(localDate)}</DatOfPreMES9>
+      <TimOfPreMES10>{Format.timeFormatted(localTime)}</TimOfPreMES10>
+      <HEAHEA>
+        <DocNumHEA5>{mrn.value}</DocNumHEA5>
+      </HEAHEA>
+    </CC014A>
+
+  val savedDeclarationCancellationRequestXml =
+    <CC014A>
+      <SynVerNumMES2>123</SynVerNumMES2><MesSenMES3>{MessageSender(departureId, 2).toString}</MesSenMES3>
+      <DatOfPreMES9>{Format.dateFormatted(localDate)}</DatOfPreMES9>
+      <TimOfPreMES10>{Format.timeFormatted(localTime)}</TimOfPreMES10>
+      <HEAHEA>
+        <DocNumHEA5>{mrn.value}</DocNumHEA5>
+      </HEAHEA>
+    </CC014A>
 
   val departureDeclarationRequestXmlBody =
     <CC015A>
@@ -96,14 +109,12 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
   val message = MessageWithStatus(
     localDateTime,
     MessageType.DeclarationCancellationRequest,
-    declarationCancellationRequestXmlBody,
+    savedDeclarationCancellationRequestXml,
     SubmissionPending,
     2
   )
 
   val messageId = MessageId.fromIndex(0)
-
-  val departureId = arbitrary[DepartureId].sample.value
 
   val departureWithOneMessage: Gen[Departure] = for {
     departure <- arbitrary[Departure]
@@ -153,7 +164,7 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
         header("Location", result).value must be(routes.MessagesController.getMessage(departure.departureId, MessageId.fromIndex(1)).url)
         verify(mockSubmitMessageService, times(1)).submitMessage(eqTo(departure.departureId),
                                                                  eqTo(1),
-                                                                 eqTo(message),
+                                                                 any(),
                                                                  eqTo(DepartureStatus.DeclarationCancellationRequest))(any())
       }
     }

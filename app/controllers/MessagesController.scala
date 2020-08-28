@@ -55,7 +55,8 @@ class MessagesController @Inject()(
       MessageType.getMessageType(request.body) match {
         case Some(MessageType.DeclarationCancellationRequest) =>
           departureService
-            .makeMessageWithStatus(request.departure.nextMessageCorrelationId, MessageType.DeclarationCancellationRequest)(request.body)
+            .makeMessageWithStatus(request.departure.departureId, request.departure.nextMessageCorrelationId, MessageType.DeclarationCancellationRequest)(
+              request.body)
             .map {
               message =>
                 {

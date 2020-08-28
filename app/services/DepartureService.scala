@@ -21,11 +21,14 @@ import cats.implicits._
 import com.google.inject.Inject
 import models.DepartureStatus.Initialized
 import models.MessageStatus.SubmissionPending
+import models.ParseError.EmptyNodeSeq
 import models.Departure
+import models.DepartureId
 import models.MessageType
 import models.MessageWithStatus
 import models.MessageWithoutStatus
 import repositories.DepartureIdRepository
+import utils.XMLTransformer
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -33,41 +36,51 @@ import scala.xml.NodeSeq
 
 class DepartureService @Inject()(departureIdRepository: DepartureIdRepository)(implicit ec: ExecutionContext) {
   import XmlMessageParser._
+  import XMLTransformer._
 
-  def makeMessageWithStatus(messageCorrelationId: Int, messageType: MessageType): ReaderT[Option, NodeSeq, MessageWithStatus] =
+  def makeMessageWithStatus(departureId: DepartureId, messageCorrelationId: Int, messageType: MessageType): ReaderT[ParseHandler, NodeSeq, MessageWithStatus] =
     for {
       _          <- correctRootNodeR(messageType)
       dateTime   <- dateTimeOfPrepR
-      xmlMessage <- ReaderT[Option, NodeSeq, NodeSeq](Option.apply)
+      xmlMessage <- updateMesSenMES3(departureId, messageCorrelationId)
     } yield MessageWithStatus(dateTime, messageType, xmlMessage, SubmissionPending, messageCorrelationId)
 
-  def createDeparture(eori: String): ReaderT[Option, NodeSeq, Future[Departure]] =
-    for {
-      _         <- correctRootNodeR(MessageType.DepartureDeclaration)
-      dateTime  <- dateTimeOfPrepR
-      reference <- referenceR
-      message   <- makeMessageWithStatus(1, MessageType.DepartureDeclaration)
-    } yield {
-      departureIdRepository
-        .nextId()
-        .map(
-          Departure(
-            _,
-            eori,
-            None,
-            reference,
-            Initialized,
-            dateTime,
-            dateTime,
-            2,
-            NonEmptyList.one(message)
-          ))
-    }
+  def createDeparture(eori: String, nodeSeq: NodeSeq): Future[ParseHandler[Departure]] =
+    departureIdRepository
+      .nextId()
+      .map {
+        departureId =>
+          (for {
+            _         <- correctRootNodeR(MessageType.DepartureDeclaration)
+            dateTime  <- dateTimeOfPrepR
+            reference <- referenceR
+            message   <- makeMessageWithStatus(departureId, 1, MessageType.DepartureDeclaration)
+          } yield {
+            Departure(
+              departureId,
+              eori,
+              None,
+              reference,
+              Initialized,
+              dateTime,
+              dateTime,
+              2,
+              NonEmptyList.one(message)
+            )
+          }).apply(nodeSeq)
+      }
 
-  def makeMessage(messageCorrelationId: Int, messageType: MessageType): ReaderT[Option, NodeSeq, MessageWithoutStatus] =
+  def makeMessage(messageCorrelationId: Int, messageType: MessageType): ReaderT[ParseHandler, NodeSeq, MessageWithoutStatus] =
     for {
       _          <- correctRootNodeR(messageType)
       dateTime   <- dateTimeOfPrepR
-      xmlMessage <- ReaderT[Option, NodeSeq, NodeSeq](Option.apply)
+      xmlMessage <- ReaderT[ParseHandler, NodeSeq, NodeSeq](nodeSeqToEither)
     } yield MessageWithoutStatus(dateTime, messageType, xmlMessage, messageCorrelationId)
+
+  private[this] def nodeSeqToEither(xml: NodeSeq): ParseHandler[NodeSeq] =
+    if (xml != null) {
+      Right(xml)
+    } else {
+      Left(EmptyNodeSeq("Request body is empty"))
+    }
 }

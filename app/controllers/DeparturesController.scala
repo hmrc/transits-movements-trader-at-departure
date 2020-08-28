@@ -58,7 +58,7 @@ class DeparturesController @Inject()(cc: ControllerComponents,
       request.departure match {
         case Some(departure) if allMessageUnsent(departure.messages) =>
           departureService
-            .makeMessageWithStatus(departure.nextMessageCorrelationId, DepartureDeclaration)(request.body)
+            .makeMessageWithStatus(departure.departureId, departure.nextMessageCorrelationId, DepartureDeclaration)(request.body)
             .map {
               message =>
                 submitMessageService
@@ -75,6 +75,11 @@ class DeparturesController @Inject()(cc: ControllerComponents,
                     case SubmissionProcessingResult.SubmissionFailureExternal =>
                       BadGateway
                   }
+                  .recover {
+                    case _ => {
+                      InternalServerError
+                    }
+                  }
             }
             .getOrElse {
               Logger.warn("Invalid data: missing either DatOfPreMES9, TimOfPreMES10 or DocNumHEA5")
@@ -82,30 +87,35 @@ class DeparturesController @Inject()(cc: ControllerComponents,
             }
 
         case _ =>
-          departureService.createDeparture(request.eoriNumber)(request.body) match {
-            case None =>
-              Logger.warn("Invalid data: missing either DatOfPreMES9, TimOfPreMES10 or DocNumHEA5")
-              Future.successful(BadRequest("Invalid data: missing either DatOfPreMES9, TimOfPreMES10 or DocNumHEA5"))
-            case Some(departureFuture) =>
-              departureFuture
-                .flatMap {
-                  departure =>
-                    submitMessageService.submitDeparture(departure).map {
-                      case SubmissionProcessingResult.SubmissionSuccess =>
-                        Accepted("Message accepted")
-                          .withHeaders("Location" -> routes.DeparturesController.get(departure.departureId).url)
-                      case SubmissionProcessingResult.SubmissionFailureExternal =>
-                        BadGateway
-                      case SubmissionProcessingResult.SubmissionFailureInternal =>
-                        InternalServerError
-                    }
-                }
-                .recover {
-                  case _ => {
-                    InternalServerError
+          departureService
+            .createDeparture(request.eoriNumber, request.body)
+            .flatMap {
+              case Left(error) =>
+                Logger.error(s"Failed to create Departure with the following error: $error")
+                Future.successful(BadRequest(s"Failed to create Departure with the following error: $error"))
+              case Right(departure) =>
+                submitMessageService
+                  .submitDeparture(departure)
+                  .map {
+                    case SubmissionProcessingResult.SubmissionSuccess =>
+                      Accepted("Message accepted")
+                        .withHeaders("Location" -> routes.DeparturesController.get(departure.departureId).url)
+                    case SubmissionProcessingResult.SubmissionFailureExternal =>
+                      BadGateway
+                    case SubmissionProcessingResult.SubmissionFailureInternal =>
+                      InternalServerError
                   }
-                }
-          }
+                  .recover {
+                    case _ => {
+                      InternalServerError
+                    }
+                  }
+            }
+            .recover {
+              case _ => {
+                InternalServerError
+              }
+            }
       }
   }
 

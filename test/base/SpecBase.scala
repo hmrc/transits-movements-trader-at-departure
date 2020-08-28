@@ -18,10 +18,15 @@ package base
 
 import controllers.actions.AuthenticateActionProvider
 import controllers.actions.FakeAuthenticateActionProvider
+import models.Departure
+import models.MessageWithStatus
+import org.scalactic.Equality
+import org.scalatest.EitherValues
 import org.scalatest.OptionValues
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
+import org.scalatest.verbs.ShouldVerb
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
@@ -29,7 +34,10 @@ import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
 import uk.gov.hmrc.http.HeaderCarrier
 
-trait SpecBase extends AnyFreeSpec with Matchers with MockitoSugar with ScalaFutures with OptionValues {
+import scala.xml.Utility
+import scala.xml.XML
+
+trait SpecBase extends AnyFreeSpec with Matchers with MockitoSugar with ScalaFutures with OptionValues with EitherValues {
 
   implicit val hc: HeaderCarrier = HeaderCarrier()
 
@@ -43,4 +51,41 @@ trait SpecBase extends AnyFreeSpec with Matchers with MockitoSugar with ScalaFut
       .overrides(
         bind[AuthenticateActionProvider].to[FakeAuthenticateActionProvider]
       )
+
+  implicit val messageWithStatusEquality: Equality[MessageWithStatus] = (a: MessageWithStatus, b: Any) =>
+    b match {
+      case x: MessageWithStatus =>
+        val normalisedAMessage = Utility.trim(XML.loadString(a.message.toString))
+        val normalisedXMessage = Utility.trim(XML.loadString(x.message.toString))
+
+        val normalisedA = a.copy(message = normalisedAMessage)
+        val normalisedX = a.copy(message = normalisedXMessage)
+
+        normalisedA == normalisedX
+
+      case _ => false
+  }
+
+  implicit val departureEquality: Equality[Departure] = (a: Departure, b: Any) =>
+    b match {
+      case x: Departure => {
+        val unAppliedA = Departure.unapply(a).get
+        val unAppliedX = Departure.unapply(x).get
+
+        val normalisedMessagesA = unAppliedA._9.map {
+          y =>
+            Utility.trim(XML.loadString(y.message.toString()))
+        }
+        val normalisedA = unAppliedA.copy(_9 = normalisedMessagesA)
+
+        val normalisedMessagesX = unAppliedX._9.map {
+          z =>
+            Utility.trim(XML.loadString(z.message.toString()))
+        }
+        val normalisedX = unAppliedX.copy(_9 = normalisedMessagesX)
+
+        normalisedA == normalisedX
+      }
+      case _ => false
+  }
 }

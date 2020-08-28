@@ -70,11 +70,10 @@ class NCTSMessageController @Inject()(cc: ControllerComponents, getDeparture: Ge
               response.messageType match {
                 case MessageType.MrnAllocated =>
                   XmlMessageParser.mrnR(xml) match {
-                    case None =>
-                      val message = "Missing MRN"
-                      Logger.warn(message)
-                      Future.successful(BadRequest(message))
-                    case Some(mrn) =>
+                    case Left(error) =>
+                      Logger.warn(error.message)
+                      Future.successful(BadRequest(error.message))
+                    case Right(mrn) =>
                       val processingResult = saveMessageService.validateXmlSaveMessageUpdateMrn(xml, messageSender, response, newState, mrn)
                       processingResult map {
                         case SubmissionSuccess => Ok

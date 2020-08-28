@@ -33,9 +33,9 @@ case class Departure(departureId: DepartureId,
                      nextMessageCorrelationId: Int,
                      messages: NonEmptyList[Message]) {
 
-  lazy val nextMessageId: MessageId = MessageId.fromIndex(messages.length)
+  def nextMessageId: MessageId = MessageId.fromIndex(messages.length)
 
-  lazy val messagesWithId: NonEmptyList[(Message, MessageId)] =
+  def messagesWithId: NonEmptyList[(Message, MessageId)] =
     messages.mapWithIndex(_ -> MessageId.fromIndex(_))
 
 }
