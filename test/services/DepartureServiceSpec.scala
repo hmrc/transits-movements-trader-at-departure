@@ -31,6 +31,7 @@ import models.MessageType
 import models.MessageWithStatus
 import models.MessageStatus.SubmissionPending
 import org.mockito.Mockito.when
+import org.scalatest.StreamlinedXmlEquality
 import org.scalatest.concurrent.IntegrationPatience
 import play.api.inject.bind
 import repositories.DepartureIdRepository
@@ -38,7 +39,7 @@ import utils.Format
 
 import scala.concurrent.Future
 
-class DepartureServiceSpec extends SpecBase with IntegrationPatience {
+class DepartureServiceSpec extends SpecBase with IntegrationPatience with StreamlinedXmlEquality {
 
   "createDeparture" - {
     "creates a departure declaration with an internal ref number and a mrn, date and time of creation from the message submitted with a message id of 1 and next correlation id of 2" in {
@@ -96,7 +97,7 @@ class DepartureServiceSpec extends SpecBase with IntegrationPatience {
 
       val result = service.createDeparture(eori, inputMovement).futureValue
 
-      result mustEqual Right(expectedDeparture)
+      result.right.get mustEqual expectedDeparture
     }
 
     "returns Left when the root node is not <CC007A>" in {
@@ -162,7 +163,7 @@ class DepartureServiceSpec extends SpecBase with IntegrationPatience {
         MessageWithStatus(LocalDateTime.of(dateOfPrep, timeOfPrep), MessageType.DepartureDeclaration, savedMovement, SubmissionPending, messageCorrelationId)
 
       val result = service.makeMessageWithStatus(id, messageCorrelationId, MessageType.DepartureDeclaration)(movement)
-      result mustEqual Right(expectedMessage)
+      result.right.get mustEqual expectedMessage
     }
 
     "does not return a message when the root node does not match the message type" in {
@@ -185,5 +186,4 @@ class DepartureServiceSpec extends SpecBase with IntegrationPatience {
       result.isLeft mustBe true
     }
   }
-
 }

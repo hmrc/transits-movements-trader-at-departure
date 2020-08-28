@@ -164,7 +164,7 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
         header("Location", result).value must be(routes.MessagesController.getMessage(departure.departureId, MessageId.fromIndex(1)).url)
         verify(mockSubmitMessageService, times(1)).submitMessage(eqTo(departure.departureId),
                                                                  eqTo(1),
-                                                                 eqTo(message),
+                                                                 any(),
                                                                  eqTo(DepartureStatus.DeclarationCancellationRequest))(any())
       }
     }
