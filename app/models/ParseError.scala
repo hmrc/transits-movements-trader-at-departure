@@ -16,20 +16,15 @@
 
 package models
 
-sealed trait SubmissionProcessingResult
+trait ParseError {
+  def message: String
+}
 
-object SubmissionProcessingResult {
-
-  case object SubmissionSuccess extends SubmissionProcessingResult
-
-  //TODO: Include failure message for logging reasons?
-  sealed trait SubmissionFailure        extends SubmissionProcessingResult
-  case object SubmissionFailureInternal extends SubmissionFailure
-  case object SubmissionFailureExternal extends SubmissionFailure
-
-  val values = Seq(
-    SubmissionSuccess,
-    SubmissionFailureInternal,
-    SubmissionFailureExternal
-  )
+object ParseError {
+  case class LocalDateParseFailure(message: String)        extends ParseError
+  case class LocalTimeParseFailure(message: String)        extends ParseError
+  case class InvalidRootNode(message: String)              extends ParseError
+  case class EmptyMovementReferenceNumber(message: String) extends ParseError
+  case class EmptyLocalReferenceNumber(message: String)    extends ParseError
+  case class EmptyNodeSeq(message: String)                 extends ParseError
 }

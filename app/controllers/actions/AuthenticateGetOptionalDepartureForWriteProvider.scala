@@ -58,11 +58,10 @@ class AuthenticateGetOptionalDepartureForWriteAction(departureRepository: Depart
     request.body match {
       case body: NodeSeq =>
         XmlMessageParser.referenceR(body) match {
-          case None =>
-            Logger.warn("Invalid reference specified in request")
-            Future.successful(BadRequest("Invalid reference specified in request"))
-
-          case Some(reference) => {
+          case Left(error) =>
+            Logger.warn(error.message)
+            Future.successful(BadRequest(error.message))
+          case Right(reference) => {
             departureRepository.get(request.eoriNumber, reference).flatMap {
               case None => block(AuthenticatedOptionalDepartureRequest(request, None, request.eoriNumber))
               case Some(departure) =>

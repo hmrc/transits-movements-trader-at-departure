@@ -25,6 +25,7 @@ import cats.data.NonEmptyList
 import models.Departure
 import models.DepartureId
 import models.DepartureStatus
+import models.MessageSender
 import models.MessageStatus
 import models.MessageType
 import models.MessageWithStatus
@@ -59,14 +60,25 @@ class DepartureServiceSpec extends SpecBase with IntegrationPatience {
 
       val service = application.injector.instanceOf[DepartureService]
 
-      val movement =
+      val inputMovement =
         <CC015B>
-          <DatOfPreMES9>{Format.dateFormatted(dateOfPrep)}</DatOfPreMES9>
-          <TimOfPreMES10>{Format.timeFormatted(timeOfPrep)}</TimOfPreMES10>
-          <HEAHEA>
-            <RefNumHEA4>{ref}</RefNumHEA4>
-          </HEAHEA>
-        </CC015B>
+        <SynVerNumMES2>123</SynVerNumMES2>
+        <DatOfPreMES9>{Format.dateFormatted(dateOfPrep)}</DatOfPreMES9>
+        <TimOfPreMES10>{Format.timeFormatted(timeOfPrep)}</TimOfPreMES10>
+        <HEAHEA>
+          <RefNumHEA4>{ref}</RefNumHEA4>
+        </HEAHEA>
+      </CC015B>
+
+      val savedMovement =
+        <CC015B>
+        <SynVerNumMES2>123</SynVerNumMES2><MesSenMES3>{MessageSender(id, 1).toString}</MesSenMES3>
+        <DatOfPreMES9>{Format.dateFormatted(dateOfPrep)}</DatOfPreMES9>
+        <TimOfPreMES10>{Format.timeFormatted(timeOfPrep)}</TimOfPreMES10>
+        <HEAHEA>
+          <RefNumHEA4>{ref}</RefNumHEA4>
+        </HEAHEA>
+      </CC015B>
 
       val expectedDeparture = Departure(
         departureId = id,
@@ -77,15 +89,17 @@ class DepartureServiceSpec extends SpecBase with IntegrationPatience {
         created = dateTime,
         updated = dateTime,
         messages = NonEmptyList.one(
-          MessageWithStatus(dateTime, MessageType.DepartureDeclaration, movement, MessageStatus.SubmissionPending, 1)
+          MessageWithStatus(dateTime, MessageType.DepartureDeclaration, savedMovement, MessageStatus.SubmissionPending, 1)
         ),
         nextMessageCorrelationId = 2
       )
 
-      service.createDeparture(eori)(movement).value.futureValue mustEqual expectedDeparture
+      val result = service.createDeparture(eori, inputMovement).futureValue
+
+      result mustEqual Right(expectedDeparture)
     }
 
-    "returns None when the root node is not <CC007A>" in {
+    "returns Left when the root node is not <CC007A>" in {
 
       val ref        = "ref"
       val eori       = "eoriNumber"
@@ -98,6 +112,7 @@ class DepartureServiceSpec extends SpecBase with IntegrationPatience {
 
       val invalidPayload =
         <Foo>
+          <SynVerNumMES2>123</SynVerNumMES2>
           <DatOfPreMES9>{Format.dateFormatted(dateOfPrep)}</DatOfPreMES9>
           <TimOfPreMES10>{Format.timeFormatted(timeOfPrep)}</TimOfPreMES10>
           <HEAHEA>
@@ -105,7 +120,7 @@ class DepartureServiceSpec extends SpecBase with IntegrationPatience {
           </HEAHEA>
         </Foo>
 
-      service.createDeparture(eori)(invalidPayload) must not be defined
+      service.createDeparture(eori, invalidPayload).futureValue.isLeft mustBe true
     }
   }
 
@@ -120,8 +135,21 @@ class DepartureServiceSpec extends SpecBase with IntegrationPatience {
 
       val service = application.injector.instanceOf[DepartureService]
 
+      val id = DepartureId(1)
+
       val movement =
         <CC015B>
+          <SynVerNumMES2>123</SynVerNumMES2>
+          <DatOfPreMES9>{Format.dateFormatted(dateOfPrep)}</DatOfPreMES9>
+          <TimOfPreMES10>{Format.timeFormatted(timeOfPrep)}</TimOfPreMES10>
+          <HEAHEA>
+            <RefNumHEA4>{ref}</RefNumHEA4>
+          </HEAHEA>
+        </CC015B>
+
+      val savedMovement =
+        <CC015B>
+          <SynVerNumMES2>123</SynVerNumMES2><MesSenMES3>{MessageSender(id, 1).toString}</MesSenMES3>
           <DatOfPreMES9>{Format.dateFormatted(dateOfPrep)}</DatOfPreMES9>
           <TimOfPreMES10>{Format.timeFormatted(timeOfPrep)}</TimOfPreMES10>
           <HEAHEA>
@@ -131,9 +159,10 @@ class DepartureServiceSpec extends SpecBase with IntegrationPatience {
 
       val messageCorrelationId = 1
       val expectedMessage =
-        MessageWithStatus(LocalDateTime.of(dateOfPrep, timeOfPrep), MessageType.DepartureDeclaration, movement, SubmissionPending, messageCorrelationId)
+        MessageWithStatus(LocalDateTime.of(dateOfPrep, timeOfPrep), MessageType.DepartureDeclaration, savedMovement, SubmissionPending, messageCorrelationId)
 
-      service.makeMessageWithStatus(messageCorrelationId, MessageType.DepartureDeclaration)(movement).value mustEqual expectedMessage
+      val result = service.makeMessageWithStatus(id, messageCorrelationId, MessageType.DepartureDeclaration)(movement)
+      result mustEqual Right(expectedMessage)
     }
 
     "does not return a message when the root node does not match the message type" in {
@@ -147,11 +176,13 @@ class DepartureServiceSpec extends SpecBase with IntegrationPatience {
 
       val movement =
         <Foo>
+          <SynVerNumMES2>123</SynVerNumMES2>
           <DatOfPreMES9>{Format.dateFormatted(dateOfPrep)}</DatOfPreMES9>
           <TimOfPreMES10>{Format.timeFormatted(timeOfPrep)}</TimOfPreMES10>
         </Foo>
 
-      service.makeMessageWithStatus(1, MessageType.DepartureDeclaration)(movement) must not be defined
+      val result = service.makeMessageWithStatus(DepartureId(1), 1, MessageType.DepartureDeclaration)(movement)
+      result.isLeft mustBe true
     }
   }
 

@@ -71,6 +71,7 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
 
   val requestXmlBody =
     <CC015B>
+      <SynVerNumMES2>123</SynVerNumMES2>
       <DatOfPreMES9>{Format.dateFormatted(localDate)}</DatOfPreMES9>
       <TimOfPreMES10>{Format.timeFormatted(localTime)}</TimOfPreMES10>
       <HEAHEA>
@@ -213,6 +214,8 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
         val mockDepartureIdRepository = mock[DepartureIdRepository]
         val mockSubmitMessageService  = mock[SubmitMessageService]
 
+        when(mockDepartureIdRepository.nextId()).thenReturn(Future.successful(DepartureId(1)))
+
         val application =
           baseApplicationBuilder
             .overrides(
@@ -232,12 +235,13 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
 
           status(result) mustEqual BAD_REQUEST
           header("Location", result) must not be (defined)
-          verify(mockDepartureIdRepository, never()).nextId()
         }
       }
 
       "must return BadRequest if the message is not an departure declaration" in {
         val mockDepartureIdRepository = mock[DepartureIdRepository]
+
+        when(mockDepartureIdRepository.nextId()).thenReturn(Future.successful(DepartureId(1)))
 
         val application =
           baseApplicationBuilder
@@ -256,7 +260,6 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
 
           status(result) mustEqual BAD_REQUEST
           header("Location", result) must not be (defined)
-          verify(mockDepartureIdRepository, never()).nextId()
         }
       }
     }

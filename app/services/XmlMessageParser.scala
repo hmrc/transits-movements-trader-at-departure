@@ -22,62 +22,73 @@ import java.time.LocalTime
 
 import cats.data.ReaderT
 
+import scala.util.Failure
+import scala.util.Success
 import scala.util.Try
 import scala.xml.NodeSeq
 import cats.implicits._
+import models.ParseError.EmptyLocalReferenceNumber
+import models.ParseError.EmptyMovementReferenceNumber
+import models.ParseError.InvalidRootNode
+import models.ParseError.LocalDateParseFailure
+import models.ParseError.LocalTimeParseFailure
 import models.MessageType
 import models.MovementReferenceNumber
+import models.ParseError
 import utils.Format
 
 object XmlMessageParser {
 
-  def correctRootNodeR(messageType: MessageType): ReaderT[Option, NodeSeq, Unit] =
-    ReaderT[Option, NodeSeq, Unit] {
+  type ParseHandler[A] = Either[ParseError, A]
+
+  def correctRootNodeR(messageType: MessageType): ReaderT[ParseHandler, NodeSeq, Unit] =
+    ReaderT[ParseHandler, NodeSeq, Unit] {
       nodeSeq =>
-        if (nodeSeq.head.label == messageType.rootNode) Some(()) else None
+        nodeSeq.head.label match {
+          case messageType.rootNode => Right(nodeSeq)
+          case _                    => Left(InvalidRootNode(s"Node ${nodeSeq.head.label} didn't match ${messageType.rootNode}"))
+        }
     }
 
-  val dateOfPrepR: ReaderT[Option, NodeSeq, LocalDate] =
-    ReaderT[Option, NodeSeq, LocalDate](xml => {
-      (xml \ "DatOfPreMES9").text match {
-        case x if x.isEmpty => None
-        case x => {
-          Try {
-            LocalDate.parse(x, Format.dateFormatter)
-          }.toOption // TODO: We are not propagating this failure back, do we need to do this?
-        }
+  val dateOfPrepR: ReaderT[ParseHandler, NodeSeq, LocalDate] =
+    ReaderT[ParseHandler, NodeSeq, LocalDate](xml => {
+
+      val dateOfPrepString = (xml \ "DatOfPreMES9").text
+
+      Try(LocalDate.parse(dateOfPrepString, Format.dateFormatter)) match {
+        case Success(value) => Right(value)
+        case Failure(e)     => Left(LocalDateParseFailure(s"Failed to parse DatOfPreMES9 to LocalDate with error: ${e.getMessage}"))
       }
     })
 
-  val timeOfPrepR: ReaderT[Option, NodeSeq, LocalTime] =
-    ReaderT[Option, NodeSeq, LocalTime](xml => {
-      (xml \ "TimOfPreMES10").text match {
-        case x if x.isEmpty => None
-        case x => {
-          Try {
-            LocalTime.parse(x, Format.timeFormatter)
-          }.toOption // TODO: We are not propagating this failure back, do we need to do this?
-        }
+  val timeOfPrepR: ReaderT[ParseHandler, NodeSeq, LocalTime] =
+    ReaderT[ParseHandler, NodeSeq, LocalTime](xml => {
+
+      val timeOfPrepString = (xml \ "TimOfPreMES10").text
+
+      Try(LocalTime.parse(timeOfPrepString, Format.timeFormatter)) match {
+        case Success(value) => Right(value)
+        case Failure(e)     => Left(LocalTimeParseFailure(s"Failed to parse TimOfPreMES10 to LocalTime with error: ${e.getMessage}"))
       }
     })
 
-  val dateTimeOfPrepR: ReaderT[Option, NodeSeq, LocalDateTime] =
+  val dateTimeOfPrepR: ReaderT[ParseHandler, NodeSeq, LocalDateTime] =
     for {
       date <- dateOfPrepR
       time <- timeOfPrepR
     } yield LocalDateTime.of(date, time)
 
-  val referenceR: ReaderT[Option, NodeSeq, String] =
-    ReaderT[Option, NodeSeq, String](xml =>
+  val referenceR: ReaderT[ParseHandler, NodeSeq, String] =
+    ReaderT[ParseHandler, NodeSeq, String](xml =>
       (xml \ "HEAHEA" \ "RefNumHEA4").text match {
-        case refString if !refString.isEmpty => Some(refString)
-        case _                               => None
+        case refString if !refString.isEmpty => Right(refString)
+        case _                               => Left(EmptyLocalReferenceNumber("RefNumHEA4 was empty"))
     })
 
-  val mrnR: ReaderT[Option, NodeSeq, MovementReferenceNumber] =
-    ReaderT[Option, NodeSeq, MovementReferenceNumber](xml =>
+  val mrnR: ReaderT[ParseHandler, NodeSeq, MovementReferenceNumber] =
+    ReaderT[ParseHandler, NodeSeq, MovementReferenceNumber](xml =>
       (xml \ "HEAHEA" \ "DocNumHEA5").text match {
-        case mrnString if !mrnString.isEmpty => Some(MovementReferenceNumber(mrnString))
-        case _                               => None
+        case mrnString if !mrnString.isEmpty => Right(MovementReferenceNumber(mrnString))
+        case _                               => Left(EmptyMovementReferenceNumber("DocNumHEA5 was empty"))
     })
 }
