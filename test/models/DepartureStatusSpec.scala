@@ -181,9 +181,18 @@ class DepartureStatusSpec extends SpecBase with ScalaCheckDrivenPropertyChecks w
       DepartureStatus.ReleaseForTransit.transition(MessageReceivedEvent.CancellationDecision) mustEqual Right(DepartureStatus.CancellationDecision)
     }
 
+    "transition to WriteOffNotification when receiving a WriteOffNotification event" in {
+      DepartureStatus.ReleaseForTransit.transition(MessageReceivedEvent.WriteOffNotification) mustEqual Right(DepartureStatus.WriteOffNotification)
+    }
+
     "return an error message when receiving any other event" in {
       val validMessages =
-        Seq(MessageReceivedEvent.ReleaseForTransit, MessageReceivedEvent.DeclarationCancellationRequest, MessageReceivedEvent.CancellationDecision)
+        Seq(
+          MessageReceivedEvent.ReleaseForTransit,
+          MessageReceivedEvent.DeclarationCancellationRequest,
+          MessageReceivedEvent.CancellationDecision,
+          MessageReceivedEvent.WriteOffNotification
+        )
       val invalidMessages = MessageReceivedEvent.values.diff(validMessages)
       invalidMessages.foreach {
         m =>
@@ -227,6 +236,40 @@ class DepartureStatusSpec extends SpecBase with ScalaCheckDrivenPropertyChecks w
     }
   }
 
+  "CancellationDecision must " - {
+    "transition to CancellationDecision when receiving a CancellationDecision event" in {
+      DepartureStatus.CancellationDecision.transition(MessageReceivedEvent.CancellationDecision) mustEqual Right(DepartureStatus.CancellationDecision)
+    }
+
+    "transition to WriteOffNotification when receiving a WriteOffNotification event" in {
+      DepartureStatus.CancellationDecision.transition(MessageReceivedEvent.WriteOffNotification) mustEqual Right(DepartureStatus.WriteOffNotification)
+    }
+
+    "return an error message when receiving any other event" in {
+      val validMessages   = Seq(MessageReceivedEvent.CancellationDecision, MessageReceivedEvent.WriteOffNotification)
+      val invalidMessages = MessageReceivedEvent.values.diff(validMessages)
+      invalidMessages.foreach {
+        m =>
+          DepartureStatus.CancellationDecision.transition(m).isLeft mustBe true
+      }
+    }
+  }
+
+  "WriteOffNotification must " - {
+    "transition to WriteOffNotification when receiving a WriteOffNotification event" in {
+      DepartureStatus.WriteOffNotification.transition(MessageReceivedEvent.WriteOffNotification) mustEqual Right(DepartureStatus.WriteOffNotification)
+    }
+
+    "return an error message when receiving any other event" in {
+      val validMessages   = Seq(MessageReceivedEvent.WriteOffNotification)
+      val invalidMessages = MessageReceivedEvent.values.diff(validMessages)
+      invalidMessages.foreach {
+        m =>
+          DepartureStatus.WriteOffNotification.transition(m).isLeft mustBe true
+      }
+    }
+  }
+
   "DepartureStatus.values must contain" - {
     "Initialized" in { DepartureStatus.values.contains(DepartureStatus.Initialized) }
     "DepartureSubmitted" in { DepartureStatus.values.contains(DepartureStatus.DepartureSubmitted) }
@@ -238,6 +281,7 @@ class DepartureStatusSpec extends SpecBase with ScalaCheckDrivenPropertyChecks w
     "NoReleaseForTransit" in { DepartureStatus.values.contains(DepartureStatus.NoReleaseForTransit) }
     "DeclarationCancellationRequest" in { DepartureStatus.values.contains(DepartureStatus.DeclarationCancellationRequest) }
     "CancellationDecision" in { DepartureStatus.values.contains(DepartureStatus.CancellationDecision) }
+    "WriteOffNotification" in { DepartureStatus.values.contains(DepartureStatus.WriteOffNotification) }
   }
 
 }

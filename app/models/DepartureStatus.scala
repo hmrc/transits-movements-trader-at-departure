@@ -89,6 +89,7 @@ object DepartureStatus extends Enumerable.Implicits with MongoDateTimeFormats {
       case MessageReceivedEvent.ReleaseForTransit              => Right(ReleaseForTransit)
       case MessageReceivedEvent.DeclarationCancellationRequest => Right(DeclarationCancellationRequest)
       case MessageReceivedEvent.CancellationDecision           => Right(CancellationDecision)
+      case MessageReceivedEvent.WriteOffNotification           => Right(WriteOffNotification)
       case _                                                   => Left(TransitionError(s"Failed to transition from ReleaseForTransit to $messageReceived"))
     }
   }
@@ -104,7 +105,15 @@ object DepartureStatus extends Enumerable.Implicits with MongoDateTimeFormats {
   case object CancellationDecision extends DepartureStatus {
     override def transition(messageReceived: MessageReceivedEvent): Either[TransitionError, DepartureStatus] = messageReceived match {
       case MessageReceivedEvent.CancellationDecision => Right(CancellationDecision)
+      case MessageReceivedEvent.WriteOffNotification => Right(WriteOffNotification)
       case _                                         => Left(TransitionError(s"Failed to transition from CancellationDecision to $messageReceived"))
+    }
+  }
+
+  case object WriteOffNotification extends DepartureStatus {
+    override def transition(messageReceived: MessageReceivedEvent): Either[TransitionError, DepartureStatus] = messageReceived match {
+      case MessageReceivedEvent.WriteOffNotification => Right(WriteOffNotification)
+      case _                                         => Left(TransitionError(s"Failed to transition from WriteOffNotification to $messageReceived"))
     }
   }
 
@@ -118,7 +127,8 @@ object DepartureStatus extends Enumerable.Implicits with MongoDateTimeFormats {
     NoReleaseForTransit,
     ReleaseForTransit,
     DeclarationCancellationRequest,
-    CancellationDecision
+    CancellationDecision,
+    WriteOffNotification
   )
 
   implicit val enumerable: Enumerable[DepartureStatus] =

@@ -27,6 +27,7 @@ import models.MessageType.MrnAllocated
 import models.MessageType.NoReleaseForTransit
 import models.MessageType.PositiveAcknowledgement
 import models.MessageType.ReleaseForTransit
+import models.MessageType.WriteOffNotification
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.libs.json.JsError
 import play.api.libs.json.JsNumber
@@ -90,6 +91,12 @@ class MessageTypeSpec extends SpecBase with ScalaCheckDrivenPropertyChecks with 
       MessageType.values must contain(CancellationDecision)
       CancellationDecision.code mustEqual "IE009"
       CancellationDecision.rootNode mustEqual "CC009A"
+    }
+
+    "WriteOffNotification" in {
+      MessageType.values must contain(WriteOffNotification)
+      WriteOffNotification.code mustEqual "IE045"
+      WriteOffNotification.rootNode mustEqual "CC045A"
     }
   }
 
