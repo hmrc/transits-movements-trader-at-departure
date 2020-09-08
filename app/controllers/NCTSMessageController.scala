@@ -24,6 +24,7 @@ import models.SubmissionProcessingResult.SubmissionSuccess
 import models.CancellationDecisionResponse
 import models.ControlDecisionNotificationResponse
 import models.DepartureRejectedResponse
+import models.GuaranteeNotValidResponse
 import models.MessageResponse
 import models.MessageSender
 import models.MessageType
@@ -60,6 +61,7 @@ class NCTSMessageController @Inject()(cc: ControllerComponents, getDeparture: Ge
         case Some(MessageType.ReleaseForTransit.code)           => Some(ReleaseForTransitResponse)
         case Some(MessageType.CancellationDecision.code)        => Some(CancellationDecisionResponse)
         case Some(MessageType.WriteOffNotification.code)        => Some(WriteOffNotificationResponse)
+        case Some(MessageType.GuaranteeNotValid.code)           => Some(GuaranteeNotValidResponse)
         case invalidResponse =>
           Logger.warn(s"Received the following invalid response for X-Message-Type: $invalidResponse")
           None

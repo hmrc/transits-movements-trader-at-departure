@@ -111,13 +111,18 @@ class DepartureStatusSpec extends SpecBase with ScalaCheckDrivenPropertyChecks w
         DepartureStatus.DeclarationCancellationRequest)
     }
 
+    "transition to GuaranteeNotValid when receiving a GuaranteeNotValid event" in {
+      DepartureStatus.MrnAllocated.transition(MessageReceivedEvent.GuaranteeNotValid) mustEqual Right(DepartureStatus.GuaranteeNotValid)
+    }
+
     "return an error message when receiving any other event" in {
       val validMessages = Seq(
         MessageReceivedEvent.MrnAllocated,
         MessageReceivedEvent.ControlDecisionNotification,
         MessageReceivedEvent.NoReleaseForTransit,
         MessageReceivedEvent.ReleaseForTransit,
-        MessageReceivedEvent.DeclarationCancellationRequest
+        MessageReceivedEvent.DeclarationCancellationRequest,
+        MessageReceivedEvent.GuaranteeNotValid
       )
       val invalidMessages = MessageReceivedEvent.values.diff(validMessages)
       invalidMessages.foreach {
@@ -266,6 +271,29 @@ class DepartureStatusSpec extends SpecBase with ScalaCheckDrivenPropertyChecks w
       invalidMessages.foreach {
         m =>
           DepartureStatus.WriteOffNotification.transition(m).isLeft mustBe true
+      }
+    }
+  }
+
+  "GuaranteeNotValid must " - {
+    "transition to GuaranteeNotValid when recieving a GuaranteeNotValid event" in {
+      DepartureStatus.GuaranteeNotValid.transition(MessageReceivedEvent.GuaranteeNotValid) mustEqual Right(DepartureStatus.GuaranteeNotValid)
+    }
+
+    "transition to NoReleaseForTransit when recieving a NoReleaseForTransit event" in {
+      DepartureStatus.GuaranteeNotValid.transition(MessageReceivedEvent.NoReleaseForTransit) mustEqual Right(DepartureStatus.NoReleaseForTransit)
+    }
+
+    "transition to ReleaseForTransit when recieving a ReleaseForTransit event" in {
+      DepartureStatus.GuaranteeNotValid.transition(MessageReceivedEvent.ReleaseForTransit) mustEqual Right(DepartureStatus.ReleaseForTransit)
+    }
+
+    "return an error message when receiving any other event" in {
+      val validMessages   = Seq(MessageReceivedEvent.GuaranteeNotValid, MessageReceivedEvent.NoReleaseForTransit, MessageReceivedEvent.ReleaseForTransit)
+      val invalidMessages = MessageReceivedEvent.values.diff(validMessages)
+      invalidMessages.foreach {
+        m =>
+          DepartureStatus.GuaranteeNotValid.transition(m).isLeft mustBe true
       }
     }
   }
