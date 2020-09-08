@@ -24,23 +24,21 @@ import play.api.mvc.Action
 import play.api.mvc.AnyContent
 import play.api.mvc.ControllerComponents
 import uk.gov.hmrc.play.bootstrap.controller.BackendController
-import actions.AuthenticateGetOptionalDepartureForWriteActionProvider
-import actions.AuthenticatedGetDepartureForReadActionProvider
+import actions._
+import models._
 import models.MessageStatus.SubmissionSucceeded
-import models.response.ResponseDeparture
-import models.DepartureId
-import models.DepartureStatus
-import models.Message
-import models.SubmissionProcessingResult
+import models.response.{ResponseDeparture, ResponseDepartures}
 import play.api.libs.json.Json
-import services.DepartureService
-import services.SubmitMessageService
+import repositories.DepartureRepository
+import services._
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.xml.NodeSeq
 
 class DeparturesController @Inject()(cc: ControllerComponents,
+                                     departureRepository: DepartureRepository,
+                                     authenticate: AuthenticateActionProvider,
                                      authenticatedOptionalDeparture: AuthenticateGetOptionalDepartureForWriteActionProvider,
                                      authenticatedDepartureForRead: AuthenticatedGetDepartureForReadActionProvider,
                                      departureService: DepartureService,
@@ -122,5 +120,22 @@ class DeparturesController @Inject()(cc: ControllerComponents,
   def get(departureId: DepartureId): Action[AnyContent] = authenticatedDepartureForRead(departureId) {
     implicit request =>
       Ok(Json.toJsObject(ResponseDeparture.build(request.departure)))
+  }
+
+  def getDepartures(): Action[AnyContent] = authenticate().async {
+    implicit request =>
+      departureRepository
+        .fetchAllDepartures(request.eoriNumber)
+        .map {
+          allDepartures =>
+            Ok(Json.toJsObject(ResponseDepartures(allDepartures.map {
+              departure =>
+                ResponseDeparture.build(departure)
+            })))
+        }
+        .recover {
+          case e =>
+            InternalServerError(s"Failed with the following error: $e")
+        }
   }
 }

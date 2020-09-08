@@ -16,8 +16,6 @@
 
 package repositories
 
-import java.time.LocalDateTime
-
 import config.AppConfig
 import javax.inject.Inject
 import models.Departure
@@ -27,8 +25,10 @@ import models.Message
 import models.MessageStatus
 import models.MongoDateTimeFormats
 import models.MovementReferenceNumber
+import play.api.libs.json.JsObject
 import play.api.libs.json.Json
 import play.modules.reactivemongo.ReactiveMongoApi
+import reactivemongo.api.Cursor
 import reactivemongo.api.commands.WriteResult
 import reactivemongo.bson.BSONDocument
 import reactivemongo.api.bson.collection.BSONSerializationPack
@@ -256,6 +256,13 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfi
         }
     }
   }
+
+  def fetchAllDepartures(eoriNumber: String): Future[Seq[Departure]] =
+    collection.flatMap {
+      _.find(Json.obj("eoriNumber" -> eoriNumber), Option.empty[JsObject])
+        .cursor[Departure]()
+        .collect[Seq](-1, Cursor.FailOnError())
+    }
 }
 
 object DepartureRepository {

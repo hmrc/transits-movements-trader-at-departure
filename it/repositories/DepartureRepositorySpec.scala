@@ -1,6 +1,8 @@
 package repositories
 
-import java.time.{LocalDate, LocalDateTime, LocalTime}
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
 
 import cats.data.NonEmptyList
 import generators.ModelGenerators
@@ -16,7 +18,9 @@ import org.scalatest.exceptions.{StackDepthException, TestFailedException}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
+import play.api.test.Helpers.running
 import reactivemongo.play.json.ImplicitBSONHandlers.JsObjectDocumentWriter
 import reactivemongo.play.json.collection.JSONCollection
 import utils.Format
@@ -24,6 +28,7 @@ import utils.Format
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.reflect.ClassTag
 import scala.util.{Failure, Success}
+
 class DepartureRepositorySpec extends AnyFreeSpec with TryValues with OptionValues with ModelGenerators with Matchers with ScalaFutures with MongoSuite with GuiceOneAppPerSuite with IntegrationPatience  with MongoDateTimeFormats {
 
   private val service = app.injector.instanceOf[DepartureRepository]
@@ -94,24 +99,24 @@ class DepartureRepositorySpec extends AnyFreeSpec with TryValues with OptionValu
       "must get an departure if one exists with a matching eoriNumber and referenceNumber" in {
         database.flatMap(_.drop()).futureValue
 
-            val referenceNumber = "apples"
-            val eori            = "eori"
-            val departure       = arbitrary[Departure].sample.value copy (eoriNumber = eori, referenceNumber = referenceNumber)
-            service.insert(departure).futureValue
-            val result = service.get(eori, referenceNumber)
-            whenReady(result) { r =>
-              r.value mustEqual departure
-            }
+        val referenceNumber = "apples"
+        val eori = "eori"
+        val departure = arbitrary[Departure].sample.value copy(eoriNumber = eori, referenceNumber = referenceNumber)
+        service.insert(departure).futureValue
+        val result = service.get(eori, referenceNumber)
+        whenReady(result) { r =>
+          r.value mustEqual departure
+        }
       }
 
       "must return a None if any exist with a matching eoriNumber but no matching referenceNumber" in {
         database.flatMap(_.drop()).futureValue
 
-        val referenceNumber      = arbitrary[String].sample.value
+        val referenceNumber = arbitrary[String].sample.value
         val otherReferenceNumber = arbitrary[String].sample.value
 
-        val eori    = "eori"
-        val departure = arbitrary[Departure].sample.value copy (eoriNumber = eori, referenceNumber = otherReferenceNumber)
+        val eori = "eori"
+        val departure = arbitrary[Departure].sample.value copy(eoriNumber = eori, referenceNumber = otherReferenceNumber)
 
         service.insert(departure).futureValue
 
@@ -125,11 +130,11 @@ class DepartureRepositorySpec extends AnyFreeSpec with TryValues with OptionValu
       "must return a None if any exist with a matching referenceNumber but no matching eoriNumber" in {
         database.flatMap(_.drop()).futureValue
 
-        val referenceNumber      = arbitrary[String].sample.value
+        val referenceNumber = arbitrary[String].sample.value
 
-        val eori      = "eori"
+        val eori = "eori"
         val otherEori = "otherEori"
-        val departure = arbitrary[Departure].sample.value copy (eoriNumber = otherEori, referenceNumber = referenceNumber)
+        val departure = arbitrary[Departure].sample.value copy(eoriNumber = otherEori, referenceNumber = referenceNumber)
 
         service.insert(departure).futureValue
 
@@ -143,12 +148,12 @@ class DepartureRepositorySpec extends AnyFreeSpec with TryValues with OptionValu
       "must return a None when an departure does not exist" in {
         database.flatMap(_.drop()).futureValue
 
-        val referenceNumber      = arbitrary[String].sample.value
+        val referenceNumber = arbitrary[String].sample.value
         val otherReferenceNumber = arbitrary[String].sample.value
 
-        val eori      = "eori"
+        val eori = "eori"
         val otherEori = "otherEori"
-        val departure = arbitrary[Departure].sample.value copy (eoriNumber = otherEori, referenceNumber = otherReferenceNumber)
+        val departure = arbitrary[Departure].sample.value copy(eoriNumber = otherEori, referenceNumber = otherReferenceNumber)
 
         service.insert(departure).futureValue
 
@@ -184,18 +189,18 @@ class DepartureRepositorySpec extends AnyFreeSpec with TryValues with OptionValu
 
         val departure = departureWithOneMessage.sample.value.copy(departureId = DepartureId(1))
 
-          service.insert(departure).futureValue
-          val result = service.setMessageState(DepartureId(2), 0, SubmissionSucceeded)
+        service.insert(departure).futureValue
+        val result = service.setMessageState(DepartureId(2), 0, SubmissionSucceeded)
 
-          whenReady(result) { r =>
-            r mustBe a[Failure[_]]
-          }
+        whenReady(result) { r =>
+          r mustBe a[Failure[_]]
+        }
       }
 
       "must fail if the message doesn't exist" in {
         database.flatMap(_.drop()).futureValue
 
-        val departure = departureWithOneMessage.sample.value copy(departureId = DepartureId(1))
+        val departure = departureWithOneMessage.sample.value copy (departureId = DepartureId(1))
 
         service.insert(departure).futureValue
         val result = service.setMessageState(DepartureId(1), 5, SubmissionSucceeded)
@@ -210,7 +215,7 @@ class DepartureRepositorySpec extends AnyFreeSpec with TryValues with OptionValu
 
         val preGenDeparture = departureWithOneMessage.sample.value
         val departure = preGenDeparture.copy(departureId = DepartureId(1),
-        messages = NonEmptyList.one(arbitrary[MessageWithoutStatus].sample.value))
+          messages = NonEmptyList.one(arbitrary[MessageWithoutStatus].sample.value))
 
         service.insert(departure).futureValue
         val result = service.setMessageState(DepartureId(1), 0, SubmissionSucceeded)
@@ -264,7 +269,7 @@ class DepartureRepositorySpec extends AnyFreeSpec with TryValues with OptionValu
       "must fail if the departure cannot be found" in {
         database.flatMap(_.drop()).futureValue
 
-        val departure = arbitrary[Departure].sample.value copy (status = DepartureStatus.DepartureSubmitted, departureId = DepartureId(1))
+        val departure = arbitrary[Departure].sample.value copy(status = DepartureStatus.DepartureSubmitted, departureId = DepartureId(1))
 
         val dateOfPrep = LocalDate.now()
         val timeOfPrep = LocalTime.of(1, 1)
@@ -313,12 +318,12 @@ class DepartureRepositorySpec extends AnyFreeSpec with TryValues with OptionValu
         database.flatMap(_.drop()).futureValue
 
         val departure = departureWithOneMessage.sample.value.copy(departureId = DepartureId(1), status = Initialized)
-        val messageId =  MessageId.fromIndex(0)
+        val messageId = MessageId.fromIndex(0)
 
         service.insert(departure).futureValue
 
         val setResult = service.setDepartureStateAndMessageState(DepartureId(2), messageId.index, DepartureSubmitted, SubmissionSucceeded)
-        setResult.futureValue must not be(defined)
+        setResult.futureValue must not be (defined)
 
         val result = service.get(departure.departureId)
 
@@ -367,11 +372,11 @@ class DepartureRepositorySpec extends AnyFreeSpec with TryValues with OptionValu
         updatedDeparture.status mustEqual newState
         updatedDeparture.messages.size - departure.messages.size mustEqual 1
         updatedDeparture.messages.last mustEqual declarationRejectedMessage
-    }
+      }
       "must fail if the departure cannot be found" in {
         database.flatMap(_.drop()).futureValue
 
-        val departure = arbitrary[Departure].sample.value copy (status = DepartureStatus.DepartureSubmitted, departureId = DepartureId(1))
+        val departure = arbitrary[Departure].sample.value copy(status = DepartureStatus.DepartureSubmitted, departureId = DepartureId(1))
 
         val dateOfPrep = LocalDate.now()
         val timeOfPrep = LocalTime.of(1, 1)
@@ -393,7 +398,7 @@ class DepartureRepositorySpec extends AnyFreeSpec with TryValues with OptionValu
 
         result mustBe a[Failure[_]]
       }
-  }
+    }
 
     "setMrnAndAddResponseMessage" - {
       "must add a message, update the status of a document, update the timestamp, and update the MRN" in {
@@ -441,7 +446,7 @@ class DepartureRepositorySpec extends AnyFreeSpec with TryValues with OptionValu
       "must fail if the departure cannot be found" in {
         database.flatMap(_.drop()).futureValue
 
-        val departure = arbitrary[Departure].sample.value copy (status = DepartureStatus.DepartureSubmitted, departureId = DepartureId(1))
+        val departure = arbitrary[Departure].sample.value copy(status = DepartureStatus.DepartureSubmitted, departureId = DepartureId(1))
 
         val mrn = "mrn"
         val dateOfPrep = LocalDate.now()
@@ -464,9 +469,58 @@ class DepartureRepositorySpec extends AnyFreeSpec with TryValues with OptionValu
 
         addMessageResult mustBe a[Failure[_]]
       }
+    }
 
+    "fetchAllDepartures" - {
+      "return Departures that match an eoriNumber" in {
+        database.flatMap(_.drop()).futureValue
+
+        val app = new GuiceApplicationBuilder().build()
+        val eoriNumber: String = arbitrary[String].sample.value
+
+        val departure1 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber)
+        val departure2 = arbitrary[Departure].suchThat(_.eoriNumber != eoriNumber).sample.value
+
+        running(app) {
+          started(app).futureValue
+          val respository = app.injector.instanceOf[DepartureRepository]
+          val departures = Seq(departure1, departure2)
+          val jsonArr = departures.map(Json.toJsObject(_))
+          database.flatMap {
+            db =>
+              db.collection[JSONCollection](DepartureRepository.collectionName).insert(false).many(jsonArr)
+          }.futureValue
+
+          respository.fetchAllDepartures(eoriNumber).futureValue mustBe Seq(departure1)
+        }
+      }
+
+      "must return an empty sequence when there are no movements with the same eori" in {
+        database.flatMap(_.drop()).futureValue
+
+        val eoriNumber: String = arbitrary[String].sample.value
+
+        val app = new GuiceApplicationBuilder().build()
+        val departure1 = arbitrary[Departure].suchThat(_.eoriNumber != eoriNumber).sample.value
+        val departure2 = arbitrary[Departure].suchThat(_.eoriNumber != eoriNumber).sample.value
+
+        running(app) {
+          started(app).futureValue
+
+          val respository = app.injector.instanceOf[DepartureRepository]
+          val allDepartures = Seq(departure1, departure2)
+          val jsonArr = allDepartures.map(Json.toJsObject(_))
+
+          database.flatMap {
+            db =>
+              db.collection[JSONCollection](DepartureRepository.collectionName).insert(false).many(jsonArr)
+          }.futureValue
+
+          val result = respository.fetchAllDepartures(eoriNumber).futureValue
+
+          result mustBe Seq.empty[Departure]
+        }
+      }
     }
   }
-
-
-  }
+}
