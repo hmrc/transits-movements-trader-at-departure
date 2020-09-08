@@ -27,7 +27,8 @@ import uk.gov.hmrc.play.bootstrap.controller.BackendController
 import actions._
 import models._
 import models.MessageStatus.SubmissionSucceeded
-import models.response.{ResponseDeparture, ResponseDepartures}
+import models.response.ResponseDeparture
+import models.response.ResponseDepartures
 import play.api.libs.json.Json
 import repositories.DepartureRepository
 import services._

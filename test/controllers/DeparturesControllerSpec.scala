@@ -25,6 +25,7 @@ import controllers.actions.AuthenticateGetOptionalDepartureForWriteActionProvide
 import controllers.actions.FakeAuthenticatedGetOptionalDepartureForWriteActionProvider
 import org.scalatest.concurrent.IntegrationPatience
 import org.scalatest.BeforeAndAfterEach
+import org.scalatest.stats
 import org.mockito.Mockito._
 import org.scalacheck.Arbitrary.arbitrary
 import generators.ModelGenerators
@@ -45,6 +46,7 @@ import models.SubmissionProcessingResult.SubmissionFailureExternal
 import models.SubmissionProcessingResult.SubmissionFailureInternal
 import models.SubmissionProcessingResult.SubmissionSuccess
 import models.response.ResponseDeparture
+import models.response.ResponseDepartures
 import models.Departure
 import models.DepartureId
 import models.DepartureStatus
@@ -496,6 +498,62 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
 
       running(application) {
         val request = FakeRequest(GET, routes.DeparturesController.get(DepartureId(1)).url)
+        val result  = route(application, request).value
+
+        status(result) mustEqual INTERNAL_SERVER_ERROR
+      }
+    }
+  }
+  "/GET" - {
+    "must return all departures from database" in {
+      val mockDepartureRepository = mock[DepartureRepository]
+
+      val departure         = Arbitrary.arbitrary[Departure].sample.value.copy(eoriNumber = "eori")
+      val responseDeparture = ResponseDeparture.build(departure)
+
+      when(mockDepartureRepository.fetchAllDepartures(any())).thenReturn(Future.successful(Seq(departure)))
+
+      val application = baseApplicationBuilder
+        .overrides(bind[DepartureRepository].toInstance(mockDepartureRepository))
+        .build()
+
+      running(application) {
+        val request = FakeRequest(GET, routes.DeparturesController.getDepartures().url)
+        val result  = route(application, request).value
+
+        status(result) mustEqual OK
+        contentAsJson(result) mustEqual Json.toJson(ResponseDepartures(Seq(responseDeparture)))
+      }
+    }
+
+    "must return empty sequence when there are no departures in database" in {
+      val mockDepartureRepository = mock[DepartureRepository]
+
+      when(mockDepartureRepository.fetchAllDepartures(any())).thenReturn(Future.successful(Seq.empty))
+
+      val application = baseApplicationBuilder
+        .overrides(bind[DepartureRepository].toInstance(mockDepartureRepository))
+        .build()
+
+      running(application) {
+        val request = FakeRequest(GET, routes.DeparturesController.getDepartures().url)
+        val result  = route(application, request).value
+
+        status(result) mustEqual OK
+        contentAsJson(result) mustEqual Json.toJson(ResponseDepartures(Seq.empty))
+      }
+    }
+    "must return INTERNAL_SERVER_ERROR when we cannot retrieve departures" in {
+      val mockDepartureRepository = mock[DepartureRepository]
+
+      when(mockDepartureRepository.fetchAllDepartures(any())).thenReturn(Future.failed(new Exception))
+
+      val application = baseApplicationBuilder
+        .overrides(bind[DepartureRepository].toInstance(mockDepartureRepository))
+        .build()
+
+      running(application) {
+        val request = FakeRequest(GET, routes.DeparturesController.getDepartures().url)
         val result  = route(application, request).value
 
         status(result) mustEqual INTERNAL_SERVER_ERROR
