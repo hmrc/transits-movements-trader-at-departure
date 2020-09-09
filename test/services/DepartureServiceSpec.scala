@@ -96,12 +96,20 @@ class DepartureServiceSpec extends SpecBase with IntegrationPatience with Stream
 
     "returns Left when the root node is not <CC007A>" in {
 
+      val id         = DepartureId(1)
       val ref        = "ref"
       val eori       = "eoriNumber"
       val dateOfPrep = LocalDate.now()
       val timeOfPrep = LocalTime.of(1, 1)
 
-      val application = baseApplicationBuilder.build()
+      val mockArrivalIdRepository = mock[DepartureIdRepository]
+      when(mockArrivalIdRepository.nextId()).thenReturn(Future.successful(id))
+
+      val application = baseApplicationBuilder
+        .overrides(
+          bind[DepartureIdRepository].toInstance(mockArrivalIdRepository)
+        )
+        .build()
 
       val service = application.injector.instanceOf[DepartureService]
 
