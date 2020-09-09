@@ -16,27 +16,19 @@
 
 package repositories
 
-import java.time.LocalDateTime
-
 import config.AppConfig
 import javax.inject.Inject
-import models.Departure
-import models.DepartureId
-import models.DepartureStatus
-import models.Message
-import models.MessageStatus
-import models.MongoDateTimeFormats
-import models.MovementReferenceNumber
+import models._
 import play.api.libs.json.Json
 import play.modules.reactivemongo.ReactiveMongoApi
-import reactivemongo.api.commands.WriteResult
-import reactivemongo.bson.BSONDocument
 import reactivemongo.api.bson.collection.BSONSerializationPack
+import reactivemongo.api.commands.WriteResult
 import reactivemongo.api.indexes.Index.Aux
 import reactivemongo.api.indexes.IndexType
+import reactivemongo.bson.BSONDocument
+import reactivemongo.play.json.ImplicitBSONHandlers.JsObjectDocumentWriter
 import reactivemongo.play.json.collection.JSONCollection
 import utils.IndexUtils
-import reactivemongo.play.json.ImplicitBSONHandlers.JsObjectDocumentWriter
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future

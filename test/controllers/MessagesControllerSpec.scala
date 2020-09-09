@@ -24,22 +24,14 @@ import base.SpecBase
 import cats.data.NonEmptyList
 import connectors.MessageConnector
 import generators.ModelGenerators
-import models.Departure
-import models.DepartureId
-import models.DepartureStatus
-import models.MessageId
-import models.MessageSender
-import models.MessageType
-import models.MessageWithStatus
-import models.MessageWithoutStatus
-import models.MovementReferenceNumber
-import models.SubmissionProcessingResult
 import models.MessageStatus.SubmissionFailed
 import models.MessageStatus.SubmissionPending
 import models.MessageStatus.SubmissionSucceeded
+import models._
 import models.response.ResponseDepartureWithMessages
 import models.response.ResponseMessage
 import org.mockito.ArgumentMatchers.any
+import org.mockito.ArgumentMatchers.{eq => eqTo}
 import org.mockito.Mockito.times
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.when
@@ -56,12 +48,11 @@ import play.api.test.Helpers.GET
 import play.api.test.Helpers.contentAsJson
 import play.api.test.Helpers.route
 import play.api.test.Helpers.running
+import play.api.test.Helpers._
 import repositories.DepartureRepository
 import repositories.LockRepository
-import utils.Format
-import play.api.test.Helpers._
 import services.SubmitMessageService
-import org.mockito.ArgumentMatchers.{eq => eqTo}
+import utils.Format
 
 import scala.concurrent.Future
 

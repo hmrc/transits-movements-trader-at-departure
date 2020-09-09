@@ -16,23 +16,19 @@
 
 package controllers.actions
 
+import config.AppConfig
 import javax.inject.Inject
 import models.request.AuthenticatedRequest
 import play.api.Logger
 import play.api.mvc.ActionRefiner
 import play.api.mvc.Request
 import play.api.mvc.Result
-import play.api.mvc.Results.Unauthorized
 import play.api.mvc.Results.Forbidden
-import uk.gov.hmrc.auth.core.AuthConnector
-import uk.gov.hmrc.auth.core.AuthorisationException
-import uk.gov.hmrc.auth.core.AuthorisedFunctions
-import uk.gov.hmrc.auth.core.Enrolment
-import uk.gov.hmrc.auth.core.InsufficientEnrolments
+import play.api.mvc.Results.Unauthorized
+import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.HeaderCarrierConverter
-import config.AppConfig
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future

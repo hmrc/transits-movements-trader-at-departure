@@ -1,6 +1,4 @@
 import play.core.PlayVersion.current
-import play.sbt.PlayImport._
-import sbt.Keys.libraryDependencies
 import sbt._
 
 object AppDependencies {
@@ -8,11 +6,11 @@ object AppDependencies {
   private val catsVersion = "2.1.1"
 
   val compile = Seq(
-    "org.reactivemongo" %% "play2-reactivemongo" % "0.20.11-play26",
-    "uk.gov.hmrc"       %% "bootstrap-play-26"   % "1.13.0",
-    "com.typesafe.play" %% "play-iteratees"      % "2.6.1",
-    "com.typesafe.play" %% "play-iteratees-reactive-streams"  % "2.6.1",
-    "org.typelevel"     %% "cats-core"           % catsVersion
+    "org.reactivemongo" %% "play2-reactivemongo"             % "0.20.11-play26",
+    "uk.gov.hmrc"       %% "bootstrap-play-26"               % "1.13.0",
+    "com.typesafe.play" %% "play-iteratees"                  % "2.6.1",
+    "com.typesafe.play" %% "play-iteratees-reactive-streams" % "2.6.1",
+    "org.typelevel"     %% "cats-core"                       % catsVersion
   )
 
   val test = Seq(

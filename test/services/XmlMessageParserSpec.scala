@@ -23,11 +23,6 @@ import java.time.LocalTime
 import base.SpecBase
 import models.MessageType
 import models.MovementReferenceNumber
-import models.ParseError.EmptyLocalReferenceNumber
-import models.ParseError.EmptyMovementReferenceNumber
-import models.ParseError.InvalidRootNode
-import models.ParseError.LocalDateParseFailure
-import models.ParseError.LocalTimeParseFailure
 import org.scalatest.EitherValues
 import utils.Format
 

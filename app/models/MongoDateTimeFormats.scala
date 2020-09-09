@@ -20,11 +20,7 @@ import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 
-import play.api.libs.json.JsValue
-import play.api.libs.json.Json
-import play.api.libs.json.Reads
-import play.api.libs.json.Writes
-import play.api.libs.json.__
+import play.api.libs.json._
 
 trait MongoDateTimeFormats {
 

@@ -36,12 +36,12 @@ import play.api.mvc.Results
 import play.api.test.FakeRequest
 import play.api.test.Helpers.contentAsString
 import play.api.test.Helpers.status
+import play.api.test.Helpers._
 import repositories.DepartureRepository
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.auth.core.Enrolment
 import uk.gov.hmrc.auth.core.EnrolmentIdentifier
 import uk.gov.hmrc.auth.core.Enrolments
-import play.api.test.Helpers._
 
 import scala.concurrent.Future
 

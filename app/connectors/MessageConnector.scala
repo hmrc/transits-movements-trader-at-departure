@@ -20,17 +20,13 @@ import java.time.OffsetDateTime
 import java.util.UUID
 
 import com.google.inject.Inject
+import config.AppConfig
+import models._
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.HttpReads
 import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.http.logging.Authorization
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
-import config.AppConfig
-import models.DepartureId
-import models.MessageSender
-import models.MessageType
-import models.MessageWithStatus
-import models.TransitWrapper
 import utils.Format
 
 import scala.concurrent.ExecutionContext

@@ -18,10 +18,10 @@ package models
 
 import java.time.LocalDateTime
 
-import play.api.libs.json._
-import play.api.libs.functional.syntax._
 import cats.data._
 import cats.implicits._
+import play.api.libs.functional.syntax._
+import play.api.libs.json._
 
 case class Departure(departureId: DepartureId,
                      eoriNumber: String,

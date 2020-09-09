@@ -20,14 +20,7 @@ import java.time.LocalDate
 import java.time.LocalTime
 
 import base.SpecBase
-import models.DepartureId
-import models.DepartureRejectedResponse
-import models.DepartureStatus
-import models.MrnAllocatedResponse
-import models.MessageSender
-import models.MovementReferenceNumber
-import models.SubmissionProcessingResult
-import models.XSDFile.MRNAllocatedXSD
+import models._
 import org.mockito.ArgumentMatchers.{eq => eqTo, _}
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
