@@ -21,21 +21,17 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 
 import cats.data.ReaderT
+import cats.implicits._
+import models.MessageType
+import models.MovementReferenceNumber
+import models.ParseError
+import models.ParseError._
+import utils.Format
 
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
 import scala.xml.NodeSeq
-import cats.implicits._
-import models.ParseError.EmptyLocalReferenceNumber
-import models.ParseError.EmptyMovementReferenceNumber
-import models.ParseError.InvalidRootNode
-import models.ParseError.LocalDateParseFailure
-import models.ParseError.LocalTimeParseFailure
-import models.MessageType
-import models.MovementReferenceNumber
-import models.ParseError
-import utils.Format
 
 object XmlMessageParser {
 

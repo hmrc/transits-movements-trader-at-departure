@@ -16,13 +16,7 @@
 
 package utils
 
-import play.api.libs.json.JsError
-import play.api.libs.json.JsResult
-import play.api.libs.json.JsString
-import play.api.libs.json.JsSuccess
-import play.api.libs.json.JsValue
-import play.api.libs.json.Reads
-import play.api.libs.json.Writes
+import play.api.libs.json._
 
 import scala.xml.NodeSeq
 import scala.xml.XML

@@ -17,11 +17,7 @@
 package services
 
 import com.google.inject.Inject
-import models.DepartureStatus
-import models.MessageResponse
-import models.MessageSender
-import models.MovementReferenceNumber
-import models.SubmissionProcessingResult
+import models._
 import models.SubmissionProcessingResult.SubmissionFailureExternal
 import models.SubmissionProcessingResult.SubmissionFailureInternal
 import models.SubmissionProcessingResult.SubmissionSuccess

@@ -19,16 +19,12 @@ package controllers.actions
 import models.Departure
 import models.request.AuthenticatedOptionalDepartureRequest
 import models.request.AuthenticatedRequest
-import play.api.mvc.ActionBuilder
-import play.api.mvc.AnyContent
-import play.api.mvc.BodyParser
-import play.api.mvc.Request
-import play.api.mvc.Result
+import play.api.mvc._
 import play.api.test.Helpers.stubBodyParser
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
 
 class FakeAuthenticatedGetOptionalDepartureForWriteActionProvider(departure: Option[Departure]) extends AuthenticateGetOptionalDepartureForWriteActionProvider {
   override def apply(): ActionBuilder[AuthenticatedOptionalDepartureRequest, AnyContent] =

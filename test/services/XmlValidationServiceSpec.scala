@@ -19,8 +19,6 @@ package services
 import base.SpecBase
 import models.XSDFile
 
-import scala.util.Failure
-
 class XmlValidationServiceSpec extends SpecBase {
 
   private val xmlValidationService: XmlValidationService = new XmlValidationService()

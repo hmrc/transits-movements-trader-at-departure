@@ -22,14 +22,8 @@ import java.time.LocalTime
 
 import base.SpecBase
 import cats.data.NonEmptyList
-import models.Departure
-import models.DepartureId
-import models.DepartureStatus
-import models.MessageSender
-import models.MessageStatus
-import models.MessageType
-import models.MessageWithStatus
 import models.MessageStatus.SubmissionPending
+import models._
 import org.mockito.Mockito.when
 import org.scalatest.StreamlinedXmlEquality
 import org.scalatest.concurrent.IntegrationPatience

@@ -1,18 +1,24 @@
 package repositories
 
-import java.time.{LocalDate, LocalDateTime, LocalTime}
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
 
 import cats.data.NonEmptyList
 import generators.ModelGenerators
-import models.DepartureStatus.{DepartureSubmitted, Initialized}
-import models.MessageStatus.{SubmissionPending, SubmissionSucceeded}
-import models.{Departure, DepartureId, DepartureStatus, MessageId, MessageType, MessageWithStatus, MessageWithoutStatus, MongoDateTimeFormats, MovementReferenceNumber}
+import models.DepartureStatus.DepartureSubmitted
+import models.DepartureStatus.Initialized
+import models.MessageStatus.SubmissionPending
+import models.MessageStatus.SubmissionSucceeded
+import models._
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import org.scalactic.source
 import org.scalatest._
-import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
-import org.scalatest.exceptions.{StackDepthException, TestFailedException}
+import org.scalatest.concurrent.IntegrationPatience
+import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.exceptions.StackDepthException
+import org.scalatest.exceptions.TestFailedException
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
@@ -23,21 +29,35 @@ import utils.Format
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.reflect.ClassTag
-import scala.util.{Failure, Success}
-class DepartureRepositorySpec extends AnyFreeSpec with TryValues with OptionValues with ModelGenerators with Matchers with ScalaFutures with MongoSuite with GuiceOneAppPerSuite with IntegrationPatience  with MongoDateTimeFormats {
+import scala.util.Failure
+import scala.util.Success
+
+class DepartureRepositorySpec
+    extends AnyFreeSpec
+    with TryValues
+    with OptionValues
+    with ModelGenerators
+    with Matchers
+    with ScalaFutures
+    with MongoSuite
+    with GuiceOneAppPerSuite
+    with IntegrationPatience
+    with MongoDateTimeFormats {
 
   private val service = app.injector.instanceOf[DepartureRepository]
 
   def typeMatchOnTestValue[A, B](testValue: A)(test: B => Unit)(implicit bClassTag: ClassTag[B]) = testValue match {
     case result: B => test(result)
-    case failedResult => throw new TestFailedException((_: StackDepthException) => Some(s"Test for ${bClassTag.runtimeClass}, but got a ${failedResult.getClass}"), None, implicitly[source.Position])
+    case failedResult =>
+      throw new TestFailedException((_: StackDepthException) => Some(s"Test for ${bClassTag.runtimeClass}, but got a ${failedResult.getClass}"),
+                                    None,
+                                    implicitly[source.Position])
   }
 
   val departureWithOneMessage: Gen[Departure] = for {
     departure <- arbitrary[Departure]
-    message <- arbitrary[MessageWithStatus]
+    message   <- arbitrary[MessageWithStatus]
   } yield departure.copy(messages = NonEmptyList.one(message.copy(status = SubmissionPending)))
-
 
   "DepartureRepository" - {
 
@@ -56,8 +76,9 @@ class DepartureRepositorySpec extends AnyFreeSpec with TryValues with OptionValu
             result.collection[JSONCollection](DepartureRepository.collectionName).find(selector, None).one[Departure]
         }
 
-        whenReady(result) { r =>
-          r.value mustBe departure
+        whenReady(result) {
+          r =>
+            r.value mustBe departure
         }
       }
     }
@@ -71,8 +92,9 @@ class DepartureRepositorySpec extends AnyFreeSpec with TryValues with OptionValu
         service.insert(departure).futureValue
         val result = service.get(departure.departureId)
 
-        whenReady(result) { r =>
-          r.value mustEqual departure
+        whenReady(result) {
+          r =>
+            r.value mustEqual departure
         }
       }
 
@@ -84,8 +106,9 @@ class DepartureRepositorySpec extends AnyFreeSpec with TryValues with OptionValu
         service.insert(departure).futureValue
         val result = service.get(DepartureId(2))
 
-        whenReady(result) { r =>
-          r.isDefined mustBe false
+        whenReady(result) {
+          r =>
+            r.isDefined mustBe false
         }
       }
     }
@@ -94,14 +117,15 @@ class DepartureRepositorySpec extends AnyFreeSpec with TryValues with OptionValu
       "must get an departure if one exists with a matching eoriNumber and referenceNumber" in {
         database.flatMap(_.drop()).futureValue
 
-            val referenceNumber = "apples"
-            val eori            = "eori"
-            val departure       = arbitrary[Departure].sample.value copy (eoriNumber = eori, referenceNumber = referenceNumber)
-            service.insert(departure).futureValue
-            val result = service.get(eori, referenceNumber)
-            whenReady(result) { r =>
-              r.value mustEqual departure
-            }
+        val referenceNumber = "apples"
+        val eori            = "eori"
+        val departure       = arbitrary[Departure].sample.value copy (eoriNumber = eori, referenceNumber = referenceNumber)
+        service.insert(departure).futureValue
+        val result = service.get(eori, referenceNumber)
+        whenReady(result) {
+          r =>
+            r.value mustEqual departure
+        }
       }
 
       "must return a None if any exist with a matching eoriNumber but no matching referenceNumber" in {
@@ -110,7 +134,7 @@ class DepartureRepositorySpec extends AnyFreeSpec with TryValues with OptionValu
         val referenceNumber      = arbitrary[String].sample.value
         val otherReferenceNumber = arbitrary[String].sample.value
 
-        val eori    = "eori"
+        val eori      = "eori"
         val departure = arbitrary[Departure].sample.value copy (eoriNumber = eori, referenceNumber = otherReferenceNumber)
 
         service.insert(departure).futureValue
@@ -118,14 +142,15 @@ class DepartureRepositorySpec extends AnyFreeSpec with TryValues with OptionValu
         val result = service.get(eori, referenceNumber)
 
         whenReady(result) {
-          r => r mustEqual None
+          r =>
+            r mustEqual None
         }
       }
 
       "must return a None if any exist with a matching referenceNumber but no matching eoriNumber" in {
         database.flatMap(_.drop()).futureValue
 
-        val referenceNumber      = arbitrary[String].sample.value
+        val referenceNumber = arbitrary[String].sample.value
 
         val eori      = "eori"
         val otherEori = "otherEori"
@@ -135,8 +160,9 @@ class DepartureRepositorySpec extends AnyFreeSpec with TryValues with OptionValu
 
         val result = service.get(eori, referenceNumber)
 
-        whenReady(result) { r =>
-          r mustEqual None
+        whenReady(result) {
+          r =>
+            r mustEqual None
         }
       }
 
@@ -154,8 +180,9 @@ class DepartureRepositorySpec extends AnyFreeSpec with TryValues with OptionValu
 
         val result = service.get(eori, referenceNumber)
 
-        whenReady(result) { r =>
-          r mustEqual None
+        whenReady(result) {
+          r =>
+            r mustEqual None
         }
       }
     }
@@ -172,10 +199,12 @@ class DepartureRepositorySpec extends AnyFreeSpec with TryValues with OptionValu
 
         val updatedDeparture = service.get(departure.departureId)
 
-        whenReady(updatedDeparture) { r =>
-          typeMatchOnTestValue(r.value.messages.head) {
-            result: MessageWithStatus => result.status mustEqual SubmissionSucceeded
-          }
+        whenReady(updatedDeparture) {
+          r =>
+            typeMatchOnTestValue(r.value.messages.head) {
+              result: MessageWithStatus =>
+                result.status mustEqual SubmissionSucceeded
+            }
         }
       }
 
@@ -184,24 +213,26 @@ class DepartureRepositorySpec extends AnyFreeSpec with TryValues with OptionValu
 
         val departure = departureWithOneMessage.sample.value.copy(departureId = DepartureId(1))
 
-          service.insert(departure).futureValue
-          val result = service.setMessageState(DepartureId(2), 0, SubmissionSucceeded)
+        service.insert(departure).futureValue
+        val result = service.setMessageState(DepartureId(2), 0, SubmissionSucceeded)
 
-          whenReady(result) { r =>
+        whenReady(result) {
+          r =>
             r mustBe a[Failure[_]]
-          }
+        }
       }
 
       "must fail if the message doesn't exist" in {
         database.flatMap(_.drop()).futureValue
 
-        val departure = departureWithOneMessage.sample.value copy(departureId = DepartureId(1))
+        val departure = departureWithOneMessage.sample.value copy (departureId = DepartureId(1))
 
         service.insert(departure).futureValue
         val result = service.setMessageState(DepartureId(1), 5, SubmissionSucceeded)
 
-        whenReady(result) { r =>
-          r mustBe a[Failure[_]]
+        whenReady(result) {
+          r =>
+            r mustBe a[Failure[_]]
         }
       }
 
@@ -209,14 +240,14 @@ class DepartureRepositorySpec extends AnyFreeSpec with TryValues with OptionValu
         database.flatMap(_.drop()).futureValue
 
         val preGenDeparture = departureWithOneMessage.sample.value
-        val departure = preGenDeparture.copy(departureId = DepartureId(1),
-        messages = NonEmptyList.one(arbitrary[MessageWithoutStatus].sample.value))
+        val departure       = preGenDeparture.copy(departureId = DepartureId(1), messages = NonEmptyList.one(arbitrary[MessageWithoutStatus].sample.value))
 
         service.insert(departure).futureValue
         val result = service.setMessageState(DepartureId(1), 0, SubmissionSucceeded)
 
-        whenReady(result) { r =>
-          r mustBe a[Failure[_]]
+        whenReady(result) {
+          r =>
+            r mustBe a[Failure[_]]
         }
       }
     }
@@ -238,7 +269,8 @@ class DepartureRepositorySpec extends AnyFreeSpec with TryValues with OptionValu
             </HEAHEA>
           </CC015B>
 
-        val departureDeclarationMessage = MessageWithoutStatus(LocalDateTime.of(dateOfPrep, timeOfPrep), MessageType.DepartureDeclaration, messageBody, departure.nextMessageCorrelationId)
+        val departureDeclarationMessage =
+          MessageWithoutStatus(LocalDateTime.of(dateOfPrep, timeOfPrep), MessageType.DepartureDeclaration, messageBody, departure.nextMessageCorrelationId)
 
         service.insert(departure).futureValue
         service.addNewMessage(departure.departureId, departureDeclarationMessage).futureValue.success
@@ -250,14 +282,15 @@ class DepartureRepositorySpec extends AnyFreeSpec with TryValues with OptionValu
             result.collection[JSONCollection](DepartureRepository.collectionName).find(selector, None).one[Departure]
         }
 
-        whenReady(result) { r =>
-          val updatedDeparture = r.value
+        whenReady(result) {
+          r =>
+            val updatedDeparture = r.value
 
-          updatedDeparture.nextMessageCorrelationId - departure.nextMessageCorrelationId mustBe 1
-          updatedDeparture.updated mustEqual departureDeclarationMessage.dateTime
-          updatedDeparture.status mustEqual departure.status
-          updatedDeparture.messages.size - departure.messages.size mustEqual 1
-          updatedDeparture.messages.last mustEqual departureDeclarationMessage
+            updatedDeparture.nextMessageCorrelationId - departure.nextMessageCorrelationId mustBe 1
+            updatedDeparture.updated mustEqual departureDeclarationMessage.dateTime
+            updatedDeparture.status mustEqual departure.status
+            updatedDeparture.messages.size - departure.messages.size mustEqual 1
+            updatedDeparture.messages.last mustEqual departureDeclarationMessage
         }
       }
 
@@ -277,13 +310,15 @@ class DepartureRepositorySpec extends AnyFreeSpec with TryValues with OptionValu
             </HEAHEA>
           </CC015B>
 
-        val departureDeclaration = MessageWithoutStatus(LocalDateTime.of(dateOfPrep, timeOfPrep), MessageType.DepartureDeclaration, messageBody, messageCorrelationId = 1)
+        val departureDeclaration =
+          MessageWithoutStatus(LocalDateTime.of(dateOfPrep, timeOfPrep), MessageType.DepartureDeclaration, messageBody, messageCorrelationId = 1)
 
         service.insert(departure).futureValue
         val result = service.addNewMessage(DepartureId(2), departureDeclaration)
 
-        whenReady(result) { r =>
-          r mustBe a[Failure[_]]
+        whenReady(result) {
+          r =>
+            r mustBe a[Failure[_]]
         }
       }
     }
@@ -300,12 +335,14 @@ class DepartureRepositorySpec extends AnyFreeSpec with TryValues with OptionValu
 
         val updatedDeparture = service.get(departure.departureId)
 
-        whenReady(updatedDeparture) { r =>
-          r.value.status mustEqual DepartureSubmitted
+        whenReady(updatedDeparture) {
+          r =>
+            r.value.status mustEqual DepartureSubmitted
 
-          typeMatchOnTestValue(r.value.messages.head) {
-            result: MessageWithStatus => result.status mustEqual SubmissionSucceeded
-          }
+            typeMatchOnTestValue(r.value.messages.head) {
+              result: MessageWithStatus =>
+                result.status mustEqual SubmissionSucceeded
+            }
         }
       }
 
@@ -313,20 +350,22 @@ class DepartureRepositorySpec extends AnyFreeSpec with TryValues with OptionValu
         database.flatMap(_.drop()).futureValue
 
         val departure = departureWithOneMessage.sample.value.copy(departureId = DepartureId(1), status = Initialized)
-        val messageId =  MessageId.fromIndex(0)
+        val messageId = MessageId.fromIndex(0)
 
         service.insert(departure).futureValue
 
         val setResult = service.setDepartureStateAndMessageState(DepartureId(2), messageId.index, DepartureSubmitted, SubmissionSucceeded)
-        setResult.futureValue must not be(defined)
+        setResult.futureValue must not be (defined)
 
         val result = service.get(departure.departureId)
 
-        whenReady(result) { r =>
-          r.value.status mustEqual Initialized
-          typeMatchOnTestValue(r.value.messages.head) {
-            result: MessageWithStatus => result.status mustEqual SubmissionPending
-          }
+        whenReady(result) {
+          r =>
+            r.value.status mustEqual Initialized
+            typeMatchOnTestValue(r.value.messages.head) {
+              result: MessageWithStatus =>
+                result.status mustEqual SubmissionPending
+            }
         }
       }
     }
@@ -367,7 +406,7 @@ class DepartureRepositorySpec extends AnyFreeSpec with TryValues with OptionValu
         updatedDeparture.status mustEqual newState
         updatedDeparture.messages.size - departure.messages.size mustEqual 1
         updatedDeparture.messages.last mustEqual declarationRejectedMessage
-    }
+      }
       "must fail if the departure cannot be found" in {
         database.flatMap(_.drop()).futureValue
 
@@ -393,7 +432,7 @@ class DepartureRepositorySpec extends AnyFreeSpec with TryValues with OptionValu
 
         result mustBe a[Failure[_]]
       }
-  }
+    }
 
     "setMrnAndAddResponseMessage" - {
       "must add a message, update the status of a document, update the timestamp, and update the MRN" in {
@@ -401,7 +440,7 @@ class DepartureRepositorySpec extends AnyFreeSpec with TryValues with OptionValu
 
         val departure = arbitrary[Departure].sample.value
 
-        val mrn = "mrn"
+        val mrn        = "mrn"
         val dateOfPrep = LocalDate.now()
         val timeOfPrep = LocalTime.of(1, 1)
         val messageBody =
@@ -418,7 +457,8 @@ class DepartureRepositorySpec extends AnyFreeSpec with TryValues with OptionValu
         val newState = DepartureStatus.MrnAllocated
 
         service.insert(departure).futureValue
-        val addMessageResult = service.setMrnAndAddResponseMessage(departure.departureId, mrnAllocatedMessage, newState, MovementReferenceNumber(mrn)).futureValue
+        val addMessageResult =
+          service.setMrnAndAddResponseMessage(departure.departureId, mrnAllocatedMessage, newState, MovementReferenceNumber(mrn)).futureValue
 
         val selector = Json.obj("_id" -> departure.departureId)
 
@@ -443,7 +483,7 @@ class DepartureRepositorySpec extends AnyFreeSpec with TryValues with OptionValu
 
         val departure = arbitrary[Departure].sample.value copy (status = DepartureStatus.DepartureSubmitted, departureId = DepartureId(1))
 
-        val mrn = "mrn"
+        val mrn        = "mrn"
         val dateOfPrep = LocalDate.now()
         val timeOfPrep = LocalTime.of(1, 1)
         val messageBody =
@@ -468,5 +508,4 @@ class DepartureRepositorySpec extends AnyFreeSpec with TryValues with OptionValu
     }
   }
 
-
-  }
+}

@@ -17,13 +17,13 @@
 package controllers.actions
 
 import javax.inject.Inject
+import models.request.AuthenticatedOptionalDepartureRequest
+import models.request.AuthenticatedRequest
+import play.api.Logger
 import play.api.mvc.ActionBuilder
 import play.api.mvc.ActionFunction
 import play.api.mvc.AnyContent
 import play.api.mvc.Result
-import models.request.AuthenticatedOptionalDepartureRequest
-import models.request.AuthenticatedRequest
-import play.api.Logger
 import play.api.mvc.Results.BadRequest
 import play.api.mvc.Results.InternalServerError
 import play.api.mvc.Results.Locked
