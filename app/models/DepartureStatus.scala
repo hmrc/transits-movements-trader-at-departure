@@ -57,6 +57,7 @@ object DepartureStatus extends Enumerable.Implicits with MongoDateTimeFormats {
       case MessageReceivedEvent.NoReleaseForTransit            => Right(NoReleaseForTransit)
       case MessageReceivedEvent.ReleaseForTransit              => Right(ReleaseForTransit)
       case MessageReceivedEvent.DeclarationCancellationRequest => Right(DeclarationCancellationRequest)
+      case MessageReceivedEvent.GuaranteeNotValid              => Right(GuaranteeNotValid)
       case _                                                   => Left(TransitionError(s"Failed to transition from MrnAllocated to $messageReceived."))
     }
   }
@@ -117,6 +118,15 @@ object DepartureStatus extends Enumerable.Implicits with MongoDateTimeFormats {
     }
   }
 
+  case object GuaranteeNotValid extends DepartureStatus {
+    override def transition(messageReceived: MessageReceivedEvent): Either[TransitionError, DepartureStatus] = messageReceived match {
+      case MessageReceivedEvent.GuaranteeNotValid   => Right(GuaranteeNotValid)
+      case MessageReceivedEvent.NoReleaseForTransit => Right(NoReleaseForTransit)
+      case MessageReceivedEvent.ReleaseForTransit   => Right(ReleaseForTransit)
+      case _                                        => Left(TransitionError(s"Failed to transition from GuaranteeNotValid to $messageReceived"))
+    }
+  }
+
   val values = Seq(
     Initialized,
     DepartureSubmitted,
@@ -128,7 +138,8 @@ object DepartureStatus extends Enumerable.Implicits with MongoDateTimeFormats {
     ReleaseForTransit,
     DeclarationCancellationRequest,
     CancellationDecision,
-    WriteOffNotification
+    WriteOffNotification,
+    GuaranteeNotValid
   )
 
   implicit val enumerable: Enumerable[DepartureStatus] =

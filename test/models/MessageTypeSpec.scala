@@ -23,6 +23,7 @@ import models.MessageType.ControlDecisionNotification
 import models.MessageType.DeclarationCancellationRequest
 import models.MessageType.DeclarationRejected
 import models.MessageType.DepartureDeclaration
+import models.MessageType.GuaranteeNotValid
 import models.MessageType.MrnAllocated
 import models.MessageType.NoReleaseForTransit
 import models.MessageType.PositiveAcknowledgement
@@ -93,6 +94,12 @@ class MessageTypeSpec extends SpecBase with ScalaCheckDrivenPropertyChecks with 
       MessageType.values must contain(WriteOffNotification)
       WriteOffNotification.code mustEqual "IE045"
       WriteOffNotification.rootNode mustEqual "CC045A"
+    }
+
+    "GuaranteeNotValid" in {
+      MessageType.values must contain(GuaranteeNotValid)
+      GuaranteeNotValid.code mustEqual "IE055"
+      GuaranteeNotValid.rootNode mustEqual "CC055A"
     }
   }
 
