@@ -16,16 +16,16 @@
 
 package controllers.actions
 
-import org.scalatest.matchers.must.Matchers
 import generators.ModelGenerators
 import models.Departure
 import models.DepartureId
 import org.mockito.ArgumentMatchers
+import org.mockito.ArgumentMatchers.{eq => eqTo, _}
 import org.mockito.Mockito._
 import org.scalacheck.Arbitrary.arbitrary
-import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.OptionValues
-import org.mockito.ArgumentMatchers.{eq => eqTo, _}
+import org.scalatest.freespec.AnyFreeSpec
+import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.inject.bind
@@ -38,7 +38,7 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import repositories.DepartureRepository
 import repositories.LockRepository
-import ArgumentMatchers._
+
 import scala.concurrent.Future
 
 class GetDepartureForWriteActionProviderSpec

@@ -21,20 +21,20 @@ import java.time.LocalDateTime
 import config.AppConfig
 import javax.inject.Inject
 import models.DepartureId
+import models.MongoDateTimeFormats._
 import play.api.libs.json.Json
 import play.modules.reactivemongo.ReactiveMongoApi
+import reactivemongo.api.bson.collection.BSONSerializationPack
 import reactivemongo.api.commands.LastError
 import reactivemongo.api.indexes.Index.Aux
 import reactivemongo.api.indexes.IndexType
 import reactivemongo.bson.BSONDocument
-import reactivemongo.api.bson.collection.BSONSerializationPack
 import reactivemongo.play.json.ImplicitBSONHandlers.JsObjectDocumentWriter
 import reactivemongo.play.json.collection.JSONCollection
+import utils.IndexUtils
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
-import models.MongoDateTimeFormats._
-import utils.IndexUtils
 
 class LockRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfig)(implicit ec: ExecutionContext) {
 

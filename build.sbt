@@ -1,7 +1,7 @@
 import play.sbt.routes.RoutesKeys
+import scoverage.ScoverageKeys
 import uk.gov.hmrc.SbtArtifactory
 import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin.publishingSettings
-import scoverage.ScoverageKeys
 
 val appName = "transits-movements-trader-at-departure"
 

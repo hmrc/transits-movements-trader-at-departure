@@ -25,14 +25,7 @@ import cats.data.NonEmptyList
 import connectors.MessageConnector
 import generators.ModelGenerators
 import models.MessageStatus.SubmissionPending
-import models.Departure
-import models.DepartureId
-import models.DepartureStatus
-import models.MessageId
-import models.MessageStatus
-import models.MessageType
-import models.MessageWithStatus
-import models.SubmissionProcessingResult
+import models._
 import org.mockito.ArgumentMatchers.{eq => eqTo, _}
 import org.mockito.Mockito.when
 import org.mockito.Mockito._
@@ -45,9 +38,9 @@ import repositories.DepartureRepository
 import uk.gov.hmrc.http.HttpResponse
 import utils.Format
 
-import scala.concurrent.duration.Duration
 import scala.concurrent.Await
 import scala.concurrent.Future
+import scala.concurrent.duration.Duration
 import scala.util.Failure
 import scala.util.Success
 

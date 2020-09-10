@@ -23,12 +23,7 @@ import models.ParseError
 import play.api.Logger
 import services.XmlMessageParser.ParseHandler
 
-import scala.xml.Elem
-import scala.xml.Node
-import scala.xml.NodeSeq
-import scala.xml.Null
-import scala.xml.Text
-import scala.xml.TopScope
+import scala.xml._
 import scala.xml.transform.RewriteRule
 import scala.xml.transform.RuleTransformer
 

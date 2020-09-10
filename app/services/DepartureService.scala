@@ -21,12 +21,8 @@ import cats.implicits._
 import com.google.inject.Inject
 import models.DepartureStatus.Initialized
 import models.MessageStatus.SubmissionPending
+import models._
 import models.ParseError.EmptyNodeSeq
-import models.Departure
-import models.DepartureId
-import models.MessageType
-import models.MessageWithStatus
-import models.MessageWithoutStatus
 import repositories.DepartureIdRepository
 import utils.XMLTransformer
 
@@ -35,8 +31,8 @@ import scala.concurrent.Future
 import scala.xml.NodeSeq
 
 class DepartureService @Inject()(departureIdRepository: DepartureIdRepository)(implicit ec: ExecutionContext) {
-  import XmlMessageParser._
   import XMLTransformer._
+  import XmlMessageParser._
 
   def makeMessageWithStatus(departureId: DepartureId, messageCorrelationId: Int, messageType: MessageType): ReaderT[ParseHandler, NodeSeq, MessageWithStatus] =
     for {

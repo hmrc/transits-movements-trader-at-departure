@@ -29,6 +29,8 @@ object MessageReceivedEvent {
   case object ReleaseForTransit              extends MessageReceivedEvent
   case object DeclarationCancellationRequest extends MessageReceivedEvent
   case object CancellationDecision           extends MessageReceivedEvent
+  case object WriteOffNotification           extends MessageReceivedEvent
+  case object GuaranteeNotValid              extends MessageReceivedEvent
 
   val values: Seq[MessageReceivedEvent] = Seq(
     DepartureSubmitted,
@@ -39,6 +41,8 @@ object MessageReceivedEvent {
     NoReleaseForTransit,
     ReleaseForTransit,
     DeclarationCancellationRequest,
-    CancellationDecision
+    CancellationDecision,
+    WriteOffNotification,
+    GuaranteeNotValid
   )
 }

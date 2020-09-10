@@ -24,6 +24,7 @@ import models.SubmissionProcessingResult.SubmissionSuccess
 import models.CancellationDecisionResponse
 import models.ControlDecisionNotificationResponse
 import models.DepartureRejectedResponse
+import models.GuaranteeNotValidResponse
 import models.MessageResponse
 import models.MessageSender
 import models.MessageType
@@ -31,6 +32,7 @@ import models.MrnAllocatedResponse
 import models.NoReleaseForTransitResponse
 import models.PositiveAcknowledgementResponse
 import models.ReleaseForTransitResponse
+import models.WriteOffNotificationResponse
 import play.api.Logger
 import play.api.mvc.Action
 import play.api.mvc.ControllerComponents
@@ -58,6 +60,8 @@ class NCTSMessageController @Inject()(cc: ControllerComponents, getDeparture: Ge
         case Some(MessageType.NoReleaseForTransit.code)         => Some(NoReleaseForTransitResponse)
         case Some(MessageType.ReleaseForTransit.code)           => Some(ReleaseForTransitResponse)
         case Some(MessageType.CancellationDecision.code)        => Some(CancellationDecisionResponse)
+        case Some(MessageType.WriteOffNotification.code)        => Some(WriteOffNotificationResponse)
+        case Some(MessageType.GuaranteeNotValid.code)           => Some(GuaranteeNotValidResponse)
         case invalidResponse =>
           Logger.warn(s"Received the following invalid response for X-Message-Type: $invalidResponse")
           None

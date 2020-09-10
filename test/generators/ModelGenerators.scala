@@ -19,22 +19,14 @@ package generators
 import java.time.LocalDate
 import java.time.LocalDateTime
 
-import org.scalacheck.Arbitrary.arbitrary
-import org.scalacheck.Arbitrary
-import org.scalacheck.Gen
 import models.MessageStatus.SubmissionPending
+import models._
 import models.SubmissionProcessingResult.SubmissionFailure
 import models.SubmissionProcessingResult.SubmissionFailureExternal
 import models.SubmissionProcessingResult.SubmissionFailureInternal
-import models.Departure
-import models.DepartureId
-import models.DepartureStatus
-import models.MessageId
-import models.MessageType
-import models.MessageWithStatus
-import models.MessageWithoutStatus
-import models.MovementReferenceNumber
-import models.SubmissionProcessingResult
+import org.scalacheck.Arbitrary.arbitrary
+import org.scalacheck.Arbitrary
+import org.scalacheck.Gen
 
 trait ModelGenerators extends BaseGenerators with JavaTimeGenerators {
 

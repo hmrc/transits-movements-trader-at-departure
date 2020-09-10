@@ -23,14 +23,7 @@ import java.time.LocalTime
 import base.SpecBase
 import cats.data.NonEmptyList
 import generators.ModelGenerators
-import models.Departure
-import models.DepartureId
-import models.DepartureStatus
-import models.MessageSender
-import models.MessageType
-import models.MessageWithStatus
-import models.MovementReferenceNumber
-import models.SubmissionProcessingResult
+import models._
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import org.scalacheck.Arbitrary

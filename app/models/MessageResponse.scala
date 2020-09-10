@@ -65,3 +65,15 @@ case object CancellationDecisionResponse extends MessageResponse {
   override val messageType: MessageType              = MessageType.CancellationDecision
   override val xsdFile: XSDFile                      = CancellationDecisionXSD
 }
+
+case object WriteOffNotificationResponse extends MessageResponse {
+  override val messageReceived: MessageReceivedEvent = MessageReceivedEvent.WriteOffNotification
+  override val messageType: MessageType              = MessageType.WriteOffNotification
+  override val xsdFile: XSDFile                      = WriteOffNotificationXSD
+}
+
+case object GuaranteeNotValidResponse extends MessageResponse {
+  override val messageReceived: MessageReceivedEvent = MessageReceivedEvent.GuaranteeNotValid
+  override val messageType: MessageType              = MessageType.GuaranteeNotValid
+  override val xsdFile: XSDFile                      = GuaranteeNotValidXSD
+}

@@ -17,21 +17,22 @@
 package controllers
 
 import cats.data.NonEmptyList
+import controllers.actions._
 import javax.inject.Inject
-import models.MessageType.DepartureDeclaration
-import play.api.Logger
-import play.api.mvc.Action
-import play.api.mvc.AnyContent
-import play.api.mvc.ControllerComponents
-import uk.gov.hmrc.play.bootstrap.controller.BackendController
 import actions._
 import models._
 import models.MessageStatus.SubmissionSucceeded
+import models.MessageType.DepartureDeclaration
+import play.api.Logger
 import models.response.ResponseDeparture
 import models.response.ResponseDepartures
 import play.api.libs.json.Json
 import repositories.DepartureRepository
 import services._
+import play.api.mvc.Action
+import play.api.mvc.AnyContent
+import play.api.mvc.ControllerComponents
+import uk.gov.hmrc.play.bootstrap.controller.BackendController
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future

@@ -17,12 +17,7 @@
 package config
 
 import com.google.inject.AbstractModule
-import controllers.actions.AuthenticateActionProvider
-import controllers.actions.AuthenticateActionProviderImpl
-import controllers.actions.AuthenticateGetOptionalDepartureForWriteActionProvider
-import controllers.actions.AuthenticateGetOptionalDepartureForWriteActionProviderImpl
-import controllers.actions.AuthenticatedGetDepartureForReadActionProvider
-import controllers.actions.AuthenticatedGetDepartureForReadActionProviderImpl
+import controllers.actions._
 import repositories.DepartureIdRepository
 import repositories.DepartureRepository
 

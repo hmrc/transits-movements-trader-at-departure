@@ -18,6 +18,7 @@ package models
 
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
+
 import scala.xml.Utility.trim
 
 class TransitWrapperSpec extends AnyFreeSpec with Matchers {

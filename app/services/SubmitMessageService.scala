@@ -18,18 +18,13 @@ package services
 
 import java.time.OffsetDateTime
 
-import javax.inject.Inject
-import play.api.Logger
-import uk.gov.hmrc.http.HeaderCarrier
 import cats.implicits._
 import connectors.MessageConnector
-import models.Departure
-import models.DepartureId
-import models.DepartureStatus
-import models.MessageStatus
-import models.MessageWithStatus
-import models.SubmissionProcessingResult
+import javax.inject.Inject
+import models._
+import play.api.Logger
 import repositories.DepartureRepository
+import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future

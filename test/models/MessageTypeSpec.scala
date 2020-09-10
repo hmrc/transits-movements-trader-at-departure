@@ -23,17 +23,15 @@ import models.MessageType.ControlDecisionNotification
 import models.MessageType.DeclarationCancellationRequest
 import models.MessageType.DeclarationRejected
 import models.MessageType.DepartureDeclaration
+import models.MessageType.GuaranteeNotValid
 import models.MessageType.MrnAllocated
 import models.MessageType.NoReleaseForTransit
 import models.MessageType.PositiveAcknowledgement
 import models.MessageType.ReleaseForTransit
-import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-import play.api.libs.json.JsError
-import play.api.libs.json.JsNumber
-import play.api.libs.json.JsString
-import play.api.libs.json.JsSuccess
-import play.api.libs.json.Json
+import models.MessageType.WriteOffNotification
 import org.scalacheck.Arbitrary.arbitrary
+import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
+import play.api.libs.json._
 
 class MessageTypeSpec extends SpecBase with ScalaCheckDrivenPropertyChecks with ModelGenerators {
 
@@ -90,6 +88,18 @@ class MessageTypeSpec extends SpecBase with ScalaCheckDrivenPropertyChecks with 
       MessageType.values must contain(CancellationDecision)
       CancellationDecision.code mustEqual "IE009"
       CancellationDecision.rootNode mustEqual "CC009A"
+    }
+
+    "WriteOffNotification" in {
+      MessageType.values must contain(WriteOffNotification)
+      WriteOffNotification.code mustEqual "IE045"
+      WriteOffNotification.rootNode mustEqual "CC045A"
+    }
+
+    "GuaranteeNotValid" in {
+      MessageType.values must contain(GuaranteeNotValid)
+      GuaranteeNotValid.code mustEqual "IE055"
+      GuaranteeNotValid.rootNode mustEqual "CC055A"
     }
   }
 
