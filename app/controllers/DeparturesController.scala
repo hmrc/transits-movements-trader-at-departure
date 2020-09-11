@@ -58,34 +58,31 @@ class DeparturesController @Inject()(cc: ControllerComponents,
       request.departure match {
         case Some(departure) if allMessageUnsent(departure.messages) =>
           departureService
-            .makeMessageWithStatus(departure.departureId, departure.nextMessageCorrelationId, DepartureDeclaration)(request.body)
-            .map {
-              message =>
-                submitMessageService
-                  .submitMessage(departure.departureId, departure.nextMessageCorrelationId, message, DepartureStatus.DepartureSubmitted)
-                  .map {
-                    case SubmissionProcessingResult.SubmissionSuccess =>
-                      Accepted("Message accepted")
-                        .withHeaders("Location" -> routes.DeparturesController.get(departure.departureId).url)
+            .makeMessageWithStatus(departure.departureId, departure.nextMessageCorrelationId, DepartureDeclaration)(request.body) match {
+            case Right(message) =>
+              submitMessageService
+                .submitMessage(departure.departureId, departure.nextMessageCorrelationId, message, DepartureStatus.DepartureSubmitted)
+                .map {
+                  case SubmissionProcessingResult.SubmissionSuccess =>
+                    Accepted("Message accepted")
+                      .withHeaders("Location" -> routes.DeparturesController.get(departure.departureId).url)
 
-                    case SubmissionProcessingResult.SubmissionFailureInternal => {
-                      InternalServerError
-                    }
-
-                    case SubmissionProcessingResult.SubmissionFailureExternal =>
-                      BadGateway
+                  case SubmissionProcessingResult.SubmissionFailureInternal => {
+                    InternalServerError
                   }
-                  .recover {
-                    case _ => {
-                      InternalServerError
-                    }
-                  }
-            }
-            .getOrElse {
-              Logger.warn("Invalid data: missing either DatOfPreMES9, TimOfPreMES10 or DocNumHEA5")
-              Future.successful(BadRequest("Invalid data: missing either DatOfPreMES9, TimOfPreMES10 or DocNumHEA5"))
-            }
 
+                  case SubmissionProcessingResult.SubmissionFailureExternal =>
+                    BadGateway
+                }
+                .recover {
+                  case _ => {
+                    InternalServerError
+                  }
+                }
+            case Left(error) =>
+              Logger.warn(error.message)
+              Future.successful(BadRequest(error.message))
+          }
         case _ =>
           departureService
             .createDeparture(request.eoriNumber, request.body)
