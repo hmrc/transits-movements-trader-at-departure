@@ -19,9 +19,11 @@ package repositories
 import config.AppConfig
 import javax.inject.Inject
 import models._
+import play.api.libs.json.JsObject
 import play.api.libs.json.Json
 import play.modules.reactivemongo.ReactiveMongoApi
 import reactivemongo.api.bson.collection.BSONSerializationPack
+import reactivemongo.api.Cursor
 import reactivemongo.api.commands.WriteResult
 import reactivemongo.api.indexes.Index.Aux
 import reactivemongo.api.indexes.IndexType
@@ -32,8 +34,8 @@ import utils.IndexUtils
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
-import scala.util.Failure
 import scala.util.Success
+import scala.util.Failure
 import scala.util.Try
 
 class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfig)(implicit ec: ExecutionContext) extends MongoDateTimeFormats {
@@ -248,6 +250,13 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfi
         }
     }
   }
+
+  def fetchAllDepartures(eoriNumber: String): Future[Seq[Departure]] =
+    collection.flatMap {
+      _.find(Json.obj("eoriNumber" -> eoriNumber), Option.empty[JsObject])
+        .cursor[Departure]()
+        .collect[Seq](-1, Cursor.FailOnError())
+    }
 }
 
 object DepartureRepository {
