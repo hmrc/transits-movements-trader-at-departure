@@ -21,6 +21,7 @@ import java.time.OffsetDateTime
 
 import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.matching.StringValuePattern
+import config.AppConfig
 import generators.ModelGenerators
 import models.DepartureId
 import models.MessageStatus
@@ -34,7 +35,12 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
+import play.api.Configuration
+import play.api.Environment
+import play.api.Mode
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.play.bootstrap.config.RunMode
+import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 class MessageConnectorSpec
     extends AnyFreeSpec
@@ -57,6 +63,12 @@ class MessageConnectorSpec
 
   private val messageType: MessageType = Gen.oneOf(MessageType.values).sample.value
 
+  private val env           = Environment.simple()
+  private val configuration = Configuration.load(env)
+
+  private val serviceConfig = new ServicesConfig(configuration, new RunMode(configuration, Mode.Dev))
+  private val appConfig     = new AppConfig(configuration, serviceConfig)
+
   "MessageConnector" - {
 
     "post" - {
@@ -67,7 +79,7 @@ class MessageConnectorSpec
 
         server.stubFor(
           post(urlEqualTo(postUrl))
-            .withHeader("Authorization", equalTo("Bearer securityToken"))
+            .withHeader("Authorization", equalTo(s"Bearer ${appConfig.eisBearerToken}"))
             .withHeader("X-Forwarded-Host", equalTo("mdtp"))
             .withHeader("X-Correlation-ID", headerCarrierPattern)
             .withHeader("Content-Type", equalTo("application/xml"))
@@ -98,7 +110,7 @@ class MessageConnectorSpec
 
         server.stubFor(
           post(urlEqualTo(postUrl))
-            .withHeader("Authorization", equalTo("Bearer securityToken"))
+            .withHeader("Authorization", equalTo(s"Bearer ${appConfig.eisBearerToken}"))
             .withHeader("X-Forwarded-Host", equalTo("mdtp"))
             .withHeader("X-Correlation-ID", headerCarrierPattern)
             .withHeader("Content-Type", equalTo("application/xml"))
