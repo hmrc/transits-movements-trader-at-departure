@@ -33,10 +33,6 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.reflect.ClassTag
 import scala.util.{Failure, Success}
 
-class DepartureRepositorySpec extends AnyFreeSpec with TryValues with OptionValues with ModelGenerators with Matchers with ScalaFutures with MongoSuite with GuiceOneAppPerSuite with IntegrationPatience  with MongoDateTimeFormats {
-import scala.util.Failure
-import scala.util.Success
-
 class DepartureRepositorySpec
     extends AnyFreeSpec
     with TryValues
@@ -564,5 +560,4 @@ class DepartureRepositorySpec
       }
     }
   }
-}
 }
