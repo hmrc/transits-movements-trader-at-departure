@@ -45,7 +45,7 @@ class MessageConnector @Inject()(config: AppConfig, http: HttpClient)(implicit e
     lazy val messageSender = MessageSender(departureId, message.messageCorrelationId)
 
     val newHeaders = headerCarrier
-      .copy(authorization = Some(Authorization("Bearer securityToken")))
+      .copy(authorization = Some(Authorization(s"Bearer ${config.eisBearerToken}")))
       .withExtraHeaders(addHeaders(message.messageType, dateTime, messageSender): _*)
 
     // TODO: Don't throw exceptions here
