@@ -16,6 +16,7 @@
 
 package controllers
 
+import audit.AuditService
 import controllers.actions.GetDepartureForWriteActionProvider
 import javax.inject.Inject
 import models.SubmissionProcessingResult.SubmissionFailureExternal
@@ -44,8 +45,10 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.xml.NodeSeq
 
-class NCTSMessageController @Inject()(cc: ControllerComponents, getDeparture: GetDepartureForWriteActionProvider, saveMessageService: SaveMessageService)(
-  implicit ec: ExecutionContext)
+class NCTSMessageController @Inject()(cc: ControllerComponents,
+                                      getDeparture: GetDepartureForWriteActionProvider,
+                                      auditService: AuditService,
+                                      saveMessageService: SaveMessageService)(implicit ec: ExecutionContext)
     extends BackendController(cc) {
 
   def post(messageSender: MessageSender): Action[NodeSeq] = getDeparture(messageSender.departureId)(parse.xml).async {
@@ -80,7 +83,9 @@ class NCTSMessageController @Inject()(cc: ControllerComponents, getDeparture: Ge
                     case Right(mrn) =>
                       val processingResult = saveMessageService.validateXmlSaveMessageUpdateMrn(xml, messageSender, response, newState, mrn)
                       processingResult map {
-                        case SubmissionSuccess => Ok
+                        case SubmissionSuccess =>
+                          auditService.auditNCTSMessages(response, xml)
+                          Ok
                         case SubmissionFailureInternal =>
                           val message = "Internal Submission Failure " + processingResult
                           Logger.warn(message)
@@ -94,7 +99,9 @@ class NCTSMessageController @Inject()(cc: ControllerComponents, getDeparture: Ge
                 case _ =>
                   val processingResult = saveMessageService.validateXmlAndSaveMessage(xml, messageSender, response, newState)
                   processingResult map {
-                    case SubmissionSuccess => Ok
+                    case SubmissionSuccess =>
+                      auditService.auditNCTSMessages(response, xml)
+                      Ok
                     case SubmissionFailureInternal =>
                       val message = "Internal Submission Failure " + processingResult
                       Logger.warn(message)

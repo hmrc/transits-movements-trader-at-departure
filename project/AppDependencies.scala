@@ -10,7 +10,8 @@ object AppDependencies {
     "uk.gov.hmrc"       %% "bootstrap-play-26"               % "1.13.0",
     "com.typesafe.play" %% "play-iteratees"                  % "2.6.1",
     "com.typesafe.play" %% "play-iteratees-reactive-streams" % "2.6.1",
-    "org.typelevel"     %% "cats-core"                       % catsVersion
+    "org.typelevel"     %% "cats-core"                       % catsVersion,
+    "org.json"          % "json"                             % "20200518"
   )
 
   val test = Seq(

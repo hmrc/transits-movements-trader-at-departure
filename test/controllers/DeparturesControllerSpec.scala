@@ -20,6 +20,8 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 
+import audit.AuditService
+import audit.AuditType
 import base.SpecBase
 import cats.data.NonEmptyList
 import controllers.actions.AuthenticateGetOptionalDepartureForWriteActionProvider
@@ -39,6 +41,7 @@ import models.SubmissionProcessingResult.SubmissionFailureInternal
 import models.SubmissionProcessingResult.SubmissionSuccess
 import models.response.ResponseDeparture
 import org.mockito.ArgumentMatchers.any
+import org.mockito.ArgumentMatchers.{eq => eqTo}
 import org.mockito.Mockito._
 import models.response.ResponseDepartures
 import models.Departure
@@ -113,6 +116,7 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
         val mockDepartureIdRepository = mock[DepartureIdRepository]
         val mockDepartureRepository   = mock[DepartureRepository]
         val mockSubmitMessageService  = mock[SubmitMessageService]
+        val mockAuditService          = mock[AuditService]
 
         when(mockDepartureIdRepository.nextId()).thenReturn(Future.successful(initializedDeparture.departureId))
         when(mockDepartureRepository.insert(any())).thenReturn(Future.successful(()))
@@ -123,7 +127,8 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
             bind[DepartureIdRepository].toInstance(mockDepartureIdRepository),
             bind[SubmitMessageService].toInstance(mockSubmitMessageService),
             bind[DepartureRepository].toInstance(mockDepartureRepository),
-            bind[AuthenticateGetOptionalDepartureForWriteActionProvider].toInstance(FakeAuthenticatedGetOptionalDepartureForWriteActionProvider())
+            bind[AuthenticateGetOptionalDepartureForWriteActionProvider].toInstance(FakeAuthenticatedGetOptionalDepartureForWriteActionProvider()),
+            bind[AuditService].toInstance(mockAuditService)
           )
           .build()
 
@@ -135,6 +140,7 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
 
           status(result) mustEqual ACCEPTED
           verify(mockSubmitMessageService, times(1)).submitDeparture(any())(any())
+          verify(mockAuditService, times(1)).auditEvent(eqTo(AuditType.User.DepartureDeclarationSubmitted), any())(any())
           header("Location", result).get must be(routes.DeparturesController.get(initializedDeparture.departureId).url)
         }
       }
@@ -228,7 +234,7 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
             .overrides(
               bind[DepartureIdRepository].toInstance(mockDepartureIdRepository),
               bind[SubmitMessageService].toInstance(mockSubmitMessageService),
-              bind[AuthenticateGetOptionalDepartureForWriteActionProvider].toInstance(FakeAuthenticatedGetOptionalDepartureForWriteActionProvider())
+              bind[AuthenticateGetOptionalDepartureForWriteActionProvider].toInstance(FakeAuthenticatedGetOptionalDepartureForWriteActionProvider()),
             )
             .build()
 
@@ -279,6 +285,7 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
       "must return Accepted when submitted to upstream against the existing departure" in {
         val mockDepartureRepository  = mock[DepartureRepository]
         val mockSubmitMessageService = mock[SubmitMessageService]
+        val mockAuditService         = mock[AuditService]
 
         when(mockSubmitMessageService.submitMessage(any(), any(), any(), any())(any())).thenReturn(Future.successful(SubmissionSuccess))
 
@@ -287,7 +294,8 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
             bind[SubmitMessageService].toInstance(mockSubmitMessageService),
             bind[DepartureRepository].toInstance(mockDepartureRepository),
             bind[AuthenticateGetOptionalDepartureForWriteActionProvider].toInstance(
-              FakeAuthenticatedGetOptionalDepartureForWriteActionProvider(failedToSubmitDeparture))
+              FakeAuthenticatedGetOptionalDepartureForWriteActionProvider(failedToSubmitDeparture)),
+            bind[AuditService].toInstance(mockAuditService)
           )
           .build()
 
@@ -299,6 +307,7 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
 
           status(result) mustEqual ACCEPTED
           verify(mockSubmitMessageService, times(1)).submitMessage(any(), any(), any(), any())(any())
+          verify(mockAuditService, times(1)).auditEvent(eqTo(AuditType.User.DepartureDeclarationSubmitted), any())(any())
           header("Location", result).get must be(routes.DeparturesController.get(failedToSubmitDeparture.departureId).url)
         }
       }
@@ -314,6 +323,7 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
         val expectedDeparture = initializedDeparture.copy(messages = NonEmptyList.of(message))
 
         val mockSubmitMessageService  = mock[SubmitMessageService]
+        val mockAuditService          = mock[AuditService]
         val mockDepartureIdRepository = mock[DepartureIdRepository]
 
         when(mockSubmitMessageService.submitDeparture(any())(any()))
@@ -325,7 +335,8 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
           .overrides(
             bind[SubmitMessageService].toInstance(mockSubmitMessageService),
             bind[DepartureIdRepository].toInstance(mockDepartureIdRepository),
-            bind[AuthenticateGetOptionalDepartureForWriteActionProvider].toInstance(FakeAuthenticatedGetOptionalDepartureForWriteActionProvider(departure))
+            bind[AuthenticateGetOptionalDepartureForWriteActionProvider].toInstance(FakeAuthenticatedGetOptionalDepartureForWriteActionProvider(departure)),
+            bind[AuditService].toInstance(mockAuditService)
           )
           .build()
 
@@ -338,6 +349,7 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
           status(result) mustEqual ACCEPTED
           header("Location", result).value must be(routes.DeparturesController.get(expectedDeparture.departureId).url)
           verify(mockSubmitMessageService, times(1)).submitDeparture(any())(any())
+          verify(mockAuditService, times(1)).auditEvent(eqTo(AuditType.User.DepartureDeclarationSubmitted), any())(any())
         }
       }
 
