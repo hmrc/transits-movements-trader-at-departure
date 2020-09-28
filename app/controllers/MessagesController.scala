@@ -16,6 +16,8 @@
 
 package controllers
 
+import audit.AuditService
+import audit.AuditType
 import controllers.actions.AuthenticatedGetDepartureForReadActionProvider
 import controllers.actions.AuthenticatedGetDepartureForWriteActionProvider
 import javax.inject.Inject
@@ -42,6 +44,7 @@ class MessagesController @Inject()(
   authenticateForRead: AuthenticatedGetDepartureForReadActionProvider,
   authenticateForWrite: AuthenticatedGetDepartureForWriteActionProvider,
   departureService: DepartureService,
+  auditService: AuditService,
   submitMessageService: SubmitMessageService
 )(implicit ec: ExecutionContext)
     extends BackendController(cc) {
@@ -60,6 +63,7 @@ class MessagesController @Inject()(
                     .submitMessage(departureId, request.departure.nextMessageId.index, message, status)
                     .map {
                       case SubmissionProcessingResult.SubmissionSuccess =>
+                        auditService.auditEvent(AuditType.User.DepartureCancellationRequestSubmitted, request.body)
                         Accepted("Message accepted")
                           .withHeaders("Location" -> routes.MessagesController.getMessage(request.departure.departureId, request.departure.nextMessageId).url)
 

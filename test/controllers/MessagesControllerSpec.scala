@@ -20,6 +20,8 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 
+import audit.AuditService
+import audit.AuditType
 import base.SpecBase
 import cats.data.NonEmptyList
 import connectors.MessageConnector
@@ -131,6 +133,7 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
       val mockDepartureRepository  = mock[DepartureRepository]
       val mockLockRepository       = mock[LockRepository]
       val mockSubmitMessageService = mock[SubmitMessageService]
+      val mockAuditService         = mock[AuditService]
 
       when(mockLockRepository.lock(any())).thenReturn(Future.successful(true))
       when(mockLockRepository.unlock(any())).thenReturn(Future.successful(()))
@@ -143,7 +146,8 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
         .overrides(
           bind[DepartureRepository].toInstance(mockDepartureRepository),
           bind[LockRepository].toInstance(mockLockRepository),
-          bind[SubmitMessageService].toInstance(mockSubmitMessageService)
+          bind[SubmitMessageService].toInstance(mockSubmitMessageService),
+          bind[AuditService].toInstance(mockAuditService)
         )
         .build()
 
@@ -157,6 +161,7 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
                                                                  eqTo(1),
                                                                  any(),
                                                                  eqTo(DepartureStatus.DeclarationCancellationRequest))(any())
+        verify(mockAuditService, times(1)).auditEvent(eqTo(AuditType.User.DepartureCancellationRequestSubmitted), any())(any())
       }
     }
 
