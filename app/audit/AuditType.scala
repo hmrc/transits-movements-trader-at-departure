@@ -51,23 +51,4 @@ object AuditType extends Enumerable.Implicits {
       WriteOffNotificationReceived,
       GuaranteeNotValidReceived
     )
-
-  val userValues: Seq[AuditType] =
-    Seq(
-      DepartureDeclarationSubmitted,
-      DepartureCancellationRequestSubmitted
-    )
-
-  val nctsValues: Seq[AuditType] =
-    Seq(
-      PositiveAcknowledgementReceived,
-      MrnAllocatedReceived,
-      DeclarationRejectedReceived,
-      ControlDecisionNotificationReceived,
-      NoReleaseForTransitReceived,
-      ReleaseForTransitReceived,
-      CancellationDecisionReceived,
-      WriteOffNotificationReceived,
-      GuaranteeNotValidReceived
-    )
 }
