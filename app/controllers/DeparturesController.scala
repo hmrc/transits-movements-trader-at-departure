@@ -22,6 +22,7 @@ import javax.inject.Inject
 import actions._
 import audit.AuditService
 import audit.AuditType
+import audit.AuditType._
 import models._
 import models.MessageStatus.SubmissionSucceeded
 import models.MessageType.DepartureDeclaration
@@ -67,7 +68,7 @@ class DeparturesController @Inject()(cc: ControllerComponents,
                 .submitMessage(departure.departureId, departure.nextMessageCorrelationId, message, DepartureStatus.DepartureSubmitted)
                 .map {
                   case SubmissionProcessingResult.SubmissionSuccess =>
-                    auditService.auditEvent(AuditType.User.DepartureDeclarationSubmitted, request.body)
+                    auditService.auditEvent(DepartureDeclarationSubmitted, request.body)
                     Accepted("Message accepted")
                       .withHeaders("Location" -> routes.DeparturesController.get(departure.departureId).url)
 
@@ -99,7 +100,7 @@ class DeparturesController @Inject()(cc: ControllerComponents,
                   .submitDeparture(departure)
                   .map {
                     case SubmissionProcessingResult.SubmissionSuccess =>
-                      auditService.auditEvent(AuditType.User.DepartureDeclarationSubmitted, request.body)
+                      auditService.auditEvent(DepartureDeclarationSubmitted, request.body)
                       Accepted("Message accepted")
                         .withHeaders("Location" -> routes.DeparturesController.get(departure.departureId).url)
                     case SubmissionProcessingResult.SubmissionFailureExternal =>

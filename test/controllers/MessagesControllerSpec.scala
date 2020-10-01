@@ -22,6 +22,7 @@ import java.time.LocalTime
 
 import audit.AuditService
 import audit.AuditType
+import audit.AuditType._
 import base.SpecBase
 import cats.data.NonEmptyList
 import connectors.MessageConnector
@@ -161,7 +162,7 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
                                                                  eqTo(1),
                                                                  any(),
                                                                  eqTo(DepartureStatus.DeclarationCancellationRequest))(any())
-        verify(mockAuditService, times(1)).auditEvent(eqTo(AuditType.User.DepartureCancellationRequestSubmitted), any())(any())
+        verify(mockAuditService, times(1)).auditEvent(eqTo(DepartureCancellationRequestSubmitted), any())(any())
       }
     }
 

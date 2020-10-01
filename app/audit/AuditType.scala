@@ -16,23 +16,39 @@
 
 package audit
 
-object AuditType {
+import models.Enumerable
 
-  object User {
-    val DepartureDeclarationSubmitted         = "DepartureDeclarationSubmitted"
-    val DepartureCancellationRequestSubmitted = "DepartureCancellationRequestSubmitted"
-  }
+sealed trait AuditType {}
 
-  object NCTS {
-    val PositiveAcknowledgementReceived     = "PositiveAcknowledgementReceived"
-    val MrnAllocatedReceived                = "MrnAllocatedReceived"
-    val DeclarationRejectedReceived         = "DeclarationRejectedReceived"
-    val ControlDecisionNotificationReceived = "ControlDecisionNotificationReceived"
-    val NoReleaseForTransitReceived         = "NoReleaseForTransitReceived"
-    val ReleaseForTransitReceived           = "ReleaseForTransitReceived"
-    val CancellationDecisionReceived        = "CancellationDecisionReceived"
-    val WriteOffNotificationReceived        = "WriteOffNotificationReceived"
-    val GuaranteeNotValidReceived           = "GuaranteeNotValidReceived"
-  }
+object AuditType extends Enumerable.Implicits {
 
+  // User
+  case object DepartureDeclarationSubmitted         extends AuditType
+  case object DepartureCancellationRequestSubmitted extends AuditType
+
+  // NCTS
+  case object PositiveAcknowledgementReceived     extends AuditType
+  case object MrnAllocatedReceived                extends AuditType
+  case object DeclarationRejectedReceived         extends AuditType
+  case object ControlDecisionNotificationReceived extends AuditType
+  case object NoReleaseForTransitReceived         extends AuditType
+  case object ReleaseForTransitReceived           extends AuditType
+  case object CancellationDecisionReceived        extends AuditType
+  case object WriteOffNotificationReceived        extends AuditType
+  case object GuaranteeNotValidReceived           extends AuditType
+
+  val values: Seq[AuditType] =
+    Seq(
+      DepartureDeclarationSubmitted,
+      DepartureCancellationRequestSubmitted,
+      PositiveAcknowledgementReceived,
+      MrnAllocatedReceived,
+      DeclarationRejectedReceived,
+      ControlDecisionNotificationReceived,
+      NoReleaseForTransitReceived,
+      ReleaseForTransitReceived,
+      CancellationDecisionReceived,
+      WriteOffNotificationReceived,
+      GuaranteeNotValidReceived
+    )
 }

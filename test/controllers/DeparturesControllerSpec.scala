@@ -22,6 +22,7 @@ import java.time.LocalTime
 
 import audit.AuditService
 import audit.AuditType
+import audit.AuditType.DepartureDeclarationSubmitted
 import base.SpecBase
 import cats.data.NonEmptyList
 import controllers.actions.AuthenticateGetOptionalDepartureForWriteActionProvider
@@ -140,7 +141,7 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
 
           status(result) mustEqual ACCEPTED
           verify(mockSubmitMessageService, times(1)).submitDeparture(any())(any())
-          verify(mockAuditService, times(1)).auditEvent(eqTo(AuditType.User.DepartureDeclarationSubmitted), any())(any())
+          verify(mockAuditService, times(1)).auditEvent(eqTo(DepartureDeclarationSubmitted), any())(any())
           header("Location", result).get must be(routes.DeparturesController.get(initializedDeparture.departureId).url)
         }
       }
@@ -307,7 +308,7 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
 
           status(result) mustEqual ACCEPTED
           verify(mockSubmitMessageService, times(1)).submitMessage(any(), any(), any(), any())(any())
-          verify(mockAuditService, times(1)).auditEvent(eqTo(AuditType.User.DepartureDeclarationSubmitted), any())(any())
+          verify(mockAuditService, times(1)).auditEvent(eqTo(DepartureDeclarationSubmitted), any())(any())
           header("Location", result).get must be(routes.DeparturesController.get(failedToSubmitDeparture.departureId).url)
         }
       }
@@ -349,7 +350,7 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
           status(result) mustEqual ACCEPTED
           header("Location", result).value must be(routes.DeparturesController.get(expectedDeparture.departureId).url)
           verify(mockSubmitMessageService, times(1)).submitDeparture(any())(any())
-          verify(mockAuditService, times(1)).auditEvent(eqTo(AuditType.User.DepartureDeclarationSubmitted), any())(any())
+          verify(mockAuditService, times(1)).auditEvent(eqTo(DepartureDeclarationSubmitted), any())(any())
         }
       }
 

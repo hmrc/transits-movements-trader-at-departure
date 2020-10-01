@@ -16,6 +16,7 @@
 
 package audit
 
+import audit.AuditType._
 import base.SpecBase
 import models.PositiveAcknowledgementResponse
 import models.MrnAllocatedResponse
@@ -31,6 +32,7 @@ import org.mockito.ArgumentMatchers.{eq => eqTo}
 import org.mockito.Mockito.reset
 import org.mockito.Mockito.times
 import org.mockito.Mockito.verify
+import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.inject.bind
@@ -52,171 +54,56 @@ class AuditServiceSpec extends SpecBase with ScalaCheckPropertyChecks with Befor
 
       val requestXml = <xml>test</xml>
 
-      val auditType    = "Some AuditEvent"
       val auditDetails = Json.toJson(AuditDetails(Json.obj("xml" -> "test"), requestXml.toString()))
 
-      val application = baseApplicationBuilder
-        .overrides(bind[AuditConnector].toInstance(mockAuditConnector))
-        .build()
-      running(application) {
-        val auditService = application.injector.instanceOf[AuditService]
-        auditService.auditEvent(auditType, requestXml)
-
-        verify(mockAuditConnector, times(1)).sendExplicitAudit(eqTo(auditType), eqTo(auditDetails))(any(), any(), any())
+      forAll(Gen.oneOf(AuditType.values)) {
+        auditType =>
+          {
+            val application = baseApplicationBuilder
+              .overrides(bind[AuditConnector].toInstance(mockAuditConnector))
+              .build()
+            running(application) {
+              val auditService = application.injector.instanceOf[AuditService]
+              auditService.auditEvent(auditType, requestXml)
+              verify(mockAuditConnector, times(1)).sendExplicitAudit(eqTo(auditType.toString()), eqTo(auditDetails))(any(), any(), any())
+              reset(mockAuditConnector)
+            }
+          }
       }
     }
 
-    "must audit NCTS message PositiveAcknowledgementResponse event" in {
+    "must audit NCTS message response events" in {
       val requestXml = <xml>test</xml>
 
-      val application = baseApplicationBuilder
-        .overrides(bind[AuditConnector].toInstance(mockAuditConnector))
-        .build()
+      val nctsAuditResponse = Map(
+        PositiveAcknowledgementResponse     -> PositiveAcknowledgementReceived,
+        MrnAllocatedResponse                -> MrnAllocatedReceived,
+        DepartureRejectedResponse           -> DeclarationRejectedReceived,
+        ControlDecisionNotificationResponse -> ControlDecisionNotificationReceived,
+        NoReleaseForTransitResponse         -> NoReleaseForTransitReceived,
+        ReleaseForTransitResponse           -> ReleaseForTransitReceived,
+        CancellationDecisionResponse        -> CancellationDecisionReceived,
+        WriteOffNotificationResponse        -> WriteOffNotificationReceived,
+        GuaranteeNotValidResponse           -> GuaranteeNotValidReceived
+      )
 
-      running(application) {
-        val auditService = application.injector.instanceOf[AuditService]
+      forAll(Gen.oneOf(nctsAuditResponse.keys)) {
+        response =>
+          {
+            val application = baseApplicationBuilder
+              .overrides(bind[AuditConnector].toInstance(mockAuditConnector))
+              .build()
 
-        auditService.auditNCTSMessages(PositiveAcknowledgementResponse, requestXml)
+            running(application) {
+              val auditService = application.injector.instanceOf[AuditService]
 
-        verify(mockAuditConnector, times(1)).sendExplicitAudit(eqTo(AuditType.NCTS.PositiveAcknowledgementReceived), any[AuditDetails]())(any(), any(), any())
+              auditService.auditNCTSMessages(response, requestXml)
+
+              verify(mockAuditConnector, times(1)).sendExplicitAudit(eqTo(nctsAuditResponse(response).toString()), any[AuditDetails]())(any(), any(), any())
+              reset(mockAuditConnector)
+            }
+          }
       }
-    }
-
-    "must audit NCTS message MrnAllocatedResponse event" in {
-      val requestXml = <xml>test</xml>
-
-      val application = baseApplicationBuilder
-        .overrides(bind[AuditConnector].toInstance(mockAuditConnector))
-        .build()
-
-      running(application) {
-        val auditService = application.injector.instanceOf[AuditService]
-
-        auditService.auditNCTSMessages(MrnAllocatedResponse, requestXml)
-
-        verify(mockAuditConnector, times(1)).sendExplicitAudit(eqTo(AuditType.NCTS.MrnAllocatedReceived), any[AuditDetails]())(any(), any(), any())
-      }
-    }
-
-    "must audit NCTS message DepartureRejectedResponse event" in {
-      val requestXml = <xml>test</xml>
-
-      val application = baseApplicationBuilder
-        .overrides(bind[AuditConnector].toInstance(mockAuditConnector))
-        .build()
-
-      running(application) {
-        val auditService = application.injector.instanceOf[AuditService]
-
-        auditService.auditNCTSMessages(DepartureRejectedResponse, requestXml)
-
-        verify(mockAuditConnector, times(1)).sendExplicitAudit(eqTo(AuditType.NCTS.DeclarationRejectedReceived), any[AuditDetails]())(any(), any(), any())
-      }
-
-    }
-
-    "must audit NCTS message ControlDecisionNotificationResponse event" in {
-      val requestXml = <xml>test</xml>
-
-      val application = baseApplicationBuilder
-        .overrides(bind[AuditConnector].toInstance(mockAuditConnector))
-        .build()
-
-      running(application) {
-        val auditService = application.injector.instanceOf[AuditService]
-
-        auditService.auditNCTSMessages(ControlDecisionNotificationResponse, requestXml)
-
-        verify(mockAuditConnector, times(1)).sendExplicitAudit(eqTo(AuditType.NCTS.ControlDecisionNotificationReceived), any[AuditDetails]())(any(),
-                                                                                                                                              any(),
-                                                                                                                                              any())
-      }
-
-    }
-
-    "must audit NCTS message NoReleaseForTransitResponse event" in {
-      val requestXml = <xml>test</xml>
-
-      val application = baseApplicationBuilder
-        .overrides(bind[AuditConnector].toInstance(mockAuditConnector))
-        .build()
-
-      running(application) {
-        val auditService = application.injector.instanceOf[AuditService]
-
-        auditService.auditNCTSMessages(NoReleaseForTransitResponse, requestXml)
-
-        verify(mockAuditConnector, times(1)).sendExplicitAudit(eqTo(AuditType.NCTS.NoReleaseForTransitReceived), any[AuditDetails]())(any(), any(), any())
-      }
-
-    }
-
-    "must audit NCTS message ReleaseForTransitResponse event" in {
-      val requestXml = <xml>test</xml>
-
-      val application = baseApplicationBuilder
-        .overrides(bind[AuditConnector].toInstance(mockAuditConnector))
-        .build()
-
-      running(application) {
-        val auditService = application.injector.instanceOf[AuditService]
-
-        auditService.auditNCTSMessages(ReleaseForTransitResponse, requestXml)
-
-        verify(mockAuditConnector, times(1)).sendExplicitAudit(eqTo(AuditType.NCTS.ReleaseForTransitReceived), any[AuditDetails]())(any(), any(), any())
-      }
-
-    }
-
-    "must audit NCTS message CancellationDecisionResponse event" in {
-      val requestXml = <xml>test</xml>
-
-      val application = baseApplicationBuilder
-        .overrides(bind[AuditConnector].toInstance(mockAuditConnector))
-        .build()
-
-      running(application) {
-        val auditService = application.injector.instanceOf[AuditService]
-
-        auditService.auditNCTSMessages(CancellationDecisionResponse, requestXml)
-
-        verify(mockAuditConnector, times(1)).sendExplicitAudit(eqTo(AuditType.NCTS.CancellationDecisionReceived), any[AuditDetails]())(any(), any(), any())
-      }
-
-    }
-
-    "must audit NCTS message WriteOffNotificationResponse event" in {
-      val requestXml = <xml>test</xml>
-
-      val application = baseApplicationBuilder
-        .overrides(bind[AuditConnector].toInstance(mockAuditConnector))
-        .build()
-
-      running(application) {
-        val auditService = application.injector.instanceOf[AuditService]
-
-        auditService.auditNCTSMessages(WriteOffNotificationResponse, requestXml)
-
-        verify(mockAuditConnector, times(1)).sendExplicitAudit(eqTo(AuditType.NCTS.WriteOffNotificationReceived), any[AuditDetails]())(any(), any(), any())
-      }
-
-    }
-
-    "must audit NCTS message GuaranteeNotValidResponse event" in {
-      val requestXml = <xml>test</xml>
-
-      val application = baseApplicationBuilder
-        .overrides(bind[AuditConnector].toInstance(mockAuditConnector))
-        .build()
-
-      running(application) {
-        val auditService = application.injector.instanceOf[AuditService]
-
-        auditService.auditNCTSMessages(GuaranteeNotValidResponse, requestXml)
-
-        verify(mockAuditConnector, times(1)).sendExplicitAudit(eqTo(AuditType.NCTS.GuaranteeNotValidReceived), any[AuditDetails]())(any(), any(), any())
-      }
-
     }
   }
 
