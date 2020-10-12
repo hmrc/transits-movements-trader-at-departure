@@ -16,7 +16,6 @@
 
 package controllers.actions
 
-import akka.util.Timeout
 import generators.ModelGenerators
 import models.MessageType._
 import models._
