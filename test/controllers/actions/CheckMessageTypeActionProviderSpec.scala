@@ -29,6 +29,7 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
+import play.api.mvc.AnyContentAsEmpty
 import play.api.mvc.Result
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
@@ -65,7 +66,7 @@ class CheckMessageTypeActionProviderSpec
   "CheckMessageTypeAction" - {
     "will process the action when the X-Message-Type is present" in {
       forAll(Gen.oneOf(responseMessages.toSeq)) {
-        case (code, response) => {
+        case (code, response: MessageResponse) => {
           def fakeRequest =
             DepartureRequest(FakeRequest("", "").withHeaders(
                                "X-Message-Type" -> code
@@ -77,16 +78,9 @@ class CheckMessageTypeActionProviderSpec
           val result = action.run(fakeRequest)
 
           whenReady(result) {
-            r =>
-              println(s"r: $r")
-              println(s"r.isRight: ${r.isRight}")
-              println(s"r.right: ${r.right}")
-              println(s"r.right.value: ${r.right.value}")
-              println(s"code: $code")
-              println(s"response: $response")
-
+            r: Either[Result, DepartureResponseRequest[AnyContentAsEmpty.type]] =>
               r.isRight mustBe true
-              r.right.value mustBe response
+              r.right.get.messageResponse mustBe response
           }
         }
       }
