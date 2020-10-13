@@ -153,6 +153,7 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
             .withHeaders("X-Message-Type" -> MessageType.MrnAllocated.code)
 
           val result = route(application, request).value
+
           status(result) mustEqual OK
           verify(mockAuditService, times(1)).auditNCTSMessages(eqTo(MrnAllocatedResponse), any())(any())
         }
@@ -173,6 +174,7 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
             .withHeaders("X-Message-Type" -> MessageType.CancellationDecision.code)
 
           val result = route(application, request).value
+          contentAsString(result) mustEqual "Failed to transition from PositiveAcknowledgement to CancellationDecision"
           status(result) mustEqual BAD_REQUEST
         }
       }
@@ -282,6 +284,7 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
 
           val result = route(application, request).value
 
+          contentAsString(result) mustEqual "Internal Submission Failure Future(Success(SubmissionFailureInternal))"
           status(result) mustEqual INTERNAL_SERVER_ERROR
           verify(mockLockRepository, times(1)).lock(departureId)
           verify(mockLockRepository, times(1)).unlock(departureId)
@@ -306,6 +309,7 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
 
           val result = route(application, request).value
 
+          contentAsString(result) mustEqual "Missing X-Message-Type header"
           status(result) mustEqual BAD_REQUEST
           verify(mockLockRepository, times(1)).lock(departureId)
           verify(mockSaveMessageService, never()).validateXmlAndSaveMessage(any(), any(), any(), any())
@@ -335,6 +339,7 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
 
           val result = route(application, request).value
 
+          contentAsString(result) mustEqual "External Submission Failure Future(Success(SubmissionFailureExternal))"
           status(result) mustEqual BAD_REQUEST
           verify(mockLockRepository, times(1)).lock(departureId)
           verify(mockSaveMessageService, times(1)).validateXmlAndSaveMessage(any(), any(), any(), any())
