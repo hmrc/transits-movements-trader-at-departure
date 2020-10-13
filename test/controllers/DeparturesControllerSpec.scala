@@ -139,6 +139,7 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
 
           val result = route(application, request).value
 
+          contentAsString(result) mustEqual "Message accepted"
           status(result) mustEqual ACCEPTED
           verify(mockSubmitMessageService, times(1)).submitDeparture(any())(any())
           verify(mockAuditService, times(1)).auditEvent(eqTo(DepartureDeclarationSubmitted), any())(any())
@@ -164,6 +165,7 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
 
           val result = route(application, request).value
 
+          contentAsString(result) mustBe empty
           status(result) mustEqual INTERNAL_SERVER_ERROR
         }
       }
@@ -191,6 +193,7 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
 
           val result = route(application, request).value
 
+          contentAsString(result) mustBe empty
           status(result) mustEqual INTERNAL_SERVER_ERROR
           header("Location", result) must not be defined
         }
@@ -219,6 +222,7 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
 
           val result = route(application, request).value
 
+          contentAsString(result) mustBe empty
           status(result) mustEqual BAD_GATEWAY
           header("Location", result) must not be defined
         }
@@ -247,6 +251,7 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
 
           val result = route(application, request).value
 
+          contentAsString(result) mustEqual "Failed to create Departure with the following error: LocalDateParseFailure(Failed to parse DatOfPreMES9 to LocalDate with error: Text '' could not be parsed at index 0)"
           status(result) mustEqual BAD_REQUEST
           header("Location", result) must not be (defined)
         }
@@ -272,6 +277,7 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
 
           val result = route(application, request).value
 
+          contentAsString(result) mustEqual "Failed to create Departure with the following error: InvalidRootNode(Node InvalidRootNode didn't match CC015B)"
           status(result) mustEqual BAD_REQUEST
           header("Location", result) must not be (defined)
         }
@@ -306,6 +312,7 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
 
           val result = route(application, request).value
 
+          contentAsString(result) mustEqual "Message accepted"
           status(result) mustEqual ACCEPTED
           verify(mockSubmitMessageService, times(1)).submitMessage(any(), any(), any(), any())(any())
           verify(mockAuditService, times(1)).auditEvent(eqTo(DepartureDeclarationSubmitted), any())(any())
@@ -347,6 +354,7 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
 
           val result = route(application, request).value
 
+          contentAsString(result) mustEqual "Message accepted"
           status(result) mustEqual ACCEPTED
           header("Location", result).value must be(routes.DeparturesController.get(expectedDeparture.departureId).url)
           verify(mockSubmitMessageService, times(1)).submitDeparture(any())(any())
@@ -374,6 +382,7 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
 
           val result = route(application, request).value
 
+          contentAsString(result) mustBe empty
           status(result) mustEqual INTERNAL_SERVER_ERROR
 
         }
@@ -399,6 +408,7 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
 
           val result = route(app, request).value
 
+          contentAsString(result) mustBe empty
           status(result) mustEqual BAD_GATEWAY
         }
       }
@@ -420,6 +430,7 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
 
           val result = route(application, request).value
 
+          contentAsString(result) mustEqual "Failed to parse DatOfPreMES9 to LocalDate with error: Text '' could not be parsed at index 0"
           status(result) mustEqual BAD_REQUEST
         }
       }
@@ -441,6 +452,7 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
 
           val result = route(application, request).value
 
+          contentAsString(result) mustEqual "Node InvalidRootNode didn't match CC015B"
           status(result) mustEqual BAD_REQUEST
         }
       }
@@ -464,6 +476,7 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
 
         val result = route(application, request).value
 
+        contentAsString(result) must not be empty
         status(result) mustEqual OK
         contentAsJson(result) mustEqual Json.toJson(ResponseDeparture.build(departure))
       }
@@ -482,6 +495,7 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
         val request = FakeRequest(GET, routes.DeparturesController.get(DepartureId(1)).url)
         val result  = route(application, request).value
 
+        contentAsString(result) mustBe empty
         status(result) mustEqual NOT_FOUND
       }
     }
@@ -500,6 +514,7 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
         val request = FakeRequest(GET, routes.DeparturesController.get(DepartureId(1)).url)
         val result  = route(application, request).value
 
+        contentAsString(result) mustBe empty
         status(result) mustEqual NOT_FOUND
       }
     }
@@ -557,6 +572,7 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
         val request = FakeRequest(GET, routes.DeparturesController.getDepartures().url)
         val result  = route(application, request).value
 
+        contentAsString(result) mustEqual "{\"departures\":[]}"
         status(result) mustEqual OK
         contentAsJson(result) mustEqual Json.toJson(ResponseDepartures(Seq.empty))
       }
@@ -574,6 +590,7 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
         val request = FakeRequest(GET, routes.DeparturesController.getDepartures().url)
         val result  = route(application, request).value
 
+        contentAsString(result) mustEqual "Failed with the following error: java.lang.Exception"
         status(result) mustEqual INTERNAL_SERVER_ERROR
       }
     }
