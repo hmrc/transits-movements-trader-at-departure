@@ -200,6 +200,7 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
 
           val result = route(application, request).value
 
+          contentAsString(result) mustEqual "DocNumHEA5 was empty"
           status(result) mustEqual BAD_REQUEST
         }
       }
