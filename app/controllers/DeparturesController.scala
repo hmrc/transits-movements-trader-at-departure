@@ -16,25 +16,23 @@
 
 package controllers
 
+import audit.AuditService
+import audit.AuditType._
 import cats.data.NonEmptyList
 import controllers.actions._
 import javax.inject.Inject
-import actions._
-import audit.AuditService
-import audit.AuditType
-import audit.AuditType._
-import models._
 import models.MessageStatus.SubmissionSucceeded
 import models.MessageType.DepartureDeclaration
-import play.api.Logger
+import models._
 import models.response.ResponseDeparture
 import models.response.ResponseDepartures
+import play.api.Logger
 import play.api.libs.json.Json
-import repositories.DepartureRepository
-import services._
 import play.api.mvc.Action
 import play.api.mvc.AnyContent
 import play.api.mvc.ControllerComponents
+import repositories.DepartureRepository
+import services._
 import uk.gov.hmrc.play.bootstrap.controller.BackendController
 
 import scala.concurrent.ExecutionContext
@@ -69,12 +67,11 @@ class DeparturesController @Inject()(cc: ControllerComponents,
                 .map {
                   case SubmissionProcessingResult.SubmissionSuccess =>
                     auditService.auditEvent(DepartureDeclarationSubmitted, request.body)
-                    Accepted("Message accepted")
+                    Accepted("")
                       .withHeaders("Location" -> routes.DeparturesController.get(departure.departureId).url)
 
-                  case SubmissionProcessingResult.SubmissionFailureInternal => {
+                  case SubmissionProcessingResult.SubmissionFailureInternal =>
                     InternalServerError
-                  }
 
                   case SubmissionProcessingResult.SubmissionFailureExternal =>
                     BadGateway
@@ -101,7 +98,7 @@ class DeparturesController @Inject()(cc: ControllerComponents,
                   .map {
                     case SubmissionProcessingResult.SubmissionSuccess =>
                       auditService.auditEvent(DepartureDeclarationSubmitted, request.body)
-                      Accepted("Message accepted")
+                      Accepted("")
                         .withHeaders("Location" -> routes.DeparturesController.get(departure.departureId).url)
                     case SubmissionProcessingResult.SubmissionFailureExternal =>
                       BadGateway
@@ -140,7 +137,8 @@ class DeparturesController @Inject()(cc: ControllerComponents,
         }
         .recover {
           case e =>
-            InternalServerError(s"Failed with the following error: $e")
+            Logger.error(s"Failed to create Departure with the following error: $e")
+            InternalServerError
         }
   }
 }
