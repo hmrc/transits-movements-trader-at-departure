@@ -67,7 +67,7 @@ class DeparturesController @Inject()(cc: ControllerComponents,
                 .map {
                   case SubmissionProcessingResult.SubmissionSuccess =>
                     auditService.auditEvent(DepartureDeclarationSubmitted, request.body)
-                    Accepted("")
+                    Accepted
                       .withHeaders("Location" -> routes.DeparturesController.get(departure.departureId).url)
 
                   case SubmissionProcessingResult.SubmissionFailureInternal =>
@@ -90,15 +90,15 @@ class DeparturesController @Inject()(cc: ControllerComponents,
             .createDeparture(request.eoriNumber, request.body)
             .flatMap {
               case Left(error) =>
-                Logger.error(s"Failed to create Departure with the following error: $error")
-                Future.successful(BadRequest(s"Failed to create Departure with the following error: $error"))
+                Logger.error(s"The root element name does not match: $error")
+                Future.successful(BadRequest(s"The root element name does not match: $error"))
               case Right(departure) =>
                 submitMessageService
                   .submitDeparture(departure)
                   .map {
                     case SubmissionProcessingResult.SubmissionSuccess =>
                       auditService.auditEvent(DepartureDeclarationSubmitted, request.body)
-                      Accepted("")
+                      Accepted
                         .withHeaders("Location" -> routes.DeparturesController.get(departure.departureId).url)
                     case SubmissionProcessingResult.SubmissionFailureExternal =>
                       BadGateway

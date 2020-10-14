@@ -175,7 +175,7 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
             .withHeaders("X-Message-Type" -> MessageType.CancellationDecision.code)
 
           val result = route(application, request).value
-          contentAsString(result) mustEqual "Failed to transition from PositiveAcknowledgement to CancellationDecision"
+          contentAsString(result) mustEqual "The message status failed to transition from 'PositiveAcknowledgement' to 'CancellationDecision'."
           status(result) mustEqual BAD_REQUEST
         }
       }
@@ -203,7 +203,7 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
 
           val result = route(application, request).value
 
-          contentAsString(result) mustEqual "DocNumHEA5 was empty"
+          contentAsString(result) mustEqual "The element 'DocNumHEA5' must contain a value."
           status(result) mustEqual BAD_REQUEST
         }
       }
@@ -287,7 +287,7 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
 
           val result = route(application, request).value
 
-          contentAsString(result) mustEqual "Internal Submission Failure Future(Success(SubmissionFailureInternal))"
+          contentAsString(result) mustBe empty
           status(result) mustEqual INTERNAL_SERVER_ERROR
           verify(mockLockRepository, times(1)).lock(departureId)
           verify(mockLockRepository, times(1)).unlock(departureId)
@@ -312,7 +312,7 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
 
           val result = route(application, request).value
 
-          contentAsString(result) mustEqual "Missing X-Message-Type header"
+          contentAsString(result) mustEqual "A 'X-Message-Type' header must be defined in the request."
           status(result) mustEqual BAD_REQUEST
           verify(mockLockRepository, times(1)).lock(departureId)
           verify(mockSaveMessageService, never()).validateXmlAndSaveMessage(any(), any(), any(), any())
