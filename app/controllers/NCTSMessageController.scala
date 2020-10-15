@@ -20,21 +20,11 @@ import audit.AuditService
 import controllers.actions.CheckMessageTypeActionProvider
 import controllers.actions.GetDepartureForWriteActionProvider
 import javax.inject.Inject
+import models.MessageSender
+import models.MessageType
 import models.SubmissionProcessingResult.SubmissionFailureExternal
 import models.SubmissionProcessingResult.SubmissionFailureInternal
 import models.SubmissionProcessingResult.SubmissionSuccess
-import models.CancellationDecisionResponse
-import models.ControlDecisionNotificationResponse
-import models.DepartureRejectedResponse
-import models.GuaranteeNotValidResponse
-import models.MessageResponse
-import models.MessageSender
-import models.MessageType
-import models.MrnAllocatedResponse
-import models.NoReleaseForTransitResponse
-import models.PositiveAcknowledgementResponse
-import models.ReleaseForTransitResponse
-import models.WriteOffNotificationResponse
 import play.api.Logger
 import play.api.mvc.Action
 import play.api.mvc.ControllerComponents
@@ -75,7 +65,7 @@ class NCTSMessageController @Inject()(cc: ControllerComponents,
                     case SubmissionFailureInternal =>
                       val message = "Internal Submission Failure " + processingResult
                       Logger.warn(message)
-                      InternalServerError(message)
+                      InternalServerError
                     case SubmissionFailureExternal =>
                       val message = "External Submission Failure " + processingResult
                       Logger.warn(message)
@@ -91,7 +81,7 @@ class NCTSMessageController @Inject()(cc: ControllerComponents,
                 case SubmissionFailureInternal =>
                   val message = "Internal Submission Failure " + processingResult
                   Logger.warn(message)
-                  InternalServerError(message)
+                  InternalServerError
                 case SubmissionFailureExternal =>
                   val message = "External Submission Failure " + processingResult
                   Logger.warn(message)

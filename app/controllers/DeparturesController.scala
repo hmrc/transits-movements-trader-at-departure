@@ -91,7 +91,7 @@ class DeparturesController @Inject()(cc: ControllerComponents,
             .flatMap {
               case Left(error) =>
                 Logger.error(s"The root element name does not match: $error")
-                Future.successful(BadRequest(s"The root element name does not match: $error"))
+                Future.successful(BadRequest(error.message))
               case Right(departure) =>
                 submitMessageService
                   .submitDeparture(departure)
