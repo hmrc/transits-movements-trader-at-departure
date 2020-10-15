@@ -90,7 +90,7 @@ class DeparturesController @Inject()(cc: ControllerComponents,
             .createDeparture(request.eoriNumber, request.body)
             .flatMap {
               case Left(error) =>
-                Logger.error(s"The root element name does not match: $error")
+                Logger.error(error.message)
                 Future.successful(BadRequest(error.message))
               case Right(departure) =>
                 submitMessageService
@@ -137,7 +137,7 @@ class DeparturesController @Inject()(cc: ControllerComponents,
         }
         .recover {
           case e =>
-            Logger.error(s"Failed to create Departure with the following error: $e")
+            Logger.error(s"Failed to create departure", e)
             InternalServerError
         }
   }

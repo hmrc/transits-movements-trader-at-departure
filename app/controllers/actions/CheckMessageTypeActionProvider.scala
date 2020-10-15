@@ -68,7 +68,7 @@ class CheckMessageTypeAction()(implicit val executionContext: ExecutionContext) 
       case Some(MessageType.WriteOffNotification.code)        => successMessage(WriteOffNotificationResponse)
       case Some(MessageType.GuaranteeNotValid.code)           => successMessage(GuaranteeNotValidResponse)
       case Some(invalidType)                                  => badRequestError(s"Received the following invalid response for X-Message-Type: $invalidType")
-      case None                                               => badRequestError(s"A 'X-Message-Type' header must be defined in the request.")
+      case None                                               => badRequestError("A 'X-Message-Type' header must be defined in the request.")
     }
   }
 }

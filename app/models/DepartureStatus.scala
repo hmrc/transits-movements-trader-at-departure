@@ -29,7 +29,7 @@ object DepartureStatus extends Enumerable.Implicits with MongoDateTimeFormats {
       case MessageReceivedEvent.DepartureSubmitted => Right(DepartureSubmitted)
       case MessageReceivedEvent.MrnAllocated       => Right(MrnAllocated)
       case MessageReceivedEvent.DepartureRejected  => Right(DepartureRejected)
-      case _                                       => Left(TransitionError(s"Failed to transition from Initialized to $messageReceived."))
+      case _                                       => Left(TransitionError(s"The message status failed to transition from 'Initialized' to  '$messageReceived'."))
     }
   }
 
@@ -38,7 +38,7 @@ object DepartureStatus extends Enumerable.Implicits with MongoDateTimeFormats {
       case MessageReceivedEvent.DepartureSubmitted      => Right(DepartureSubmitted)
       case MessageReceivedEvent.PositiveAcknowledgement => Right(PositiveAcknowledgement)
       case MessageReceivedEvent.DepartureRejected       => Right(DepartureRejected)
-      case _                                            => Left(TransitionError(s"Failed to transition from DepartureSubmitted to $messageReceived."))
+      case _                                            => Left(TransitionError(s"The message status failed to transition from 'DepartureSubmitted' to '$messageReceived'."))
     }
   }
 
@@ -58,30 +58,30 @@ object DepartureStatus extends Enumerable.Implicits with MongoDateTimeFormats {
       case MessageReceivedEvent.ReleaseForTransit              => Right(ReleaseForTransit)
       case MessageReceivedEvent.DeclarationCancellationRequest => Right(DeclarationCancellationRequest)
       case MessageReceivedEvent.GuaranteeNotValid              => Right(GuaranteeNotValid)
-      case _                                                   => Left(TransitionError(s"Failed to transition from MrnAllocated to $messageReceived."))
+      case _                                                   => Left(TransitionError(s"The message status failed to transition from 'MrnAllocated' to '$messageReceived'."))
     }
   }
 
   case object DepartureRejected extends DepartureStatus {
     override def transition(messageReceived: MessageReceivedEvent): Either[TransitionError, DepartureStatus] = messageReceived match {
       case MessageReceivedEvent.DepartureRejected => Right(DepartureRejected)
-      case _                                      => Left(TransitionError(s"Failed to transition from ArrivalRejected to $messageReceived."))
+      case _                                      => Left(TransitionError(s"The message status failed to transition from 'ArrivalRejected' to '$messageReceived'."))
     }
   }
 
   case object ControlDecisionNotification extends DepartureStatus {
-    override def transition(messageRecieved: MessageReceivedEvent): Either[TransitionError, DepartureStatus] = messageRecieved match {
+    override def transition(messageReceived: MessageReceivedEvent): Either[TransitionError, DepartureStatus] = messageReceived match {
       case MessageReceivedEvent.ControlDecisionNotification => Right(ControlDecisionNotification)
       case MessageReceivedEvent.NoReleaseForTransit         => Right(NoReleaseForTransit)
       case MessageReceivedEvent.ReleaseForTransit           => Right(ReleaseForTransit)
-      case _                                                => Left(TransitionError(s"Failed to transition from ControlDecisionNotification to $messageRecieved"))
+      case _                                                => Left(TransitionError(s"The message status failed to transition from 'ControlDecisionNotification' to '$messageReceived'."))
     }
   }
 
   case object NoReleaseForTransit extends DepartureStatus {
     override def transition(messageReceived: MessageReceivedEvent): Either[TransitionError, DepartureStatus] = messageReceived match {
       case MessageReceivedEvent.NoReleaseForTransit => Right(NoReleaseForTransit)
-      case _                                        => Left(TransitionError(s"Failed to transition from NoReleaseForTransit to $messageReceived"))
+      case _                                        => Left(TransitionError(s"The message status failed to transition from 'NoReleaseForTransit' to '$messageReceived'."))
     }
   }
 
@@ -91,7 +91,7 @@ object DepartureStatus extends Enumerable.Implicits with MongoDateTimeFormats {
       case MessageReceivedEvent.DeclarationCancellationRequest => Right(DeclarationCancellationRequest)
       case MessageReceivedEvent.CancellationDecision           => Right(CancellationDecision)
       case MessageReceivedEvent.WriteOffNotification           => Right(WriteOffNotification)
-      case _                                                   => Left(TransitionError(s"Failed to transition from ReleaseForTransit to $messageReceived"))
+      case _                                                   => Left(TransitionError(s"The message status failed to transition from 'ReleaseForTransit' to '$messageReceived'."))
     }
   }
 
@@ -99,7 +99,7 @@ object DepartureStatus extends Enumerable.Implicits with MongoDateTimeFormats {
     override def transition(messageReceived: MessageReceivedEvent): Either[TransitionError, DepartureStatus] = messageReceived match {
       case MessageReceivedEvent.DeclarationCancellationRequest => Right(DeclarationCancellationRequest)
       case MessageReceivedEvent.CancellationDecision           => Right(CancellationDecision)
-      case _                                                   => Left(TransitionError(s"Failed to transition from DeclarationCancellationRequest to $messageReceived"))
+      case _                                                   => Left(TransitionError(s"The message status failed to transition from 'DeclarationCancellationRequest' to '$messageReceived'."))
     }
   }
 
@@ -107,14 +107,14 @@ object DepartureStatus extends Enumerable.Implicits with MongoDateTimeFormats {
     override def transition(messageReceived: MessageReceivedEvent): Either[TransitionError, DepartureStatus] = messageReceived match {
       case MessageReceivedEvent.CancellationDecision => Right(CancellationDecision)
       case MessageReceivedEvent.WriteOffNotification => Right(WriteOffNotification)
-      case _                                         => Left(TransitionError(s"Failed to transition from CancellationDecision to $messageReceived"))
+      case _                                         => Left(TransitionError(s"The message status failed to transition from 'CancellationDecision' to '$messageReceived'."))
     }
   }
 
   case object WriteOffNotification extends DepartureStatus {
     override def transition(messageReceived: MessageReceivedEvent): Either[TransitionError, DepartureStatus] = messageReceived match {
       case MessageReceivedEvent.WriteOffNotification => Right(WriteOffNotification)
-      case _                                         => Left(TransitionError(s"Failed to transition from WriteOffNotification to $messageReceived"))
+      case _                                         => Left(TransitionError(s"The message status failed to transition from 'WriteOffNotification' to '$messageReceived'."))
     }
   }
 
@@ -123,7 +123,7 @@ object DepartureStatus extends Enumerable.Implicits with MongoDateTimeFormats {
       case MessageReceivedEvent.GuaranteeNotValid   => Right(GuaranteeNotValid)
       case MessageReceivedEvent.NoReleaseForTransit => Right(NoReleaseForTransit)
       case MessageReceivedEvent.ReleaseForTransit   => Right(ReleaseForTransit)
-      case _                                        => Left(TransitionError(s"Failed to transition from GuaranteeNotValid to $messageReceived"))
+      case _                                        => Left(TransitionError(s"The message status failed to transition from 'GuaranteeNotValid' to '$messageReceived'."))
     }
   }
 
