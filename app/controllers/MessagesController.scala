@@ -17,7 +17,6 @@
 package controllers
 
 import audit.AuditService
-import audit.AuditType
 import audit.AuditType.DepartureCancellationRequestSubmitted
 import controllers.actions.AuthenticatedGetDepartureForReadActionProvider
 import controllers.actions.AuthenticatedGetDepartureForWriteActionProvider
@@ -65,7 +64,7 @@ class MessagesController @Inject()(
                     .map {
                       case SubmissionProcessingResult.SubmissionSuccess =>
                         auditService.auditEvent(DepartureCancellationRequestSubmitted, request.body)
-                        Accepted("Message accepted")
+                        Accepted
                           .withHeaders("Location" -> routes.MessagesController.getMessage(request.departure.departureId, request.departure.nextMessageId).url)
 
                       case SubmissionProcessingResult.SubmissionFailureInternal =>

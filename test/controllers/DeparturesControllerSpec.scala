@@ -21,22 +21,15 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 
 import audit.AuditService
-import audit.AuditType
 import audit.AuditType.DepartureDeclarationSubmitted
 import base.SpecBase
 import cats.data.NonEmptyList
 import controllers.actions.AuthenticateGetOptionalDepartureForWriteActionProvider
 import controllers.actions.FakeAuthenticatedGetOptionalDepartureForWriteActionProvider
-import org.scalatest.concurrent.IntegrationPatience
-import org.scalatest.BeforeAndAfterEach
-import org.scalatest.stats
-import org.mockito.Mockito._
-import org.scalacheck.Arbitrary.arbitrary
 import generators.ModelGenerators
 import models.MessageStatus.SubmissionFailed
 import models.MessageStatus.SubmissionPending
 import models.MessageStatus.SubmissionSucceeded
-import models._
 import models.SubmissionProcessingResult.SubmissionFailureExternal
 import models.SubmissionProcessingResult.SubmissionFailureInternal
 import models.SubmissionProcessingResult.SubmissionSuccess
@@ -139,6 +132,7 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
 
           val result = route(application, request).value
 
+          contentAsString(result) mustBe empty
           status(result) mustEqual ACCEPTED
           verify(mockSubmitMessageService, times(1)).submitDeparture(any())(any())
           verify(mockAuditService, times(1)).auditEvent(eqTo(DepartureDeclarationSubmitted), any())(any())
@@ -164,6 +158,7 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
 
           val result = route(application, request).value
 
+          contentAsString(result) mustBe empty
           status(result) mustEqual INTERNAL_SERVER_ERROR
         }
       }
@@ -191,6 +186,7 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
 
           val result = route(application, request).value
 
+          contentAsString(result) mustBe empty
           status(result) mustEqual INTERNAL_SERVER_ERROR
           header("Location", result) must not be defined
         }
@@ -219,6 +215,7 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
 
           val result = route(application, request).value
 
+          contentAsString(result) mustBe empty
           status(result) mustEqual BAD_GATEWAY
           header("Location", result) must not be defined
         }
@@ -247,6 +244,7 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
 
           val result = route(application, request).value
 
+          contentAsString(result) mustEqual "The value of element 'DatOfPreMES9' is not valid with respect to pattern 'yyyyMMdd'"
           status(result) mustEqual BAD_REQUEST
           header("Location", result) must not be (defined)
         }
@@ -272,6 +270,7 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
 
           val result = route(application, request).value
 
+          contentAsString(result) mustEqual "The root element name does not match 'CC015B'"
           status(result) mustEqual BAD_REQUEST
           header("Location", result) must not be (defined)
         }
@@ -306,6 +305,7 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
 
           val result = route(application, request).value
 
+          contentAsString(result) mustBe empty
           status(result) mustEqual ACCEPTED
           verify(mockSubmitMessageService, times(1)).submitMessage(any(), any(), any(), any())(any())
           verify(mockAuditService, times(1)).auditEvent(eqTo(DepartureDeclarationSubmitted), any())(any())
@@ -347,6 +347,7 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
 
           val result = route(application, request).value
 
+          contentAsString(result) mustBe empty
           status(result) mustEqual ACCEPTED
           header("Location", result).value must be(routes.DeparturesController.get(expectedDeparture.departureId).url)
           verify(mockSubmitMessageService, times(1)).submitDeparture(any())(any())
@@ -374,6 +375,7 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
 
           val result = route(application, request).value
 
+          contentAsString(result) mustBe empty
           status(result) mustEqual INTERNAL_SERVER_ERROR
 
         }
@@ -399,6 +401,7 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
 
           val result = route(app, request).value
 
+          contentAsString(result) mustBe empty
           status(result) mustEqual BAD_GATEWAY
         }
       }
@@ -420,6 +423,7 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
 
           val result = route(application, request).value
 
+          contentAsString(result) mustEqual "The value of element 'DatOfPreMES9' is not valid with respect to pattern 'yyyyMMdd'"
           status(result) mustEqual BAD_REQUEST
         }
       }
@@ -441,6 +445,7 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
 
           val result = route(application, request).value
 
+          contentAsString(result) mustEqual "The root element name does not match 'CC015B'"
           status(result) mustEqual BAD_REQUEST
         }
       }
@@ -482,6 +487,7 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
         val request = FakeRequest(GET, routes.DeparturesController.get(DepartureId(1)).url)
         val result  = route(application, request).value
 
+        contentAsString(result) mustBe empty
         status(result) mustEqual NOT_FOUND
       }
     }
@@ -500,6 +506,7 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
         val request = FakeRequest(GET, routes.DeparturesController.get(DepartureId(1)).url)
         val result  = route(application, request).value
 
+        contentAsString(result) mustBe empty
         status(result) mustEqual NOT_FOUND
       }
     }
@@ -574,6 +581,7 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
         val request = FakeRequest(GET, routes.DeparturesController.getDepartures().url)
         val result  = route(application, request).value
 
+        contentAsString(result) mustBe empty
         status(result) mustEqual INTERNAL_SERVER_ERROR
       }
     }

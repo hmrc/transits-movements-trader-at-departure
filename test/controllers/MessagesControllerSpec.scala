@@ -21,7 +21,6 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 
 import audit.AuditService
-import audit.AuditType
 import audit.AuditType._
 import base.SpecBase
 import cats.data.NonEmptyList
@@ -156,6 +155,7 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
         val request = FakeRequest(POST, routes.MessagesController.post(departure.departureId).url).withXmlBody(declarationCancellationRequestXmlBody)
         val result  = route(application, request).value
 
+        contentAsString(result) mustBe empty
         status(result) mustEqual ACCEPTED
         header("Location", result).value must be(routes.MessagesController.getMessage(departure.departureId, MessageId.fromIndex(1)).url)
         verify(mockSubmitMessageService, times(1)).submitMessage(eqTo(departure.departureId),
@@ -188,6 +188,7 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
 
         val result = route(application, request).value
 
+        contentAsString(result) mustBe empty
         status(result) mustEqual NOT_FOUND
       }
     }
@@ -217,6 +218,7 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
 
         val result = route(application, request).value
 
+        contentAsString(result) mustBe empty
         status(result) mustEqual INTERNAL_SERVER_ERROR
       }
     }
@@ -244,6 +246,7 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
 
         val result = route(application, request).value
 
+        contentAsString(result) mustEqual "The value of element 'DatOfPreMES9' is not valid with respect to pattern 'yyyyMMdd'"
         status(result) mustEqual BAD_REQUEST
       }
     }
@@ -273,6 +276,7 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
 
         val result = route(application, request).value
 
+        contentAsString(result) mustBe empty
         status(result) mustEqual NOT_IMPLEMENTED
       }
     }
@@ -302,6 +306,7 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
 
         val result = route(application, request).value
 
+        contentAsString(result) mustBe empty
         status(result) mustEqual BAD_GATEWAY
       }
     }
@@ -435,6 +440,7 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
           val request = FakeRequest(GET, routes.MessagesController.getMessages(DepartureId(1)).url)
           val result  = route(application, request).value
 
+          contentAsString(result) mustBe empty
           status(result) mustEqual NOT_FOUND
         }
       }
@@ -456,6 +462,7 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
           val request = FakeRequest(GET, routes.MessagesController.getMessages(departure.departureId).url)
           val result  = route(application, request).value
 
+          contentAsString(result) mustBe empty
           status(result) mustEqual NOT_FOUND
         }
       }
@@ -524,6 +531,7 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
           val request = FakeRequest(GET, routes.MessagesController.getMessage(DepartureId(1), MessageId.fromIndex(0)).url)
           val result  = route(application, request).value
 
+          contentAsString(result) mustBe empty
           status(result) mustEqual NOT_FOUND
         }
       }
@@ -545,6 +553,7 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
           val request = FakeRequest(GET, routes.MessagesController.getMessage(departure.departureId, MessageId.fromIndex(5)).url)
           val result  = route(application, request).value
 
+          contentAsString(result) mustBe empty
           status(result) mustEqual NOT_FOUND
         }
       }
@@ -566,6 +575,7 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
           val request = FakeRequest(GET, routes.MessagesController.getMessage(departure.departureId, MessageId.fromIndex(0)).url)
           val result  = route(application, request).value
 
+          contentAsString(result) mustBe empty
           status(result) mustEqual NOT_FOUND
         }
       }
@@ -587,6 +597,7 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
           val request = FakeRequest(GET, routes.MessagesController.getMessage(departure.departureId, MessageId.fromIndex(0)).url)
           val result  = route(application, request).value
 
+          contentAsString(result) mustBe empty
           status(result) mustEqual NOT_FOUND
         }
       }

@@ -42,7 +42,7 @@ object XmlMessageParser {
       nodeSeq =>
         nodeSeq.head.label match {
           case messageType.rootNode => Right(nodeSeq)
-          case _                    => Left(InvalidRootNode(s"Node ${nodeSeq.head.label} didn't match ${messageType.rootNode}"))
+          case _                    => Left(InvalidRootNode("The root element name does not match 'CC015B'"))
         }
     }
 
@@ -53,7 +53,7 @@ object XmlMessageParser {
 
       Try(LocalDate.parse(dateOfPrepString, Format.dateFormatter)) match {
         case Success(value) => Right(value)
-        case Failure(e)     => Left(LocalDateParseFailure(s"Failed to parse DatOfPreMES9 to LocalDate with error: ${e.getMessage}"))
+        case Failure(_)     => Left(LocalDateParseFailure("The value of element 'DatOfPreMES9' is not valid with respect to pattern 'yyyyMMdd'"))
       }
     })
 
@@ -78,13 +78,13 @@ object XmlMessageParser {
     ReaderT[ParseHandler, NodeSeq, String](xml =>
       (xml \ "HEAHEA" \ "RefNumHEA4").text match {
         case refString if !refString.isEmpty => Right(refString)
-        case _                               => Left(EmptyLocalReferenceNumber("RefNumHEA4 was empty"))
+        case _                               => Left(EmptyLocalReferenceNumber("The element 'RefNumHEA4' must contain a value."))
     })
 
   val mrnR: ReaderT[ParseHandler, NodeSeq, MovementReferenceNumber] =
     ReaderT[ParseHandler, NodeSeq, MovementReferenceNumber](xml =>
       (xml \ "HEAHEA" \ "DocNumHEA5").text match {
         case mrnString if !mrnString.isEmpty => Right(MovementReferenceNumber(mrnString))
-        case _                               => Left(EmptyMovementReferenceNumber("DocNumHEA5 was empty"))
+        case _                               => Left(EmptyMovementReferenceNumber("The element 'DocNumHEA5' must contain a value."))
     })
 }
