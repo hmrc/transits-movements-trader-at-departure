@@ -332,9 +332,7 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
         running(application) {
           lazy val request = FakeRequest(GET, routes.MessagesController.getMessages(departure.departureId).url)
           val result       = route(application, request).value
-          val body         = Json.obj()
 
-          contentAsJson(result) must not be body
           status(result) mustEqual OK
 
           val expectedMessages  = ResponseMessage.build(departure.departureId, MessageId.fromMessageIdValue(1).value, message)
@@ -364,9 +362,7 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
         running(application) {
           val request = FakeRequest(GET, routes.MessagesController.getMessages(departure.departureId).url)
           val result  = route(application, request).value
-          val body    = Json.obj()
 
-          contentAsJson(result) must not be body
           status(result) mustEqual OK
           contentAsJson(result) mustEqual Json.toJson(expectedDeparture)
         }
@@ -396,9 +392,7 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
         running(application) {
           val request = FakeRequest(GET, routes.MessagesController.getMessages(departure.departureId).url)
           val result  = route(application, request).value
-          val body    = Json.obj()
 
-          contentAsJson(result) must not be body
           status(result) mustEqual OK
           contentAsJson(result) mustEqual Json.toJson(expectedDeparture)
         }
@@ -424,9 +418,7 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
         running(application) {
           val request = FakeRequest(GET, routes.MessagesController.getMessages(departure.departureId).url)
           val result  = route(application, request).value
-          val body    = Json.obj()
 
-          contentAsJson(result) must not be body
           status(result) mustEqual OK
           contentAsJson(result) mustEqual Json.toJson(expectedDeparture)
         }
@@ -496,9 +488,7 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
       running(application) {
         val request = FakeRequest(GET, routes.MessagesController.getMessage(departure.departureId, MessageId.fromIndex(0)).url)
         val result  = route(application, request).value
-        val body    = Json.obj()
 
-        contentAsJson(result) must not be body
         status(result) mustEqual OK
         contentAsJson(result) mustEqual Json.toJson(ResponseMessage.build(departure.departureId, MessageId.fromIndex(0), message))
       }
@@ -520,9 +510,7 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
       running(application) {
         val request = FakeRequest(GET, routes.MessagesController.getMessage(departure.departureId, MessageId.fromIndex(0)).url)
         val result  = route(application, request).value
-        val body    = Json.obj()
 
-        contentAsJson(result) must not be body
         status(result) mustEqual OK
         contentAsJson(result) mustEqual Json.toJson(ResponseMessage.build(departure.departureId, MessageId.fromIndex(0), message))
       }

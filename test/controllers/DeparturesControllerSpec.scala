@@ -50,7 +50,6 @@ import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.IntegrationPatience
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.inject.bind
-import play.api.libs.json.JsValue
 import play.api.libs.json.Json
 import play.api.test.FakeRequest
 import play.api.test.Helpers.POST
@@ -470,7 +469,6 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
 
         val result = route(application, request).value
 
-        contentAsString(result) must not be empty
         status(result) mustEqual OK
         contentAsJson(result) mustEqual Json.toJson(ResponseDeparture.build(departure))
       }
@@ -563,11 +561,9 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
         .build()
 
       running(application) {
-        val request               = FakeRequest(GET, routes.DeparturesController.getDepartures().url)
-        val result                = route(application, request).value
-        val jsonResponse: JsValue = Json.parse("""{"departures":[]}""")
+        val request = FakeRequest(GET, routes.DeparturesController.getDepartures().url)
+        val result  = route(application, request).value
 
-        contentAsJson(result) mustBe jsonResponse
         status(result) mustEqual OK
         contentAsJson(result) mustEqual Json.toJson(ResponseDepartures(Seq.empty))
       }

@@ -69,7 +69,7 @@ class NCTSMessageController @Inject()(cc: ControllerComponents,
                     case SubmissionFailureExternal =>
                       val message = "External Submission Failure " + processingResult
                       Logger.warn(message)
-                      BadRequest(message)
+                      BadRequest
                   }
               }
             case _ =>
@@ -85,7 +85,7 @@ class NCTSMessageController @Inject()(cc: ControllerComponents,
                 case SubmissionFailureExternal =>
                   val message = "External Submission Failure " + processingResult
                   Logger.warn(message)
-                  BadRequest(message)
+                  BadRequest
               }
           }
         case Left(error) =>

@@ -342,7 +342,7 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
 
           val result = route(application, request).value
 
-          contentAsString(result) mustEqual "External Submission Failure Future(Success(SubmissionFailureExternal))"
+          contentAsString(result) mustBe empty
           status(result) mustEqual BAD_REQUEST
           verify(mockLockRepository, times(1)).lock(departureId)
           verify(mockSaveMessageService, times(1)).validateXmlAndSaveMessage(any(), any(), any(), any())
