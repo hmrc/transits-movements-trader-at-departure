@@ -30,9 +30,7 @@ class TransitWrapperSpec extends AnyFreeSpec with Matchers {
       val result   = TransitWrapper(testNode).toXml
 
       val expectedResult =
-        <transitRequest
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:noNamespaceSchemaLocation="../../schema/request/request.xsd">{testNode}</transitRequest>
+        <transitRequest>{testNode}</transitRequest>
 
       trim(result) mustBe trim(expectedResult)
     }
