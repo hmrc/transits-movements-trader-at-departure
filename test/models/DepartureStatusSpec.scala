@@ -48,12 +48,16 @@ class DepartureStatusSpec extends SpecBase with ScalaCheckDrivenPropertyChecks w
   }
 
   "DepartureSubmitted must" - {
-    "transitionn to DepartureSubmitted when receiving a DepartureSubmitted event" in {
+    "transition to DepartureSubmitted when receiving a DepartureSubmitted event" in {
       DepartureStatus.DepartureSubmitted.transition(MessageReceivedEvent.DepartureSubmitted) mustEqual Right(DepartureStatus.DepartureSubmitted)
     }
 
-    "transitionn to PositiveAcknowledgement when receiving a PositiveAcknowledgement event" in {
+    "transition to PositiveAcknowledgement when receiving a PositiveAcknowledgement event" in {
       DepartureStatus.DepartureSubmitted.transition(MessageReceivedEvent.PositiveAcknowledgement) mustEqual Right(DepartureStatus.PositiveAcknowledgement)
+    }
+
+    "transition to MrnAllocated when receiving a MrnAllocated event" in {
+      DepartureStatus.DepartureSubmitted.transition(MessageReceivedEvent.MrnAllocated) mustEqual Right(DepartureStatus.MrnAllocated)
     }
 
     "transition to DepartureRejected when receiving a DepartureRejected event" in {
@@ -61,7 +65,12 @@ class DepartureStatusSpec extends SpecBase with ScalaCheckDrivenPropertyChecks w
     }
 
     "return an error message when receiving any other event" in {
-      val validMessages   = Seq(MessageReceivedEvent.DepartureSubmitted, MessageReceivedEvent.PositiveAcknowledgement, MessageReceivedEvent.DepartureRejected)
+      val validMessages = Seq(
+        MessageReceivedEvent.DepartureSubmitted,
+        MessageReceivedEvent.PositiveAcknowledgement,
+        MessageReceivedEvent.MrnAllocated,
+        MessageReceivedEvent.DepartureRejected
+      )
       val invalidMessages = MessageReceivedEvent.values.diff(validMessages)
       invalidMessages.foreach {
         m =>
@@ -71,11 +80,11 @@ class DepartureStatusSpec extends SpecBase with ScalaCheckDrivenPropertyChecks w
   }
 
   "PositiveAcknowledgement must " - {
-    "transition to MrnAllocated when recieving a MrnAllocated event" in {
+    "transition to MrnAllocated when receiving a MrnAllocated event" in {
       DepartureStatus.PositiveAcknowledgement.transition(MessageReceivedEvent.MrnAllocated) mustEqual Right(DepartureStatus.MrnAllocated)
     }
 
-    "transition to PositiveAcknowledgement when recieving a PositiveAcknowledgement event" in {
+    "transition to PositiveAcknowledgement when receiving a PositiveAcknowledgement event" in {
       DepartureStatus.PositiveAcknowledgement.transition(MessageReceivedEvent.PositiveAcknowledgement) mustEqual Right(DepartureStatus.PositiveAcknowledgement)
     }
 
