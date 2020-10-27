@@ -297,8 +297,18 @@ class DepartureStatusSpec extends SpecBase with ScalaCheckDrivenPropertyChecks w
       DepartureStatus.GuaranteeNotValid.transition(MessageReceivedEvent.ReleaseForTransit) mustEqual Right(DepartureStatus.ReleaseForTransit)
     }
 
+    "transition to DeclarationCancellationRequest when recieving a DeclarationCancellationRequest event" in {
+      DepartureStatus.GuaranteeNotValid.transition(MessageReceivedEvent.DeclarationCancellationRequest) mustEqual Right(
+        DepartureStatus.DeclarationCancellationRequest)
+    }
+
     "return an error message when receiving any other event" in {
-      val validMessages   = Seq(MessageReceivedEvent.GuaranteeNotValid, MessageReceivedEvent.NoReleaseForTransit, MessageReceivedEvent.ReleaseForTransit)
+      val validMessages = Seq(
+        MessageReceivedEvent.GuaranteeNotValid,
+        MessageReceivedEvent.NoReleaseForTransit,
+        MessageReceivedEvent.ReleaseForTransit,
+        MessageReceivedEvent.DeclarationCancellationRequest
+      )
       val invalidMessages = MessageReceivedEvent.values.diff(validMessages)
       invalidMessages.foreach {
         m =>
