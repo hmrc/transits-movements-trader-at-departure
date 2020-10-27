@@ -75,7 +75,7 @@ class MessageTypeSpec extends SpecBase with ScalaCheckDrivenPropertyChecks with 
     "ReleaseForTransit" in {
       MessageType.values must contain(ReleaseForTransit)
       ReleaseForTransit.code mustEqual "IE029"
-      ReleaseForTransit.rootNode mustEqual "CC029A"
+      ReleaseForTransit.rootNode mustEqual "CC029B"
     }
 
     "DeclarationCancellationRequest" in {

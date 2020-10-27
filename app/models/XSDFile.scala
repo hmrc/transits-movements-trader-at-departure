@@ -24,7 +24,7 @@ object XSDFile {
   object DepartureRejectedXSD           extends XSDFile("/xsd/CC016A.xsd")
   object ControlDecisionNotificationXSD extends XSDFile("/xsd/CC060A.xsd")
   object NoReleaseForTransitXSD         extends XSDFile("/xsd/CC051A.xsd")
-  object ReleaseForTransitXSD           extends XSDFile("/xsd/CC029A.xsd")
+  object ReleaseForTransitXSD           extends XSDFile("/xsd/CC029B.xsd")
   object CancellationDecisionXSD        extends XSDFile("/xsd/CC009A.xsd")
   object WriteOffNotificationXSD        extends XSDFile("/xsd/CC045A.xsd")
   object GuaranteeNotValidXSD           extends XSDFile("/xsd/CC055A.xsd")
