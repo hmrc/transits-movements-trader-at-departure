@@ -32,7 +32,7 @@ object MessageType extends Enumerable.Implicits {
   case object MrnAllocated                   extends IeMetadata("IE028", "CC028A") with MessageType
   case object DeclarationRejected            extends IeMetadata("IE016", "CC016A") with MessageType
   case object ControlDecisionNotification    extends IeMetadata("IE060", "CC060A") with MessageType
-  case object NoReleaseForTransit            extends IeMetadata("IE051", "CC051A") with MessageType
+  case object NoReleaseForTransit            extends IeMetadata("IE051", "CC051B") with MessageType
   case object ReleaseForTransit              extends IeMetadata("IE029", "CC029B") with MessageType
   case object DeclarationCancellationRequest extends IeMetadata("IE014", "CC014A") with MessageType
   case object CancellationDecision           extends IeMetadata("IE009", "CC009A") with MessageType
