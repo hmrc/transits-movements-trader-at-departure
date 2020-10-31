@@ -21,6 +21,9 @@ import audit.AuditType._
 import cats.data.NonEmptyList
 import controllers.actions._
 import javax.inject.Inject
+import models.EisSubmissionResult.EisSubmissionRejected
+import models.EisSubmissionResult.ErrorInPayload
+import models.EisSubmissionResult.VirusFoundOrInvalidToken
 import models.MessageStatus.SubmissionSucceeded
 import models.MessageType.DepartureDeclaration
 import models._
@@ -75,6 +78,14 @@ class DeparturesController @Inject()(cc: ControllerComponents,
 
                   case SubmissionProcessingResult.SubmissionFailureExternal =>
                     BadGateway
+
+                  case SubmissionProcessingResult.SubmissionFailureRejected(submissionResult: EisSubmissionRejected) =>
+                    submissionResult match {
+                      case ErrorInPayload =>
+                        Status(submissionResult.httpStatus)(submissionResult.asString)
+                      case VirusFoundOrInvalidToken =>
+                        InternalServerError
+                    }
                 }
                 .recover {
                   case _ => {
@@ -104,6 +115,13 @@ class DeparturesController @Inject()(cc: ControllerComponents,
                       BadGateway
                     case SubmissionProcessingResult.SubmissionFailureInternal =>
                       InternalServerError
+                    case SubmissionProcessingResult.SubmissionFailureRejected(submissionResult: EisSubmissionRejected) =>
+                      submissionResult match {
+                        case ErrorInPayload =>
+                          Status(submissionResult.httpStatus)(submissionResult.asString)
+                        case VirusFoundOrInvalidToken =>
+                          InternalServerError
+                      }
                   }
                   .recover {
                     case _ => {

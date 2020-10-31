@@ -16,6 +16,8 @@
 
 package models
 
+import models.EisSubmissionResult.EisSubmissionRejected
+
 sealed trait SubmissionProcessingResult
 
 object SubmissionProcessingResult {
@@ -23,9 +25,10 @@ object SubmissionProcessingResult {
   case object SubmissionSuccess extends SubmissionProcessingResult
 
   //TODO: Include failure message for logging reasons?
-  sealed trait SubmissionFailure        extends SubmissionProcessingResult
-  case object SubmissionFailureInternal extends SubmissionFailure
-  case object SubmissionFailureExternal extends SubmissionFailure
+  sealed trait SubmissionFailure                                                extends SubmissionProcessingResult
+  case object SubmissionFailureInternal                                         extends SubmissionFailure
+  case object SubmissionFailureExternal                                         extends SubmissionFailure
+  case class SubmissionFailureRejected(submissionResult: EisSubmissionRejected) extends SubmissionFailure
 
   val values = Seq(
     SubmissionSuccess,
