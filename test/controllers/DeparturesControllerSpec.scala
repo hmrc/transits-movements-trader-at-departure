@@ -22,6 +22,7 @@ import java.time.LocalTime
 
 import audit.AuditService
 import audit.AuditType.DepartureDeclarationSubmitted
+import audit.AuditType.MesSenMES3Added
 import base.SpecBase
 import cats.data.NonEmptyList
 import controllers.actions.AuthenticateGetOptionalDepartureForWriteActionProvider
@@ -136,6 +137,7 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
           status(result) mustEqual ACCEPTED
           verify(mockSubmitMessageService, times(1)).submitDeparture(any())(any())
           verify(mockAuditService, times(1)).auditEvent(eqTo(DepartureDeclarationSubmitted), any())(any())
+          verify(mockAuditService, times(1)).auditEvent(eqTo(MesSenMES3Added), any())(any())
           header("Location", result).get must be(routes.DeparturesController.get(initializedDeparture.departureId).url)
         }
       }
@@ -309,6 +311,7 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
           status(result) mustEqual ACCEPTED
           verify(mockSubmitMessageService, times(1)).submitMessage(any(), any(), any(), any())(any())
           verify(mockAuditService, times(1)).auditEvent(eqTo(DepartureDeclarationSubmitted), any())(any())
+          verify(mockAuditService, times(1)).auditEvent(eqTo(MesSenMES3Added), any())(any())
           header("Location", result).get must be(routes.DeparturesController.get(failedToSubmitDeparture.departureId).url)
         }
       }
@@ -352,6 +355,7 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
           header("Location", result).value must be(routes.DeparturesController.get(expectedDeparture.departureId).url)
           verify(mockSubmitMessageService, times(1)).submitDeparture(any())(any())
           verify(mockAuditService, times(1)).auditEvent(eqTo(DepartureDeclarationSubmitted), any())(any())
+          verify(mockAuditService, times(1)).auditEvent(eqTo(MesSenMES3Added), any())(any())
         }
       }
 

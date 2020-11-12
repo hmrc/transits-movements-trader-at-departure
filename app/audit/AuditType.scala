@@ -26,6 +26,9 @@ object AuditType extends Enumerable.Implicits {
   case object DepartureDeclarationSubmitted         extends AuditType
   case object DepartureCancellationRequestSubmitted extends AuditType
 
+  //Transform
+  case object MesSenMES3Added extends AuditType
+
   // NCTS
   case object PositiveAcknowledgementReceived     extends AuditType
   case object MrnAllocatedReceived                extends AuditType
@@ -49,6 +52,7 @@ object AuditType extends Enumerable.Implicits {
       ReleaseForTransitReceived,
       CancellationDecisionReceived,
       WriteOffNotificationReceived,
-      GuaranteeNotValidReceived
+      GuaranteeNotValidReceived,
+      MesSenMES3Added
     )
 }
