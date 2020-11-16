@@ -22,7 +22,7 @@ case class MessagesSummary(departure: Departure,
                            declaration: MessageId,
                            declarationRejection: Option[MessageId] = None,
                            mrnAllocated: Option[MessageId] = None,
-                           guaranteeNotValidRejection: Option[MessageId] = None)
+                           guaranteeNotValid: Option[MessageId] = None)
 
 object MessagesSummary {
 
