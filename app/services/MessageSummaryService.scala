@@ -19,6 +19,7 @@ import cats.data.NonEmptyList
 import cats.data.Reader
 import models.MessageType.DeclarationRejected
 import models.MessageType.DepartureDeclaration
+import models.MessageType.GuaranteeNotValid
 import models.MessageType.MrnAllocated
 import models.MessagesSummary
 import models._
@@ -32,9 +33,10 @@ class MessageSummaryService {
       declaration          <- declarationMessage
       declarationRejection <- declarationRejectionMessage
       mrnAllocated         <- mrnAllocatedMessage
+      guaranteeNotValid    <- guaranteeNotValidRejectionMessage
       //TODO: Other messages need adding
     } yield {
-      MessagesSummary(departure, declaration._2, declarationRejection.map(_._2), mrnAllocated.map(_._2))
+      MessagesSummary(departure, declaration._2, declarationRejection.map(_._2), mrnAllocated.map(_._2), guaranteeNotValid.map(_._2))
     }).run(departure)
 
   private[services] val declarationMessage: Reader[Departure, (Message, MessageId)] =
@@ -89,6 +91,19 @@ class MessageSummaryService {
 
         if (rejectionNotificationCount > 0 && departureDeclarationCount(departure.messages) == rejectionNotificationCount)
           Some(rejectionNotifications.maxBy(_._1.messageCorrelationId))
+        else
+          None
+    }
+
+  private[services] val guaranteeNotValidRejectionMessage: Reader[Departure, Option[(Message, MessageId)]] =
+    Reader[Departure, Option[(Message, MessageId)]] {
+      departure =>
+        val guaranteeNotValidNotifications = getLatestMessageWithoutStatus(departure.messagesWithId)(GuaranteeNotValid)
+
+        val guaranteeNotValidNotificationCount = guaranteeNotValidNotifications.length
+
+        if (guaranteeNotValidNotificationCount > 0 && departureDeclarationCount(departure.messages) == guaranteeNotValidNotificationCount)
+          Some(guaranteeNotValidNotifications.maxBy(_._1.messageCorrelationId))
         else
           None
     }
