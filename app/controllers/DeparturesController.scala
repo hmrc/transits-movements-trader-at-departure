@@ -66,8 +66,8 @@ class DeparturesController @Inject()(cc: ControllerComponents,
                 .submitMessage(departure.departureId, departure.nextMessageCorrelationId, message, DepartureStatus.DepartureSubmitted)
                 .map {
                   case SubmissionProcessingResult.SubmissionSuccess =>
-                    auditService.auditEvent(DepartureDeclarationSubmitted, message.message)
-                    auditService.auditEvent(MesSenMES3Added, message.message)
+                    auditService.auditEvent(DepartureDeclarationSubmitted, message.message, request.getChannel)
+                    auditService.auditEvent(MesSenMES3Added, message.message, request.getChannel)
                     Accepted
                       .withHeaders("Location" -> routes.DeparturesController.get(departure.departureId).url)
 
@@ -98,8 +98,8 @@ class DeparturesController @Inject()(cc: ControllerComponents,
                   .submitDeparture(departure)
                   .map {
                     case SubmissionProcessingResult.SubmissionSuccess =>
-                      auditService.auditEvent(DepartureDeclarationSubmitted, request.body)
-                      auditService.auditEvent(MesSenMES3Added, request.body)
+                      auditService.auditEvent(DepartureDeclarationSubmitted, request.body, request.getChannel)
+                      auditService.auditEvent(MesSenMES3Added, request.body, request.getChannel)
                       Accepted
                         .withHeaders("Location" -> routes.DeparturesController.get(departure.departureId).url)
                     case SubmissionProcessingResult.SubmissionFailureExternal =>

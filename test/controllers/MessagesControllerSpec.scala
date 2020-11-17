@@ -162,7 +162,7 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
                                                                  eqTo(1),
                                                                  any(),
                                                                  eqTo(DepartureStatus.DeclarationCancellationRequest))(any())
-        verify(mockAuditService, times(1)).auditEvent(eqTo(DepartureCancellationRequestSubmitted), any())(any())
+        verify(mockAuditService, times(1)).auditEvent(eqTo(DepartureCancellationRequestSubmitted), any(), any())(any())
       }
     }
 
