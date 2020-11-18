@@ -56,11 +56,7 @@ class MessageConnector @Inject()(config: AppConfig, http: HttpClient)(implicit e
     implicit headerCarrier: HeaderCarrier): Seq[(String, String)] =
     Seq(
       "X-Forwarded-Host" -> "mdtp",
-      "X-Correlation-ID" -> {
-        headerCarrier.sessionId
-          .map(_.value)
-          .getOrElse(UUID.randomUUID().toString)
-      },
+      "X-Correlation-ID" -> UUID.randomUUID().toString,
       "Date"             -> Format.dateFormattedForHeader(dateTime),
       "Content-Type"     -> "application/xml",
       "Accept"           -> "application/xml",
