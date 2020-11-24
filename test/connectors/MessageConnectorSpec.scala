@@ -79,7 +79,7 @@ class MessageConnectorSpec
 
         server.stubFor(
           post(urlEqualTo(postUrl))
-            .withHeader("X-Forwarded-Host", equalTo("mdtp"))
+            .withHeader("X-Forwarded-Host", equalTo("MDTP"))
             .withHeader("X-Correlation-ID", matching("""\b[0-9a-f]{8}\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-\b[0-9a-f]{12}\b"""))
             .withHeader("Content-Type", equalTo("application/xml"))
             .withHeader("Accept", equalTo("application/xml"))
@@ -109,7 +109,7 @@ class MessageConnectorSpec
 
         server.stubFor(
           post(urlEqualTo(postUrl))
-            .withHeader("X-Forwarded-Host", equalTo("mdtp"))
+            .withHeader("X-Forwarded-Host", equalTo("MDTP"))
             .withHeader("X-Correlation-ID", matching("""\b[0-9a-f]{8}\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-\b[0-9a-f]{12}\b"""))
             .withHeader("Content-Type", equalTo("application/xml"))
             .withHeader("Accept", equalTo("application/xml"))

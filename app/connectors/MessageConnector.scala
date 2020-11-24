@@ -55,7 +55,7 @@ class MessageConnector @Inject()(config: AppConfig, http: HttpClient)(implicit e
   private def addHeaders(messageType: MessageType, dateTime: OffsetDateTime, messageSender: MessageSender)(
     implicit headerCarrier: HeaderCarrier): Seq[(String, String)] =
     Seq(
-      "X-Forwarded-Host" -> "mdtp",
+      "X-Forwarded-Host" -> "MDTP",
       "X-Correlation-ID" -> UUID.randomUUID().toString,
       "Date"             -> Format.dateFormattedForHeader(dateTime),
       "Content-Type"     -> "application/xml",
