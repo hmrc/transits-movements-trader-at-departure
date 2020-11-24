@@ -14,17 +14,18 @@
  * limitations under the License.
  */
 
-package models.request
+package models
 
-import models.ChannelType
-import models.ChannelType.api
-import models.ChannelType.web
-import play.api.mvc.WrappedRequest
+sealed trait ChannelType
 
-trait ChannelOptionalRequest[A] extends WrappedRequest[A] {
+object ChannelType extends Enumerable.Implicits {
+  case object web  extends ChannelType
+  case object api  extends ChannelType
+  case object ncts extends ChannelType
 
-  def getChannel: ChannelType = headers.get("channel") match {
-    case Some(channel) if channel.equals("api") => api
-    case _                                      => web
-  }
+  val values: Seq[ChannelType] = Seq(web, api)
+
+  implicit val enumerable: Enumerable[ChannelType] =
+    Enumerable(values.map(v => v.toString -> v): _*)
+
 }
