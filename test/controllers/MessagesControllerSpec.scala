@@ -116,7 +116,6 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
       departureId,
       "eori",
       Some(mrn),
-      "ref",
       DepartureStatus.MrnAllocated,
       localDateTime,
       localDateTime,

@@ -91,7 +91,6 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
     departureId = newDepartureId,
     eoriNumber = "eori",
     movementReferenceNumber = None,
-    referenceNumber = "referenceNumber",
     status = DepartureStatus.Initialized,
     created = localDateTime,
     updated = localDateTime,
