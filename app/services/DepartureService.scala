@@ -47,16 +47,14 @@ class DepartureService @Inject()(departureIdRepository: DepartureIdRepository)(i
       .map {
         departureId =>
           (for {
-            _         <- correctRootNodeR(MessageType.DepartureDeclaration)
-            dateTime  <- dateTimeOfPrepR
-            reference <- referenceR
-            message   <- makeMessageWithStatus(departureId, 1, MessageType.DepartureDeclaration)
+            _        <- correctRootNodeR(MessageType.DepartureDeclaration)
+            dateTime <- dateTimeOfPrepR
+            message  <- makeMessageWithStatus(departureId, 1, MessageType.DepartureDeclaration)
           } yield {
             Departure(
               departureId,
               eori,
               None,
-              reference,
               Initialized,
               dateTime,
               dateTime,

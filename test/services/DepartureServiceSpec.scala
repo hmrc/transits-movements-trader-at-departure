@@ -78,7 +78,6 @@ class DepartureServiceSpec extends SpecBase with IntegrationPatience with Stream
       val expectedDeparture = Departure(
         departureId = id,
         movementReferenceNumber = None,
-        referenceNumber = ref,
         eoriNumber = eori,
         status = DepartureStatus.Initialized,
         created = dateTime,

@@ -28,7 +28,6 @@ class Module extends AbstractModule {
     bind(classOf[AuthenticateActionProvider]).to(classOf[AuthenticateActionProviderImpl]).asEagerSingleton()
     bind(classOf[DepartureRepository]).asEagerSingleton()
     bind(classOf[DepartureIdRepository]).asEagerSingleton()
-    bind(classOf[AuthenticateGetOptionalDepartureForWriteActionProvider]).to(classOf[AuthenticateGetOptionalDepartureForWriteActionProviderImpl])
     bind(classOf[AuthenticatedGetDepartureForReadActionProvider]).to(classOf[AuthenticatedGetDepartureForReadActionProviderImpl])
   }
 

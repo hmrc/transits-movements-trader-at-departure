@@ -42,83 +42,45 @@ import scala.xml.NodeSeq
 class DeparturesController @Inject()(cc: ControllerComponents,
                                      departureRepository: DepartureRepository,
                                      authenticate: AuthenticateActionProvider,
-                                     authenticatedOptionalDeparture: AuthenticateGetOptionalDepartureForWriteActionProvider,
                                      authenticatedDepartureForRead: AuthenticatedGetDepartureForReadActionProvider,
                                      departureService: DepartureService,
                                      auditService: AuditService,
                                      submitMessageService: SubmitMessageService)(implicit ec: ExecutionContext)
     extends BackendController(cc) {
 
-  private val allMessageUnsent: NonEmptyList[Message] => Boolean =
-    _.map(_.optStatus).forall {
-      case Some(messageStatus) if messageStatus != SubmissionSucceeded => true
-      case _                                                           => false
-    }
-
-  def post: Action[NodeSeq] = authenticatedOptionalDeparture().async(parse.xml) {
+  def post: Action[NodeSeq] = authenticate().async(parse.xml) {
     implicit request =>
-      request.departure match {
-        case Some(departure) if allMessageUnsent(departure.messages) =>
-          departureService
-            .makeMessageWithStatus(departure.departureId, departure.nextMessageCorrelationId, DepartureDeclaration)(request.body) match {
-            case Right(message) =>
-              submitMessageService
-                .submitMessage(departure.departureId, departure.nextMessageCorrelationId, message, DepartureStatus.DepartureSubmitted)
-                .map {
-                  case SubmissionProcessingResult.SubmissionSuccess =>
-                    auditService.auditEvent(DepartureDeclarationSubmitted, message.message, request.getChannel)
-                    auditService.auditEvent(MesSenMES3Added, message.message, request.getChannel)
-                    Accepted
-                      .withHeaders("Location" -> routes.DeparturesController.get(departure.departureId).url)
-
-                  case SubmissionProcessingResult.SubmissionFailureInternal =>
-                    InternalServerError
-
-                  case SubmissionProcessingResult.SubmissionFailureExternal =>
-                    BadGateway
-                }
-                .recover {
-                  case _ => {
-                    InternalServerError
-                  }
-                }
-            case Left(error) =>
-              Logger.warn(error.message)
-              Future.successful(BadRequest(error.message))
-          }
-        case _ =>
-          departureService
-            .createDeparture(request.eoriNumber, request.body)
-            .flatMap {
-              case Left(error) =>
-                Logger.error(error.message)
-                Future.successful(BadRequest(error.message))
-              case Right(departure) =>
-                submitMessageService
-                  .submitDeparture(departure)
-                  .map {
-                    case SubmissionProcessingResult.SubmissionSuccess =>
-                      auditService.auditEvent(DepartureDeclarationSubmitted, request.body, request.getChannel)
-                      auditService.auditEvent(MesSenMES3Added, request.body, request.getChannel)
-                      Accepted
-                        .withHeaders("Location" -> routes.DeparturesController.get(departure.departureId).url)
-                    case SubmissionProcessingResult.SubmissionFailureExternal =>
-                      BadGateway
-                    case SubmissionProcessingResult.SubmissionFailureInternal =>
-                      InternalServerError
-                  }
-                  .recover {
-                    case _ => {
-                      InternalServerError
-                    }
-                  }
-            }
-            .recover {
-              case _ => {
-                InternalServerError
+      departureService
+        .createDeparture(request.eoriNumber, request.body)
+        .flatMap {
+          case Left(error) =>
+            Logger.error(error.message)
+            Future.successful(BadRequest(error.message))
+          case Right(departure) =>
+            submitMessageService
+              .submitDeparture(departure)
+              .map {
+                case SubmissionProcessingResult.SubmissionSuccess =>
+                  auditService.auditEvent(DepartureDeclarationSubmitted, departure.messages.head.message, request.getChannel)
+                  auditService.auditEvent(MesSenMES3Added, departure.messages.head.message, request.getChannel)
+                  Accepted
+                    .withHeaders("Location" -> routes.DeparturesController.get(departure.departureId).url)
+                case SubmissionProcessingResult.SubmissionFailureExternal =>
+                  BadGateway
+                case SubmissionProcessingResult.SubmissionFailureInternal =>
+                  InternalServerError
               }
-            }
-      }
+              .recover {
+                case _ => {
+                  InternalServerError
+                }
+              }
+        }
+        .recover {
+          case _ => {
+            InternalServerError
+          }
+        }
   }
 
   def get(departureId: DepartureId): Action[AnyContent] = authenticatedDepartureForRead(departureId) {
