@@ -16,11 +16,12 @@
 
 package audit
 
+import models.ChannelType
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
 import play.api.libs.json.OWrites
 
-case class AuditDetails(channel: String, json: JsObject, xml: String)
+case class AuditDetails(channel: ChannelType, json: JsObject, xml: String)
 
 object AuditDetails {
   implicit val writes: OWrites[AuditDetails] = Json.writes[AuditDetails]
