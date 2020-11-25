@@ -23,7 +23,7 @@ object ChannelType extends Enumerable.Implicits {
   case object api  extends ChannelType
   case object ncts extends ChannelType
 
-  val values: Seq[ChannelType] = Seq(web, api)
+  val values: Seq[ChannelType] = Seq(web, api, ncts)
 
   implicit val enumerable: Enumerable[ChannelType] =
     Enumerable(values.map(v => v.toString -> v): _*)

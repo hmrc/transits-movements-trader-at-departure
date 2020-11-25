@@ -24,7 +24,7 @@ import play.api.mvc.WrappedRequest
 trait ChannelOptionalRequest[A] extends WrappedRequest[A] {
 
   def getChannel: ChannelType = headers.get("channel") match {
-    case Some(channel) if channel.equals("api") => api
+    case Some(channel) if channel.equals(api.toString) => api
     case _                                      => web
   }
 }
