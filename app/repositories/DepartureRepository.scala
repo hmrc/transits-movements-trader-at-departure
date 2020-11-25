@@ -180,18 +180,6 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfi
     }
   }
 
-  def get(eoriNumber: String, reference: String): Future[Option[Departure]] = {
-    val selector = Json.obj(
-      "referenceNumber" -> reference,
-      "eoriNumber"      -> eoriNumber
-    )
-
-    collection.flatMap {
-      _.find(selector, None)
-        .one[Departure]
-    }
-  }
-
   def addResponseMessage(departureId: DepartureId, message: Message, status: DepartureStatus): Future[Try[Unit]] = {
     val selector = Json.obj(
       "_id" -> departureId
