@@ -22,13 +22,14 @@ case class MessagesSummary(departure: Departure,
                            declaration: MessageId,
                            declarationRejection: Option[MessageId] = None,
                            mrnAllocated: Option[MessageId] = None,
-                           guaranteeNotValid: Option[MessageId] = None)
+                           guaranteeNotValid: Option[MessageId] = None,
+                           cancellationDecision: Option[MessageId] = None)
 
 object MessagesSummary {
 
   implicit val writes: OWrites[MessagesSummary] =
     OWrites[MessagesSummary] {
-      case MessagesSummary(departure, declaration, declarationRejection, mrnAllocated, guaranteeNotValidId) =>
+      case MessagesSummary(departure, declaration, declarationRejection, mrnAllocated, guaranteeNotValidId, cancellationDecision) =>
         Json
           .obj(
             "departureId" -> departure.departureId,
@@ -36,7 +37,8 @@ object MessagesSummary {
               MessageType.DepartureDeclaration.code -> controllers.routes.MessagesController.getMessage(departure.departureId, declaration).url,
               MessageType.DeclarationRejected.code  -> declarationRejection.map(controllers.routes.MessagesController.getMessage(departure.departureId, _).url),
               MessageType.MrnAllocated.code         -> mrnAllocated.map(controllers.routes.MessagesController.getMessage(departure.departureId, _).url),
-              MessageType.GuaranteeNotValid.code    -> guaranteeNotValidId.map(controllers.routes.MessagesController.getMessage(departure.departureId, _).url)
+              MessageType.GuaranteeNotValid.code    -> guaranteeNotValidId.map(controllers.routes.MessagesController.getMessage(departure.departureId, _).url),
+              MessageType.CancellationDecision.code -> cancellationDecision.map(controllers.routes.MessagesController.getMessage(departure.departureId, _).url)
             )
           )
           .filterNulls

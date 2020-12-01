@@ -102,5 +102,34 @@ class MessagesSummarySpec extends SpecBase with ModelGenerators with ScalaCheckD
       )
 
     }
+
+    "return cancellation decision link" in {
+
+      val messageId           = 1
+      val rejectionId         = 2
+      val mrnAllocated        = 3
+      val guaranteeNotValidId = 4
+      val cancellationId      = 5
+
+      Json.toJson(
+        MessagesSummary(departure,
+                        MessageId.fromIndex(0),
+                        Some(MessageId.fromIndex(1)),
+                        Some(MessageId.fromIndex(2)),
+                        Some(MessageId.fromIndex(3)),
+                        Some(MessageId.fromIndex(4)))
+      ) mustBe Json.obj(
+        "departureId" -> departure.departureId,
+        "messages" ->
+          Json.obj(
+            "IE015" -> s"/transits-movements-trader-at-departure/movements/departures/${departure.departureId.index}/messages/$messageId",
+            "IE016" -> s"/transits-movements-trader-at-departure/movements/departures/${departure.departureId.index}/messages/$rejectionId",
+            "IE028" -> s"/transits-movements-trader-at-departure/movements/departures/${departure.departureId.index}/messages/$mrnAllocated",
+            "IE055" -> s"/transits-movements-trader-at-departure/movements/departures/${departure.departureId.index}/messages/$guaranteeNotValidId",
+            "IE009" -> s"/transits-movements-trader-at-departure/movements/departures/${departure.departureId.index}/messages/$cancellationId"
+          )
+      )
+
+    }
   }
 }
