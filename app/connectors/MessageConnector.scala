@@ -17,7 +17,6 @@
 package connectors
 
 import java.time.OffsetDateTime
-import java.util.UUID
 
 import com.google.inject.Inject
 import config.AppConfig
@@ -25,7 +24,6 @@ import models._
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.HttpReads
 import uk.gov.hmrc.http.HttpResponse
-import uk.gov.hmrc.http.logging.Authorization
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import utils.Format
 
@@ -55,8 +53,6 @@ class MessageConnector @Inject()(config: AppConfig, http: HttpClient)(implicit e
   private def addHeaders(messageType: MessageType, dateTime: OffsetDateTime, messageSender: MessageSender)(
     implicit headerCarrier: HeaderCarrier): Seq[(String, String)] =
     Seq(
-      "X-Forwarded-Host" -> "mdtp",
-      "X-Correlation-ID" -> UUID.randomUUID().toString,
       "Date"             -> Format.dateFormattedForHeader(dateTime),
       "Content-Type"     -> "application/xml",
       "Accept"           -> "application/xml",
