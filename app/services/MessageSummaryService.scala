@@ -17,6 +17,7 @@
 package services
 import cats.data.NonEmptyList
 import cats.data.Reader
+import models.MessageType.CancellationDecision
 import models.MessageType.DeclarationRejected
 import models.MessageType.DepartureDeclaration
 import models.MessageType.GuaranteeNotValid
@@ -34,9 +35,15 @@ class MessageSummaryService {
       declarationRejection <- declarationRejectionMessage
       mrnAllocated         <- mrnAllocatedMessage
       guaranteeNotValid    <- guaranteeNotValidRejectionMessage
+      cancellationDecision <- cancellationDecisionMessage
       //TODO: Other messages need adding
     } yield {
-      MessagesSummary(departure, declaration._2, declarationRejection.map(_._2), mrnAllocated.map(_._2), guaranteeNotValid.map(_._2))
+      MessagesSummary(departure,
+                      declaration._2,
+                      declarationRejection.map(_._2),
+                      mrnAllocated.map(_._2),
+                      guaranteeNotValid.map(_._2),
+                      cancellationDecision.map(_._2))
     }).run(departure)
 
   private[services] val declarationMessage: Reader[Departure, (Message, MessageId)] =
@@ -91,6 +98,19 @@ class MessageSummaryService {
 
         if (rejectionNotificationCount > 0 && departureDeclarationCount(departure.messages) == rejectionNotificationCount)
           Some(rejectionNotifications.maxBy(_._1.messageCorrelationId))
+        else
+          None
+    }
+
+  private[services] val cancellationDecisionMessage: Reader[Departure, Option[(Message, MessageId)]] =
+    Reader[Departure, Option[(Message, MessageId)]] {
+      departure =>
+        val cancellationDecisionNotifications = getLatestMessageWithoutStatus(departure.messagesWithId)(CancellationDecision)
+
+        val cancellationDecisionNotificationCount = cancellationDecisionNotifications.length
+
+        if (cancellationDecisionNotificationCount > 0 && departureDeclarationCount(departure.messages) > 0)
+          Some(cancellationDecisionNotifications.maxBy(_._1.messageCorrelationId))
         else
           None
     }
