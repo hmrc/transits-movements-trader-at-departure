@@ -276,13 +276,12 @@ class MessageSummaryServiceSpec extends SpecBase with ModelGenerators with Scala
   "cancellationDecisionMessage" - {
 
     "must return" - {
-      "None when there are none in the movement" in {
+      "None when there are no IE015 in the movement" in {
         forAll(ie009Gen) {
           ie009 =>
             forAll(createMovement(NonEmptyList.one(ie009))) {
               departure =>
                 service.cancellationDecisionMessage(departure) must not be defined
-
             }
         }
       }
@@ -293,34 +292,21 @@ class MessageSummaryServiceSpec extends SpecBase with ModelGenerators with Scala
             forAll(createMovement(NonEmptyList.of(ie015, ie009))) {
               departure =>
                 val (message, messageId) = service.cancellationDecisionMessage(departure).value
-
                 message mustEqual ie009
                 messageId mustEqual MessageId.fromMessageIdValue(2).value
             }
         }
       }
 
-      "None when there has been a cancellation decision message and correction" in {
-        forAll(ie015Gen.submitted.msgCorrId(1), ie009Gen.msgCorrId(1), ie015Gen.msgCorrId(2)) {
-          case (ie015Old, ie009, ie015) =>
-            val messages = NonEmptyList.of(ie015Old, ie009, ie015)
-
-            forAll(createMovement(messages)) {
-              departure =>
-                service.cancellationDecisionMessage(departure) must not be defined
-            }
-        }
-      }
-
-      "IE015 when all IE009 have been rejected" in {
-        forAll(ie015Gen.submitted.msgCorrId(1), ie009Gen.msgCorrId(1), ie015Gen.msgCorrId(2), ie009Gen.msgCorrId(2)) {
-          case (ie015Old, ie009Old, ie015, ie009) =>
-            forAll(createMovement(NonEmptyList.of(ie015Old, ie009Old, ie015, ie009))) {
+      "Get the latest IE009 when there are multiples" in {
+        forAll(ie015Gen.submitted.msgCorrId(1), ie009Gen.msgCorrId(1), ie009Gen.msgCorrId(2)) {
+          case (ie015Old, ie009Old, ie009) =>
+            forAll(createMovement(NonEmptyList.of(ie015Old, ie009Old, ie009))) {
               departure =>
                 val (message, messageId) = service.cancellationDecisionMessage(departure).value
 
                 message mustEqual ie009
-                messageId mustEqual MessageId.fromMessageIdValue(4).value
+                messageId mustEqual MessageId.fromMessageIdValue(3).value
             }
         }
       }

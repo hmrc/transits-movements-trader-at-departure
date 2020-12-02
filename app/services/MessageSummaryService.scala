@@ -109,7 +109,7 @@ class MessageSummaryService {
 
         val cancellationDecisionNotificationCount = cancellationDecisionNotifications.length
 
-        if (cancellationDecisionNotificationCount > 0 && departureDeclarationCount(departure.messages) == cancellationDecisionNotificationCount)
+        if (cancellationDecisionNotificationCount > 0 && departureDeclarationCount(departure.messages) > 0)
           Some(cancellationDecisionNotifications.maxBy(_._1.messageCorrelationId))
         else
           None
