@@ -74,6 +74,13 @@ object XmlMessageParser {
       time <- timeOfPrepR
     } yield LocalDateTime.of(date, time)
 
+  val referenceR: ReaderT[ParseHandler, NodeSeq, String] =
+    ReaderT[ParseHandler, NodeSeq, String](xml =>
+      (xml \ "HEAHEA" \ "RefNumHEA4").text match {
+        case refString if !refString.isEmpty => Right(refString)
+        case _                               => Left(EmptyLocalReferenceNumber("The element 'RefNumHEA4' must contain a value."))
+    })
+
   val mrnR: ReaderT[ParseHandler, NodeSeq, MovementReferenceNumber] =
     ReaderT[ParseHandler, NodeSeq, MovementReferenceNumber](xml =>
       (xml \ "HEAHEA" \ "DocNumHEA5").text match {

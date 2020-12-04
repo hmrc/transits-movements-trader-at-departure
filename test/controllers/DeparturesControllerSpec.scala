@@ -95,7 +95,8 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
     created = localDateTime,
     updated = localDateTime,
     nextMessageCorrelationId = message.messageCorrelationId + 1,
-    messages = NonEmptyList.one(message)
+    messages = NonEmptyList.one(message),
+    referenceNumber = "referenceNumber",
   )
 
   "/POST" - {

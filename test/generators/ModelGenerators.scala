@@ -89,11 +89,12 @@ trait ModelGenerators extends BaseGenerators with JavaTimeGenerators {
         id       <- arbitrary[DepartureId]
         eN       <- arbitrary[String]
         mrn      <- arbitrary[MovementReferenceNumber]
+        rN       <- arbitrary[String]
         status   <- arbitrary[DepartureStatus]
         created  <- arbitrary[LocalDateTime]
         updated  <- arbitrary[LocalDateTime]
         messages <- nonEmptyListOfMaxLength[MessageWithStatus](2)
-      } yield models.Departure(id, eN, Some(mrn), status, created, updated, messages.length + 1, messages)
+      } yield models.Departure(id, eN, Some(mrn), rN, status, created, updated, messages.length + 1, messages)
     }
 
   implicit lazy val arbitraryFailure: Arbitrary[SubmissionFailure] =

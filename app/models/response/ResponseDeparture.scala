@@ -30,6 +30,7 @@ case class ResponseDeparture(departureId: DepartureId,
                              location: String,
                              messagesLocation: String,
                              movementReferenceNumber: Option[MovementReferenceNumber],
+                             referenceNumber: String,
                              status: DepartureStatus,
                              created: LocalDateTime,
                              updated: LocalDateTime)
@@ -42,6 +43,7 @@ object ResponseDeparture {
       routes.DeparturesController.get(departure.departureId).url,
       routes.MessagesController.getMessages(departure.departureId).url,
       departure.movementReferenceNumber,
+      departure.referenceNumber,
       departure.status,
       departure.created,
       departure.updated

@@ -26,6 +26,7 @@ import play.api.libs.json._
 case class Departure(departureId: DepartureId,
                      eoriNumber: String,
                      movementReferenceNumber: Option[MovementReferenceNumber],
+                     referenceNumber: String,
                      status: DepartureStatus,
                      created: LocalDateTime,
                      updated: LocalDateTime,
@@ -53,6 +54,7 @@ object Departure {
       (__ \ "_id").read[DepartureId] and
         (__ \ "eoriNumber").read[String] and
         (__ \ "movementReferenceNumber").read[Option[MovementReferenceNumber]] and
+        (__ \ "referenceNumber").read[String] and
         (__ \ "status").read[DepartureStatus] and
         (__ \ "created").read(MongoDateTimeFormats.localDateTimeRead) and
         (__ \ "updated").read(MongoDateTimeFormats.localDateTimeRead) and
@@ -65,6 +67,7 @@ object Departure {
       (__ \ "_id").write[DepartureId] and
         (__ \ "eoriNumber").write[String] and
         (__ \ "movementReferenceNumber").write[Option[MovementReferenceNumber]] and
+        (__ \ "referenceNumber").write[String] and
         (__ \ "status").write[DepartureStatus] and
         (__ \ "created").write(write) and
         (__ \ "updated").write(write) and
