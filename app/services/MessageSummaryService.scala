@@ -18,6 +18,7 @@ package services
 import cats.data.NonEmptyList
 import cats.data.Reader
 import models.MessageType.CancellationDecision
+import models.MessageType.DeclarationCancellationRequest
 import models.MessageType.DeclarationRejected
 import models.MessageType.DepartureDeclaration
 import models.MessageType.GuaranteeNotValid
@@ -31,11 +32,12 @@ class MessageSummaryService {
 
   def messagesSummary(departure: Departure): MessagesSummary =
     (for {
-      declaration          <- declarationMessage
-      declarationRejection <- declarationRejectionMessage
-      mrnAllocated         <- mrnAllocatedMessage
-      guaranteeNotValid    <- guaranteeNotValidRejectionMessage
-      cancellationDecision <- cancellationDecisionMessage
+      declaration                    <- declarationMessage
+      declarationRejection           <- declarationRejectionMessage
+      mrnAllocated                   <- mrnAllocatedMessage
+      guaranteeNotValid              <- guaranteeNotValidRejectionMessage
+      cancellationDecision           <- cancellationDecisionMessage
+      declarationCancellationRequest <- declarationCancellationRequestMessage
       //TODO: Other messages need adding
     } yield {
       MessagesSummary(departure,
@@ -111,6 +113,19 @@ class MessageSummaryService {
 
         if (cancellationDecisionNotificationCount > 0 && departureDeclarationCount(departure.messages) > 0)
           Some(cancellationDecisionNotifications.maxBy(_._1.messageCorrelationId))
+        else
+          None
+    }
+
+  private[services] val declarationCancellationRequestMessage: Reader[Departure, Option[(Message, MessageId)]] =
+    Reader[Departure, Option[(Message, MessageId)]] {
+      departure =>
+        val declarationCancellationRequestNotifications = getLatestMessageWithoutStatus(departure.messagesWithId)(DeclarationCancellationRequest)
+
+        val declarationCancellationRequestNotificationCount = declarationCancellationRequestNotifications.length
+
+        if (declarationCancellationRequestNotificationCount > 0 && departureDeclarationCount(departure.messages) > 0)
+          Some(declarationCancellationRequestNotifications.maxBy(_._1.messageCorrelationId))
         else
           None
     }
