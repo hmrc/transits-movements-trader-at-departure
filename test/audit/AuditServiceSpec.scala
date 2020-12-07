@@ -53,9 +53,8 @@ class AuditServiceSpec extends SpecBase with ScalaCheckPropertyChecks with Befor
   "AuditService" - {
     "must audit notification message event" in {
 
-      val requestXml = <xml>test</xml>
-
-      val auditDetails = Json.toJson(AuditDetails(api, Json.obj("xml" -> "test"), requestXml.toString()))
+      val requestXml         = <xml>test</xml>
+      val requestedXmlToJson = Json.parse("{\"channel\":\"api\",\"xml\":\"test\"}")
 
       forAll(Gen.oneOf(AuditType.values)) {
         auditType =>
@@ -66,7 +65,7 @@ class AuditServiceSpec extends SpecBase with ScalaCheckPropertyChecks with Befor
             running(application) {
               val auditService = application.injector.instanceOf[AuditService]
               auditService.auditEvent(auditType, requestXml, api)
-              verify(mockAuditConnector, times(1)).sendExplicitAudit(eqTo(auditType.toString()), eqTo(auditDetails))(any(), any(), any())
+              verify(mockAuditConnector, times(1)).sendExplicitAudit(eqTo(auditType.toString()), eqTo(requestedXmlToJson))(any(), any(), any())
               reset(mockAuditConnector)
             }
           }
