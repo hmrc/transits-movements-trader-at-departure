@@ -281,7 +281,7 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
         .build()
 
       val departure = Arbitrary.arbitrary[Departure].sample.value.copy(eoriNumber = "eori")
-      when(mockDepartureRepository.get(any())).thenReturn(Future.successful(Some(departure)))
+      when(mockDepartureRepository.get(any(), any())).thenReturn(Future.successful(Some(departure)))
 
       running(application) {
         val request = FakeRequest(GET, routes.DeparturesController.get(DepartureId(1)).url)
@@ -300,7 +300,7 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
         .overrides(bind[DepartureRepository].toInstance(mockDepartureRepository))
         .build()
 
-      when(mockDepartureRepository.get(any())).thenReturn(Future.successful(None))
+      when(mockDepartureRepository.get(any(), any())).thenReturn(Future.successful(None))
 
       running(application) {
         val request = FakeRequest(GET, routes.DeparturesController.get(DepartureId(1)).url)
@@ -319,7 +319,7 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
         .build()
 
       val departure = Arbitrary.arbitrary[Departure].sample.value.copy(eoriNumber = "eori2")
-      when(mockDepartureRepository.get(any())).thenReturn(Future.successful(Some(departure)))
+      when(mockDepartureRepository.get(any(), any())).thenReturn(Future.successful(Some(departure)))
 
       running(application) {
         val request = FakeRequest(GET, routes.DeparturesController.get(DepartureId(1)).url)
@@ -333,7 +333,7 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
     "must return an INTERNAL_SERVER_ERROR when we cannot retrieve the departure" in {
       val mockDepartureRepository = mock[DepartureRepository]
 
-      when(mockDepartureRepository.get(any()))
+      when(mockDepartureRepository.get(any(), any()))
         .thenReturn(Future.failed(new Exception))
 
       val application = baseApplicationBuilder
@@ -355,7 +355,7 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
       val departure         = Arbitrary.arbitrary[Departure].sample.value.copy(eoriNumber = "eori")
       val responseDeparture = ResponseDeparture.build(departure)
 
-      when(mockDepartureRepository.fetchAllDepartures(any())).thenReturn(Future.successful(Seq(departure)))
+      when(mockDepartureRepository.fetchAllDepartures(any(), any())).thenReturn(Future.successful(Seq(departure)))
 
       val application = baseApplicationBuilder
         .overrides(bind[DepartureRepository].toInstance(mockDepartureRepository))
@@ -373,7 +373,7 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
     "must return empty sequence when there are no departures in database" in {
       val mockDepartureRepository = mock[DepartureRepository]
 
-      when(mockDepartureRepository.fetchAllDepartures(any())).thenReturn(Future.successful(Seq.empty))
+      when(mockDepartureRepository.fetchAllDepartures(any(), any())).thenReturn(Future.successful(Seq.empty))
 
       val application = baseApplicationBuilder
         .overrides(bind[DepartureRepository].toInstance(mockDepartureRepository))
@@ -390,7 +390,7 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
     "must return INTERNAL_SERVER_ERROR when we cannot retrieve departures" in {
       val mockDepartureRepository = mock[DepartureRepository]
 
-      when(mockDepartureRepository.fetchAllDepartures(any())).thenReturn(Future.failed(new Exception))
+      when(mockDepartureRepository.fetchAllDepartures(any(), any())).thenReturn(Future.failed(new Exception))
 
       val application = baseApplicationBuilder
         .overrides(bind[DepartureRepository].toInstance(mockDepartureRepository))

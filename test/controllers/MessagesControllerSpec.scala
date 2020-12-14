@@ -139,7 +139,7 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
 
       when(mockLockRepository.lock(any())).thenReturn(Future.successful(true))
       when(mockLockRepository.unlock(any())).thenReturn(Future.successful(()))
-      when(mockDepartureRepository.get(any())).thenReturn(Future.successful(Some(departure)))
+      when(mockDepartureRepository.get(any(), any())).thenReturn(Future.successful(Some(departure)))
 
       when(mockSubmitMessageService.submitMessage(any(), any(), any(), eqTo(DepartureStatus.DeclarationCancellationRequest))(any()))
         .thenReturn(Future.successful(SubmissionProcessingResult.SubmissionSuccess))
@@ -175,7 +175,7 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
 
       when(mockLockRepository.lock(any())).thenReturn(Future.successful(true))
       when(mockLockRepository.unlock(any())).thenReturn(Future.successful(()))
-      when(mockDepartureRepository.get(any())).thenReturn(Future.successful(None))
+      when(mockDepartureRepository.get(any(), any())).thenReturn(Future.successful(None))
 
       val application = baseApplicationBuilder
         .overrides(
@@ -202,7 +202,7 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
 
       when(mockLockRepository.lock(any())).thenReturn(Future.successful(true))
       when(mockLockRepository.unlock(any())).thenReturn(Future.successful(()))
-      when(mockDepartureRepository.get(any())).thenReturn(Future.successful(Some(departure)))
+      when(mockDepartureRepository.get(any(), any())).thenReturn(Future.successful(Some(departure)))
 
       when(mockSubmitMessageService.submitMessage(any(), any(), any(), any())(any()))
         .thenReturn(Future.successful(SubmissionProcessingResult.SubmissionFailureInternal))
@@ -231,7 +231,7 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
 
       when(mockLockRepository.lock(any())).thenReturn(Future.successful(true))
       when(mockLockRepository.unlock(any())).thenReturn(Future.successful(()))
-      when(mockDepartureRepository.get(any())).thenReturn(Future.successful(Some(departure)))
+      when(mockDepartureRepository.get(any(), any())).thenReturn(Future.successful(Some(departure)))
 
       val application =
         baseApplicationBuilder
@@ -260,7 +260,7 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
 
       when(mockLockRepository.lock(any())).thenReturn(Future.successful(true))
       when(mockLockRepository.unlock(any())).thenReturn(Future.successful(()))
-      when(mockDepartureRepository.get(any())).thenReturn(Future.successful(Some(departure)))
+      when(mockDepartureRepository.get(any(), any())).thenReturn(Future.successful(Some(departure)))
 
       val application =
         baseApplicationBuilder
@@ -290,7 +290,7 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
 
       when(mockLockRepository.lock(any())).thenReturn(Future.successful(true))
       when(mockLockRepository.unlock(any())).thenReturn(Future.successful(()))
-      when(mockDepartureRepository.get(any())).thenReturn(Future.successful(Some(departure)))
+      when(mockDepartureRepository.get(any(), any())).thenReturn(Future.successful(Some(departure)))
 
       when(mockSubmitMessageService.submitMessage(any(), any(), any(), any())(any()))
         .thenReturn(Future.successful(SubmissionProcessingResult.SubmissionFailureExternal))
@@ -323,7 +323,7 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
         val departure = Arbitrary.arbitrary[Departure].sample.value.copy(messages = NonEmptyList.one(message), eoriNumber = "eori")
 
         val mockDepartureRepository = mock[DepartureRepository]
-        when(mockDepartureRepository.get(any()))
+        when(mockDepartureRepository.get(any(), any()))
           .thenReturn(Future.successful(Some(departure)))
 
         val application =
@@ -353,7 +353,7 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
         val expectedDeparture = ResponseDepartureWithMessages.build(departure).copy(messages = Seq(expectedMessages))
 
         val mockDepartureRepository = mock[DepartureRepository]
-        when(mockDepartureRepository.get(any()))
+        when(mockDepartureRepository.get(any(), any()))
           .thenReturn(Future.successful(Some(departure)))
 
         val application =
@@ -383,7 +383,7 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
         val expectedDeparture = ResponseDepartureWithMessages.build(departure).copy(messages = Seq(expectedMessage1, expectedMessage3))
 
         val mockDepartureRepository = mock[DepartureRepository]
-        when(mockDepartureRepository.get(any()))
+        when(mockDepartureRepository.get(any(), any()))
           .thenReturn(Future.successful(Some(departure)))
 
         val application =
@@ -409,7 +409,7 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
         val expectedDeparture = ResponseDepartureWithMessages.build(departure).copy(messages = Nil)
 
         val mockDepartureRepository = mock[DepartureRepository]
-        when(mockDepartureRepository.get(any()))
+        when(mockDepartureRepository.get(any(), any()))
           .thenReturn(Future.successful(Some(departure)))
 
         val application =
@@ -430,7 +430,7 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
     "must return NOT FOUND" - {
       "when departure is not found" in {
         val mockDepartureRepository = mock[DepartureRepository]
-        when(mockDepartureRepository.get(any()))
+        when(mockDepartureRepository.get(any(), any()))
           .thenReturn(Future.successful(None))
 
         val application =
@@ -452,7 +452,7 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
         val departure = Arbitrary.arbitrary[Departure].sample.value.copy(messages = NonEmptyList.of(message), eoriNumber = "eori2")
 
         val mockDepartureRepository = mock[DepartureRepository]
-        when(mockDepartureRepository.get(any()))
+        when(mockDepartureRepository.get(any(), any()))
           .thenReturn(Future.successful(Some(departure)))
 
         val application =
@@ -479,7 +479,7 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
       val departure = Arbitrary.arbitrary[Departure].sample.value.copy(messages = NonEmptyList.one(message), eoriNumber = "eori")
 
       val mockDepartureRepository = mock[DepartureRepository]
-      when(mockDepartureRepository.get(any()))
+      when(mockDepartureRepository.get(any(), any()))
         .thenReturn(Future.successful(Some(departure)))
 
       val application =
@@ -501,7 +501,7 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
       val departure = Arbitrary.arbitrary[Departure].sample.value.copy(messages = NonEmptyList.one(message), eoriNumber = "eori")
 
       val mockDepartureRepository = mock[DepartureRepository]
-      when(mockDepartureRepository.get(any()))
+      when(mockDepartureRepository.get(any(), any()))
         .thenReturn(Future.successful(Some(departure)))
 
       val application =
@@ -521,7 +521,7 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
     "must return NOT FOUND" - {
       "when departure is not found" in {
         val mockDepartureRepository = mock[DepartureRepository]
-        when(mockDepartureRepository.get(any()))
+        when(mockDepartureRepository.get(any(), any()))
           .thenReturn(Future.successful(None))
 
         val application =
@@ -543,7 +543,7 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
         val departure = Arbitrary.arbitrary[Departure].sample.value.copy(messages = NonEmptyList.one(message), eoriNumber = "eori")
 
         val mockDepartureRepository = mock[DepartureRepository]
-        when(mockDepartureRepository.get(any()))
+        when(mockDepartureRepository.get(any(), any()))
           .thenReturn(Future.successful(Some(departure)))
 
         val application =
@@ -565,7 +565,7 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
         val departure = Arbitrary.arbitrary[Departure].sample.value.copy(messages = NonEmptyList.one(message), eoriNumber = "eori")
 
         val mockDepartureRepository = mock[DepartureRepository]
-        when(mockDepartureRepository.get(any()))
+        when(mockDepartureRepository.get(any(), any()))
           .thenReturn(Future.successful(Some(departure)))
 
         val application =
@@ -587,7 +587,7 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
         val departure = Arbitrary.arbitrary[Departure].sample.value.copy(messages = NonEmptyList.one(message), eoriNumber = "eori2")
 
         val mockDepartureRepository = mock[DepartureRepository]
-        when(mockDepartureRepository.get(any()))
+        when(mockDepartureRepository.get(any(), any()))
           .thenReturn(Future.successful(Some(departure)))
 
         val application =

@@ -19,12 +19,19 @@ package models.request
 import models.ChannelType
 import models.ChannelType.api
 import models.ChannelType.web
+import play.api.mvc.Request
 import play.api.mvc.WrappedRequest
 
 trait ChannelOptionalRequest[A] extends WrappedRequest[A] {
 
-  def getChannel: ChannelType = headers.get("channel") match {
-    case Some(channel) if channel.equals(api.toString) => api
-    case _                                             => web
-  }
+  def getChannel: ChannelType = ChannelUtil.getChannel(this)
+}
+
+object ChannelUtil {
+
+  def getChannel[A](request: Request[A]): ChannelType =
+    request.headers.get("channel") match {
+      case Some(channel) if channel.equals(api.toString) => api
+      case _                                             => web
+    }
 }

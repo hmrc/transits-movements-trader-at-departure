@@ -19,6 +19,7 @@ package controllers.actions
 import javax.inject.Inject
 import models.DepartureId
 import models.request.AuthenticatedRequest
+import models.request.ChannelUtil
 import models.request.DepartureRequest
 import play.api.Logger
 import play.api.mvc.ActionRefiner
@@ -46,7 +47,7 @@ private[actions] class GetDepartureAction(
     extends ActionRefiner[Request, DepartureRequest] {
 
   override protected def refine[A](request: Request[A]): Future[Either[Result, DepartureRequest[A]]] =
-    repository.get(departureId).map {
+    repository.get(departureId, ChannelUtil.getChannel(request)).map {
       case Some(departure) =>
         Right(DepartureRequest(request, departure))
       case None =>
@@ -70,7 +71,7 @@ private[actions] class AuthenticatedGetDepartureAction(
 
   override protected def refine[A](request: AuthenticatedRequest[A]): Future[Either[Result, DepartureRequest[A]]] =
     repository
-      .get(departureId)
+      .get(departureId, request.getChannel)
       .map {
         case Some(departure) if departure.eoriNumber == request.eoriNumber =>
           Right(DepartureRequest(request.request, departure))

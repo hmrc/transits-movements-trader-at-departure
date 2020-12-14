@@ -18,11 +18,8 @@ package controllers
 
 import audit.AuditService
 import audit.AuditType._
-import cats.data.NonEmptyList
 import controllers.actions._
 import javax.inject.Inject
-import models.MessageStatus.SubmissionSucceeded
-import models.MessageType.DepartureDeclaration
 import models._
 import models.response.ResponseDeparture
 import models.response.ResponseDepartures
@@ -91,7 +88,7 @@ class DeparturesController @Inject()(cc: ControllerComponents,
   def getDepartures(): Action[AnyContent] = authenticate().async {
     implicit request =>
       departureRepository
-        .fetchAllDepartures(request.eoriNumber)
+        .fetchAllDepartures(request.eoriNumber, request.getChannel)
         .map {
           allDepartures =>
             Ok(Json.toJsObject(ResponseDepartures(allDepartures.map {

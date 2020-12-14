@@ -73,7 +73,7 @@ class GetDepartureForWriteActionProviderSpec
       val mockDepartureRepository = mock[DepartureRepository]
       val mockLockRepository      = mock[LockRepository]
 
-      when(mockDepartureRepository.get(any())) thenReturn Future.successful(Some(departure))
+      when(mockDepartureRepository.get(any(), any())) thenReturn Future.successful(Some(departure))
       when(mockLockRepository.lock(any())) thenReturn Future.successful(true)
       when(mockLockRepository.unlock(any())) thenReturn Future.successful(())
 
@@ -101,7 +101,7 @@ class GetDepartureForWriteActionProviderSpec
       val mockDepartureRepository = mock[DepartureRepository]
       val mockLockRepository      = mock[LockRepository]
 
-      when(mockDepartureRepository.get(any())) thenReturn Future.successful(None)
+      when(mockDepartureRepository.get(any(), any())) thenReturn Future.successful(None)
       when(mockLockRepository.lock(any())) thenReturn Future.successful(true)
       when(mockLockRepository.unlock(any())) thenReturn Future.successful(())
 
@@ -143,7 +143,7 @@ class GetDepartureForWriteActionProviderSpec
 
       status(result) mustEqual LOCKED
       verify(mockLockRepository, never).unlock(any())
-      verify(mockDepartureRepository, never).get(any())
+      verify(mockDepartureRepository, never).get(any(), any())
     }
 
     "must unlock a departure and return Internal Server Error if the main action fails" in {
@@ -153,7 +153,7 @@ class GetDepartureForWriteActionProviderSpec
       val mockDepartureRepository = mock[DepartureRepository]
       val mockLockRepository      = mock[LockRepository]
 
-      when(mockDepartureRepository.get(any())) thenReturn Future.successful(Some(departure))
+      when(mockDepartureRepository.get(any(), any())) thenReturn Future.successful(Some(departure))
       when(mockLockRepository.lock(any())) thenReturn Future.successful(true)
       when(mockLockRepository.unlock(any())) thenReturn Future.successful(())
 
