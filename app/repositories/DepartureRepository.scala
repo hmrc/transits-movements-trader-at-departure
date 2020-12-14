@@ -45,6 +45,11 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfi
     name = Some("eori-number-index")
   )
 
+  private val channelIndex: Aux[BSONSerializationPack.type] = IndexUtils.index(
+    key = Seq("channelType" -> IndexType.Ascending),
+    name = Some("channel-type-index")
+  )
+
   private val cacheTtl = appConfig.cacheTtl
 
   private val lastUpdatedIndex: Aux[BSONSerializationPack.type] = IndexUtils.index(
@@ -59,6 +64,7 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfi
         jsonCollection =>
           for {
             _   <- jsonCollection.indexesManager.ensure(index)
+            _   <- jsonCollection.indexesManager.ensure(channelIndex)
             res <- jsonCollection.indexesManager.ensure(lastUpdatedIndex)
           } yield res
       }
