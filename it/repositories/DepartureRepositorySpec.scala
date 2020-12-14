@@ -6,6 +6,7 @@ import java.time.LocalTime
 
 import cats.data.NonEmptyList
 import generators.ModelGenerators
+import models.ChannelType.{api, web}
 import models.DepartureStatus.DepartureSubmitted
 import models.DepartureStatus.Initialized
 import models.MessageStatus.SubmissionPending
@@ -84,14 +85,14 @@ class DepartureRepositorySpec
       }
     }
 
-    "get(departureId: DepartureId)" - {
-      "must get an departure when it exists" in {
+    "get(departureId: DepartureId, channelFilter: ChannelType)" - {
+      "must get an departure when it exists and has the right channel type" in {
         database.flatMap(_.drop()).futureValue
 
-        val departure = arbitrary[Departure].sample.value
+        val departure = arbitrary[Departure].sample.value.copy(channel = api)
 
         service.insert(departure).futureValue
-        val result = service.get(departure.departureId)
+        val result = service.get(departure.departureId, api)
 
         whenReady(result) {
           r =>
@@ -102,10 +103,24 @@ class DepartureRepositorySpec
       "must return None when an departure does not exist" in {
         database.flatMap(_.drop()).futureValue
 
-        val departure = arbitrary[Departure].sample.value copy (departureId = DepartureId(1))
+        val departure = arbitrary[Departure].sample.value copy (departureId = DepartureId(1), api)
 
         service.insert(departure).futureValue
-        val result = service.get(DepartureId(2))
+        val result = service.get(DepartureId(2), api)
+
+        whenReady(result) {
+          r =>
+            r.isDefined mustBe false
+        }
+      }
+
+      "must return None when a departure exists, but with a different channel type" in {
+        database.flatMap(_.drop()).futureValue
+
+        val departure = arbitrary[Departure].sample.value copy (departureId = DepartureId(1), api)
+
+        service.insert(departure).futureValue
+        val result = service.get(DepartureId(1), web)
 
         whenReady(result) {
           r =>
@@ -124,7 +139,7 @@ class DepartureRepositorySpec
 
         service.setMessageState(departure.departureId, 0, SubmissionSucceeded).futureValue
 
-        val updatedDeparture = service.get(departure.departureId)
+        val updatedDeparture = service.get(departure.departureId, departure.channel)
 
         whenReady(updatedDeparture) {
           r =>
@@ -261,7 +276,7 @@ class DepartureRepositorySpec
         service.insert(departure).futureValue
         service.setDepartureStateAndMessageState(departure.departureId, messageId.index, DepartureSubmitted, SubmissionSucceeded).futureValue
 
-        val updatedDeparture = service.get(departure.departureId)
+        val updatedDeparture = service.get(departure.departureId, departure.channel)
 
         whenReady(updatedDeparture) {
           r =>
@@ -285,7 +300,7 @@ class DepartureRepositorySpec
         val setResult = service.setDepartureStateAndMessageState(DepartureId(2), messageId.index, DepartureSubmitted, SubmissionSucceeded)
         setResult.futureValue must not be (defined)
 
-        val result = service.get(departure.departureId)
+        val result = service.get(departure.departureId, departure.channel)
 
         whenReady(result) {
           r =>
@@ -435,26 +450,28 @@ class DepartureRepositorySpec
     }
 
     "fetchAllDepartures" - {
-      "return Departures that match an eoriNumber" in {
+      "return Departures that match an eoriNumber and channel type" in {
         database.flatMap(_.drop()).futureValue
 
         val app = new GuiceApplicationBuilder().build()
         val eoriNumber: String = arbitrary[String].sample.value
 
-        val departure1 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber)
-        val departure2 = arbitrary[Departure].suchThat(_.eoriNumber != eoriNumber).sample.value
+        val departure1 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = api)
+        val departure2 = arbitrary[Departure].suchThat(_.eoriNumber != eoriNumber).sample.value.copy(channel = api)
+        val departure3 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = web)
 
         running(app) {
           started(app).futureValue
-          val respository = app.injector.instanceOf[DepartureRepository]
-          val departures = Seq(departure1, departure2)
+          val repository = app.injector.instanceOf[DepartureRepository]
+          val departures = Seq(departure1, departure2, departure3)
           val jsonArr = departures.map(Json.toJsObject(_))
           database.flatMap {
             db =>
               db.collection[JSONCollection](DepartureRepository.collectionName).insert(false).many(jsonArr)
           }.futureValue
 
-          respository.fetchAllDepartures(eoriNumber).futureValue mustBe Seq(departure1)
+          repository.fetchAllDepartures(eoriNumber, api).futureValue mustBe Seq(departure1)
+          repository.fetchAllDepartures(eoriNumber, web).futureValue mustBe Seq(departure3)
         }
       }
 
@@ -464,8 +481,8 @@ class DepartureRepositorySpec
         val eoriNumber: String = arbitrary[String].sample.value
 
         val app = new GuiceApplicationBuilder().build()
-        val departure1 = arbitrary[Departure].suchThat(_.eoriNumber != eoriNumber).sample.value
-        val departure2 = arbitrary[Departure].suchThat(_.eoriNumber != eoriNumber).sample.value
+        val departure1 = arbitrary[Departure].suchThat(_.eoriNumber != eoriNumber).sample.value.copy(channel = api)
+        val departure2 = arbitrary[Departure].suchThat(_.eoriNumber != eoriNumber).sample.value.copy(channel = api)
 
         running(app) {
           started(app).futureValue
@@ -479,7 +496,7 @@ class DepartureRepositorySpec
               db.collection[JSONCollection](DepartureRepository.collectionName).insert(false).many(jsonArr)
           }.futureValue
 
-          val result = respository.fetchAllDepartures(eoriNumber).futureValue
+          val result = respository.fetchAllDepartures(eoriNumber, api).futureValue
 
           result mustBe Seq.empty[Departure]
         }
