@@ -18,7 +18,6 @@ package audit
 
 import audit.AuditType._
 import javax.inject.Inject
-import models.ChannelType.ncts
 import models._
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
@@ -38,7 +37,7 @@ class AuditService @Inject()(auditConnector: AuditConnector)(implicit ec: Execut
     auditConnector.sendExplicitAudit(auditType.toString(), Json.toJson(details))
   }
 
-  def auditNCTSMessages(messageResponse: MessageResponse, xmlRequestBody: NodeSeq)(implicit hc: HeaderCarrier): Unit = {
+  def auditNCTSMessages(departure: Departure, messageResponse: MessageResponse, xmlRequestBody: NodeSeq)(implicit hc: HeaderCarrier): Unit = {
     val auditType: AuditType = messageResponse match {
       case PositiveAcknowledgementResponse     => PositiveAcknowledgementReceived
       case MrnAllocatedResponse                => MrnAllocatedReceived
@@ -50,7 +49,7 @@ class AuditService @Inject()(auditConnector: AuditConnector)(implicit ec: Execut
       case WriteOffNotificationResponse        => WriteOffNotificationReceived
       case GuaranteeNotValidResponse           => GuaranteeNotValidReceived
     }
-    auditEvent(auditType, xmlRequestBody, ncts)
+    auditEvent(auditType, xmlRequestBody, departure.channel)
   }
 
 }

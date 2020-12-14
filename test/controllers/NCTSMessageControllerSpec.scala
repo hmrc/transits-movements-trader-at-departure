@@ -24,6 +24,7 @@ import audit.AuditService
 import base.SpecBase
 import cats.data.NonEmptyList
 import generators.ModelGenerators
+import models.ChannelType.api
 import models._
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
@@ -58,6 +59,7 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
   private val message       = Arbitrary.arbitrary[MessageWithStatus].sample.value
   private val departure = Departure(
     departureId,
+    api,
     "eori",
     Some(MovementReferenceNumber("mrn")),
     "ref",
@@ -70,6 +72,7 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
 
   private val acknowledgedDeparture = Departure(
     departureId,
+    api,
     "eori",
     Some(MovementReferenceNumber("mrn")),
     "ref",
@@ -156,7 +159,7 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
 
           status(result) mustEqual OK
           contentAsString(result) mustBe empty
-          verify(mockAuditService, times(1)).auditNCTSMessages(eqTo(MrnAllocatedResponse), any())(any())
+          verify(mockAuditService, times(1)).auditNCTSMessages(any(), eqTo(MrnAllocatedResponse), any())(any())
         }
       }
 
@@ -234,7 +237,7 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
 
           contentAsString(result) mustBe empty
           status(result) mustEqual OK
-          verify(mockAuditService, times(1)).auditNCTSMessages(eqTo(DepartureRejectedResponse), any())(any())
+          verify(mockAuditService, times(1)).auditNCTSMessages(any(), eqTo(DepartureRejectedResponse), any())(any())
         }
       }
 

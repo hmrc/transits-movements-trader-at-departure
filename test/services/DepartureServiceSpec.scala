@@ -22,6 +22,7 @@ import java.time.LocalTime
 
 import base.SpecBase
 import cats.data.NonEmptyList
+import models.ChannelType.api
 import models.MessageStatus.SubmissionPending
 import models._
 import org.mockito.Mockito.when
@@ -77,6 +78,7 @@ class DepartureServiceSpec extends SpecBase with IntegrationPatience with Stream
 
       val expectedDeparture = Departure(
         departureId = id,
+        channel = api,
         movementReferenceNumber = None,
         referenceNumber = ref,
         eoriNumber = eori,
@@ -89,7 +91,7 @@ class DepartureServiceSpec extends SpecBase with IntegrationPatience with Stream
         nextMessageCorrelationId = 2
       )
 
-      val result = service.createDeparture(eori, inputMovement).futureValue
+      val result = service.createDeparture(eori, inputMovement, api).futureValue
 
       result.right.get mustEqual expectedDeparture
     }
@@ -123,7 +125,7 @@ class DepartureServiceSpec extends SpecBase with IntegrationPatience with Stream
           </HEAHEA>
         </Foo>
 
-      service.createDeparture(eori, invalidPayload).futureValue.isLeft mustBe true
+      service.createDeparture(eori, invalidPayload, api).futureValue.isLeft mustBe true
     }
   }
 

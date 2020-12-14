@@ -26,6 +26,7 @@ import audit.AuditType.MesSenMES3Added
 import base.SpecBase
 import cats.data.NonEmptyList
 import generators.ModelGenerators
+import models.ChannelType.api
 import models.MessageStatus.SubmissionPending
 import models.SubmissionProcessingResult.SubmissionFailureExternal
 import models.SubmissionProcessingResult.SubmissionFailureInternal
@@ -89,6 +90,7 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
 
   val initializedDeparture = Departure(
     departureId = newDepartureId,
+    channel = api,
     eoriNumber = "eori",
     movementReferenceNumber = None,
     status = DepartureStatus.Initialized,
@@ -96,7 +98,7 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
     updated = localDateTime,
     nextMessageCorrelationId = message.messageCorrelationId + 1,
     messages = NonEmptyList.one(message),
-    referenceNumber = "referenceNumber",
+    referenceNumber = "referenceNumber"
   )
 
   "/POST" - {

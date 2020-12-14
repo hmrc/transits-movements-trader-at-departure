@@ -26,6 +26,7 @@ import base.SpecBase
 import cats.data.NonEmptyList
 import connectors.MessageConnector
 import generators.ModelGenerators
+import models.ChannelType.api
 import models.MessageStatus.SubmissionFailed
 import models.MessageStatus.SubmissionPending
 import models.MessageStatus.SubmissionSucceeded
@@ -114,6 +115,7 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
   } yield {
     departure.copy(
       departureId,
+      api,
       "eori",
       Some(mrn),
       "ref",

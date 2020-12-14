@@ -51,7 +51,7 @@ class DeparturesController @Inject()(cc: ControllerComponents,
   def post: Action[NodeSeq] = authenticate().async(parse.xml) {
     implicit request =>
       departureService
-        .createDeparture(request.eoriNumber, request.body)
+        .createDeparture(request.eoriNumber, request.body, request.getChannel)
         .flatMap {
           case Left(error) =>
             Logger.error(error.message)
