@@ -18,26 +18,59 @@ package utils
 
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
+import org.scalatestplus.mockito.MockitoSugar
+import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
+import play.api.test.Helpers.running
 
-class JsonHelperSpec extends AnyFreeSpec with Matchers {
+class JsonHelperSpec extends AnyFreeSpec with Matchers with MockitoSugar {
+
+  val appBuilder: GuiceApplicationBuilder =
+    new GuiceApplicationBuilder()
+      .configure("message-translation-file" -> "TestMessageTranslation.json")
 
   "JsonHelper" - {
 
     "must convert xml to json" in {
       val xml = "<xml><test1>one</test1><test1>two</test1></xml>"
 
-      val expectedResult: JsObject = Json.obj("xml" -> Json.obj("test1" -> Json.arr("one", "two")))
-      val result: JsObject         = JsonHelper.convertXmlToJson(xml)
-      result.toString mustBe expectedResult.toString()
+      val app = appBuilder.build()
+
+      running(app) {
+        val jsonHelper = app.injector.instanceOf[JsonHelper]
+
+        val expectedResult: JsObject = Json.obj("xml" -> Json.obj("test1" -> Json.arr("one", "two")))
+        val result: JsObject         = jsonHelper.convertXmlToJson(xml)
+        result mustBe expectedResult
+      }
+    }
+
+    "must replace field names when a match is found in the message translation file, and leave others untouched" in {
+      val xml = "<xml><field1>1</field1><field2>2</field2><field3>3</field3></xml>"
+
+      val app = appBuilder.build()
+
+      running(app) {
+        val jsonHelper = app.injector.instanceOf[JsonHelper]
+
+        val expectedResult: JsObject = Json.obj("xml" -> Json.obj("Description 1" -> 1, "Description 2" -> 2, "field3" -> 3))
+        val result: JsObject         = jsonHelper.convertXmlToJson(xml)
+        result mustBe expectedResult
+      }
     }
 
     "must return empty JsObject on failing to convert xml to json" in {
       val invalidXml = "<xml><test1>one</test1><test1></xml>"
 
-      val result: JsObject = JsonHelper.convertXmlToJson(invalidXml)
-      result mustBe Json.obj()
+      val app = appBuilder.build()
+
+      running(app) {
+        val jsonHelper = app.injector.instanceOf[JsonHelper]
+
+        val result: JsObject = jsonHelper.convertXmlToJson(invalidXml)
+        result mustBe Json.obj()
+      }
     }
   }
 }

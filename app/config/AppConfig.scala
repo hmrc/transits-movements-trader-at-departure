@@ -38,4 +38,6 @@ class AppConfig @Inject()(config: Configuration, servicesConfig: ServicesConfig)
   val enrolmentKey: String   = config.get[String]("keys.enrolmentKey")
   val lockRepositoryTtl: Int = config.get[Int]("mongodb.lockRepository.timeToLiveInSeconds")
   val cacheTtl               = config.get[Int]("mongodb.timeToLiveInSeconds")
+
+  val messageTranslationFile: String = config.get[String]("message-translation-file")
 }
