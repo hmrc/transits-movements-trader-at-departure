@@ -20,6 +20,8 @@ import com.google.inject.AbstractModule
 import controllers.actions._
 import repositories.DepartureIdRepository
 import repositories.DepartureRepository
+import utils.JsonHelper
+import utils.MessageTranslation
 
 class Module extends AbstractModule {
 
@@ -29,6 +31,8 @@ class Module extends AbstractModule {
     bind(classOf[DepartureRepository]).asEagerSingleton()
     bind(classOf[DepartureIdRepository]).asEagerSingleton()
     bind(classOf[AuthenticatedGetDepartureForReadActionProvider]).to(classOf[AuthenticatedGetDepartureForReadActionProviderImpl])
+    bind(classOf[JsonHelper]).asEagerSingleton()
+    bind(classOf[MessageTranslation]).asEagerSingleton()
   }
 
 }
