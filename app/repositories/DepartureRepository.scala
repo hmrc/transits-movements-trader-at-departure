@@ -40,7 +40,7 @@ import scala.util.Try
 
 class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfig)(implicit ec: ExecutionContext) extends MongoDateTimeFormats {
 
-  private val index: Aux[BSONSerializationPack.type] = IndexUtils.index(
+  private val eoriNumberIndex: Aux[BSONSerializationPack.type] = IndexUtils.index(
     key = Seq("eoriNumber" -> IndexType.Ascending),
     name = Some("eori-number-index")
   )
@@ -50,12 +50,15 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfi
     name = Some("channel-type-index")
   )
 
-  private val cacheTtl = appConfig.cacheTtl
+  private val referenceNumberIndex: Aux[BSONSerializationPack.type] = IndexUtils.index(
+    key = Seq("referenceNumber" -> IndexType.Ascending),
+    name = Some("reference-number-index")
+  )
 
   private val lastUpdatedIndex: Aux[BSONSerializationPack.type] = IndexUtils.index(
     key = Seq("lastUpdated" -> IndexType.Ascending),
     name = Some("last-updated-index"),
-    options = BSONDocument("expireAfterSeconds" -> cacheTtl)
+    options = BSONDocument("expireAfterSeconds" -> appConfig.cacheTtl)
   )
 
   val started: Future[Unit] = {
@@ -63,8 +66,9 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfi
       .flatMap {
         jsonCollection =>
           for {
-            _   <- jsonCollection.indexesManager.ensure(index)
             _   <- jsonCollection.indexesManager.ensure(channelIndex)
+            _   <- jsonCollection.indexesManager.ensure(eoriNumberIndex)
+            _   <- jsonCollection.indexesManager.ensure(referenceNumberIndex)
             res <- jsonCollection.indexesManager.ensure(lastUpdatedIndex)
           } yield res
       }

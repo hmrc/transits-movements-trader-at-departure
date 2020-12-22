@@ -16,6 +16,7 @@
 
 package utils
 
+import javax.inject.Inject
 import org.json.XML
 import play.api.Logger
 import play.api.libs.json.JsObject
@@ -25,14 +26,16 @@ import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
 
-object JsonHelper {
+class JsonHelper @Inject()(messageTranslation: MessageTranslation) {
 
   def convertXmlToJson(xml: String): JsObject =
-    Try(Json.parse(XML.toJSONObject(xml).toString).as[JsObject]) match {
+    Try(translateMessage(xml)) match {
       case Success(data) => data
       case Failure(error) =>
         Logger.error(s"Failed to convert xml to json with error: ${error.getMessage}")
         Json.obj()
     }
 
+  private def translateMessage(xml: String): JsObject =
+    messageTranslation.translate(Json.parse(XML.toJSONObject(xml).toString).as[JsObject])
 }
