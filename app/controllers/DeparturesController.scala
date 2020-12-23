@@ -48,7 +48,7 @@ class DeparturesController @Inject()(cc: ControllerComponents,
   def post: Action[NodeSeq] = authenticate().async(parse.xml) {
     implicit request =>
       departureService
-        .createDeparture(request.eoriNumber, request.body, request.getChannel)
+        .createDeparture(request.eoriNumber, request.body, request.channel)
         .flatMap {
           case Left(error) =>
             Logger.error(error.message)
@@ -58,8 +58,8 @@ class DeparturesController @Inject()(cc: ControllerComponents,
               .submitDeparture(departure)
               .map {
                 case SubmissionProcessingResult.SubmissionSuccess =>
-                  auditService.auditEvent(DepartureDeclarationSubmitted, departure.messages.head.message, request.getChannel)
-                  auditService.auditEvent(MesSenMES3Added, departure.messages.head.message, request.getChannel)
+                  auditService.auditEvent(DepartureDeclarationSubmitted, departure.messages.head.message, request.channel)
+                  auditService.auditEvent(MesSenMES3Added, departure.messages.head.message, request.channel)
                   Accepted
                     .withHeaders("Location" -> routes.DeparturesController.get(departure.departureId).url)
                 case SubmissionProcessingResult.SubmissionFailureExternal =>
@@ -88,7 +88,7 @@ class DeparturesController @Inject()(cc: ControllerComponents,
   def getDepartures(): Action[AnyContent] = authenticate().async {
     implicit request =>
       departureRepository
-        .fetchAllDepartures(request.eoriNumber, request.getChannel)
+        .fetchAllDepartures(request.eoriNumber, request.channel)
         .map {
           allDepartures =>
             Ok(Json.toJsObject(ResponseDepartures(allDepartures.map {

@@ -92,7 +92,7 @@ class DepartureRepositorySpec
         val departure = arbitrary[Departure].sample.value.copy(channel = api)
 
         service.insert(departure).futureValue
-        val result = service.get(departure.departureId, api)
+        val result = service.get(departure.departureId, departure.channel)
 
         whenReady(result) {
           r =>
@@ -103,10 +103,10 @@ class DepartureRepositorySpec
       "must return None when an departure does not exist" in {
         database.flatMap(_.drop()).futureValue
 
-        val departure = arbitrary[Departure].sample.value copy (departureId = DepartureId(1), api)
+        val departure = arbitrary[Departure].sample.value copy (departureId = DepartureId(1), channel = api)
 
         service.insert(departure).futureValue
-        val result = service.get(DepartureId(2), api)
+        val result = service.get(DepartureId(2), web)
 
         whenReady(result) {
           r =>

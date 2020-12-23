@@ -46,11 +46,11 @@ class DepartureServiceSpec extends SpecBase with IntegrationPatience with Stream
       val ref  = "ref"
       val eori = "eoriNumber"
 
-      val mockArrivalIdRepository = mock[DepartureIdRepository]
-      when(mockArrivalIdRepository.nextId).thenReturn(Future.successful(id))
+      val mockDepartureIdRepository = mock[DepartureIdRepository]
+      when(mockDepartureIdRepository.nextId).thenReturn(Future.successful(id))
       val application = baseApplicationBuilder
         .overrides(
-          bind[DepartureIdRepository].toInstance(mockArrivalIdRepository)
+          bind[DepartureIdRepository].toInstance(mockDepartureIdRepository)
         )
         .build()
 
@@ -104,12 +104,12 @@ class DepartureServiceSpec extends SpecBase with IntegrationPatience with Stream
       val dateOfPrep = LocalDate.now()
       val timeOfPrep = LocalTime.of(1, 1)
 
-      val mockArrivalIdRepository = mock[DepartureIdRepository]
-      when(mockArrivalIdRepository.nextId()).thenReturn(Future.successful(id))
+      val mockDepartureIdRepository = mock[DepartureIdRepository]
+      when(mockDepartureIdRepository.nextId()).thenReturn(Future.successful(id))
 
       val application = baseApplicationBuilder
         .overrides(
-          bind[DepartureIdRepository].toInstance(mockArrivalIdRepository)
+          bind[DepartureIdRepository].toInstance(mockDepartureIdRepository)
         )
         .build()
 

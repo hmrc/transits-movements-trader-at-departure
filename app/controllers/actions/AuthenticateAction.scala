@@ -23,6 +23,7 @@ import play.api.Logger
 import play.api.mvc.ActionRefiner
 import play.api.mvc.Request
 import play.api.mvc.Result
+import play.api.mvc.Results.BadRequest
 import play.api.mvc.Results.Forbidden
 import play.api.mvc.Results.Unauthorized
 import uk.gov.hmrc.auth.core._
@@ -41,14 +42,19 @@ private[actions] class AuthenticateAction @Inject()(override val authConnector: 
   private val enrolmentIdentifierKey: String = "VATRegNoTURN"
 
   override protected def refine[A](request: Request[A]): Future[Either[Result, AuthenticatedRequest[A]]] = {
-    implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromHeadersAndSession(request.headers)
-    authorised(Enrolment(config.enrolmentKey)).retrieve(Retrievals.authorisedEnrolments) {
-      enrolments =>
-        val eoriNumber = (for {
-          enrolment  <- enrolments.enrolments.find(_.key.equals(config.enrolmentKey))
-          identifier <- enrolment.getIdentifier(enrolmentIdentifierKey)
-        } yield identifier.value).getOrElse(throw InsufficientEnrolments(s"Unable to retrieve enrolment for $enrolmentIdentifierKey"))
-        Future.successful(Right(AuthenticatedRequest(request, eoriNumber)))
+    ChannelUtil.getChannel(request) match {
+      case None =>
+        Future.successful(Left(BadRequest("Missing channel header or incorrect value specified in channel header")))
+      case Some(channel) =>
+        implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromHeadersAndSession(request.headers)
+        authorised(Enrolment(config.enrolmentKey)).retrieve(Retrievals.authorisedEnrolments) {
+          enrolments =>
+            val eoriNumber = (for {
+              enrolment  <- enrolments.enrolments.find(_.key.equals(config.enrolmentKey))
+              identifier <- enrolment.getIdentifier(enrolmentIdentifierKey)
+            } yield identifier.value).getOrElse(throw InsufficientEnrolments(s"Unable to retrieve enrolment for $enrolmentIdentifierKey"))
+            Future.successful(Right(AuthenticatedRequest(request, channel, eoriNumber)))
+        }
     }
   }.recover {
     case e: InsufficientEnrolments =>

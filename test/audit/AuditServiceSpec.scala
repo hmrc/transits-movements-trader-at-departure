@@ -101,7 +101,7 @@ class AuditServiceSpec extends SpecBase with ScalaCheckPropertyChecks with Befor
             running(application) {
               val auditService = application.injector.instanceOf[AuditService]
 
-              auditService.auditNCTSMessages(Arbitrary.arbitrary[Departure].sample.value, response, requestXml)
+              auditService.auditNCTSMessages(Arbitrary.arbitrary[Departure].sample.value.channel, response, requestXml)
 
               verify(mockAuditConnector, times(1)).sendExplicitAudit(eqTo(nctsAuditResponse(response).toString()), any[AuditDetails]())(any(), any(), any())
               reset(mockAuditConnector)

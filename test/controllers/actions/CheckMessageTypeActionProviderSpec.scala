@@ -67,10 +67,9 @@ class CheckMessageTypeActionProviderSpec
       forAll(Gen.oneOf(responseMessages.toSeq)) {
         case (code, response: MessageResponse) => {
           def fakeRequest =
-            DepartureRequest(FakeRequest("", "").withHeaders(
-                               "X-Message-Type" -> code
-                             ),
-                             fakeDeparture)
+            DepartureRequest(FakeRequest("", "").withHeaders("X-Message-Type" -> code, "channel" -> fakeDeparture.channel.toString),
+                             fakeDeparture,
+                             fakeDeparture.channel)
 
           val action: Harness = new Harness()
 
@@ -85,7 +84,7 @@ class CheckMessageTypeActionProviderSpec
       }
     }
     "must return an BadRequest when the X-Message-Type is missing" in {
-      def fakeRequest = DepartureRequest(FakeRequest("", ""), fakeDeparture)
+      def fakeRequest = DepartureRequest(FakeRequest("", "").withHeaders("channel" -> fakeDeparture.channel.toString), fakeDeparture, fakeDeparture.channel)
 
       val harness = new Harness
 
@@ -100,10 +99,9 @@ class CheckMessageTypeActionProviderSpec
 
     "must return an BadRequest when the X-Message-Type is invalid" in {
       def fakeRequest =
-        DepartureRequest(FakeRequest("", "").withHeaders(
-                           "X-Message-Type" -> "Invalid-type"
-                         ),
-                         fakeDeparture)
+        DepartureRequest(FakeRequest("", "").withHeaders("X-Message-Type" -> "Invalid-type", "channel" -> fakeDeparture.channel.toString),
+                         fakeDeparture,
+                         fakeDeparture.channel)
 
       val harness = new Harness
 

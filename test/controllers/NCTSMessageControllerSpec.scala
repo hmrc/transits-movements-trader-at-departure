@@ -19,12 +19,12 @@ package controllers
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
-
 import audit.AuditService
 import base.SpecBase
 import cats.data.NonEmptyList
 import generators.ModelGenerators
 import models.ChannelType.api
+import models.ChannelType.web
 import models._
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
@@ -154,6 +154,7 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
           val request = FakeRequest(POST, routes.NCTSMessageController.post(messageSender).url)
             .withXmlBody(requestMrnAllocatedBody)
             .withHeaders("X-Message-Type" -> MessageType.MrnAllocated.code)
+            .withHeaders("channel" -> acknowledgedDeparture.channel.toString)
 
           val result = route(application, request).value
 
@@ -177,6 +178,7 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
           val request = FakeRequest(POST, routes.NCTSMessageController.post(messageSender).url)
             .withXmlBody(requestCancellationDecisionBody)
             .withHeaders("X-Message-Type" -> MessageType.CancellationDecision.code)
+            .withHeaders("channel" -> acknowledgedDeparture.channel.toString)
 
           val result = route(application, request).value
           contentAsString(result) mustEqual "The message status failed to transition from 'PositiveAcknowledgement' to 'CancellationDecision'."
@@ -204,6 +206,7 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
           val request = FakeRequest(POST, routes.NCTSMessageController.post(messageSender).url)
             .withXmlBody(badRequestMrnAllocatedBody)
             .withHeaders("X-Message-Type" -> MessageType.MrnAllocated.code)
+            .withHeaders("channel" -> acknowledgedDeparture.channel.toString)
 
           val result = route(application, request).value
 
@@ -233,6 +236,7 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
           val request = FakeRequest(POST, routes.NCTSMessageController.post(messageSender).url)
             .withXmlBody(requestDepartureRejectionXmlBody)
             .withHeaders("X-Message-Type" -> MessageType.DeclarationRejected.code)
+            .withHeaders("channel" -> departure.channel.toString)
 
           val result = route(application, request).value
 
@@ -259,6 +263,7 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
           val request = FakeRequest(POST, routes.NCTSMessageController.post(messageSender).url)
             .withXmlBody(requestMrnAllocatedBody)
             .withHeaders("X-Message-Type" -> MessageType.MrnAllocated.code)
+            .withHeaders("channel" -> web.toString)
 
           val result = route(application, request).value
 
@@ -289,6 +294,7 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
           val request = FakeRequest(POST, routes.NCTSMessageController.post(messageSender).url)
             .withXmlBody(requestDepartureRejectionXmlBody)
             .withHeaders("X-Message-Type" -> MessageType.DeclarationRejected.code)
+            .withHeaders("channel" -> departure.channel.toString)
 
           val result = route(application, request).value
 
@@ -313,6 +319,7 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
 
         running(application) {
           val request = FakeRequest(POST, routes.NCTSMessageController.post(messageSender).url)
+            .withHeaders("channel" -> departure.channel.toString)
             .withXmlBody(requestDepartureRejectionXmlBody)
 
           val result = route(application, request).value
@@ -344,6 +351,7 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
           val request = FakeRequest(POST, routes.NCTSMessageController.post(messageSender).url)
             .withXmlBody(requestDepartureRejectionXmlBody)
             .withHeaders("X-Message-Type" -> MessageType.DeclarationRejected.code)
+            .withHeaders("channel" -> departure.channel.toString)
 
           val result = route(application, request).value
 
@@ -374,6 +382,7 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
           val request = FakeRequest(POST, routes.NCTSMessageController.post(messageSender).url)
             .withXmlBody(requestDepartureRejectionXmlBody)
             .withHeaders("X-Message-Type" -> MessageType.DeclarationRejected.code)
+            .withHeaders("channel" -> departure.channel.toString)
 
           val result = route(application, request).value
 

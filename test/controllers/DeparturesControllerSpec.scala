@@ -19,7 +19,6 @@ package controllers
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
-
 import audit.AuditService
 import audit.AuditType.DepartureDeclarationSubmitted
 import audit.AuditType.MesSenMES3Added
@@ -27,6 +26,7 @@ import base.SpecBase
 import cats.data.NonEmptyList
 import generators.ModelGenerators
 import models.ChannelType.api
+import models.ChannelType.web
 import models.MessageStatus.SubmissionPending
 import models.SubmissionProcessingResult.SubmissionFailureExternal
 import models.SubmissionProcessingResult.SubmissionFailureInternal
@@ -125,7 +125,9 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
 
         running(application) {
 
-          val request = FakeRequest(POST, routes.DeparturesController.post().url).withXmlBody(requestXmlBody)
+          val request = FakeRequest(POST, routes.DeparturesController.post().url)
+            .withHeaders("channel" -> initializedDeparture.channel.toString)
+            .withXmlBody(requestXmlBody)
 
           val result = route(application, request).value
 
@@ -151,7 +153,9 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
 
         running(application) {
 
-          val request = FakeRequest(POST, routes.DeparturesController.post().url).withXmlBody(requestXmlBody)
+          val request = FakeRequest(POST, routes.DeparturesController.post().url)
+            .withHeaders("channel" -> web.toString)
+            .withXmlBody(requestXmlBody)
 
           val result = route(application, request).value
 
@@ -178,7 +182,9 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
 
         running(application) {
 
-          val request = FakeRequest(POST, routes.DeparturesController.post().url).withXmlBody(requestXmlBody)
+          val request = FakeRequest(POST, routes.DeparturesController.post().url)
+            .withHeaders("channel" -> web.toString)
+            .withXmlBody(requestXmlBody)
 
           val result = route(application, request).value
 
@@ -206,7 +212,9 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
 
         running(application) {
 
-          val request = FakeRequest(POST, routes.DeparturesController.post().url).withXmlBody(requestXmlBody)
+          val request = FakeRequest(POST, routes.DeparturesController.post().url)
+            .withHeaders("channel" -> web.toString)
+            .withXmlBody(requestXmlBody)
 
           val result = route(application, request).value
 
@@ -234,7 +242,9 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
           val requestXmlBody =
             <CC015B></CC015B>
 
-          val request = FakeRequest(POST, routes.DeparturesController.post().url).withXmlBody(requestXmlBody)
+          val request = FakeRequest(POST, routes.DeparturesController.post().url)
+            .withHeaders("channel" -> web.toString)
+            .withXmlBody(requestXmlBody)
 
           val result = route(application, request).value
 
@@ -259,7 +269,9 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
         running(application) {
           val requestXmlBody = <InvalidRootNode></InvalidRootNode>
 
-          val request = FakeRequest(POST, routes.DeparturesController.post().url).withXmlBody(requestXmlBody)
+          val request = FakeRequest(POST, routes.DeparturesController.post().url)
+            .withHeaders("channel" -> web.toString)
+            .withXmlBody(requestXmlBody)
 
           val result = route(application, request).value
 
@@ -285,6 +297,7 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
 
       running(application) {
         val request = FakeRequest(GET, routes.DeparturesController.get(DepartureId(1)).url)
+          .withHeaders("channel" -> departure.channel.toString)
 
         val result = route(application, request).value
 
@@ -304,7 +317,8 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
 
       running(application) {
         val request = FakeRequest(GET, routes.DeparturesController.get(DepartureId(1)).url)
-        val result  = route(application, request).value
+          .withHeaders("channel" -> web.toString)
+        val result = route(application, request).value
 
         contentAsString(result) mustBe empty
         status(result) mustEqual NOT_FOUND
@@ -323,7 +337,8 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
 
       running(application) {
         val request = FakeRequest(GET, routes.DeparturesController.get(DepartureId(1)).url)
-        val result  = route(application, request).value
+          .withHeaders("channel" -> departure.channel.toString)
+        val result = route(application, request).value
 
         contentAsString(result) mustBe empty
         status(result) mustEqual NOT_FOUND
@@ -342,7 +357,8 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
 
       running(application) {
         val request = FakeRequest(GET, routes.DeparturesController.get(DepartureId(1)).url)
-        val result  = route(application, request).value
+          .withHeaders("channel" -> web.toString)
+        val result = route(application, request).value
 
         status(result) mustEqual INTERNAL_SERVER_ERROR
       }
@@ -363,7 +379,8 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
 
       running(application) {
         val request = FakeRequest(GET, routes.DeparturesController.getDepartures().url)
-        val result  = route(application, request).value
+          .withHeaders("channel" -> departure.channel.toString)
+        val result = route(application, request).value
 
         status(result) mustEqual OK
         contentAsJson(result) mustEqual Json.toJson(ResponseDepartures(Seq(responseDeparture)))
@@ -381,7 +398,8 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
 
       running(application) {
         val request = FakeRequest(GET, routes.DeparturesController.getDepartures().url)
-        val result  = route(application, request).value
+          .withHeaders("channel" -> web.toString)
+        val result = route(application, request).value
 
         status(result) mustEqual OK
         contentAsJson(result) mustEqual Json.toJson(ResponseDepartures(Seq.empty))
@@ -398,7 +416,8 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
 
       running(application) {
         val request = FakeRequest(GET, routes.DeparturesController.getDepartures().url)
-        val result  = route(application, request).value
+          .withHeaders("channel" -> web.toString)
+        val result = route(application, request).value
 
         contentAsString(result) mustBe empty
         status(result) mustEqual INTERNAL_SERVER_ERROR

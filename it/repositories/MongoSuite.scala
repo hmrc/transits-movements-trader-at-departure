@@ -20,7 +20,6 @@ import com.typesafe.config.ConfigFactory
 import org.scalatest._
 import play.api.{Application, Configuration}
 import reactivemongo.api._
-//import repositories.ArrivalMovementRepository
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future

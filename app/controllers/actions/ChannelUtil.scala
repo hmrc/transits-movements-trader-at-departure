@@ -14,24 +14,19 @@
  * limitations under the License.
  */
 
-package models.request
+package controllers.actions
 
 import models.ChannelType
 import models.ChannelType.api
 import models.ChannelType.web
 import play.api.mvc.Request
-import play.api.mvc.WrappedRequest
 
-trait ChannelOptionalRequest[A] extends WrappedRequest[A] {
+private[actions] object ChannelUtil {
 
-  def getChannel: ChannelType = ChannelUtil.getChannel(this)
-}
-
-object ChannelUtil {
-
-  def getChannel[A](request: Request[A]): ChannelType =
+  def getChannel[A](request: Request[A]): Option[ChannelType] =
     request.headers.get("channel") match {
-      case Some(channel) if channel.equals(api.toString) => api
-      case _                                             => web
+      case Some(channel) if channel.equals(api.toString) => Some(api)
+      case Some(channel) if channel.equals(web.toString) => Some(web)
+      case _                                             => None
     }
 }

@@ -37,7 +37,7 @@ class AuditService @Inject()(auditConnector: AuditConnector, jsonHelper: JsonHel
     auditConnector.sendExplicitAudit(auditType.toString(), Json.toJson(details))
   }
 
-  def auditNCTSMessages(departure: Departure, messageResponse: MessageResponse, xmlRequestBody: NodeSeq)(implicit hc: HeaderCarrier): Unit = {
+  def auditNCTSMessages(channel: ChannelType, messageResponse: MessageResponse, xmlRequestBody: NodeSeq)(implicit hc: HeaderCarrier): Unit = {
     val auditType: AuditType = messageResponse match {
       case PositiveAcknowledgementResponse     => PositiveAcknowledgementReceived
       case MrnAllocatedResponse                => MrnAllocatedReceived
@@ -49,7 +49,7 @@ class AuditService @Inject()(auditConnector: AuditConnector, jsonHelper: JsonHel
       case WriteOffNotificationResponse        => WriteOffNotificationReceived
       case GuaranteeNotValidResponse           => GuaranteeNotValidReceived
     }
-    auditEvent(auditType, xmlRequestBody, departure.channel)
+    auditEvent(auditType, xmlRequestBody, channel)
   }
 
 }
