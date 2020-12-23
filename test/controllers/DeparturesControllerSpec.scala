@@ -19,17 +19,15 @@ package controllers
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
-
 import audit.AuditService
 import audit.AuditType.DepartureDeclarationSubmitted
+import audit.AuditType.MesSenMES3Added
 import base.SpecBase
 import cats.data.NonEmptyList
-import controllers.actions.AuthenticateGetOptionalDepartureForWriteActionProvider
-import controllers.actions.FakeAuthenticatedGetOptionalDepartureForWriteActionProvider
 import generators.ModelGenerators
-import models.MessageStatus.SubmissionFailed
+import models.ChannelType.api
+import models.ChannelType.web
 import models.MessageStatus.SubmissionPending
-import models.MessageStatus.SubmissionSucceeded
 import models.SubmissionProcessingResult.SubmissionFailureExternal
 import models.SubmissionProcessingResult.SubmissionFailureInternal
 import models.SubmissionProcessingResult.SubmissionSuccess
@@ -43,7 +41,6 @@ import models.DepartureId
 import models.DepartureStatus
 import models.MessageType
 import models.MessageWithStatus
-import models.SubmissionProcessingResult
 import org.scalacheck.Arbitrary
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalatest.BeforeAndAfterEach
@@ -93,14 +90,15 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
 
   val initializedDeparture = Departure(
     departureId = newDepartureId,
+    channel = api,
     eoriNumber = "eori",
     movementReferenceNumber = None,
-    referenceNumber = "referenceNumber",
     status = DepartureStatus.Initialized,
     created = localDateTime,
     updated = localDateTime,
     nextMessageCorrelationId = message.messageCorrelationId + 1,
-    messages = NonEmptyList.one(message)
+    messages = NonEmptyList.one(message),
+    referenceNumber = "referenceNumber"
   )
 
   "/POST" - {
@@ -121,21 +119,23 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
             bind[DepartureIdRepository].toInstance(mockDepartureIdRepository),
             bind[SubmitMessageService].toInstance(mockSubmitMessageService),
             bind[DepartureRepository].toInstance(mockDepartureRepository),
-            bind[AuthenticateGetOptionalDepartureForWriteActionProvider].toInstance(FakeAuthenticatedGetOptionalDepartureForWriteActionProvider()),
             bind[AuditService].toInstance(mockAuditService)
           )
           .build()
 
         running(application) {
 
-          val request = FakeRequest(POST, routes.DeparturesController.post().url).withXmlBody(requestXmlBody)
+          val request = FakeRequest(POST, routes.DeparturesController.post().url)
+            .withHeaders("channel" -> initializedDeparture.channel.toString)
+            .withXmlBody(requestXmlBody)
 
           val result = route(application, request).value
 
           contentAsString(result) mustBe empty
           status(result) mustEqual ACCEPTED
           verify(mockSubmitMessageService, times(1)).submitDeparture(any())(any())
-          verify(mockAuditService, times(1)).auditEvent(eqTo(DepartureDeclarationSubmitted), any())(any())
+          verify(mockAuditService, times(1)).auditEvent(eqTo(DepartureDeclarationSubmitted), any(), any())(any())
+          verify(mockAuditService, times(1)).auditEvent(eqTo(MesSenMES3Added), any(), any())(any())
           header("Location", result).get must be(routes.DeparturesController.get(initializedDeparture.departureId).url)
         }
       }
@@ -148,13 +148,14 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
         val application = baseApplicationBuilder
           .overrides(
             bind[DepartureIdRepository].toInstance(mockDepartureIdRepository),
-            bind[AuthenticateGetOptionalDepartureForWriteActionProvider].toInstance(FakeAuthenticatedGetOptionalDepartureForWriteActionProvider())
           )
           .build()
 
         running(application) {
 
-          val request = FakeRequest(POST, routes.DeparturesController.post().url).withXmlBody(requestXmlBody)
+          val request = FakeRequest(POST, routes.DeparturesController.post().url)
+            .withHeaders("channel" -> web.toString)
+            .withXmlBody(requestXmlBody)
 
           val result = route(application, request).value
 
@@ -176,13 +177,14 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
           .overrides(
             bind[DepartureIdRepository].toInstance(mockDepartureIdRepository),
             bind[SubmitMessageService].toInstance(mockSubmitMessageService),
-            bind[AuthenticateGetOptionalDepartureForWriteActionProvider].toInstance(FakeAuthenticatedGetOptionalDepartureForWriteActionProvider())
           )
           .build()
 
         running(application) {
 
-          val request = FakeRequest(POST, routes.DeparturesController.post().url).withXmlBody(requestXmlBody)
+          val request = FakeRequest(POST, routes.DeparturesController.post().url)
+            .withHeaders("channel" -> web.toString)
+            .withXmlBody(requestXmlBody)
 
           val result = route(application, request).value
 
@@ -205,13 +207,14 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
           .overrides(
             bind[DepartureIdRepository].toInstance(mockDepartureIdRepository),
             bind[SubmitMessageService].toInstance(mockSubmitMessageService),
-            bind[AuthenticateGetOptionalDepartureForWriteActionProvider].toInstance(FakeAuthenticatedGetOptionalDepartureForWriteActionProvider())
           )
           .build()
 
         running(application) {
 
-          val request = FakeRequest(POST, routes.DeparturesController.post().url).withXmlBody(requestXmlBody)
+          val request = FakeRequest(POST, routes.DeparturesController.post().url)
+            .withHeaders("channel" -> web.toString)
+            .withXmlBody(requestXmlBody)
 
           val result = route(application, request).value
 
@@ -232,7 +235,6 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
             .overrides(
               bind[DepartureIdRepository].toInstance(mockDepartureIdRepository),
               bind[SubmitMessageService].toInstance(mockSubmitMessageService),
-              bind[AuthenticateGetOptionalDepartureForWriteActionProvider].toInstance(FakeAuthenticatedGetOptionalDepartureForWriteActionProvider()),
             )
             .build()
 
@@ -240,7 +242,9 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
           val requestXmlBody =
             <CC015B></CC015B>
 
-          val request = FakeRequest(POST, routes.DeparturesController.post().url).withXmlBody(requestXmlBody)
+          val request = FakeRequest(POST, routes.DeparturesController.post().url)
+            .withHeaders("channel" -> web.toString)
+            .withXmlBody(requestXmlBody)
 
           val result = route(application, request).value
 
@@ -259,194 +263,21 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
           baseApplicationBuilder
             .overrides(
               bind[DepartureIdRepository].toInstance(mockDepartureIdRepository),
-              bind[AuthenticateGetOptionalDepartureForWriteActionProvider].toInstance(FakeAuthenticatedGetOptionalDepartureForWriteActionProvider())
             )
             .build()
 
         running(application) {
           val requestXmlBody = <InvalidRootNode></InvalidRootNode>
 
-          val request = FakeRequest(POST, routes.DeparturesController.post().url).withXmlBody(requestXmlBody)
+          val request = FakeRequest(POST, routes.DeparturesController.post().url)
+            .withHeaders("channel" -> web.toString)
+            .withXmlBody(requestXmlBody)
 
           val result = route(application, request).value
 
           contentAsString(result) mustEqual "The root element name does not match 'CC015B'"
           status(result) mustEqual BAD_REQUEST
           header("Location", result) must not be (defined)
-        }
-      }
-    }
-
-    "when there has been a previous failed attempt to submit" - {
-
-      val failedToSubmit007       = message.copy(status = SubmissionFailed)
-      val failedToSubmitDeparture = initializedDeparture.copy(messages = NonEmptyList.one(failedToSubmit007))
-
-      "must return Accepted when submitted to upstream against the existing departure" in {
-        val mockDepartureRepository  = mock[DepartureRepository]
-        val mockSubmitMessageService = mock[SubmitMessageService]
-        val mockAuditService         = mock[AuditService]
-
-        when(mockSubmitMessageService.submitMessage(any(), any(), any(), any())(any())).thenReturn(Future.successful(SubmissionSuccess))
-
-        val application = baseApplicationBuilder
-          .overrides(
-            bind[SubmitMessageService].toInstance(mockSubmitMessageService),
-            bind[DepartureRepository].toInstance(mockDepartureRepository),
-            bind[AuthenticateGetOptionalDepartureForWriteActionProvider].toInstance(
-              FakeAuthenticatedGetOptionalDepartureForWriteActionProvider(failedToSubmitDeparture)),
-            bind[AuditService].toInstance(mockAuditService)
-          )
-          .build()
-
-        running(application) {
-
-          val request = FakeRequest(POST, routes.DeparturesController.post().url).withXmlBody(requestXmlBody)
-
-          val result = route(application, request).value
-
-          contentAsString(result) mustBe empty
-          status(result) mustEqual ACCEPTED
-          verify(mockSubmitMessageService, times(1)).submitMessage(any(), any(), any(), any())(any())
-          verify(mockAuditService, times(1)).auditEvent(eqTo(DepartureDeclarationSubmitted), any())(any())
-          header("Location", result).get must be(routes.DeparturesController.get(failedToSubmitDeparture.departureId).url)
-        }
-      }
-
-      "must return Accepted when saved as a new departure declaration when there has been a successful message in an older one" in {
-        val messages = NonEmptyList.of(
-          message.copy(status = SubmissionPending, messageCorrelationId = 1),
-          message.copy(status = SubmissionFailed, messageCorrelationId = 2),
-          message.copy(status = SubmissionSucceeded, messageCorrelationId = 3)
-        )
-        val departure = initializedDeparture.copy(messages = messages, nextMessageCorrelationId = 4)
-
-        val expectedDeparture = initializedDeparture.copy(messages = NonEmptyList.of(message))
-
-        val mockSubmitMessageService  = mock[SubmitMessageService]
-        val mockAuditService          = mock[AuditService]
-        val mockDepartureIdRepository = mock[DepartureIdRepository]
-
-        when(mockSubmitMessageService.submitDeparture(any())(any()))
-          .thenReturn(Future.successful(SubmissionProcessingResult.SubmissionSuccess))
-
-        when(mockDepartureIdRepository.nextId()).thenReturn(Future.successful(expectedDeparture.departureId))
-
-        val application = baseApplicationBuilder
-          .overrides(
-            bind[SubmitMessageService].toInstance(mockSubmitMessageService),
-            bind[DepartureIdRepository].toInstance(mockDepartureIdRepository),
-            bind[AuthenticateGetOptionalDepartureForWriteActionProvider].toInstance(FakeAuthenticatedGetOptionalDepartureForWriteActionProvider(departure)),
-            bind[AuditService].toInstance(mockAuditService)
-          )
-          .build()
-
-        running(application) {
-
-          val request = FakeRequest(POST, routes.DeparturesController.post().url).withXmlBody(requestXmlBody)
-
-          val result = route(application, request).value
-
-          contentAsString(result) mustBe empty
-          status(result) mustEqual ACCEPTED
-          header("Location", result).value must be(routes.DeparturesController.get(expectedDeparture.departureId).url)
-          verify(mockSubmitMessageService, times(1)).submitDeparture(any())(any())
-          verify(mockAuditService, times(1)).auditEvent(eqTo(DepartureDeclarationSubmitted), any())(any())
-        }
-      }
-
-      "must return InternalServerError if there was an internal failure when saving and sending" in {
-        val mockSubmitMessageService = mock[SubmitMessageService]
-
-        when(mockSubmitMessageService.submitMessage(any(), any(), any(), any())(any()))
-          .thenReturn(Future.successful(SubmissionProcessingResult.SubmissionFailureInternal))
-
-        val application = baseApplicationBuilder
-          .overrides(
-            bind[SubmitMessageService].toInstance(mockSubmitMessageService),
-            bind[AuthenticateGetOptionalDepartureForWriteActionProvider].toInstance(
-              FakeAuthenticatedGetOptionalDepartureForWriteActionProvider(initializedDeparture))
-          )
-          .build()
-
-        running(application) {
-
-          val request = FakeRequest(POST, routes.DeparturesController.post().url).withXmlBody(requestXmlBody)
-
-          val result = route(application, request).value
-
-          contentAsString(result) mustBe empty
-          status(result) mustEqual INTERNAL_SERVER_ERROR
-
-        }
-      }
-
-      "must return BadGateway if there was an external failure when saving and sending" in {
-        val mockSubmitMessageService = mock[SubmitMessageService]
-
-        when(mockSubmitMessageService.submitMessage(any(), any(), any(), any())(any()))
-          .thenReturn(Future.successful(SubmissionProcessingResult.SubmissionFailureExternal))
-
-        val app = baseApplicationBuilder
-          .overrides(
-            bind[SubmitMessageService].toInstance(mockSubmitMessageService),
-            bind[AuthenticateGetOptionalDepartureForWriteActionProvider].toInstance(
-              FakeAuthenticatedGetOptionalDepartureForWriteActionProvider(initializedDeparture))
-          )
-          .build()
-
-        running(app) {
-
-          val request = FakeRequest(POST, routes.DeparturesController.post().url).withXmlBody(requestXmlBody)
-
-          val result = route(app, request).value
-
-          contentAsString(result) mustBe empty
-          status(result) mustEqual BAD_GATEWAY
-        }
-      }
-
-      "must return BadRequest if the payload is malformed" in {
-        val departure = Arbitrary.arbitrary[Departure].sample.value.copy(eoriNumber = "eori")
-
-        val application =
-          baseApplicationBuilder
-            .overrides(
-              bind[AuthenticateGetOptionalDepartureForWriteActionProvider].toInstance(FakeAuthenticatedGetOptionalDepartureForWriteActionProvider(departure))
-            )
-            .build()
-
-        running(application) {
-          val requestXmlBody = <CC015B><HEAHEA></HEAHEA></CC015B>
-
-          val request = FakeRequest(POST, routes.DeparturesController.post().url).withXmlBody(requestXmlBody)
-
-          val result = route(application, request).value
-
-          contentAsString(result) mustEqual "The value of element 'DatOfPreMES9' is not valid with respect to pattern 'yyyyMMdd'"
-          status(result) mustEqual BAD_REQUEST
-        }
-      }
-
-      "must return BadRequest if the message is not a departure declaration" in {
-        val application =
-          baseApplicationBuilder
-            .overrides(
-              bind[AuthenticateGetOptionalDepartureForWriteActionProvider].toInstance(
-                FakeAuthenticatedGetOptionalDepartureForWriteActionProvider(initializedDeparture))
-            )
-            .build()
-
-        running(application) {
-
-          val requestXmlBody = <InvalidRootNode></InvalidRootNode>
-
-          val request = FakeRequest(POST, routes.DeparturesController.post().url).withXmlBody(requestXmlBody)
-
-          val result = route(application, request).value
-
-          contentAsString(result) mustEqual "The root element name does not match 'CC015B'"
-          status(result) mustEqual BAD_REQUEST
         }
       }
     }
@@ -462,10 +293,11 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
         .build()
 
       val departure = Arbitrary.arbitrary[Departure].sample.value.copy(eoriNumber = "eori")
-      when(mockDepartureRepository.get(any())).thenReturn(Future.successful(Some(departure)))
+      when(mockDepartureRepository.get(any(), any())).thenReturn(Future.successful(Some(departure)))
 
       running(application) {
         val request = FakeRequest(GET, routes.DeparturesController.get(DepartureId(1)).url)
+          .withHeaders("channel" -> departure.channel.toString)
 
         val result = route(application, request).value
 
@@ -481,11 +313,12 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
         .overrides(bind[DepartureRepository].toInstance(mockDepartureRepository))
         .build()
 
-      when(mockDepartureRepository.get(any())).thenReturn(Future.successful(None))
+      when(mockDepartureRepository.get(any(), any())).thenReturn(Future.successful(None))
 
       running(application) {
         val request = FakeRequest(GET, routes.DeparturesController.get(DepartureId(1)).url)
-        val result  = route(application, request).value
+          .withHeaders("channel" -> web.toString)
+        val result = route(application, request).value
 
         contentAsString(result) mustBe empty
         status(result) mustEqual NOT_FOUND
@@ -500,11 +333,12 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
         .build()
 
       val departure = Arbitrary.arbitrary[Departure].sample.value.copy(eoriNumber = "eori2")
-      when(mockDepartureRepository.get(any())).thenReturn(Future.successful(Some(departure)))
+      when(mockDepartureRepository.get(any(), any())).thenReturn(Future.successful(Some(departure)))
 
       running(application) {
         val request = FakeRequest(GET, routes.DeparturesController.get(DepartureId(1)).url)
-        val result  = route(application, request).value
+          .withHeaders("channel" -> departure.channel.toString)
+        val result = route(application, request).value
 
         contentAsString(result) mustBe empty
         status(result) mustEqual NOT_FOUND
@@ -514,7 +348,7 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
     "must return an INTERNAL_SERVER_ERROR when we cannot retrieve the departure" in {
       val mockDepartureRepository = mock[DepartureRepository]
 
-      when(mockDepartureRepository.get(any()))
+      when(mockDepartureRepository.get(any(), any()))
         .thenReturn(Future.failed(new Exception))
 
       val application = baseApplicationBuilder
@@ -523,7 +357,8 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
 
       running(application) {
         val request = FakeRequest(GET, routes.DeparturesController.get(DepartureId(1)).url)
-        val result  = route(application, request).value
+          .withHeaders("channel" -> web.toString)
+        val result = route(application, request).value
 
         status(result) mustEqual INTERNAL_SERVER_ERROR
       }
@@ -536,7 +371,7 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
       val departure         = Arbitrary.arbitrary[Departure].sample.value.copy(eoriNumber = "eori")
       val responseDeparture = ResponseDeparture.build(departure)
 
-      when(mockDepartureRepository.fetchAllDepartures(any())).thenReturn(Future.successful(Seq(departure)))
+      when(mockDepartureRepository.fetchAllDepartures(any(), any())).thenReturn(Future.successful(Seq(departure)))
 
       val application = baseApplicationBuilder
         .overrides(bind[DepartureRepository].toInstance(mockDepartureRepository))
@@ -544,7 +379,8 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
 
       running(application) {
         val request = FakeRequest(GET, routes.DeparturesController.getDepartures().url)
-        val result  = route(application, request).value
+          .withHeaders("channel" -> departure.channel.toString)
+        val result = route(application, request).value
 
         status(result) mustEqual OK
         contentAsJson(result) mustEqual Json.toJson(ResponseDepartures(Seq(responseDeparture)))
@@ -554,7 +390,7 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
     "must return empty sequence when there are no departures in database" in {
       val mockDepartureRepository = mock[DepartureRepository]
 
-      when(mockDepartureRepository.fetchAllDepartures(any())).thenReturn(Future.successful(Seq.empty))
+      when(mockDepartureRepository.fetchAllDepartures(any(), any())).thenReturn(Future.successful(Seq.empty))
 
       val application = baseApplicationBuilder
         .overrides(bind[DepartureRepository].toInstance(mockDepartureRepository))
@@ -562,7 +398,8 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
 
       running(application) {
         val request = FakeRequest(GET, routes.DeparturesController.getDepartures().url)
-        val result  = route(application, request).value
+          .withHeaders("channel" -> web.toString)
+        val result = route(application, request).value
 
         status(result) mustEqual OK
         contentAsJson(result) mustEqual Json.toJson(ResponseDepartures(Seq.empty))
@@ -571,7 +408,7 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
     "must return INTERNAL_SERVER_ERROR when we cannot retrieve departures" in {
       val mockDepartureRepository = mock[DepartureRepository]
 
-      when(mockDepartureRepository.fetchAllDepartures(any())).thenReturn(Future.failed(new Exception))
+      when(mockDepartureRepository.fetchAllDepartures(any(), any())).thenReturn(Future.failed(new Exception))
 
       val application = baseApplicationBuilder
         .overrides(bind[DepartureRepository].toInstance(mockDepartureRepository))
@@ -579,7 +416,8 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
 
       running(application) {
         val request = FakeRequest(GET, routes.DeparturesController.getDepartures().url)
-        val result  = route(application, request).value
+          .withHeaders("channel" -> web.toString)
+        val result = route(application, request).value
 
         contentAsString(result) mustBe empty
         status(result) mustEqual INTERNAL_SERVER_ERROR

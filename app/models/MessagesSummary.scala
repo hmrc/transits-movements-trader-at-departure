@@ -18,20 +18,36 @@ package models
 
 import play.api.libs.json._
 
-case class MessagesSummary(departure: Departure, declaration: MessageId, declarationRejection: Option[MessageId] = None, mrnAllocated: Option[MessageId] = None)
+case class MessagesSummary(departure: Departure,
+                           declaration: MessageId,
+                           declarationRejection: Option[MessageId] = None,
+                           mrnAllocated: Option[MessageId] = None,
+                           guaranteeNotValid: Option[MessageId] = None,
+                           cancellationDecision: Option[MessageId] = None,
+                           declarationCancellationRequest: Option[MessageId] = None)
 
 object MessagesSummary {
 
   implicit val writes: OWrites[MessagesSummary] =
     OWrites[MessagesSummary] {
-      case MessagesSummary(departure, declaration, declarationRejection, mrnAllocated) =>
+      case MessagesSummary(departure,
+                           declaration,
+                           declarationRejection,
+                           mrnAllocated,
+                           guaranteeNotValidId,
+                           cancellationDecision,
+                           declarationCancellationRequest) =>
         Json
           .obj(
             "departureId" -> departure.departureId,
             "messages" -> Json.obj(
               MessageType.DepartureDeclaration.code -> controllers.routes.MessagesController.getMessage(departure.departureId, declaration).url,
               MessageType.DeclarationRejected.code  -> declarationRejection.map(controllers.routes.MessagesController.getMessage(departure.departureId, _).url),
-              MessageType.MrnAllocated.code         -> mrnAllocated.map(controllers.routes.MessagesController.getMessage(departure.departureId, _).url)
+              MessageType.MrnAllocated.code         -> mrnAllocated.map(controllers.routes.MessagesController.getMessage(departure.departureId, _).url),
+              MessageType.GuaranteeNotValid.code    -> guaranteeNotValidId.map(controllers.routes.MessagesController.getMessage(departure.departureId, _).url),
+              MessageType.CancellationDecision.code -> cancellationDecision.map(controllers.routes.MessagesController.getMessage(departure.departureId, _).url),
+              MessageType.DeclarationCancellationRequest.code -> declarationCancellationRequest.map(
+                controllers.routes.MessagesController.getMessage(departure.departureId, _).url)
             )
           )
           .filterNulls

@@ -17,8 +17,11 @@
 package services
 import cats.data.NonEmptyList
 import cats.data.Reader
+import models.MessageType.CancellationDecision
+import models.MessageType.DeclarationCancellationRequest
 import models.MessageType.DeclarationRejected
 import models.MessageType.DepartureDeclaration
+import models.MessageType.GuaranteeNotValid
 import models.MessageType.MrnAllocated
 import models.MessagesSummary
 import models._
@@ -29,12 +32,20 @@ class MessageSummaryService {
 
   def messagesSummary(departure: Departure): MessagesSummary =
     (for {
-      declaration          <- declarationMessage
-      declarationRejection <- declarationRejectionMessage
-      mrnAllocated         <- mrnAllocatedMessage
+      declaration                    <- declarationMessage
+      declarationRejection           <- declarationRejectionMessage
+      mrnAllocated                   <- mrnAllocatedMessage
+      guaranteeNotValid              <- guaranteeNotValidRejectionMessage
+      cancellationDecision           <- cancellationDecisionMessage
+      declarationCancellationRequest <- declarationCancellationRequestMessage
       //TODO: Other messages need adding
     } yield {
-      MessagesSummary(departure, declaration._2, declarationRejection.map(_._2), mrnAllocated.map(_._2))
+      MessagesSummary(departure,
+                      declaration._2,
+                      declarationRejection.map(_._2),
+                      mrnAllocated.map(_._2),
+                      guaranteeNotValid.map(_._2),
+                      cancellationDecision.map(_._2))
     }).run(departure)
 
   private[services] val declarationMessage: Reader[Departure, (Message, MessageId)] =
@@ -89,6 +100,45 @@ class MessageSummaryService {
 
         if (rejectionNotificationCount > 0 && departureDeclarationCount(departure.messages) == rejectionNotificationCount)
           Some(rejectionNotifications.maxBy(_._1.messageCorrelationId))
+        else
+          None
+    }
+
+  private[services] val cancellationDecisionMessage: Reader[Departure, Option[(Message, MessageId)]] =
+    Reader[Departure, Option[(Message, MessageId)]] {
+      departure =>
+        val cancellationDecisionNotifications = getLatestMessageWithoutStatus(departure.messagesWithId)(CancellationDecision)
+
+        val cancellationDecisionNotificationCount = cancellationDecisionNotifications.length
+
+        if (cancellationDecisionNotificationCount > 0 && departureDeclarationCount(departure.messages) > 0)
+          Some(cancellationDecisionNotifications.maxBy(_._1.messageCorrelationId))
+        else
+          None
+    }
+
+  private[services] val declarationCancellationRequestMessage: Reader[Departure, Option[(Message, MessageId)]] =
+    Reader[Departure, Option[(Message, MessageId)]] {
+      departure =>
+        val declarationCancellationRequestNotifications = getLatestMessageWithoutStatus(departure.messagesWithId)(DeclarationCancellationRequest)
+
+        val declarationCancellationRequestNotificationCount = declarationCancellationRequestNotifications.length
+
+        if (declarationCancellationRequestNotificationCount > 0 && departureDeclarationCount(departure.messages) > 0)
+          Some(declarationCancellationRequestNotifications.maxBy(_._1.messageCorrelationId))
+        else
+          None
+    }
+
+  private[services] val guaranteeNotValidRejectionMessage: Reader[Departure, Option[(Message, MessageId)]] =
+    Reader[Departure, Option[(Message, MessageId)]] {
+      departure =>
+        val guaranteeNotValidNotifications = getLatestMessageWithoutStatus(departure.messagesWithId)(GuaranteeNotValid)
+
+        val guaranteeNotValidNotificationCount = guaranteeNotValidNotifications.length
+
+        if (guaranteeNotValidNotificationCount > 0 && departureDeclarationCount(departure.messages) == guaranteeNotValidNotificationCount)
+          Some(guaranteeNotValidNotifications.maxBy(_._1.messageCorrelationId))
         else
           None
     }

@@ -41,7 +41,7 @@ class DepartureService @Inject()(departureIdRepository: DepartureIdRepository)(i
       xmlMessage <- updateMesSenMES3(departureId, messageCorrelationId)
     } yield MessageWithStatus(dateTime, messageType, xmlMessage, SubmissionPending, messageCorrelationId)
 
-  def createDeparture(eori: String, nodeSeq: NodeSeq): Future[ParseHandler[Departure]] =
+  def createDeparture(eori: String, nodeSeq: NodeSeq, channelType: ChannelType): Future[ParseHandler[Departure]] =
     departureIdRepository
       .nextId()
       .map {
@@ -54,6 +54,7 @@ class DepartureService @Inject()(departureIdRepository: DepartureIdRepository)(i
           } yield {
             Departure(
               departureId,
+              channelType,
               eori,
               None,
               reference,

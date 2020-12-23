@@ -14,10 +14,17 @@
  * limitations under the License.
  */
 
-package models.request
+package models
 
-import models.ChannelType
-import play.api.mvc.Request
-import play.api.mvc.WrappedRequest
+sealed trait ChannelType
 
-case class AuthenticatedRequest[A](request: Request[A], channel: ChannelType, eoriNumber: String) extends WrappedRequest[A](request)
+object ChannelType extends Enumerable.Implicits {
+  case object web extends ChannelType
+  case object api extends ChannelType
+
+  val values: Seq[ChannelType] = Seq(web, api)
+
+  implicit val enumerable: Enumerable[ChannelType] =
+    Enumerable(values.map(v => v.toString -> v): _*)
+
+}

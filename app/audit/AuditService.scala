@@ -28,16 +28,16 @@ import utils.JsonHelper
 import scala.concurrent.ExecutionContext
 import scala.xml.NodeSeq
 
-class AuditService @Inject()(auditConnector: AuditConnector)(implicit ec: ExecutionContext) {
+class AuditService @Inject()(auditConnector: AuditConnector, jsonHelper: JsonHelper)(implicit ec: ExecutionContext) {
 
-  def auditEvent(auditType: AuditType, xmlRequestBody: NodeSeq)(implicit hc: HeaderCarrier): Unit = {
-    val json: JsObject = JsonHelper.convertXmlToJson(xmlRequestBody.toString())
+  def auditEvent(auditType: AuditType, xmlRequestBody: NodeSeq, channel: ChannelType)(implicit hc: HeaderCarrier): Unit = {
+    val json: JsObject = jsonHelper.convertXmlToJson(xmlRequestBody.toString())
 
-    val details = AuditDetails(json, xmlRequestBody.toString())
+    val details = AuditDetails(channel, json, xmlRequestBody.toString())
     auditConnector.sendExplicitAudit(auditType.toString(), Json.toJson(details))
   }
 
-  def auditNCTSMessages(messageResponse: MessageResponse, xmlRequestBody: NodeSeq)(implicit hc: HeaderCarrier): Unit = {
+  def auditNCTSMessages(channel: ChannelType, messageResponse: MessageResponse, xmlRequestBody: NodeSeq)(implicit hc: HeaderCarrier): Unit = {
     val auditType: AuditType = messageResponse match {
       case PositiveAcknowledgementResponse     => PositiveAcknowledgementReceived
       case MrnAllocatedResponse                => MrnAllocatedReceived
@@ -49,7 +49,7 @@ class AuditService @Inject()(auditConnector: AuditConnector)(implicit ec: Execut
       case WriteOffNotificationResponse        => WriteOffNotificationReceived
       case GuaranteeNotValidResponse           => GuaranteeNotValidReceived
     }
-    auditEvent(auditType, xmlRequestBody)
+    auditEvent(auditType, xmlRequestBody, channel)
   }
 
 }

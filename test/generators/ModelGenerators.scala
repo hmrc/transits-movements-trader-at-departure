@@ -83,10 +83,16 @@ trait ModelGenerators extends BaseGenerators with JavaTimeGenerators {
       Gen.oneOf(DepartureStatus.values)
     }
 
+  implicit lazy val arbitraryChannel: Arbitrary[ChannelType] =
+    Arbitrary {
+      Gen.oneOf(ChannelType.values)
+    }
+
   implicit lazy val arbitraryDeparture: Arbitrary[Departure] =
     Arbitrary {
       for {
         id       <- arbitrary[DepartureId]
+        channel  <- arbitrary[ChannelType]
         eN       <- arbitrary[String]
         mrn      <- arbitrary[MovementReferenceNumber]
         rN       <- arbitrary[String]
@@ -94,7 +100,7 @@ trait ModelGenerators extends BaseGenerators with JavaTimeGenerators {
         created  <- arbitrary[LocalDateTime]
         updated  <- arbitrary[LocalDateTime]
         messages <- nonEmptyListOfMaxLength[MessageWithStatus](2)
-      } yield models.Departure(id, eN, Some(mrn), rN, status, created, updated, messages.length + 1, messages)
+      } yield models.Departure(id, channel, eN, Some(mrn), rN, status, created, updated, messages.length + 1, messages)
     }
 
   implicit lazy val arbitraryFailure: Arbitrary[SubmissionFailure] =

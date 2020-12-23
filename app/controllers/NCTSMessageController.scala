@@ -60,8 +60,9 @@ class NCTSMessageController @Inject()(cc: ControllerComponents,
                   val processingResult = saveMessageService.validateXmlSaveMessageUpdateMrn(xml, messageSender, response, newState, mrn)
                   processingResult map {
                     case SubmissionSuccess =>
-                      auditService.auditNCTSMessages(response, xml)
-                      Ok
+                      auditService.auditNCTSMessages(request.request.departure.channel, response, xml)
+                      Ok.withHeaders(
+                        LOCATION -> routes.MessagesController.getMessage(request.request.departure.departureId, request.request.departure.nextMessageId).url)
                     case SubmissionFailureInternal =>
                       val message = "Internal Submission Failure " + processingResult
                       Logger.warn(message)
@@ -76,8 +77,9 @@ class NCTSMessageController @Inject()(cc: ControllerComponents,
               val processingResult = saveMessageService.validateXmlAndSaveMessage(xml, messageSender, response, newState)
               processingResult map {
                 case SubmissionSuccess =>
-                  auditService.auditNCTSMessages(response, xml)
-                  Ok
+                  auditService.auditNCTSMessages(request.request.departure.channel, response, xml)
+                  Ok.withHeaders(
+                    LOCATION -> routes.MessagesController.getMessage(request.request.departure.departureId, request.request.departure.nextMessageId).url)
                 case SubmissionFailureInternal =>
                   val message = "Internal Submission Failure " + processingResult
                   Logger.warn(message)

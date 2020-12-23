@@ -79,8 +79,6 @@ class MessageConnectorSpec
 
         server.stubFor(
           post(urlEqualTo(postUrl))
-            .withHeader("X-Forwarded-Host", equalTo("mdtp"))
-            .withHeader("X-Correlation-ID", headerCarrierPattern)
             .withHeader("Content-Type", equalTo("application/xml"))
             .withHeader("Accept", equalTo("application/xml"))
             .withHeader("X-Message-Type", equalTo(messageType.toString))
@@ -109,8 +107,6 @@ class MessageConnectorSpec
 
         server.stubFor(
           post(urlEqualTo(postUrl))
-            .withHeader("X-Forwarded-Host", equalTo("mdtp"))
-            .withHeader("X-Correlation-ID", headerCarrierPattern)
             .withHeader("Content-Type", equalTo("application/xml"))
             .withHeader("Accept", equalTo("application/xml"))
             .withHeader("X-Message-Type", equalTo(messageType.toString))
@@ -137,12 +133,6 @@ class MessageConnectorSpec
 }
 
 object MessageConnectorSpec {
-
-  private def headerCarrierPattern()(implicit headerCarrier: HeaderCarrier): StringValuePattern =
-    headerCarrier.sessionId match {
-      case Some(_) => equalTo("sessionId")
-      case _       => matching("""\b[0-9a-f]{8}\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-\b[0-9a-f]{12}\b""")
-    }
 
   private val postUrl                        = "/movements/messages"
   private val genFailedStatusCodes: Gen[Int] = Gen.choose(400, 599)

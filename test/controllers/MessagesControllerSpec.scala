@@ -19,13 +19,14 @@ package controllers
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
-
 import audit.AuditService
 import audit.AuditType._
 import base.SpecBase
 import cats.data.NonEmptyList
 import connectors.MessageConnector
 import generators.ModelGenerators
+import models.ChannelType.api
+import models.ChannelType.web
 import models.MessageStatus.SubmissionFailed
 import models.MessageStatus.SubmissionPending
 import models.MessageStatus.SubmissionSucceeded
@@ -114,6 +115,7 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
   } yield {
     departure.copy(
       departureId,
+      api,
       "eori",
       Some(mrn),
       "ref",
@@ -137,7 +139,7 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
 
       when(mockLockRepository.lock(any())).thenReturn(Future.successful(true))
       when(mockLockRepository.unlock(any())).thenReturn(Future.successful(()))
-      when(mockDepartureRepository.get(any())).thenReturn(Future.successful(Some(departure)))
+      when(mockDepartureRepository.get(any(), any())).thenReturn(Future.successful(Some(departure)))
 
       when(mockSubmitMessageService.submitMessage(any(), any(), any(), eqTo(DepartureStatus.DeclarationCancellationRequest))(any()))
         .thenReturn(Future.successful(SubmissionProcessingResult.SubmissionSuccess))
@@ -152,8 +154,10 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
         .build()
 
       running(application) {
-        val request = FakeRequest(POST, routes.MessagesController.post(departure.departureId).url).withXmlBody(declarationCancellationRequestXmlBody)
-        val result  = route(application, request).value
+        val request = FakeRequest(POST, routes.MessagesController.post(departure.departureId).url)
+          .withHeaders("channel" -> departure.channel.toString)
+          .withXmlBody(declarationCancellationRequestXmlBody)
+        val result = route(application, request).value
 
         contentAsString(result) mustBe empty
         status(result) mustEqual ACCEPTED
@@ -162,7 +166,7 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
                                                                  eqTo(1),
                                                                  any(),
                                                                  eqTo(DepartureStatus.DeclarationCancellationRequest))(any())
-        verify(mockAuditService, times(1)).auditEvent(eqTo(DepartureCancellationRequestSubmitted), any())(any())
+        verify(mockAuditService, times(1)).auditEvent(eqTo(DepartureCancellationRequestSubmitted), any(), any())(any())
       }
     }
 
@@ -173,7 +177,7 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
 
       when(mockLockRepository.lock(any())).thenReturn(Future.successful(true))
       when(mockLockRepository.unlock(any())).thenReturn(Future.successful(()))
-      when(mockDepartureRepository.get(any())).thenReturn(Future.successful(None))
+      when(mockDepartureRepository.get(any(), any())).thenReturn(Future.successful(None))
 
       val application = baseApplicationBuilder
         .overrides(
@@ -184,7 +188,9 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
         .build()
 
       running(application) {
-        val request = FakeRequest(POST, routes.MessagesController.post(DepartureId(1)).url).withXmlBody(declarationCancellationRequestXmlBody)
+        val request = FakeRequest(POST, routes.MessagesController.post(DepartureId(1)).url)
+          .withHeaders("channel" -> web.toString)
+          .withXmlBody(declarationCancellationRequestXmlBody)
 
         val result = route(application, request).value
 
@@ -200,7 +206,7 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
 
       when(mockLockRepository.lock(any())).thenReturn(Future.successful(true))
       when(mockLockRepository.unlock(any())).thenReturn(Future.successful(()))
-      when(mockDepartureRepository.get(any())).thenReturn(Future.successful(Some(departure)))
+      when(mockDepartureRepository.get(any(), any())).thenReturn(Future.successful(Some(departure)))
 
       when(mockSubmitMessageService.submitMessage(any(), any(), any(), any())(any()))
         .thenReturn(Future.successful(SubmissionProcessingResult.SubmissionFailureInternal))
@@ -214,7 +220,9 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
         .build()
 
       running(application) {
-        val request = FakeRequest(POST, routes.MessagesController.post(departure.departureId).url).withXmlBody(declarationCancellationRequestXmlBody)
+        val request = FakeRequest(POST, routes.MessagesController.post(departure.departureId).url)
+          .withHeaders("channel" -> departure.channel.toString)
+          .withXmlBody(declarationCancellationRequestXmlBody)
 
         val result = route(application, request).value
 
@@ -229,7 +237,7 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
 
       when(mockLockRepository.lock(any())).thenReturn(Future.successful(true))
       when(mockLockRepository.unlock(any())).thenReturn(Future.successful(()))
-      when(mockDepartureRepository.get(any())).thenReturn(Future.successful(Some(departure)))
+      when(mockDepartureRepository.get(any(), any())).thenReturn(Future.successful(Some(departure)))
 
       val application =
         baseApplicationBuilder
@@ -242,7 +250,9 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
       running(application) {
         val requestXmlBody = <CC014A><HEAHEA></HEAHEA></CC014A>
 
-        val request = FakeRequest(POST, routes.MessagesController.post(departure.departureId).url).withXmlBody(requestXmlBody)
+        val request = FakeRequest(POST, routes.MessagesController.post(departure.departureId).url)
+          .withHeaders("channel" -> departure.channel.toString)
+          .withXmlBody(requestXmlBody)
 
         val result = route(application, request).value
 
@@ -258,7 +268,7 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
 
       when(mockLockRepository.lock(any())).thenReturn(Future.successful(true))
       when(mockLockRepository.unlock(any())).thenReturn(Future.successful(()))
-      when(mockDepartureRepository.get(any())).thenReturn(Future.successful(Some(departure)))
+      when(mockDepartureRepository.get(any(), any())).thenReturn(Future.successful(Some(departure)))
 
       val application =
         baseApplicationBuilder
@@ -272,7 +282,9 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
       running(application) {
         val requestXmlBody = <CC099A><HEAHEA></HEAHEA></CC099A>
 
-        val request = FakeRequest(POST, routes.MessagesController.post(departure.departureId).url).withXmlBody(requestXmlBody)
+        val request = FakeRequest(POST, routes.MessagesController.post(departure.departureId).url)
+          .withHeaders("channel" -> departure.channel.toString)
+          .withXmlBody(requestXmlBody)
 
         val result = route(application, request).value
 
@@ -288,7 +300,7 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
 
       when(mockLockRepository.lock(any())).thenReturn(Future.successful(true))
       when(mockLockRepository.unlock(any())).thenReturn(Future.successful(()))
-      when(mockDepartureRepository.get(any())).thenReturn(Future.successful(Some(departure)))
+      when(mockDepartureRepository.get(any(), any())).thenReturn(Future.successful(Some(departure)))
 
       when(mockSubmitMessageService.submitMessage(any(), any(), any(), any())(any()))
         .thenReturn(Future.successful(SubmissionProcessingResult.SubmissionFailureExternal))
@@ -302,7 +314,9 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
         .build()
 
       running(application) {
-        val request = FakeRequest(POST, routes.MessagesController.post(departure.departureId).url).withXmlBody(declarationCancellationRequestXmlBody)
+        val request = FakeRequest(POST, routes.MessagesController.post(departure.departureId).url)
+          .withHeaders("channel" -> departure.channel.toString)
+          .withXmlBody(declarationCancellationRequestXmlBody)
 
         val result = route(application, request).value
 
@@ -321,7 +335,7 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
         val departure = Arbitrary.arbitrary[Departure].sample.value.copy(messages = NonEmptyList.one(message), eoriNumber = "eori")
 
         val mockDepartureRepository = mock[DepartureRepository]
-        when(mockDepartureRepository.get(any()))
+        when(mockDepartureRepository.get(any(), any()))
           .thenReturn(Future.successful(Some(departure)))
 
         val application =
@@ -331,7 +345,8 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
 
         running(application) {
           lazy val request = FakeRequest(GET, routes.MessagesController.getMessages(departure.departureId).url)
-          val result       = route(application, request).value
+            .withHeaders("channel" -> departure.channel.toString)
+          val result = route(application, request).value
 
           status(result) mustEqual OK
 
@@ -351,7 +366,7 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
         val expectedDeparture = ResponseDepartureWithMessages.build(departure).copy(messages = Seq(expectedMessages))
 
         val mockDepartureRepository = mock[DepartureRepository]
-        when(mockDepartureRepository.get(any()))
+        when(mockDepartureRepository.get(any(), any()))
           .thenReturn(Future.successful(Some(departure)))
 
         val application =
@@ -361,7 +376,8 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
 
         running(application) {
           val request = FakeRequest(GET, routes.MessagesController.getMessages(departure.departureId).url)
-          val result  = route(application, request).value
+            .withHeaders("channel" -> departure.channel.toString)
+          val result = route(application, request).value
 
           status(result) mustEqual OK
           contentAsJson(result) mustEqual Json.toJson(expectedDeparture)
@@ -381,7 +397,7 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
         val expectedDeparture = ResponseDepartureWithMessages.build(departure).copy(messages = Seq(expectedMessage1, expectedMessage3))
 
         val mockDepartureRepository = mock[DepartureRepository]
-        when(mockDepartureRepository.get(any()))
+        when(mockDepartureRepository.get(any(), any()))
           .thenReturn(Future.successful(Some(departure)))
 
         val application =
@@ -391,7 +407,8 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
 
         running(application) {
           val request = FakeRequest(GET, routes.MessagesController.getMessages(departure.departureId).url)
-          val result  = route(application, request).value
+            .withHeaders("channel" -> departure.channel.toString)
+          val result = route(application, request).value
 
           status(result) mustEqual OK
           contentAsJson(result) mustEqual Json.toJson(expectedDeparture)
@@ -407,7 +424,7 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
         val expectedDeparture = ResponseDepartureWithMessages.build(departure).copy(messages = Nil)
 
         val mockDepartureRepository = mock[DepartureRepository]
-        when(mockDepartureRepository.get(any()))
+        when(mockDepartureRepository.get(any(), any()))
           .thenReturn(Future.successful(Some(departure)))
 
         val application =
@@ -417,7 +434,8 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
 
         running(application) {
           val request = FakeRequest(GET, routes.MessagesController.getMessages(departure.departureId).url)
-          val result  = route(application, request).value
+            .withHeaders("channel" -> departure.channel.toString)
+          val result = route(application, request).value
 
           status(result) mustEqual OK
           contentAsJson(result) mustEqual Json.toJson(expectedDeparture)
@@ -428,7 +446,7 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
     "must return NOT FOUND" - {
       "when departure is not found" in {
         val mockDepartureRepository = mock[DepartureRepository]
-        when(mockDepartureRepository.get(any()))
+        when(mockDepartureRepository.get(any(), any()))
           .thenReturn(Future.successful(None))
 
         val application =
@@ -438,7 +456,8 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
 
         running(application) {
           val request = FakeRequest(GET, routes.MessagesController.getMessages(DepartureId(1)).url)
-          val result  = route(application, request).value
+            .withHeaders("channel" -> web.toString)
+          val result = route(application, request).value
 
           contentAsString(result) mustBe empty
           status(result) mustEqual NOT_FOUND
@@ -450,7 +469,7 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
         val departure = Arbitrary.arbitrary[Departure].sample.value.copy(messages = NonEmptyList.of(message), eoriNumber = "eori2")
 
         val mockDepartureRepository = mock[DepartureRepository]
-        when(mockDepartureRepository.get(any()))
+        when(mockDepartureRepository.get(any(), any()))
           .thenReturn(Future.successful(Some(departure)))
 
         val application =
@@ -460,7 +479,8 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
 
         running(application) {
           val request = FakeRequest(GET, routes.MessagesController.getMessages(departure.departureId).url)
-          val result  = route(application, request).value
+            .withHeaders("channel" -> departure.channel.toString)
+          val result = route(application, request).value
 
           contentAsString(result) mustBe empty
           status(result) mustEqual NOT_FOUND
@@ -477,7 +497,7 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
       val departure = Arbitrary.arbitrary[Departure].sample.value.copy(messages = NonEmptyList.one(message), eoriNumber = "eori")
 
       val mockDepartureRepository = mock[DepartureRepository]
-      when(mockDepartureRepository.get(any()))
+      when(mockDepartureRepository.get(any(), any()))
         .thenReturn(Future.successful(Some(departure)))
 
       val application =
@@ -487,7 +507,8 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
 
       running(application) {
         val request = FakeRequest(GET, routes.MessagesController.getMessage(departure.departureId, MessageId.fromIndex(0)).url)
-        val result  = route(application, request).value
+          .withHeaders("channel" -> departure.channel.toString)
+        val result = route(application, request).value
 
         status(result) mustEqual OK
         contentAsJson(result) mustEqual Json.toJson(ResponseMessage.build(departure.departureId, MessageId.fromIndex(0), message))
@@ -499,7 +520,7 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
       val departure = Arbitrary.arbitrary[Departure].sample.value.copy(messages = NonEmptyList.one(message), eoriNumber = "eori")
 
       val mockDepartureRepository = mock[DepartureRepository]
-      when(mockDepartureRepository.get(any()))
+      when(mockDepartureRepository.get(any(), any()))
         .thenReturn(Future.successful(Some(departure)))
 
       val application =
@@ -509,7 +530,8 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
 
       running(application) {
         val request = FakeRequest(GET, routes.MessagesController.getMessage(departure.departureId, MessageId.fromIndex(0)).url)
-        val result  = route(application, request).value
+          .withHeaders("channel" -> departure.channel.toString)
+        val result = route(application, request).value
 
         status(result) mustEqual OK
         contentAsJson(result) mustEqual Json.toJson(ResponseMessage.build(departure.departureId, MessageId.fromIndex(0), message))
@@ -519,7 +541,7 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
     "must return NOT FOUND" - {
       "when departure is not found" in {
         val mockDepartureRepository = mock[DepartureRepository]
-        when(mockDepartureRepository.get(any()))
+        when(mockDepartureRepository.get(any(), any()))
           .thenReturn(Future.successful(None))
 
         val application =
@@ -529,7 +551,8 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
 
         running(application) {
           val request = FakeRequest(GET, routes.MessagesController.getMessage(DepartureId(1), MessageId.fromIndex(0)).url)
-          val result  = route(application, request).value
+            .withHeaders("channel" -> web.toString)
+          val result = route(application, request).value
 
           contentAsString(result) mustBe empty
           status(result) mustEqual NOT_FOUND
@@ -541,7 +564,7 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
         val departure = Arbitrary.arbitrary[Departure].sample.value.copy(messages = NonEmptyList.one(message), eoriNumber = "eori")
 
         val mockDepartureRepository = mock[DepartureRepository]
-        when(mockDepartureRepository.get(any()))
+        when(mockDepartureRepository.get(any(), any()))
           .thenReturn(Future.successful(Some(departure)))
 
         val application =
@@ -551,7 +574,8 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
 
         running(application) {
           val request = FakeRequest(GET, routes.MessagesController.getMessage(departure.departureId, MessageId.fromIndex(5)).url)
-          val result  = route(application, request).value
+            .withHeaders("channel" -> departure.channel.toString)
+          val result = route(application, request).value
 
           contentAsString(result) mustBe empty
           status(result) mustEqual NOT_FOUND
@@ -563,7 +587,7 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
         val departure = Arbitrary.arbitrary[Departure].sample.value.copy(messages = NonEmptyList.one(message), eoriNumber = "eori")
 
         val mockDepartureRepository = mock[DepartureRepository]
-        when(mockDepartureRepository.get(any()))
+        when(mockDepartureRepository.get(any(), any()))
           .thenReturn(Future.successful(Some(departure)))
 
         val application =
@@ -573,7 +597,8 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
 
         running(application) {
           val request = FakeRequest(GET, routes.MessagesController.getMessage(departure.departureId, MessageId.fromIndex(0)).url)
-          val result  = route(application, request).value
+            .withHeaders("channel" -> departure.channel.toString)
+          val result = route(application, request).value
 
           contentAsString(result) mustBe empty
           status(result) mustEqual NOT_FOUND
@@ -585,7 +610,7 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
         val departure = Arbitrary.arbitrary[Departure].sample.value.copy(messages = NonEmptyList.one(message), eoriNumber = "eori2")
 
         val mockDepartureRepository = mock[DepartureRepository]
-        when(mockDepartureRepository.get(any()))
+        when(mockDepartureRepository.get(any(), any()))
           .thenReturn(Future.successful(Some(departure)))
 
         val application =
@@ -595,7 +620,8 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
 
         running(application) {
           val request = FakeRequest(GET, routes.MessagesController.getMessage(departure.departureId, MessageId.fromIndex(0)).url)
-          val result  = route(application, request).value
+            .withHeaders("channel" -> departure.channel.toString)
+          val result = route(application, request).value
 
           contentAsString(result) mustBe empty
           status(result) mustEqual NOT_FOUND

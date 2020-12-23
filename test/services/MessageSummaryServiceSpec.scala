@@ -20,8 +20,11 @@ import cats.data.NonEmptyList
 import generators.ModelGenerators
 import models.MessageStatus.SubmissionPending
 import models.MessageStatus.SubmissionSucceeded
+import models.MessageType.CancellationDecision
+import models.MessageType.DeclarationCancellationRequest
 import models.MessageType.DeclarationRejected
 import models.MessageType.DepartureDeclaration
+import models.MessageType.GuaranteeNotValid
 import models.MessageType.MrnAllocated
 import models._
 import org.scalacheck.Arbitrary.arbitrary
@@ -50,6 +53,9 @@ class MessageSummaryServiceSpec extends SpecBase with ModelGenerators with Scala
   private val ie015Gen = messageGeneratorSent(DepartureDeclaration)
   private val ie016Gen = messageGeneratorResponse(DeclarationRejected)
   private val ie028Gen = messageGeneratorResponse(MrnAllocated)
+  private val ie055Gen = messageGeneratorResponse(GuaranteeNotValid)
+  private val ie009Gen = messageGeneratorResponse(CancellationDecision)
+  private val ie014Gen = messageGeneratorResponse(DeclarationCancellationRequest)
 
   private val service = new MessageSummaryService
 
@@ -215,6 +221,140 @@ class MessageSummaryServiceSpec extends SpecBase with ModelGenerators with Scala
     }
   }
 
+  "guaranteeNotValidMessage" - {
+
+    "must return" - {
+      "None when there are none in the movement" in {
+        forAll(ie015Gen) {
+          ie015 =>
+            forAll(createMovement(NonEmptyList.one(ie015))) {
+              departure =>
+                service.declarationRejectionMessage(departure) must not be defined
+
+            }
+        }
+      }
+
+      "latest IE055 when there is only an IE015 and a IE055" in {
+        forAll(ie015Gen, ie055Gen) {
+          (ie015, ie055) =>
+            forAll(createMovement(NonEmptyList.of(ie015, ie055))) {
+              departure =>
+                val (message, messageId) = service.guaranteeNotValidRejectionMessage(departure).value
+
+                message mustEqual ie055
+                messageId mustEqual MessageId.fromMessageIdValue(2).value
+            }
+        }
+      }
+
+      "None when there has been a guarantee not valid message and correction" in {
+        forAll(ie015Gen.submitted.msgCorrId(1), ie055Gen.msgCorrId(1), ie015Gen.msgCorrId(2)) {
+          case (ie015Old, ie055, ie015) =>
+            val messages = NonEmptyList.of(ie015Old, ie055, ie015)
+
+            forAll(createMovement(messages)) {
+              departure =>
+                service.guaranteeNotValidRejectionMessage(departure) must not be defined
+            }
+        }
+      }
+
+      "IE015 when all IE055 have been rejected" in {
+        forAll(ie015Gen.submitted.msgCorrId(1), ie055Gen.msgCorrId(1), ie015Gen.msgCorrId(2), ie055Gen.msgCorrId(2)) {
+          case (ie015Old, ie055Old, ie015, ie055) =>
+            forAll(createMovement(NonEmptyList.of(ie015Old, ie055Old, ie015, ie055))) {
+              departure =>
+                val (message, messageId) = service.guaranteeNotValidRejectionMessage(departure).value
+
+                message mustEqual ie055
+                messageId mustEqual MessageId.fromMessageIdValue(4).value
+            }
+        }
+      }
+    }
+  }
+
+  "cancellationDecisionMessage" - {
+
+    "must return" - {
+      "None when there are no IE015 in the movement" in {
+        forAll(ie009Gen) {
+          ie009 =>
+            forAll(createMovement(NonEmptyList.one(ie009))) {
+              departure =>
+                service.cancellationDecisionMessage(departure) must not be defined
+            }
+        }
+      }
+
+      "latest IE009 when there is only an IE015 and a IE009" in {
+        forAll(ie015Gen, ie009Gen) {
+          (ie015, ie009) =>
+            forAll(createMovement(NonEmptyList.of(ie015, ie009))) {
+              departure =>
+                val (message, messageId) = service.cancellationDecisionMessage(departure).value
+                message mustEqual ie009
+                messageId mustEqual MessageId.fromMessageIdValue(2).value
+            }
+        }
+      }
+
+      "Get the latest IE009 when there are multiples" in {
+        forAll(ie015Gen.submitted.msgCorrId(1), ie009Gen.msgCorrId(1), ie009Gen.msgCorrId(2)) {
+          case (ie015Old, ie009Old, ie009) =>
+            forAll(createMovement(NonEmptyList.of(ie015Old, ie009Old, ie009))) {
+              departure =>
+                val (message, messageId) = service.cancellationDecisionMessage(departure).value
+
+                message mustEqual ie009
+                messageId mustEqual MessageId.fromMessageIdValue(3).value
+            }
+        }
+      }
+    }
+  }
+
+  "cancellationRequestMessage" - {
+
+    "must return" - {
+      "None when there are no IE015 in the movement" in {
+        forAll(ie014Gen) {
+          ie014 =>
+            forAll(createMovement(NonEmptyList.one(ie014))) {
+              departure =>
+                service.declarationCancellationRequestMessage(departure) must not be defined
+            }
+        }
+      }
+
+      "latest IE014 when there is only an IE015 and a IE014" in {
+        forAll(ie015Gen, ie014Gen) {
+          (ie015, ie014) =>
+            forAll(createMovement(NonEmptyList.of(ie015, ie014))) {
+              departure =>
+                val (message, messageId) = service.declarationCancellationRequestMessage(departure).value
+                message mustEqual ie014
+                messageId mustEqual MessageId.fromMessageIdValue(2).value
+            }
+        }
+      }
+
+      "Get the latest IE014 when there are multiples" in {
+        forAll(ie015Gen.submitted.msgCorrId(1), ie014Gen.msgCorrId(1), ie014Gen.msgCorrId(2)) {
+          case (ie015Old, ie014Old, ie014) =>
+            forAll(createMovement(NonEmptyList.of(ie015Old, ie014Old, ie014))) {
+              departure =>
+                val (message, messageId) = service.declarationCancellationRequestMessage(departure).value
+
+                message mustEqual ie014
+                messageId mustEqual MessageId.fromMessageIdValue(3).value
+            }
+        }
+      }
+    }
+  }
+
   "messagesSummary" - {
 
     "must return" - {
@@ -278,6 +418,21 @@ class MessageSummaryServiceSpec extends SpecBase with ModelGenerators with Scala
               departure =>
                 val expectedMessageSummary =
                   MessagesSummary(departure, MessageId.fromMessageIdValue(1).value, None, MessageId.fromMessageIdValue(2))
+
+                service.messagesSummary(departure) mustEqual expectedMessageSummary
+            }
+        }
+      }
+
+      "IE015 and IE055" in {
+        forAll(ie015Gen.submitted.msgCorrId(1), ie055Gen.msgCorrId(2)) {
+          case (ie015, ie055) =>
+            val messages = NonEmptyList.of(ie015, ie055)
+
+            forAll(createMovement(messages)) {
+              departure =>
+                val expectedMessageSummary =
+                  MessagesSummary(departure, MessageId.fromMessageIdValue(1).value, None, None, MessageId.fromMessageIdValue(2))
 
                 service.messagesSummary(departure) mustEqual expectedMessageSummary
             }

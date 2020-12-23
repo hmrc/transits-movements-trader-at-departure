@@ -66,7 +66,7 @@ object DepartureStatus extends Enumerable.Implicits with MongoDateTimeFormats {
   case object DepartureRejected extends DepartureStatus {
     override def transition(messageReceived: MessageReceivedEvent): Either[TransitionError, DepartureStatus] = messageReceived match {
       case MessageReceivedEvent.DepartureRejected => Right(DepartureRejected)
-      case _                                      => Left(TransitionError(s"The message status failed to transition from 'ArrivalRejected' to '$messageReceived'."))
+      case _                                      => Left(TransitionError(s"The message status failed to transition from 'DepartureRejected' to '$messageReceived'."))
     }
   }
 

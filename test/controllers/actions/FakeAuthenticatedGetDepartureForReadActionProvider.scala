@@ -15,6 +15,7 @@
  */
 
 package controllers.actions
+import models.ChannelType.web
 import models.request.DepartureRequest
 import models.Departure
 import models.DepartureId
@@ -33,7 +34,7 @@ class FakeAuthenticatedGetDepartureForReadActionProvider(departure: Departure) e
 
       override def invokeBlock[A](request: Request[A], block: DepartureRequest[A] => Future[Result]): Future[Result] =
         if (departure.departureId == departureId) {
-          block(DepartureRequest(request, departure))
+          block(DepartureRequest(request, departure, web))
         } else {
           throw new TestFailedException(
             s"Bad test data setup. DepartureId on the Departure was ${departure.departureId} but expected to retrieve $departureId",

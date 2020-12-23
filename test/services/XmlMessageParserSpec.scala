@@ -97,34 +97,6 @@ class XmlMessageParserSpec extends SpecBase with EitherValues {
     }
 
   }
-
-  "referenceR" - {
-    "returns the reference from the DocNumHEA5 node" in {
-      val reference = "ref"
-
-      val message =
-        <CC015B>
-          <HEAHEA>
-            <RefNumHEA4>{reference}</RefNumHEA4>
-          </HEAHEA>
-        </CC015B>
-
-      XmlMessageParser.referenceR(message) mustEqual Right(reference)
-    }
-
-    "returns Left if RefNumHEA4 node is missing" in {
-      val message =
-        <CC015B>
-          <HEAHEA>
-          </HEAHEA>
-        </CC015B>
-
-      val result = XmlMessageParser.referenceR(message)
-      result.isLeft mustBe true
-    }
-
-  }
-
   "correctRootNodeR" - {
     "returns Right if the root node is as expected" in {
 
