@@ -178,6 +178,18 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfi
     }
   }
 
+  def get(departureId: DepartureId): Future[Option[Departure]] = {
+
+    val selector = Json.obj(
+      "_id" -> departureId
+    )
+
+    collection.flatMap {
+      _.find(selector, None)
+        .one[Departure]
+    }
+  }
+
   def get(departureId: DepartureId, channelFilter: ChannelType): Future[Option[Departure]] = {
 
     val selector = Json.obj(

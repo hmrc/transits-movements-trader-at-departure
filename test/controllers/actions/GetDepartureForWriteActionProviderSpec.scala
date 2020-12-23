@@ -75,7 +75,7 @@ class GetDepartureForWriteActionProviderSpec
       val mockDepartureRepository = mock[DepartureRepository]
       val mockLockRepository      = mock[LockRepository]
 
-      when(mockDepartureRepository.get(any(), any())) thenReturn Future.successful(Some(departure))
+      when(mockDepartureRepository.get(any())) thenReturn Future.successful(Some(departure))
       when(mockLockRepository.lock(any())) thenReturn Future.successful(true)
       when(mockLockRepository.unlock(any())) thenReturn Future.successful(())
 
@@ -103,7 +103,7 @@ class GetDepartureForWriteActionProviderSpec
       val mockDepartureRepository = mock[DepartureRepository]
       val mockLockRepository      = mock[LockRepository]
 
-      when(mockDepartureRepository.get(any(), any())) thenReturn Future.successful(None)
+      when(mockDepartureRepository.get(any())) thenReturn Future.successful(None)
       when(mockLockRepository.lock(any())) thenReturn Future.successful(true)
       when(mockLockRepository.unlock(any())) thenReturn Future.successful(())
 
@@ -155,7 +155,7 @@ class GetDepartureForWriteActionProviderSpec
       val mockDepartureRepository = mock[DepartureRepository]
       val mockLockRepository      = mock[LockRepository]
 
-      when(mockDepartureRepository.get(any(), any())) thenReturn Future.successful(Some(departure))
+      when(mockDepartureRepository.get(any())) thenReturn Future.successful(Some(departure))
       when(mockLockRepository.lock(any())) thenReturn Future.successful(true)
       when(mockLockRepository.unlock(any())) thenReturn Future.successful(())
 
@@ -172,44 +172,6 @@ class GetDepartureForWriteActionProviderSpec
 
       status(result) mustEqual INTERNAL_SERVER_ERROR
       verify(mockLockRepository, times(1)).lock(eqTo(departure.departureId))
-    }
-
-    "must return Bad Request if channel header is missing" in {
-
-      val departure = arbitrary[Departure].sample.value
-
-      val application = new GuiceApplicationBuilder()
-        .overrides()
-        .build()
-
-      running(application) {
-        val actionProvider = application.injector.instanceOf[GetDepartureForWriteActionProvider]
-
-        val controller = new Harness(actionProvider)
-        val result     = controller.get(departure.departureId)(fakeRequest.withHeaders(Headers.create()))
-
-        status(result) mustEqual BAD_REQUEST
-        contentAsString(result) mustEqual "Missing channel header or incorrect value specified in channel header"
-      }
-    }
-
-    "must return Bad Request if channel header contains invalid value" in {
-
-      val departure = arbitrary[Departure].sample.value
-
-      val application = new GuiceApplicationBuilder()
-        .overrides()
-        .build()
-
-      running(application) {
-        val actionProvider = application.injector.instanceOf[GetDepartureForWriteActionProvider]
-
-        val controller = new Harness(actionProvider)
-        val result     = controller.get(departure.departureId)(fakeRequest.withHeaders("channel" -> "web2"))
-
-        status(result) mustEqual BAD_REQUEST
-        contentAsString(result) mustEqual "Missing channel header or incorrect value specified in channel header"
-      }
     }
   }
 }
