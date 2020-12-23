@@ -22,6 +22,7 @@ import java.time.LocalTime
 
 import base.SpecBase
 import cats.data.NonEmptyList
+import models.ChannelType.api
 import models.MessageStatus.SubmissionPending
 import models._
 import org.mockito.Mockito.when
@@ -45,11 +46,11 @@ class DepartureServiceSpec extends SpecBase with IntegrationPatience with Stream
       val ref  = "ref"
       val eori = "eoriNumber"
 
-      val mockArrivalIdRepository = mock[DepartureIdRepository]
-      when(mockArrivalIdRepository.nextId).thenReturn(Future.successful(id))
+      val mockDepartureIdRepository = mock[DepartureIdRepository]
+      when(mockDepartureIdRepository.nextId).thenReturn(Future.successful(id))
       val application = baseApplicationBuilder
         .overrides(
-          bind[DepartureIdRepository].toInstance(mockArrivalIdRepository)
+          bind[DepartureIdRepository].toInstance(mockDepartureIdRepository)
         )
         .build()
 
@@ -77,6 +78,7 @@ class DepartureServiceSpec extends SpecBase with IntegrationPatience with Stream
 
       val expectedDeparture = Departure(
         departureId = id,
+        channel = api,
         movementReferenceNumber = None,
         referenceNumber = ref,
         eoriNumber = eori,
@@ -89,7 +91,7 @@ class DepartureServiceSpec extends SpecBase with IntegrationPatience with Stream
         nextMessageCorrelationId = 2
       )
 
-      val result = service.createDeparture(eori, inputMovement).futureValue
+      val result = service.createDeparture(eori, inputMovement, api).futureValue
 
       result.right.get mustEqual expectedDeparture
     }
@@ -102,12 +104,12 @@ class DepartureServiceSpec extends SpecBase with IntegrationPatience with Stream
       val dateOfPrep = LocalDate.now()
       val timeOfPrep = LocalTime.of(1, 1)
 
-      val mockArrivalIdRepository = mock[DepartureIdRepository]
-      when(mockArrivalIdRepository.nextId()).thenReturn(Future.successful(id))
+      val mockDepartureIdRepository = mock[DepartureIdRepository]
+      when(mockDepartureIdRepository.nextId()).thenReturn(Future.successful(id))
 
       val application = baseApplicationBuilder
         .overrides(
-          bind[DepartureIdRepository].toInstance(mockArrivalIdRepository)
+          bind[DepartureIdRepository].toInstance(mockDepartureIdRepository)
         )
         .build()
 
@@ -123,7 +125,7 @@ class DepartureServiceSpec extends SpecBase with IntegrationPatience with Stream
           </HEAHEA>
         </Foo>
 
-      service.createDeparture(eori, invalidPayload).futureValue.isLeft mustBe true
+      service.createDeparture(eori, invalidPayload, api).futureValue.isLeft mustBe true
     }
   }
 

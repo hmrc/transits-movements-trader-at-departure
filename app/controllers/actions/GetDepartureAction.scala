@@ -24,6 +24,7 @@ import play.api.Logger
 import play.api.mvc.ActionRefiner
 import play.api.mvc.Request
 import play.api.mvc.Result
+import play.api.mvc.Results.BadRequest
 import play.api.mvc.Results.InternalServerError
 import play.api.mvc.Results.NotFound
 import repositories.DepartureRepository
@@ -46,11 +47,16 @@ private[actions] class GetDepartureAction(
     extends ActionRefiner[Request, DepartureRequest] {
 
   override protected def refine[A](request: Request[A]): Future[Either[Result, DepartureRequest[A]]] =
-    repository.get(departureId).map {
-      case Some(departure) =>
-        Right(DepartureRequest(request, departure))
+    ChannelUtil.getChannel(request) match {
       case None =>
-        Left(NotFound)
+        Future.successful(Left(BadRequest("Missing channel header or incorrect value specified in channel header")))
+      case Some(channel) =>
+        repository.get(departureId, channel).map {
+          case Some(departure) =>
+            Right(DepartureRequest(request, departure, channel))
+          case None =>
+            Left(NotFound)
+        }
     }
 }
 
@@ -70,10 +76,10 @@ private[actions] class AuthenticatedGetDepartureAction(
 
   override protected def refine[A](request: AuthenticatedRequest[A]): Future[Either[Result, DepartureRequest[A]]] =
     repository
-      .get(departureId)
+      .get(departureId, request.channel)
       .map {
         case Some(departure) if departure.eoriNumber == request.eoriNumber =>
-          Right(DepartureRequest(request.request, departure))
+          Right(DepartureRequest(request.request, departure, request.channel))
         case Some(_) =>
           Logger.warn("Attempt to retrieve an departure for another EORI")
           Left(NotFound)

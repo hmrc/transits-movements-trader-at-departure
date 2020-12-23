@@ -63,7 +63,7 @@ class MessagesController @Inject()(
                     .submitMessage(departureId, request.departure.nextMessageId.index, message, status)
                     .map {
                       case SubmissionProcessingResult.SubmissionSuccess =>
-                        auditService.auditEvent(DepartureCancellationRequestSubmitted, request.body, request.getChannel)
+                        auditService.auditEvent(DepartureCancellationRequestSubmitted, request.body, request.channel)
                         Accepted
                           .withHeaders("Location" -> routes.MessagesController.getMessage(request.departure.departureId, request.departure.nextMessageId).url)
 

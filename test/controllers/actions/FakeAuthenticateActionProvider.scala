@@ -16,6 +16,8 @@
 
 package controllers.actions
 
+import models.ChannelType.web
+
 import javax.inject.Inject
 import models.request.AuthenticatedRequest
 import play.api.mvc._
@@ -33,7 +35,7 @@ class FakeAuthenticateActionProvider @Inject()(defaultActionBuilder: DefaultActi
 
 class FakeAuthenticateAction extends ActionRefiner[Request, AuthenticatedRequest] {
   override protected def refine[A](request: Request[A]): Future[Either[Result, AuthenticatedRequest[A]]] =
-    Future.successful(Right(AuthenticatedRequest(request, "eori")))
+    Future.successful(Right(AuthenticatedRequest(request, web, "eori")))
 
   override protected def executionContext: ExecutionContext =
     scala.concurrent.ExecutionContext.Implicits.global

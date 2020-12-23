@@ -24,6 +24,7 @@ import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
 case class Departure(departureId: DepartureId,
+                     channel: ChannelType,
                      eoriNumber: String,
                      movementReferenceNumber: Option[MovementReferenceNumber],
                      referenceNumber: String,
@@ -52,6 +53,7 @@ object Departure {
   implicit val readsDeparture: Reads[Departure] =
     (
       (__ \ "_id").read[DepartureId] and
+        (__ \ "channel").read[ChannelType] and
         (__ \ "eoriNumber").read[String] and
         (__ \ "movementReferenceNumber").read[Option[MovementReferenceNumber]] and
         (__ \ "referenceNumber").read[String] and
@@ -65,6 +67,7 @@ object Departure {
   implicit def writesDeparture(implicit write: Writes[LocalDateTime]): OWrites[Departure] =
     (
       (__ \ "_id").write[DepartureId] and
+        (__ \ "channel").write[ChannelType] and
         (__ \ "eoriNumber").write[String] and
         (__ \ "movementReferenceNumber").write[Option[MovementReferenceNumber]] and
         (__ \ "referenceNumber").write[String] and

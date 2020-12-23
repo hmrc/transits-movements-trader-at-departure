@@ -45,7 +45,12 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfi
     name = Some("eori-number-index")
   )
 
-  private val referenceNumberIndex : Aux[BSONSerializationPack.type] = IndexUtils.index(
+  private val channelIndex: Aux[BSONSerializationPack.type] = IndexUtils.index(
+    key = Seq("channelType" -> IndexType.Ascending),
+    name = Some("channel-type-index")
+  )
+
+  private val referenceNumberIndex: Aux[BSONSerializationPack.type] = IndexUtils.index(
     key = Seq("referenceNumber" -> IndexType.Ascending),
     name = Some("reference-number-index")
   )
@@ -61,6 +66,7 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfi
       .flatMap {
         jsonCollection =>
           for {
+            _   <- jsonCollection.indexesManager.ensure(channelIndex)
             _   <- jsonCollection.indexesManager.ensure(eoriNumberIndex)
             _   <- jsonCollection.indexesManager.ensure(referenceNumberIndex)
             res <- jsonCollection.indexesManager.ensure(lastUpdatedIndex)
@@ -172,10 +178,11 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfi
     }
   }
 
-  def get(departureId: DepartureId): Future[Option[Departure]] = {
+  def get(departureId: DepartureId, channelFilter: ChannelType): Future[Option[Departure]] = {
 
     val selector = Json.obj(
-      "_id" -> departureId
+      "_id"     -> departureId,
+      "channel" -> channelFilter
     )
 
     collection.flatMap {
@@ -243,9 +250,9 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfi
     }
   }
 
-  def fetchAllDepartures(eoriNumber: String): Future[Seq[Departure]] =
+  def fetchAllDepartures(eoriNumber: String, channelFilter: ChannelType): Future[Seq[Departure]] =
     collection.flatMap {
-      _.find(Json.obj("eoriNumber" -> eoriNumber), Option.empty[JsObject])
+      _.find(Json.obj("eoriNumber" -> eoriNumber, "channel" -> channelFilter), Option.empty[JsObject])
         .cursor[Departure]()
         .collect[Seq](-1, Cursor.FailOnError())
     }

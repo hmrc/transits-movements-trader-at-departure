@@ -18,11 +18,8 @@ package controllers
 
 import audit.AuditService
 import audit.AuditType._
-import cats.data.NonEmptyList
 import controllers.actions._
 import javax.inject.Inject
-import models.MessageStatus.SubmissionSucceeded
-import models.MessageType.DepartureDeclaration
 import models._
 import models.response.ResponseDeparture
 import models.response.ResponseDepartures
@@ -51,7 +48,7 @@ class DeparturesController @Inject()(cc: ControllerComponents,
   def post: Action[NodeSeq] = authenticate().async(parse.xml) {
     implicit request =>
       departureService
-        .createDeparture(request.eoriNumber, request.body)
+        .createDeparture(request.eoriNumber, request.body, request.channel)
         .flatMap {
           case Left(error) =>
             Logger.error(error.message)
@@ -61,8 +58,8 @@ class DeparturesController @Inject()(cc: ControllerComponents,
               .submitDeparture(departure)
               .map {
                 case SubmissionProcessingResult.SubmissionSuccess =>
-                  auditService.auditEvent(DepartureDeclarationSubmitted, departure.messages.head.message, request.getChannel)
-                  auditService.auditEvent(MesSenMES3Added, departure.messages.head.message, request.getChannel)
+                  auditService.auditEvent(DepartureDeclarationSubmitted, departure.messages.head.message, request.channel)
+                  auditService.auditEvent(MesSenMES3Added, departure.messages.head.message, request.channel)
                   Accepted
                     .withHeaders("Location" -> routes.DeparturesController.get(departure.departureId).url)
                 case SubmissionProcessingResult.SubmissionFailureExternal =>
@@ -91,7 +88,7 @@ class DeparturesController @Inject()(cc: ControllerComponents,
   def getDepartures(): Action[AnyContent] = authenticate().async {
     implicit request =>
       departureRepository
-        .fetchAllDepartures(request.eoriNumber)
+        .fetchAllDepartures(request.eoriNumber, request.channel)
         .map {
           allDepartures =>
             Ok(Json.toJsObject(ResponseDepartures(allDepartures.map {
