@@ -215,6 +215,62 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
         }
       }
 
+      "must return BadRequest, when the service is unable to save the message with an external error" in {
+
+        when(mockDepartureRepository.get(any(), any())).thenReturn(Future.successful(Some(acknowledgedDeparture)))
+        when(mockSaveMessageService.validateXmlSaveMessageUpdateMrn(any(), any(), any(), any(), any()))
+          .thenReturn(Future.successful(SubmissionProcessingResult.SubmissionFailureExternal))
+        when(mockLockRepository.lock(any())).thenReturn(Future.successful(true))
+        when(mockLockRepository.unlock(any())).thenReturn(Future.successful(()))
+
+        val application = baseApplicationBuilder
+          .overrides(
+            bind[DepartureRepository].toInstance(mockDepartureRepository),
+            bind[LockRepository].toInstance(mockLockRepository),
+            bind[SaveMessageService].toInstance(mockSaveMessageService)
+          )
+          .build()
+
+        running(application) {
+          val request = FakeRequest(POST, routes.NCTSMessageController.post(messageSender).url)
+            .withXmlBody(requestMrnAllocatedBody)
+            .withHeaders("X-Message-Type" -> MessageType.MrnAllocated.code)
+            .withHeaders("channel" -> acknowledgedDeparture.channel.toString)
+
+          val result = route(application, request).value
+
+          status(result) mustEqual BAD_REQUEST
+        }
+      }
+
+      "must return InternalServerError, when the service is unable to save the message with an internal error" in {
+
+        when(mockDepartureRepository.get(any(), any())).thenReturn(Future.successful(Some(acknowledgedDeparture)))
+        when(mockSaveMessageService.validateXmlSaveMessageUpdateMrn(any(), any(), any(), any(), any()))
+          .thenReturn(Future.successful(SubmissionProcessingResult.SubmissionFailureInternal))
+        when(mockLockRepository.lock(any())).thenReturn(Future.successful(true))
+        when(mockLockRepository.unlock(any())).thenReturn(Future.successful(()))
+
+        val application = baseApplicationBuilder
+          .overrides(
+            bind[DepartureRepository].toInstance(mockDepartureRepository),
+            bind[LockRepository].toInstance(mockLockRepository),
+            bind[SaveMessageService].toInstance(mockSaveMessageService)
+          )
+          .build()
+
+        running(application) {
+          val request = FakeRequest(POST, routes.NCTSMessageController.post(messageSender).url)
+            .withXmlBody(requestMrnAllocatedBody)
+            .withHeaders("X-Message-Type" -> MessageType.MrnAllocated.code)
+            .withHeaders("channel" -> acknowledgedDeparture.channel.toString)
+
+          val result = route(application, request).value
+
+          status(result) mustEqual INTERNAL_SERVER_ERROR
+        }
+      }
+
       "must return OK, when the service validates and save the message (not MrnAllocated)" in {
 
         when(mockDepartureRepository.get(any(), any())).thenReturn(Future.successful(Some(departure)))
