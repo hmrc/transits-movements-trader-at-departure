@@ -16,28 +16,31 @@
 
 package models
 
+import connectors.MessageConnector.EisSubmissionResult
+import connectors.MessageConnector.EisSubmissionResult.EisSubmissionSuccessful
+
 sealed trait MessageStatus {
-  def transition(event: SubmissionProcessingResult): MessageStatus
+  def transition(event: EisSubmissionResult): MessageStatus
 }
 
 object MessageStatus extends Enumerable.Implicits {
 
   case object SubmissionPending extends MessageStatus {
-    override def transition(event: SubmissionProcessingResult): MessageStatus = event match {
-      case SubmissionProcessingResult.SubmissionSuccess => SubmissionSucceeded
-      case _                                            => SubmissionFailed
+    override def transition(event: EisSubmissionResult): MessageStatus = event match {
+      case EisSubmissionSuccessful => SubmissionSucceeded
+      case _                       => SubmissionFailed
     }
   }
 
   case object SubmissionFailed extends MessageStatus {
-    override def transition(event: SubmissionProcessingResult): MessageStatus = event match {
-      case SubmissionProcessingResult.SubmissionSuccess => SubmissionSucceeded
-      case _                                            => SubmissionFailed
+    override def transition(event: EisSubmissionResult): MessageStatus = event match {
+      case EisSubmissionSuccessful => SubmissionSucceeded
+      case _                       => SubmissionFailed
     }
   }
 
   case object SubmissionSucceeded extends MessageStatus {
-    override def transition(event: SubmissionProcessingResult): MessageStatus = SubmissionSucceeded
+    override def transition(event: EisSubmissionResult): MessageStatus = this
   }
 
   val values = Seq(

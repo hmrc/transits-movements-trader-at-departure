@@ -97,7 +97,7 @@ class MessageConnectorSpec
 
         whenReady(result) {
           response =>
-            response.status mustBe 202
+            response.statusCode mustBe 202
         }
       }
 

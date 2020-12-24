@@ -18,7 +18,6 @@ package generators
 
 import java.time.LocalDate
 import java.time.LocalDateTime
-
 import models.MessageStatus.SubmissionPending
 import models._
 import models.SubmissionProcessingResult.SubmissionFailure
@@ -27,11 +26,59 @@ import models.SubmissionProcessingResult.SubmissionFailureInternal
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Arbitrary
 import org.scalacheck.Gen
+import connectors.MessageConnector.EisSubmissionResult
+import connectors.MessageConnector.EisSubmissionResult.DownstreamInternalServerError
+import connectors.MessageConnector.EisSubmissionResult.EisSubmissionFailure
+import connectors.MessageConnector.EisSubmissionResult.EisSubmissionFailureDownstream
+import connectors.MessageConnector.EisSubmissionResult.EisSubmissionRejected
+import connectors.MessageConnector.EisSubmissionResult.EisSubmissionSuccessful
+import connectors.MessageConnector.EisSubmissionResult.ErrorInPayload
+import connectors.MessageConnector.EisSubmissionResult.UnexpectedHttpResponse
+import connectors.MessageConnector.EisSubmissionResult.VirusFoundOrInvalidToken
+import uk.gov.hmrc.http.HttpResponse
 
 trait ModelGenerators extends BaseGenerators with JavaTimeGenerators {
 
   private val pastDate: LocalDate = LocalDate.of(1900, 1, 1)
   private val dateNow: LocalDate  = LocalDate.now
+
+  implicit val arbitraryMessageStatusUpdate: Arbitrary[MessageStatusUpdate] =
+    Arbitrary {
+      for {
+        messageId     <- arbitrary[MessageId]
+        messageStatus <- arbitrary[MessageStatus]
+      } yield MessageStatusUpdate(messageId, messageStatus)
+    }
+
+  implicit val arbitraryDepartureStatusUpdate: Arbitrary[DepartureStatusUpdate] = Arbitrary(arbitrary[DepartureStatus].map(DepartureStatusUpdate(_)))
+
+  implicit val arbitraryCompoundStatusUpdate: Arbitrary[CompoundStatusUpdate] = Arbitrary {
+    for {
+      departureStatusUpdate <- arbitrary[DepartureStatusUpdate]
+      messageStatusUpdate   <- arbitrary[MessageStatusUpdate]
+    } yield CompoundStatusUpdate(departureStatusUpdate, messageStatusUpdate)
+  }
+
+  val departureUpdateTypeGenerator: Gen[Gen[DepartureUpdate]] =
+    Gen.oneOf[Gen[DepartureUpdate]](
+      arbitrary[MessageStatusUpdate],
+      arbitrary[DepartureStatusUpdate],
+      arbitrary[CompoundStatusUpdate]
+    )
+
+  implicit val arbitraryDepartureUpdate: Arbitrary[DepartureUpdate] =
+    Arbitrary(
+      Gen.oneOf[DepartureUpdate](
+        arbitrary[MessageStatusUpdate],
+        arbitrary[DepartureStatusUpdate],
+        arbitrary[CompoundStatusUpdate]
+      )
+    )
+
+  implicit lazy val arbitraryMessageStatus: Arbitrary[MessageStatus] =
+    Arbitrary {
+      Gen.oneOf(MessageStatus.values)
+    }
 
   implicit lazy val arbitraryDepartureId: Arbitrary[DepartureId] = {
     Arbitrary {
@@ -112,4 +159,31 @@ trait ModelGenerators extends BaseGenerators with JavaTimeGenerators {
   implicit lazy val arbitraryMessageType: Arbitrary[MessageType] =
     Arbitrary(Gen.oneOf(MessageType.values))
 
+  implicit lazy val arbitrarySubmissionFailure: Arbitrary[EisSubmissionFailure] =
+    Arbitrary(Gen.oneOf(arbitrary[EisSubmissionRejected], arbitrary[EisSubmissionFailureDownstream]))
+
+  implicit lazy val arbitrarySubmissionFailureInternal: Arbitrary[EisSubmissionRejected] =
+    Arbitrary {
+      Gen.oneOf(
+        ErrorInPayload,
+        VirusFoundOrInvalidToken
+      )
+    }
+
+  implicit lazy val arbitrarySubmissionFailureDownstream: Arbitrary[EisSubmissionFailureDownstream] =
+    Arbitrary {
+      Gen.oneOf(
+        DownstreamInternalServerError,
+        UnexpectedHttpResponse(HttpResponse(418, ""))
+      )
+    }
+
+  implicit def arbitraryEisSubmissionResult: Arbitrary[EisSubmissionResult] =
+    Arbitrary(
+      Gen.oneOf(
+        arbitrary[EisSubmissionRejected],
+        arbitrary[EisSubmissionFailureDownstream],
+        Gen.const(EisSubmissionSuccessful)
+      )
+    )
 }

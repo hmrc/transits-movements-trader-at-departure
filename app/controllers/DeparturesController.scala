@@ -57,15 +57,17 @@ class DeparturesController @Inject()(cc: ControllerComponents,
             submitMessageService
               .submitDeparture(departure)
               .map {
+                case SubmissionProcessingResult.SubmissionFailureInternal =>
+                  InternalServerError
+                case SubmissionProcessingResult.SubmissionFailureExternal =>
+                  BadGateway
+                case submissionFailureRejected: SubmissionProcessingResult.SubmissionFailureRejected =>
+                  BadRequest(submissionFailureRejected.responseBody)
                 case SubmissionProcessingResult.SubmissionSuccess =>
                   auditService.auditEvent(DepartureDeclarationSubmitted, departure.messages.head.message, request.channel)
                   auditService.auditEvent(MesSenMES3Added, departure.messages.head.message, request.channel)
                   Accepted
                     .withHeaders("Location" -> routes.DeparturesController.get(departure.departureId).url)
-                case SubmissionProcessingResult.SubmissionFailureExternal =>
-                  BadGateway
-                case SubmissionProcessingResult.SubmissionFailureInternal =>
-                  InternalServerError
               }
               .recover {
                 case _ => {

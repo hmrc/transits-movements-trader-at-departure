@@ -24,6 +24,7 @@ import audit.AuditType._
 import base.SpecBase
 import cats.data.NonEmptyList
 import connectors.MessageConnector
+import connectors.MessageConnector.EisSubmissionResult.ErrorInPayload
 import generators.ModelGenerators
 import models.ChannelType.api
 import models.ChannelType.web
@@ -161,9 +162,11 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
 
         contentAsString(result) mustBe empty
         status(result) mustEqual ACCEPTED
+
         header("Location", result).value must be(routes.MessagesController.getMessage(departure.departureId, MessageId.fromIndex(1)).url)
+
         verify(mockSubmitMessageService, times(1)).submitMessage(eqTo(departure.departureId),
-                                                                 eqTo(1),
+                                                                 eqTo(MessageId.fromIndex(1)),
                                                                  any(),
                                                                  eqTo(DepartureStatus.DeclarationCancellationRequest))(any())
         verify(mockAuditService, times(1)).auditEvent(eqTo(DepartureCancellationRequestSubmitted), any(), any())(any())
@@ -322,6 +325,70 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
 
         contentAsString(result) mustBe empty
         status(result) mustEqual BAD_GATEWAY
+      }
+    }
+
+    "must return BadRequest if there has been a rejection from EIS dues to schema validation failing" in {
+      val mockDepartureRepository  = mock[DepartureRepository]
+      val mockLockRepository       = mock[LockRepository]
+      val mockSubmitMessageService = mock[SubmitMessageService]
+
+      when(mockLockRepository.lock(any())).thenReturn(Future.successful(true))
+      when(mockLockRepository.unlock(any())).thenReturn(Future.successful(()))
+      when(mockDepartureRepository.get(any(), any())).thenReturn(Future.successful(Some(departure)))
+
+      when(mockSubmitMessageService.submitMessage(any(), any(), any(), any())(any()))
+        .thenReturn(Future.successful(SubmissionProcessingResult.SubmissionFailureRejected(ErrorInPayload.responseBody)))
+
+      val application = baseApplicationBuilder
+        .overrides(
+          bind[DepartureRepository].toInstance(mockDepartureRepository),
+          bind[LockRepository].toInstance(mockLockRepository),
+          bind[SubmitMessageService].toInstance(mockSubmitMessageService)
+        )
+        .build()
+
+      running(application) {
+        val request = FakeRequest(POST, routes.MessagesController.post(departure.departureId).url)
+          .withHeaders("channel" -> departure.channel.toString)
+          .withXmlBody(declarationCancellationRequestXmlBody)
+
+        val result = route(application, request).value
+
+        contentAsString(result) mustBe "Message failed schema validation"
+        status(result) mustEqual BAD_REQUEST
+      }
+    }
+
+    "must return InternalServerError if there has been a rejection from EIS due to virus found or invalid token" in {
+      val mockDepartureRepository  = mock[DepartureRepository]
+      val mockLockRepository       = mock[LockRepository]
+      val mockSubmitMessageService = mock[SubmitMessageService]
+
+      when(mockLockRepository.lock(any())).thenReturn(Future.successful(true))
+      when(mockLockRepository.unlock(any())).thenReturn(Future.successful(()))
+      when(mockDepartureRepository.get(any(), any())).thenReturn(Future.successful(Some(departure)))
+
+      when(mockSubmitMessageService.submitMessage(any(), any(), any(), any())(any()))
+        .thenReturn(Future.successful(SubmissionProcessingResult.SubmissionFailureInternal))
+
+      val application = baseApplicationBuilder
+        .overrides(
+          bind[DepartureRepository].toInstance(mockDepartureRepository),
+          bind[LockRepository].toInstance(mockLockRepository),
+          bind[SubmitMessageService].toInstance(mockSubmitMessageService)
+        )
+        .build()
+
+      running(application) {
+        val request = FakeRequest(POST, routes.MessagesController.post(departure.departureId).url)
+          .withHeaders("channel" -> departure.channel.toString)
+          .withXmlBody(declarationCancellationRequestXmlBody)
+
+        val result = route(application, request).value
+
+        contentAsString(result) mustBe empty
+        status(result) mustEqual INTERNAL_SERVER_ERROR
       }
     }
   }
