@@ -47,16 +47,11 @@ private[actions] class GetDepartureAction(
     extends ActionRefiner[Request, DepartureRequest] {
 
   override protected def refine[A](request: Request[A]): Future[Either[Result, DepartureRequest[A]]] =
-    ChannelUtil.getChannel(request) match {
+    repository.get(departureId).map {
+      case Some(departure) =>
+        Right(DepartureRequest(request, departure, departure.channel))
       case None =>
-        Future.successful(Left(BadRequest("Missing channel header or incorrect value specified in channel header")))
-      case Some(channel) =>
-        repository.get(departureId, channel).map {
-          case Some(departure) =>
-            Right(DepartureRequest(request, departure, channel))
-          case None =>
-            Left(NotFound)
-        }
+        Left(NotFound)
     }
 }
 
