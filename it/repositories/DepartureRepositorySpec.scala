@@ -3,12 +3,10 @@ package repositories
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
-
 import cats.data.NonEmptyList
 import generators.ModelGenerators
 import models.ChannelType.{api, web}
-import models.DepartureStatus.DepartureSubmitted
-import models.DepartureStatus.Initialized
+import models.DepartureStatus.{DepartureSubmitted, Initialized, MrnAllocated, PositiveAcknowledgement}
 import models.MessageStatus.SubmissionPending
 import models.MessageStatus.SubmissionSucceeded
 import models._
@@ -33,6 +31,7 @@ import utils.Format
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.reflect.ClassTag
 import scala.util.{Failure, Success}
+import play.api.Application
 
 class DepartureRepositorySpec
     extends AnyFreeSpec
@@ -266,6 +265,41 @@ class DepartureRepositorySpec
       }
     }
 
+    "updateDeparture" - {
+      "must update the departure and return a Success Unit when successful" in {
+        database.flatMap(_.drop()).futureValue
+
+        val departureStatus = DepartureStatusUpdate(Initialized)
+        val departure       = departureWithOneMessage.sample.value.copy(status = PositiveAcknowledgement)
+        val selector        = DepartureIdSelector(departure.departureId)
+
+        service.insert(departure).futureValue
+
+        service.updateDeparture(selector, departureStatus).futureValue
+
+        val updatedDeparture = service.get(departure.departureId, departure.channel).futureValue.value
+
+        updatedDeparture.status mustEqual departureStatus.departureStatus
+      }
+
+      "must return a Failure if the selector does not match any documents" in {
+        database.flatMap(_.drop()).futureValue
+
+        val departureStatus = DepartureStatusUpdate(Initialized)
+        val departure       = departureWithOneMessage.sample.value copy (departureId = DepartureId(1), status = MrnAllocated)
+        val selector        = DepartureIdSelector(DepartureId(2))
+
+        service.insert(departure).futureValue
+
+        val result = service.updateDeparture(selector, departureStatus).futureValue
+
+        val updatedDeparture = service.get(departure.departureId, departure.channel).futureValue.value
+
+        result mustBe a[Failure[_]]
+        updatedDeparture.status must not be (departureStatus.departureStatus)
+      }
+    }
+
     "setDepartureStateAndMessageState" - {
       "must update the status of the departure and the message in an departure" in {
         database.flatMap(_.drop()).futureValue
@@ -274,7 +308,7 @@ class DepartureRepositorySpec
         val messageId = MessageId.fromIndex(0)
 
         service.insert(departure).futureValue
-        service.setDepartureStateAndMessageState(departure.departureId, messageId.index, DepartureSubmitted, SubmissionSucceeded).futureValue
+        service.setDepartureStateAndMessageState(departure.departureId, messageId, DepartureSubmitted, SubmissionSucceeded).futureValue
 
         val updatedDeparture = service.get(departure.departureId, departure.channel)
 
@@ -297,7 +331,7 @@ class DepartureRepositorySpec
 
         service.insert(departure).futureValue
 
-        val setResult = service.setDepartureStateAndMessageState(DepartureId(2), messageId.index, DepartureSubmitted, SubmissionSucceeded)
+        val setResult = service.setDepartureStateAndMessageState(DepartureId(2), messageId, DepartureSubmitted, SubmissionSucceeded)
         setResult.futureValue must not be (defined)
 
         val result = service.get(departure.departureId, departure.channel)

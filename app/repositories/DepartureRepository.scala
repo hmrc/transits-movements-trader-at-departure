@@ -119,29 +119,17 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfi
     }
   }
 
+  @deprecated("Use updateDeparture since this will be removed in the next version", "next")
   def setDepartureStateAndMessageState(departureId: DepartureId,
-                                       messageId: Int,
-                                       departureStatus: DepartureStatus,
-                                       messageStatus: MessageStatus): Future[Option[Unit]] = {
+                                       messageId: MessageId,
+                                       departureState: DepartureStatus,
+                                       messageState: MessageStatus): Future[Option[Unit]] = {
 
-    val selector = Json.obj("_id" -> departureId)
+    val selector = DepartureIdSelector(departureId)
 
-    val modifier = Json.obj(
-      "$set" -> Json.obj(
-        s"messages.$messageId.status" -> messageStatus.toString,
-        "status"                      -> departureStatus.toString
-      )
-    )
+    val modifier = CompoundStatusUpdate(DepartureStatusUpdate(departureState), MessageStatusUpdate(messageId, messageState))
 
-    collection.flatMap {
-      _.update(false)
-        .one(selector, modifier)
-        .map {
-          y =>
-            if (y.n == 1) Some(())
-            else None
-        }
-    }
+    updateDeparture(selector, modifier).map(_.toOption)
   }
 
   def setMessageState(departureId: DepartureId, messageId: Int, messageStatus: MessageStatus): Future[Try[Unit]] = {
@@ -268,6 +256,25 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfi
         .cursor[Departure]()
         .collect[Seq](-1, Cursor.FailOnError())
     }
+
+  def updateDeparture[A](selector: DepartureSelector, modifier: A)(implicit ev: DepartureModifier[A]): Future[Try[Unit]] = {
+
+    import models.DepartureModifier.toJson
+
+    collection.flatMap {
+      _.update(false)
+        .one[JsObject, JsObject](Json.toJsObject(selector), modifier)
+        .map {
+          writeResult =>
+            if (writeResult.n > 0)
+              Success(())
+            else
+              writeResult.errmsg
+                .map(x => Failure(new Exception(x)))
+                .getOrElse(Failure(new Exception("Unable to update message status")))
+        }
+    }
+  }
 }
 
 object DepartureRepository {

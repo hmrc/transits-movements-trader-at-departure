@@ -16,23 +16,16 @@
 
 package models
 
-sealed trait SubmissionProcessingResult
+import play.api.libs.json.JsObject
 
-object SubmissionProcessingResult {
+trait DepartureModifier[A] {
+  def toJson(a: A): JsObject
+}
 
-  case object SubmissionSuccess extends SubmissionProcessingResult
+object DepartureModifier {
 
-  sealed trait SubmissionFailure extends SubmissionProcessingResult
+  def apply[A: DepartureModifier]: DepartureModifier[A] = implicitly[DepartureModifier[A]]
 
-  case object SubmissionFailureInternal extends SubmissionFailure
+  implicit def toJson[A: DepartureModifier](a: A): JsObject = DepartureModifier[A].toJson(a)
 
-  case object SubmissionFailureExternal extends SubmissionFailure
-
-  case class SubmissionFailureRejected(responseBody: String) extends SubmissionFailure
-
-  val values = Seq(
-    SubmissionSuccess,
-    SubmissionFailureInternal,
-    SubmissionFailureExternal
-  )
 }

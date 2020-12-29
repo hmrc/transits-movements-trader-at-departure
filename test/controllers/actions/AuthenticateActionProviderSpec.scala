@@ -35,6 +35,7 @@ import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.auth.core.Enrolment
 import uk.gov.hmrc.auth.core.EnrolmentIdentifier
 import uk.gov.hmrc.auth.core.Enrolments
+import uk.gov.hmrc.auth.core.MissingBearerToken
 
 import scala.concurrent.Future
 
@@ -251,6 +252,29 @@ class AuthenticateActionProviderSpec extends AnyFreeSpec with Matchers with Mock
         val result     = controller.action()(fakeRequest)
 
         status(result) mustBe FORBIDDEN
+      }
+    }
+
+    "when bearer token is missing" - {
+
+      "must return Unauthorized" in {
+
+        val mockAuthConnector: AuthConnector = mock[AuthConnector]
+
+        when(mockAuthConnector.authorise[Enrolments](any(), any())(any(), any()))
+          .thenReturn(Future.failed(new MissingBearerToken()))
+
+        val application = baseApplication
+          .overrides(
+            bind[AuthConnector].toInstance(mockAuthConnector)
+          )
+
+        val actionProvider = application.injector.instanceOf[AuthenticateActionProvider]
+
+        val controller = new Harness(actionProvider)
+        val result     = controller.action()(fakeRequest)
+
+        status(result) mustBe UNAUTHORIZED
       }
     }
   }

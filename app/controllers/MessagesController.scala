@@ -60,18 +60,18 @@ class MessagesController @Inject()(
               request.departure.status.transition(MessageReceivedEvent.DeclarationCancellationRequest) match {
                 case Right(status) =>
                   submitMessageService
-                    .submitMessage(departureId, request.departure.nextMessageId.index, message, status)
+                    .submitMessage(departureId, request.departure.nextMessageId, message, status)
                     .map {
+                      case SubmissionProcessingResult.SubmissionFailureInternal =>
+                        InternalServerError
+                      case SubmissionProcessingResult.SubmissionFailureExternal =>
+                        BadGateway
+                      case submissionFailureRejected: SubmissionProcessingResult.SubmissionFailureRejected =>
+                        BadRequest(submissionFailureRejected.responseBody)
                       case SubmissionProcessingResult.SubmissionSuccess =>
                         auditService.auditEvent(DepartureCancellationRequestSubmitted, request.body, request.channel)
                         Accepted
                           .withHeaders("Location" -> routes.MessagesController.getMessage(request.departure.departureId, request.departure.nextMessageId).url)
-
-                      case SubmissionProcessingResult.SubmissionFailureInternal =>
-                        InternalServerError
-
-                      case SubmissionProcessingResult.SubmissionFailureExternal =>
-                        BadGateway
                     }
                 case Left(error) =>
                   Future.successful(BadRequest(error.reason))

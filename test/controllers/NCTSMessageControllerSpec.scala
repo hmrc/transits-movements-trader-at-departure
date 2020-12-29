@@ -24,7 +24,6 @@ import base.SpecBase
 import cats.data.NonEmptyList
 import generators.ModelGenerators
 import models.ChannelType.api
-import models.ChannelType.web
 import models._
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
@@ -154,7 +153,6 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
           val request = FakeRequest(POST, routes.NCTSMessageController.post(messageSender).url)
             .withXmlBody(requestMrnAllocatedBody)
             .withHeaders("X-Message-Type" -> MessageType.MrnAllocated.code)
-            .withHeaders("channel" -> acknowledgedDeparture.channel.toString)
 
           val result = route(application, request).value
 
@@ -178,7 +176,6 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
           val request = FakeRequest(POST, routes.NCTSMessageController.post(messageSender).url)
             .withXmlBody(requestCancellationDecisionBody)
             .withHeaders("X-Message-Type" -> MessageType.CancellationDecision.code)
-            .withHeaders("channel" -> acknowledgedDeparture.channel.toString)
 
           val result = route(application, request).value
           contentAsString(result) mustEqual "The message status failed to transition from 'PositiveAcknowledgement' to 'CancellationDecision'."
@@ -206,12 +203,65 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
           val request = FakeRequest(POST, routes.NCTSMessageController.post(messageSender).url)
             .withXmlBody(badRequestMrnAllocatedBody)
             .withHeaders("X-Message-Type" -> MessageType.MrnAllocated.code)
-            .withHeaders("channel" -> acknowledgedDeparture.channel.toString)
 
           val result = route(application, request).value
 
           contentAsString(result) mustEqual "The element 'DocNumHEA5' must contain a value."
           status(result) mustEqual BAD_REQUEST
+        }
+      }
+
+      "must return BadRequest, when the service is unable to save the message with an external error" in {
+
+        when(mockDepartureRepository.get(any())).thenReturn(Future.successful(Some(acknowledgedDeparture)))
+        when(mockSaveMessageService.validateXmlSaveMessageUpdateMrn(any(), any(), any(), any(), any()))
+          .thenReturn(Future.successful(SubmissionProcessingResult.SubmissionFailureExternal))
+        when(mockLockRepository.lock(any())).thenReturn(Future.successful(true))
+        when(mockLockRepository.unlock(any())).thenReturn(Future.successful(()))
+
+        val application = baseApplicationBuilder
+          .overrides(
+            bind[DepartureRepository].toInstance(mockDepartureRepository),
+            bind[LockRepository].toInstance(mockLockRepository),
+            bind[SaveMessageService].toInstance(mockSaveMessageService)
+          )
+          .build()
+
+        running(application) {
+          val request = FakeRequest(POST, routes.NCTSMessageController.post(messageSender).url)
+            .withXmlBody(requestMrnAllocatedBody)
+            .withHeaders("X-Message-Type" -> MessageType.MrnAllocated.code)
+
+          val result = route(application, request).value
+
+          status(result) mustEqual BAD_REQUEST
+        }
+      }
+
+      "must return InternalServerError, when the service is unable to save the message with an internal error" in {
+
+        when(mockDepartureRepository.get(any())).thenReturn(Future.successful(Some(acknowledgedDeparture)))
+        when(mockSaveMessageService.validateXmlSaveMessageUpdateMrn(any(), any(), any(), any(), any()))
+          .thenReturn(Future.successful(SubmissionProcessingResult.SubmissionFailureInternal))
+        when(mockLockRepository.lock(any())).thenReturn(Future.successful(true))
+        when(mockLockRepository.unlock(any())).thenReturn(Future.successful(()))
+
+        val application = baseApplicationBuilder
+          .overrides(
+            bind[DepartureRepository].toInstance(mockDepartureRepository),
+            bind[LockRepository].toInstance(mockLockRepository),
+            bind[SaveMessageService].toInstance(mockSaveMessageService)
+          )
+          .build()
+
+        running(application) {
+          val request = FakeRequest(POST, routes.NCTSMessageController.post(messageSender).url)
+            .withXmlBody(requestMrnAllocatedBody)
+            .withHeaders("X-Message-Type" -> MessageType.MrnAllocated.code)
+
+          val result = route(application, request).value
+
+          status(result) mustEqual INTERNAL_SERVER_ERROR
         }
       }
 
@@ -236,7 +286,6 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
           val request = FakeRequest(POST, routes.NCTSMessageController.post(messageSender).url)
             .withXmlBody(requestDepartureRejectionXmlBody)
             .withHeaders("X-Message-Type" -> MessageType.DeclarationRejected.code)
-            .withHeaders("channel" -> departure.channel.toString)
 
           val result = route(application, request).value
 
@@ -263,7 +312,6 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
           val request = FakeRequest(POST, routes.NCTSMessageController.post(messageSender).url)
             .withXmlBody(requestMrnAllocatedBody)
             .withHeaders("X-Message-Type" -> MessageType.MrnAllocated.code)
-            .withHeaders("channel" -> web.toString)
 
           val result = route(application, request).value
 
@@ -294,7 +342,6 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
           val request = FakeRequest(POST, routes.NCTSMessageController.post(messageSender).url)
             .withXmlBody(requestDepartureRejectionXmlBody)
             .withHeaders("X-Message-Type" -> MessageType.DeclarationRejected.code)
-            .withHeaders("channel" -> departure.channel.toString)
 
           val result = route(application, request).value
 
@@ -319,7 +366,6 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
 
         running(application) {
           val request = FakeRequest(POST, routes.NCTSMessageController.post(messageSender).url)
-            .withHeaders("channel" -> departure.channel.toString)
             .withXmlBody(requestDepartureRejectionXmlBody)
 
           val result = route(application, request).value
@@ -351,7 +397,6 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
           val request = FakeRequest(POST, routes.NCTSMessageController.post(messageSender).url)
             .withXmlBody(requestDepartureRejectionXmlBody)
             .withHeaders("X-Message-Type" -> MessageType.DeclarationRejected.code)
-            .withHeaders("channel" -> departure.channel.toString)
 
           val result = route(application, request).value
 
@@ -368,7 +413,7 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
     "when a lock cannot be acquired" - {
 
       "must return Locked" in {
-        when(mockDepartureRepository.get(any(), any())).thenReturn(Future.successful(Some(departure)))
+        when(mockDepartureRepository.get(any())).thenReturn(Future.successful(Some(departure)))
         when(mockLockRepository.lock(any())).thenReturn(Future.successful(false))
 
         val application = baseApplicationBuilder
@@ -382,7 +427,6 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
           val request = FakeRequest(POST, routes.NCTSMessageController.post(messageSender).url)
             .withXmlBody(requestDepartureRejectionXmlBody)
             .withHeaders("X-Message-Type" -> MessageType.DeclarationRejected.code)
-            .withHeaders("channel" -> departure.channel.toString)
 
           val result = route(application, request).value
 

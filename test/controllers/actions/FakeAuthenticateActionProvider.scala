@@ -22,6 +22,7 @@ import javax.inject.Inject
 import models.request.AuthenticatedRequest
 import play.api.mvc._
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
@@ -37,6 +38,5 @@ class FakeAuthenticateAction extends ActionRefiner[Request, AuthenticatedRequest
   override protected def refine[A](request: Request[A]): Future[Either[Result, AuthenticatedRequest[A]]] =
     Future.successful(Right(AuthenticatedRequest(request, web, "eori")))
 
-  override protected def executionContext: ExecutionContext =
-    scala.concurrent.ExecutionContext.Implicits.global
+  override protected def executionContext: ExecutionContext = implicitly[ExecutionContext]
 }

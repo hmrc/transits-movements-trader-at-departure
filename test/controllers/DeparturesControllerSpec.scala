@@ -20,47 +20,57 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import audit.AuditService
-import audit.AuditType.DepartureDeclarationSubmitted
-import audit.AuditType.MesSenMES3Added
+import audit.AuditType
 import base.SpecBase
 import cats.data.NonEmptyList
+import connectors.MessageConnector
+import connectors.MessageConnector.EisSubmissionResult.ErrorInPayload
+import controllers.actions.AuthenticateActionProvider
+import controllers.actions.AuthenticatedGetDepartureForReadActionProvider
+import controllers.actions.FakeAuthenticateActionProvider
+import controllers.actions.FakeAuthenticatedGetDepartureForReadActionProvider
 import generators.ModelGenerators
-import models.ChannelType.api
-import models.ChannelType.web
+import models.MessageStatus.SubmissionFailed
 import models.MessageStatus.SubmissionPending
-import models.SubmissionProcessingResult.SubmissionFailureExternal
-import models.SubmissionProcessingResult.SubmissionFailureInternal
-import models.SubmissionProcessingResult.SubmissionSuccess
-import models.response.ResponseDeparture
-import org.mockito.ArgumentMatchers.any
-import org.mockito.ArgumentMatchers.{eq => eqTo}
-import org.mockito.Mockito._
-import models.response.ResponseDepartures
+import models.MessageStatus.SubmissionSucceeded
 import models.Departure
 import models.DepartureId
 import models.DepartureStatus
+import models.ChannelType.api
+import models.ChannelType.web
+import models.MessageId
+import models.MessageSender
 import models.MessageType
 import models.MessageWithStatus
+import models.MovementReferenceNumber
+import models.SubmissionProcessingResult
+import models.SubmissionProcessingResult.SubmissionFailureExternal
+import models.SubmissionProcessingResult.SubmissionFailureInternal
+import models.SubmissionProcessingResult.SubmissionFailureRejected
+import models.response.ResponseDeparture
+import models.response.ResponseDepartures
+import org.mockito.ArgumentCaptor
+import org.mockito.ArgumentMatchers.any
+import org.mockito.ArgumentMatchers.{eq => eqTo}
+import org.mockito.Mockito._
 import org.scalacheck.Arbitrary
 import org.scalacheck.Arbitrary.arbitrary
-import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.IntegrationPatience
+import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.inject.bind
 import play.api.libs.json.Json
 import play.api.test.FakeRequest
-import play.api.test.Helpers.POST
-import play.api.test.Helpers.header
-import play.api.test.Helpers.route
-import play.api.test.Helpers.running
-import play.api.test.Helpers.status
 import play.api.test.Helpers._
 import repositories.DepartureIdRepository
 import repositories.DepartureRepository
+import repositories.LockRepository
 import services.SubmitMessageService
 import utils.Format
 
 import scala.concurrent.Future
+import scala.xml.Utility.trim
+import scala.xml.NodeSeq
 
 class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with ModelGenerators with BeforeAndAfterEach with IntegrationPatience {
 
@@ -68,7 +78,8 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
   val localTime     = LocalTime.of(1, 1)
   val localDateTime = LocalDateTime.of(localDate, localTime)
 
-  val newDepartureId = arbitrary[DepartureId].sample.value
+  val departureId = arbitrary[DepartureId].sample.value
+  val mrn         = arbitrary[MovementReferenceNumber].sample.value
 
   val requestXmlBody =
     <CC015B>
@@ -76,28 +87,39 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
       <DatOfPreMES9>{Format.dateFormatted(localDate)}</DatOfPreMES9>
       <TimOfPreMES10>{Format.timeFormatted(localTime)}</TimOfPreMES10>
       <HEAHEA>
-        <RefNumHEA4>abc</RefNumHEA4>
+        <RefNumHEA4>{mrn.value}</RefNumHEA4>
       </HEAHEA>
     </CC015B>
 
-  val message = MessageWithStatus(
+  def savedXmlMessage(messageCorrelationId: Int) =
+    <CC015B>
+      <SynVerNumMES2>123</SynVerNumMES2>
+      <MesSenMES3>{MessageSender(departureId, messageCorrelationId).toString}</MesSenMES3>
+      <DatOfPreMES9>{Format.dateFormatted(localDate)}</DatOfPreMES9>
+      <TimOfPreMES10>{Format.timeFormatted(localTime)}</TimOfPreMES10>
+      <HEAHEA>
+        <RefNumHEA4>{mrn.value}</RefNumHEA4>
+      </HEAHEA>
+    </CC015B>
+
+  def movementMessage(messageCorrelationId: Int): MessageWithStatus = MessageWithStatus(
     localDateTime,
     MessageType.DepartureDeclaration,
-    requestXmlBody,
+    savedXmlMessage(messageCorrelationId).map(trim),
     SubmissionPending,
     1
   )
 
   val initializedDeparture = Departure(
-    departureId = newDepartureId,
+    departureId = departureId,
     channel = api,
     eoriNumber = "eori",
     movementReferenceNumber = None,
     status = DepartureStatus.Initialized,
     created = localDateTime,
     updated = localDateTime,
-    nextMessageCorrelationId = message.messageCorrelationId + 1,
-    messages = NonEmptyList.one(message),
+    nextMessageCorrelationId = movementMessage(1).messageCorrelationId + 1,
+    messages = NonEmptyList.one(movementMessage(1)),
     referenceNumber = "referenceNumber"
   )
 
@@ -106,37 +128,43 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
 
       "must return Accepted, create departure, send the message upstream and return the correct location header if submission successful" in {
         val mockDepartureIdRepository = mock[DepartureIdRepository]
-        val mockDepartureRepository   = mock[DepartureRepository]
         val mockSubmitMessageService  = mock[SubmitMessageService]
         val mockAuditService          = mock[AuditService]
 
-        when(mockDepartureIdRepository.nextId()).thenReturn(Future.successful(initializedDeparture.departureId))
-        when(mockDepartureRepository.insert(any())).thenReturn(Future.successful(()))
-        when(mockSubmitMessageService.submitDeparture(any())(any())).thenReturn(Future.successful((SubmissionSuccess)))
+        val expectedMessage: MessageWithStatus = movementMessage(1).copy(messageCorrelationId = 1)
+        val newDeparture                       = initializedDeparture.copy(messages = NonEmptyList.of[MessageWithStatus](expectedMessage), channel = web)
+        val captor: ArgumentCaptor[Departure]  = ArgumentCaptor.forClass(classOf[Departure])
+
+        when(mockDepartureIdRepository.nextId()).thenReturn(Future.successful(newDeparture.departureId))
+        when(mockSubmitMessageService.submitDeparture(any())(any())).thenReturn(Future.successful(SubmissionProcessingResult.SubmissionSuccess))
 
         val application = baseApplicationBuilder
           .overrides(
             bind[DepartureIdRepository].toInstance(mockDepartureIdRepository),
             bind[SubmitMessageService].toInstance(mockSubmitMessageService),
-            bind[DepartureRepository].toInstance(mockDepartureRepository),
             bind[AuditService].toInstance(mockAuditService)
           )
           .build()
 
         running(application) {
 
-          val request = FakeRequest(POST, routes.DeparturesController.post().url)
-            .withHeaders("channel" -> initializedDeparture.channel.toString)
-            .withXmlBody(requestXmlBody)
+          val request =
+            FakeRequest(POST, routes.DeparturesController.post().url)
+              .withHeaders("channel" -> newDeparture.channel.toString)
+              .withXmlBody(requestXmlBody.map(trim))
 
           val result = route(application, request).value
 
-          contentAsString(result) mustBe empty
           status(result) mustEqual ACCEPTED
-          verify(mockSubmitMessageService, times(1)).submitDeparture(any())(any())
-          verify(mockAuditService, times(1)).auditEvent(eqTo(DepartureDeclarationSubmitted), any(), any())(any())
-          verify(mockAuditService, times(1)).auditEvent(eqTo(MesSenMES3Added), any(), any())(any())
-          header("Location", result).get must be(routes.DeparturesController.get(initializedDeparture.departureId).url)
+          header("Location", result).value must be(routes.DeparturesController.get(newDeparture.departureId).url)
+
+          verify(mockSubmitMessageService, times(1)).submitDeparture(captor.capture())(any())
+
+          val departureMessage: MessageWithStatus = captor.getValue.messages.head.asInstanceOf[MessageWithStatus]
+          departureMessage.message.map(trim) mustEqual expectedMessage.message.map(trim)
+
+          verify(mockAuditService, times(1)).auditEvent(eqTo(AuditType.DepartureDeclarationSubmitted), any(), any())(any())
+          verify(mockAuditService, times(1)).auditEvent(eqTo(AuditType.MesSenMES3Added), any(), any())(any())
         }
       }
 
@@ -254,6 +282,35 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
         }
       }
 
+      "must return BadRequest if the message has been rejected from EIS due to error in payload" in {
+        val mockDepartureIdRepository = mock[DepartureIdRepository]
+        val mockSubmitMessageService  = mock[SubmitMessageService]
+
+        val departureId = DepartureId(1)
+
+        when(mockDepartureIdRepository.nextId()).thenReturn(Future.successful(departureId))
+        when(mockSubmitMessageService.submitDeparture(any())(any())).thenReturn(Future.successful(SubmissionFailureRejected(ErrorInPayload.responseBody)))
+
+        val application = baseApplicationBuilder
+          .overrides(
+            bind[DepartureIdRepository].toInstance(mockDepartureIdRepository),
+            bind[SubmitMessageService].toInstance(mockSubmitMessageService),
+          )
+          .build()
+
+        running(application) {
+
+          val request = FakeRequest(POST, routes.DeparturesController.post().url)
+            .withHeaders("channel" -> web.toString)
+            .withXmlBody(requestXmlBody)
+
+          val result = route(application, request).value
+
+          contentAsString(result) mustBe "Message failed schema validation"
+          status(result) mustEqual BAD_REQUEST
+        }
+      }
+
       "must return BadRequest if the message is not an departure declaration" in {
         val mockDepartureIdRepository = mock[DepartureIdRepository]
 
@@ -278,6 +335,35 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
           contentAsString(result) mustEqual "The root element name does not match 'CC015B'"
           status(result) mustEqual BAD_REQUEST
           header("Location", result) must not be (defined)
+        }
+      }
+
+      "must return InternalServerError if there has been a rejection from EIS due to virus found or invalid token" in {
+        val mockDepartureIdRepository = mock[DepartureIdRepository]
+        val mockSubmitMessageService  = mock[SubmitMessageService]
+
+        val departureId = DepartureId(1)
+
+        when(mockDepartureIdRepository.nextId()).thenReturn(Future.successful(departureId))
+        when(mockSubmitMessageService.submitDeparture(any())(any())).thenReturn(Future.successful(SubmissionProcessingResult.SubmissionFailureInternal))
+
+        val application = baseApplicationBuilder
+          .overrides(
+            bind[DepartureIdRepository].toInstance(mockDepartureIdRepository),
+            bind[SubmitMessageService].toInstance(mockSubmitMessageService),
+          )
+          .build()
+
+        running(application) {
+
+          val request = FakeRequest(POST, routes.DeparturesController.post().url)
+            .withHeaders("channel" -> web.toString)
+            .withXmlBody(requestXmlBody)
+
+          val result = route(application, request).value
+
+          contentAsString(result) mustBe empty
+          status(result) mustEqual INTERNAL_SERVER_ERROR
         }
       }
     }
