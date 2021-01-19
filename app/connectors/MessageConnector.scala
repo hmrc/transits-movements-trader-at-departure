@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,10 +23,10 @@ import connectors.MessageConnector.EisSubmissionResult
 import connectors.MessageConnector.EisSubmissionResult._
 import models._
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.http.HttpReads
 import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import utils.Format
+import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -47,9 +47,8 @@ class MessageConnector @Inject()(config: AppConfig, http: HttpClient)(implicit e
       .copy(authorization = None)
       .withExtraHeaders(addHeaders(message.messageType, dateTime, messageSender): _*)
 
-    // TODO: Don't throw exceptions here
     http
-      .POSTString(url, xmlMessage)(rds = HttpReads.readRaw, hc = newHeaders, ec = ec)
+      .POSTString[HttpResponse](url, xmlMessage)(readRaw, hc = newHeaders, implicitly)
       .map(response => responseToStatus(response))
   }
 
@@ -71,7 +70,7 @@ object MessageConnector {
   }
 
   object EisSubmissionResult {
-    private val possibleResponses           = List(EisSubmissionSuccessful, ErrorInPayload, VirusFoundOrInvalidToken, DownstreamInternalServerError)
+    private val possibleResponses           = List(EisSubmissionSuccessful, ErrorInPayload, VirusFoundOrInvalidToken, DownstreamInternalServerError, DownstreamBadGateway)
     private val statusesOfPossibleResponses = possibleResponses.map(_.statusCode)
     private val statusToResponseMapping     = statusesOfPossibleResponses.zip(possibleResponses).toMap
 
@@ -87,6 +86,7 @@ object MessageConnector {
 
     sealed abstract class EisSubmissionFailureDownstream(statusCode: Int, responseBody: String) extends EisSubmissionFailure(statusCode, responseBody)
     object DownstreamInternalServerError                                                        extends EisSubmissionFailureDownstream(500, "Downstream internal server error")
+    object DownstreamBadGateway                                                                 extends EisSubmissionFailureDownstream(502, "Downstream bad gateway ")
     case class UnexpectedHttpResponse(httpResponse: HttpResponse)
         extends EisSubmissionFailureDownstream(httpResponse.status, "Unexpected HTTP Response received")
   }
