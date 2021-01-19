@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,28 +33,22 @@ trait WiremockSuite extends BeforeAndAfterAll with BeforeAndAfterEach {
 
   protected def portConfigKey: String
 
-  protected lazy val app: Application =
+  protected lazy val appBuilder: GuiceApplicationBuilder =
     new GuiceApplicationBuilder()
       .configure(
-        "metrics.jvm" -> false,
         portConfigKey -> server.port().toString
       )
       .overrides(bindings: _*)
-      .build()
-
-  protected lazy val injector: Injector = app.injector
 
   protected def bindings: Seq[GuiceableModule] = Seq.empty
 
   override def beforeAll(): Unit = {
     server.start()
-    app
     super.beforeAll()
   }
 
   override def beforeEach(): Unit = {
     server.resetAll()
-    app
     super.beforeEach()
   }
 

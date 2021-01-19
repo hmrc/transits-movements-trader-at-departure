@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,34 +16,27 @@
 
 package connectors
 
-import java.time.LocalDateTime
-import java.time.OffsetDateTime
+import java.time.{LocalDateTime, OffsetDateTime}
 
 import com.github.tomakehurst.wiremock.client.WireMock._
-import com.github.tomakehurst.wiremock.matching.StringValuePattern
 import config.AppConfig
+import connectors.MessageConnector.EisSubmissionResult.{DownstreamBadGateway, DownstreamInternalServerError, EisSubmissionSuccessful}
 import generators.ModelGenerators
-import models.DepartureId
-import models.MessageStatus
-import models.MessageType
-import models.MessageWithStatus
+import models.{DepartureId, MessageStatus, MessageType, MessageWithStatus}
 import org.scalacheck.Gen
 import org.scalatest.OptionValues
-import org.scalatest.concurrent.IntegrationPatience
-import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
-import play.api.Configuration
-import play.api.Environment
-import play.api.Mode
+import play.api.{Configuration, Environment, Mode}
+import play.api.test.Helpers.running
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.bootstrap.config.RunMode
-import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
+import uk.gov.hmrc.play.bootstrap.config.{RunMode, ServicesConfig}
 
 class MessageConnectorSpec
-    extends AnyFreeSpec
+  extends AnyFreeSpec
     with MockitoSugar
     with ScalaFutures
     with Matchers
@@ -57,17 +50,16 @@ class MessageConnectorSpec
 
   override protected def portConfigKey: String = "microservice.services.eis.port"
 
-  private def connector: MessageConnector = app.injector.instanceOf[MessageConnector]
 
   implicit val headerCarrier: HeaderCarrier = HeaderCarrier()
 
   private val messageType: MessageType = Gen.oneOf(MessageType.values).sample.value
 
-  private val env           = Environment.simple()
+  private val env = Environment.simple()
   private val configuration = Configuration.load(env)
 
   private val serviceConfig = new ServicesConfig(configuration, new RunMode(configuration, Mode.Dev))
-  private val appConfig     = new AppConfig(configuration, serviceConfig)
+  private val appConfig = new AppConfig(configuration, serviceConfig)
 
   "MessageConnector" - {
 
@@ -89,19 +81,19 @@ class MessageConnectorSpec
                 .withStatus(202)
             )
         )
-
-        val postValue   = MessageWithStatus(LocalDateTime.now(), messageType, <CC007A>test</CC007A>, MessageStatus.SubmissionPending, 1)
+        val app = appBuilder.build()
+        val connector = app.injector.instanceOf[MessageConnector]
+        val postValue = MessageWithStatus(LocalDateTime.now(), messageType, <CC007A>test</CC007A>, MessageStatus.SubmissionPending, 1)
         val departureId = DepartureId(123)
 
-        val result = connector.post(departureId, postValue, OffsetDateTime.now())
-
-        whenReady(result) {
-          response =>
-            response.statusCode mustBe 202
+        running(app) {
+          val connector = app.injector.instanceOf[MessageConnector]
+          val result = connector.post(departureId, postValue, OffsetDateTime.now())
+          result.futureValue mustEqual EisSubmissionSuccessful
         }
       }
 
-      "return an exception when post is unsuccessful" in {
+      "return a BAD_GATEWAY for a return code of 502" in {
 
         val messageSender = "MDTP-000000000000000000000000123-01"
 
@@ -113,27 +105,82 @@ class MessageConnectorSpec
             .withHeader("X-Message-Sender", equalTo(messageSender))
             .willReturn(
               aResponse()
-                .withStatus(genFailedStatusCodes.sample.value)
+                .withStatus(502)
             )
         )
 
-        val postValue   = MessageWithStatus(LocalDateTime.now(), messageType, <CC007A>test</CC007A>, MessageStatus.SubmissionPending, 1)
+        val postValue = MessageWithStatus(LocalDateTime.now(), messageType, <CC007A>test</CC007A>, MessageStatus.SubmissionPending, 1)
         val departureId = DepartureId(123)
+        val app = appBuilder.build()
 
-        val result = connector.post(departureId, postValue, OffsetDateTime.now())
-
-        whenReady(result.failed) {
-          response =>
-            response mustBe an[Exception]
+        running(app) {
+          val connector = app.injector.instanceOf[MessageConnector]
+          val result = connector.post(departureId, postValue, OffsetDateTime.now())
+          result.futureValue mustEqual DownstreamBadGateway
         }
-
       }
+
+      "return a BAD_GATEWAY for a return code of 500" in {
+
+        val messageSender = "MDTP-000000000000000000000000123-01"
+
+        server.stubFor(
+          post(urlEqualTo(postUrl))
+            .withHeader("Content-Type", equalTo("application/xml"))
+            .withHeader("Accept", equalTo("application/xml"))
+            .withHeader("X-Message-Type", equalTo(messageType.toString))
+            .withHeader("X-Message-Sender", equalTo(messageSender))
+            .willReturn(
+              aResponse()
+                .withStatus(500)
+            )
+        )
+
+        val postValue = MessageWithStatus(LocalDateTime.now(), messageType, <CC007A>test</CC007A>, MessageStatus.SubmissionPending, 1)
+        val departureId = DepartureId(123)
+        val app = appBuilder.build()
+
+        running(app) {
+          val connector = app.injector.instanceOf[MessageConnector]
+          val result = connector.post(departureId, postValue, OffsetDateTime.now())
+          result.futureValue mustEqual DownstreamInternalServerError
+        }
+      }
+
+      "return an UnexpectedHttpResonse for an error code other than 202, 400, 403, 500 and 502" in {
+
+        val messageSender = "MDTP-000000000000000000000000123-01"
+
+        server.stubFor(
+          post(urlEqualTo(postUrl))
+            .withHeader("Content-Type", equalTo("application/xml"))
+            .withHeader("Accept", equalTo("application/xml"))
+            .withHeader("X-Message-Type", equalTo(messageType.toString))
+            .withHeader("X-Message-Sender", equalTo(messageSender))
+            .willReturn(
+              aResponse()
+                .withStatus(418)
+            )
+        )
+
+        val postValue = MessageWithStatus(LocalDateTime.now(), messageType, <CC007A>test</CC007A>, MessageStatus.SubmissionPending, 1)
+        val departureId = DepartureId(123)
+        val app = appBuilder.build()
+
+        running(app) {
+          val connector = app.injector.instanceOf[MessageConnector]
+          val result = connector.post(departureId, postValue, OffsetDateTime.now())
+          result.futureValue.statusCode mustEqual 418
+        }
+      }
+
     }
   }
+
 }
 
 object MessageConnectorSpec {
 
-  private val postUrl                        = "/movements/messages"
+  private val postUrl = "/movements/messages"
   private val genFailedStatusCodes: Gen[Int] = Gen.choose(400, 599)
 }
