@@ -26,6 +26,7 @@ import models.MessageType.DeclarationRejected
 import models.MessageType.DepartureDeclaration
 import models.MessageType.GuaranteeNotValid
 import models.MessageType.MrnAllocated
+import models.MessageType.NoReleaseForTransit
 import models._
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
@@ -56,6 +57,7 @@ class MessageSummaryServiceSpec extends SpecBase with ModelGenerators with Scala
   private val ie055Gen = messageGeneratorResponse(GuaranteeNotValid)
   private val ie009Gen = messageGeneratorResponse(CancellationDecision)
   private val ie014Gen = messageGeneratorResponse(DeclarationCancellationRequest)
+  private val ie051Gen = messageGeneratorResponse(NoReleaseForTransit)
 
   private val service = new MessageSummaryService
 
@@ -352,6 +354,49 @@ class MessageSummaryServiceSpec extends SpecBase with ModelGenerators with Scala
             }
         }
       }
+    }
+  }
+
+  "noReleaseForTransitMessage" - {
+
+    "must return" - {
+      "None when there are none in the movement" in {
+        forAll(ie015Gen) {
+          ie015 =>
+            forAll(createMovement(NonEmptyList.one(ie015))) {
+              departure =>
+                service.noReleaseForTransitMessage(departure) must not be defined
+
+            }
+        }
+      }
+
+      "latest IE051 when there is only an IE015 and a IE051" in {
+        forAll(ie015Gen, ie051Gen) {
+          (ie015, ie051) =>
+            forAll(createMovement(NonEmptyList.of(ie015, ie051))) {
+              departure =>
+                val (message, messageId) = service.noReleaseForTransitMessage(departure).value
+
+                message mustEqual ie051
+                messageId mustEqual MessageId.fromMessageIdValue(2).value
+            }
+        }
+      }
+
+      "Get the latest IE051 when there are multiples" in {
+        forAll(ie015Gen.submitted.msgCorrId(1), ie051Gen.msgCorrId(1), ie051Gen.msgCorrId(2)) {
+          case (ie015Old, ie051Old, ie051) =>
+            forAll(createMovement(NonEmptyList.of(ie015Old, ie051Old, ie051))) {
+              departure =>
+                val (message, messageId) = service.noReleaseForTransitMessage(departure).value
+
+                message mustEqual ie051
+                messageId mustEqual MessageId.fromMessageIdValue(3).value
+            }
+        }
+      }
+
     }
   }
 
