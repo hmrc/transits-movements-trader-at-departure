@@ -23,6 +23,7 @@ import models.MessageType.DeclarationRejected
 import models.MessageType.DepartureDeclaration
 import models.MessageType.GuaranteeNotValid
 import models.MessageType.MrnAllocated
+import models.MessageType.NoReleaseForTransit
 import models.MessagesSummary
 import models._
 
@@ -38,14 +39,19 @@ class MessageSummaryService {
       guaranteeNotValid              <- guaranteeNotValidRejectionMessage
       cancellationDecision           <- cancellationDecisionMessage
       declarationCancellationRequest <- declarationCancellationRequestMessage
+      noReleaseForTransit            <- noReleaseForTransitMessage
       //TODO: Other messages need adding
     } yield {
-      MessagesSummary(departure,
-                      declaration._2,
-                      declarationRejection.map(_._2),
-                      mrnAllocated.map(_._2),
-                      guaranteeNotValid.map(_._2),
-                      cancellationDecision.map(_._2))
+      MessagesSummary(
+        departure = departure,
+        declaration = declaration._2,
+        declarationRejection = declarationRejection.map(_._2),
+        mrnAllocated = mrnAllocated.map(_._2),
+        guaranteeNotValid = guaranteeNotValid.map(_._2),
+        cancellationDecision = cancellationDecision.map(_._2),
+        declarationCancellationRequest = declarationCancellationRequest.map(_._2),
+        noReleaseForTransit = noReleaseForTransit.map(_._2)
+      )
     }).run(departure)
 
   private[services] val declarationMessage: Reader[Departure, (Message, MessageId)] =
@@ -139,6 +145,19 @@ class MessageSummaryService {
 
         if (guaranteeNotValidNotificationCount > 0 && departureDeclarationCount(departure.messages) == guaranteeNotValidNotificationCount)
           Some(guaranteeNotValidNotifications.maxBy(_._1.messageCorrelationId))
+        else
+          None
+    }
+
+  private[services] val noReleaseForTransitMessage: Reader[Departure, Option[(Message, MessageId)]] =
+    Reader[Departure, Option[(Message, MessageId)]] {
+      departure =>
+        val noReleaseForTransitNotifications = getLatestMessageWithoutStatus(departure.messagesWithId)(NoReleaseForTransit)
+
+        val noReleaseForTransitNotificationCount = noReleaseForTransitNotifications.length
+
+        if (noReleaseForTransitNotificationCount > 0 && departureDeclarationCount(departure.messages) > 0)
+          Some(noReleaseForTransitNotifications.maxBy(_._1.messageCorrelationId))
         else
           None
     }

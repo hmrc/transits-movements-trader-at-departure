@@ -24,7 +24,8 @@ case class MessagesSummary(departure: Departure,
                            mrnAllocated: Option[MessageId] = None,
                            guaranteeNotValid: Option[MessageId] = None,
                            cancellationDecision: Option[MessageId] = None,
-                           declarationCancellationRequest: Option[MessageId] = None)
+                           declarationCancellationRequest: Option[MessageId] = None,
+                           noReleaseForTransit: Option[MessageId] = None)
 
 object MessagesSummary {
 
@@ -36,7 +37,8 @@ object MessagesSummary {
                            mrnAllocated,
                            guaranteeNotValidId,
                            cancellationDecision,
-                           declarationCancellationRequest) =>
+                           declarationCancellationRequest,
+                           noReleaseForTransit) =>
         Json
           .obj(
             "departureId" -> departure.departureId,
@@ -47,7 +49,8 @@ object MessagesSummary {
               MessageType.GuaranteeNotValid.code    -> guaranteeNotValidId.map(controllers.routes.MessagesController.getMessage(departure.departureId, _).url),
               MessageType.CancellationDecision.code -> cancellationDecision.map(controllers.routes.MessagesController.getMessage(departure.departureId, _).url),
               MessageType.DeclarationCancellationRequest.code -> declarationCancellationRequest.map(
-                controllers.routes.MessagesController.getMessage(departure.departureId, _).url)
+                controllers.routes.MessagesController.getMessage(departure.departureId, _).url),
+              MessageType.NoReleaseForTransit.code -> noReleaseForTransit.map(controllers.routes.MessagesController.getMessage(departure.departureId, _).url),
             )
           )
           .filterNulls
