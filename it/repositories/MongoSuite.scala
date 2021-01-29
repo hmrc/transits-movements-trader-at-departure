@@ -48,8 +48,6 @@ trait MongoSuite {
     val services = Seq(departureRepository.started, lockRepository.started)
 
     Future.sequence(services).map(_ => ())
-
-    Future.successful(())
   }
 
   def database: Future[DefaultDB] = {

@@ -31,6 +31,7 @@ case class Departure(departureId: DepartureId,
                      status: DepartureStatus,
                      created: LocalDateTime,
                      updated: LocalDateTime,
+                     lastUpdated: LocalDateTime = LocalDateTime.now,
                      nextMessageCorrelationId: Int,
                      messages: NonEmptyList[Message]) {
 
@@ -60,6 +61,7 @@ object Departure {
         (__ \ "status").read[DepartureStatus] and
         (__ \ "created").read(MongoDateTimeFormats.localDateTimeRead) and
         (__ \ "updated").read(MongoDateTimeFormats.localDateTimeRead) and
+        (__ \ "lastUpdated").read(MongoDateTimeFormats.localDateTimeRead) and
         (__ \ "nextMessageCorrelationId").read[Int] and
         (__ \ "messages").read[NonEmptyList[Message]]
     )(Departure.apply _)
@@ -74,6 +76,7 @@ object Departure {
         (__ \ "status").write[DepartureStatus] and
         (__ \ "created").write(write) and
         (__ \ "updated").write(write) and
+        (__ \ "lastUpdated").write(write) and
         (__ \ "nextMessageCorrelationId").write[Int] and
         (__ \ "messages").write[NonEmptyList[Message]]
     )(unlift(Departure.unapply))
