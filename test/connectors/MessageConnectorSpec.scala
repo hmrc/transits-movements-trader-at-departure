@@ -16,27 +16,37 @@
 
 package connectors
 
-import java.time.{LocalDateTime, OffsetDateTime}
+import java.time.LocalDateTime
+import java.time.OffsetDateTime
 
 import com.github.tomakehurst.wiremock.client.WireMock._
 import config.AppConfig
-import connectors.MessageConnector.EisSubmissionResult.{DownstreamBadGateway, DownstreamInternalServerError, EisSubmissionSuccessful}
+import connectors.MessageConnector.EisSubmissionResult.DownstreamBadGateway
+import connectors.MessageConnector.EisSubmissionResult.DownstreamInternalServerError
+import connectors.MessageConnector.EisSubmissionResult.EisSubmissionSuccessful
 import generators.ModelGenerators
-import models.{DepartureId, MessageStatus, MessageType, MessageWithStatus}
+import models.DepartureId
+import models.MessageStatus
+import models.MessageType
+import models.MessageWithStatus
 import org.scalacheck.Gen
 import org.scalatest.OptionValues
-import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
+import org.scalatest.concurrent.IntegrationPatience
+import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
-import play.api.{Configuration, Environment, Mode}
+import play.api.Configuration
+import play.api.Environment
+import play.api.Mode
 import play.api.test.Helpers.running
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.bootstrap.config.{RunMode, ServicesConfig}
+import uk.gov.hmrc.play.bootstrap.config.RunMode
+import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 class MessageConnectorSpec
-  extends AnyFreeSpec
+    extends AnyFreeSpec
     with MockitoSugar
     with ScalaFutures
     with Matchers
@@ -50,16 +60,15 @@ class MessageConnectorSpec
 
   override protected def portConfigKey: String = "microservice.services.eis.port"
 
-
   implicit val headerCarrier: HeaderCarrier = HeaderCarrier()
 
   private val messageType: MessageType = Gen.oneOf(MessageType.values).sample.value
 
-  private val env = Environment.simple()
+  private val env           = Environment.simple()
   private val configuration = Configuration.load(env)
 
   private val serviceConfig = new ServicesConfig(configuration, new RunMode(configuration, Mode.Dev))
-  private val appConfig = new AppConfig(configuration, serviceConfig)
+  private val appConfig     = new AppConfig(configuration, serviceConfig)
 
   "MessageConnector" - {
 
@@ -81,14 +90,14 @@ class MessageConnectorSpec
                 .withStatus(202)
             )
         )
-        val app = appBuilder.build()
-        val connector = app.injector.instanceOf[MessageConnector]
-        val postValue = MessageWithStatus(LocalDateTime.now(), messageType, <CC007A>test</CC007A>, MessageStatus.SubmissionPending, 1)
+        val app         = appBuilder.build()
+        val connector   = app.injector.instanceOf[MessageConnector]
+        val postValue   = MessageWithStatus(LocalDateTime.now(), messageType, <CC007A>test</CC007A>, MessageStatus.SubmissionPending, 1)
         val departureId = DepartureId(123)
 
         running(app) {
           val connector = app.injector.instanceOf[MessageConnector]
-          val result = connector.post(departureId, postValue, OffsetDateTime.now())
+          val result    = connector.post(departureId, postValue, OffsetDateTime.now())
           result.futureValue mustEqual EisSubmissionSuccessful
         }
       }
@@ -109,13 +118,13 @@ class MessageConnectorSpec
             )
         )
 
-        val postValue = MessageWithStatus(LocalDateTime.now(), messageType, <CC007A>test</CC007A>, MessageStatus.SubmissionPending, 1)
+        val postValue   = MessageWithStatus(LocalDateTime.now(), messageType, <CC007A>test</CC007A>, MessageStatus.SubmissionPending, 1)
         val departureId = DepartureId(123)
-        val app = appBuilder.build()
+        val app         = appBuilder.build()
 
         running(app) {
           val connector = app.injector.instanceOf[MessageConnector]
-          val result = connector.post(departureId, postValue, OffsetDateTime.now())
+          val result    = connector.post(departureId, postValue, OffsetDateTime.now())
           result.futureValue mustEqual DownstreamBadGateway
         }
       }
@@ -136,13 +145,13 @@ class MessageConnectorSpec
             )
         )
 
-        val postValue = MessageWithStatus(LocalDateTime.now(), messageType, <CC007A>test</CC007A>, MessageStatus.SubmissionPending, 1)
+        val postValue   = MessageWithStatus(LocalDateTime.now(), messageType, <CC007A>test</CC007A>, MessageStatus.SubmissionPending, 1)
         val departureId = DepartureId(123)
-        val app = appBuilder.build()
+        val app         = appBuilder.build()
 
         running(app) {
           val connector = app.injector.instanceOf[MessageConnector]
-          val result = connector.post(departureId, postValue, OffsetDateTime.now())
+          val result    = connector.post(departureId, postValue, OffsetDateTime.now())
           result.futureValue mustEqual DownstreamInternalServerError
         }
       }
@@ -163,13 +172,13 @@ class MessageConnectorSpec
             )
         )
 
-        val postValue = MessageWithStatus(LocalDateTime.now(), messageType, <CC007A>test</CC007A>, MessageStatus.SubmissionPending, 1)
+        val postValue   = MessageWithStatus(LocalDateTime.now(), messageType, <CC007A>test</CC007A>, MessageStatus.SubmissionPending, 1)
         val departureId = DepartureId(123)
-        val app = appBuilder.build()
+        val app         = appBuilder.build()
 
         running(app) {
           val connector = app.injector.instanceOf[MessageConnector]
-          val result = connector.post(departureId, postValue, OffsetDateTime.now())
+          val result    = connector.post(departureId, postValue, OffsetDateTime.now())
           result.futureValue.statusCode mustEqual 418
         }
       }
@@ -181,6 +190,6 @@ class MessageConnectorSpec
 
 object MessageConnectorSpec {
 
-  private val postUrl = "/movements/messages"
+  private val postUrl                        = "/movements/messages"
   private val genFailedStatusCodes: Gen[Int] = Gen.choose(400, 599)
 }

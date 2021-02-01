@@ -21,6 +21,7 @@ import generators.ModelGenerators
 import models.MessageStatus.SubmissionPending
 import models.MessageStatus.SubmissionSucceeded
 import models.MessageType.CancellationDecision
+import models.MessageType.ControlDecisionNotification
 import models.MessageType.DeclarationCancellationRequest
 import models.MessageType.DeclarationRejected
 import models.MessageType.DepartureDeclaration
@@ -58,6 +59,7 @@ class MessageSummaryServiceSpec extends SpecBase with ModelGenerators with Scala
   private val ie009Gen = messageGeneratorResponse(CancellationDecision)
   private val ie014Gen = messageGeneratorResponse(DeclarationCancellationRequest)
   private val ie051Gen = messageGeneratorResponse(NoReleaseForTransit)
+  private val ie060Gen = messageGeneratorResponse(ControlDecisionNotification)
 
   private val service = new MessageSummaryService
 
@@ -392,6 +394,49 @@ class MessageSummaryServiceSpec extends SpecBase with ModelGenerators with Scala
                 val (message, messageId) = service.noReleaseForTransitMessage(departure).value
 
                 message mustEqual ie051
+                messageId mustEqual MessageId.fromMessageIdValue(3).value
+            }
+        }
+      }
+
+    }
+  }
+
+  "controlDecisionMessage" - {
+
+    "must return" - {
+      "None when there are none in the movement" in {
+        forAll(ie060Gen) {
+          ie060 =>
+            forAll(createMovement(NonEmptyList.one(ie060))) {
+              departure =>
+                service.controlDecisionMessage(departure) must not be defined
+
+            }
+        }
+      }
+
+      "latest IE060 when there is only an IE015 and a IE060" in {
+        forAll(ie015Gen, ie060Gen) {
+          (ie015, ie060) =>
+            forAll(createMovement(NonEmptyList.of(ie015, ie060))) {
+              departure =>
+                val (message, messageId) = service.controlDecisionMessage(departure).value
+
+                message mustEqual ie060
+                messageId mustEqual MessageId.fromMessageIdValue(2).value
+            }
+        }
+      }
+
+      "Get the latest IE060 when there are multiples" in {
+        forAll(ie015Gen.submitted.msgCorrId(1), ie060Gen.msgCorrId(1), ie060Gen.msgCorrId(2)) {
+          case (ie015Old, ie060Old, ie060) =>
+            forAll(createMovement(NonEmptyList.of(ie015Old, ie060Old, ie060))) {
+              departure =>
+                val (message, messageId) = service.controlDecisionMessage(departure).value
+
+                message mustEqual ie060
                 messageId mustEqual MessageId.fromMessageIdValue(3).value
             }
         }
