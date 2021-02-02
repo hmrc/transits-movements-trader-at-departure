@@ -18,6 +18,7 @@ package services
 import cats.data.NonEmptyList
 import cats.data.Reader
 import models.MessageType.CancellationDecision
+import models.MessageType.ControlDecisionNotification
 import models.MessageType.DeclarationCancellationRequest
 import models.MessageType.DeclarationRejected
 import models.MessageType.DepartureDeclaration
@@ -40,6 +41,7 @@ class MessageSummaryService {
       cancellationDecision           <- cancellationDecisionMessage
       declarationCancellationRequest <- declarationCancellationRequestMessage
       noReleaseForTransit            <- noReleaseForTransitMessage
+      controlDecision                <- controlDecisionMessage
       //TODO: Other messages need adding
     } yield {
       MessagesSummary(
@@ -158,6 +160,19 @@ class MessageSummaryService {
 
         if (noReleaseForTransitNotificationCount > 0 && departureDeclarationCount(departure.messages) > 0)
           Some(noReleaseForTransitNotifications.maxBy(_._1.messageCorrelationId))
+        else
+          None
+    }
+
+  private[services] val controlDecisionMessage: Reader[Departure, Option[(Message, MessageId)]] =
+    Reader[Departure, Option[(Message, MessageId)]] {
+      departure =>
+        val controlDecisionNotifications = getLatestMessageWithoutStatus(departure.messagesWithId)(ControlDecisionNotification)
+
+        val controlDecisionNotificationCount = controlDecisionNotifications.length
+
+        if (controlDecisionNotificationCount > 0 && departureDeclarationCount(departure.messages) > 0)
+          Some(controlDecisionNotifications.maxBy(_._1.messageCorrelationId))
         else
           None
     }
