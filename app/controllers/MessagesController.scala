@@ -60,7 +60,7 @@ class MessagesController @Inject()(
               request.departure.status.transition(MessageReceivedEvent.DeclarationCancellationRequest) match {
                 case Right(status) =>
                   submitMessageService
-                    .submitMessage(departureId, request.departure.nextMessageId, message, status)
+                    .submitMessage(departureId, request.departure.nextMessageId, message, status, request.channel)
                     .map {
                       case SubmissionProcessingResult.SubmissionFailureInternal =>
                         InternalServerError
