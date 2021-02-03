@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ import scala.concurrent.Future
 
 class MessageConnector @Inject()(config: AppConfig, http: HttpClient)(implicit ec: ExecutionContext) {
 
-  def post(departureId: DepartureId, message: MessageWithStatus, dateTime: OffsetDateTime)(
+  def post(departureId: DepartureId, message: MessageWithStatus, dateTime: OffsetDateTime, channelType: ChannelType)(
     implicit headerCarrier: HeaderCarrier
   ): Future[EisSubmissionResult] = {
 
@@ -45,7 +45,7 @@ class MessageConnector @Inject()(config: AppConfig, http: HttpClient)(implicit e
 
     val newHeaders = headerCarrier
       .copy(authorization = None)
-      .withExtraHeaders(addHeaders(message.messageType, dateTime, messageSender): _*)
+      .withExtraHeaders(addHeaders(message.messageType, dateTime, messageSender, channelType): _*)
 
     // TODO: Don't throw exceptions here
     http
@@ -53,14 +53,15 @@ class MessageConnector @Inject()(config: AppConfig, http: HttpClient)(implicit e
       .map(response => responseToStatus(response))
   }
 
-  private def addHeaders(messageType: MessageType, dateTime: OffsetDateTime, messageSender: MessageSender)(
+  private def addHeaders(messageType: MessageType, dateTime: OffsetDateTime, messageSender: MessageSender, channelType: ChannelType)(
     implicit headerCarrier: HeaderCarrier): Seq[(String, String)] =
     Seq(
       "Date"             -> Format.dateFormattedForHeader(dateTime),
       "Content-Type"     -> "application/xml",
       "Accept"           -> "application/xml",
       "X-Message-Type"   -> messageType.toString,
-      "X-Message-Sender" -> messageSender.toString
+      "X-Message-Sender" -> messageSender.toString,
+      "channel"          -> channelType.toString
     )
 }
 

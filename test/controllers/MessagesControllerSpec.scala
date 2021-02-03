@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -142,7 +142,7 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
       when(mockLockRepository.unlock(any())).thenReturn(Future.successful(()))
       when(mockDepartureRepository.get(any(), any())).thenReturn(Future.successful(Some(departure)))
 
-      when(mockSubmitMessageService.submitMessage(any(), any(), any(), eqTo(DepartureStatus.DeclarationCancellationRequest))(any()))
+      when(mockSubmitMessageService.submitMessage(any(), any(), any(), eqTo(DepartureStatus.DeclarationCancellationRequest), any())(any()))
         .thenReturn(Future.successful(SubmissionProcessingResult.SubmissionSuccess))
 
       val application = baseApplicationBuilder
@@ -168,7 +168,8 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
         verify(mockSubmitMessageService, times(1)).submitMessage(eqTo(departure.departureId),
                                                                  eqTo(MessageId.fromIndex(1)),
                                                                  any(),
-                                                                 eqTo(DepartureStatus.DeclarationCancellationRequest))(any())
+                                                                 eqTo(DepartureStatus.DeclarationCancellationRequest),
+                                                                 any())(any())
         verify(mockAuditService, times(1)).auditEvent(eqTo(DepartureCancellationRequestSubmitted), any(), any())(any())
       }
     }
@@ -211,7 +212,7 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
       when(mockLockRepository.unlock(any())).thenReturn(Future.successful(()))
       when(mockDepartureRepository.get(any(), any())).thenReturn(Future.successful(Some(departure)))
 
-      when(mockSubmitMessageService.submitMessage(any(), any(), any(), any())(any()))
+      when(mockSubmitMessageService.submitMessage(any(), any(), any(), any(), any())(any()))
         .thenReturn(Future.successful(SubmissionProcessingResult.SubmissionFailureInternal))
 
       val application = baseApplicationBuilder
@@ -305,7 +306,7 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
       when(mockLockRepository.unlock(any())).thenReturn(Future.successful(()))
       when(mockDepartureRepository.get(any(), any())).thenReturn(Future.successful(Some(departure)))
 
-      when(mockSubmitMessageService.submitMessage(any(), any(), any(), any())(any()))
+      when(mockSubmitMessageService.submitMessage(any(), any(), any(), any(), any())(any()))
         .thenReturn(Future.successful(SubmissionProcessingResult.SubmissionFailureExternal))
 
       val application = baseApplicationBuilder
@@ -337,7 +338,7 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
       when(mockLockRepository.unlock(any())).thenReturn(Future.successful(()))
       when(mockDepartureRepository.get(any(), any())).thenReturn(Future.successful(Some(departure)))
 
-      when(mockSubmitMessageService.submitMessage(any(), any(), any(), any())(any()))
+      when(mockSubmitMessageService.submitMessage(any(), any(), any(), any(), any())(any()))
         .thenReturn(Future.successful(SubmissionProcessingResult.SubmissionFailureRejected(ErrorInPayload.responseBody)))
 
       val application = baseApplicationBuilder
@@ -369,7 +370,7 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
       when(mockLockRepository.unlock(any())).thenReturn(Future.successful(()))
       when(mockDepartureRepository.get(any(), any())).thenReturn(Future.successful(Some(departure)))
 
-      when(mockSubmitMessageService.submitMessage(any(), any(), any(), any())(any()))
+      when(mockSubmitMessageService.submitMessage(any(), any(), any(), any(), any())(any()))
         .thenReturn(Future.successful(SubmissionProcessingResult.SubmissionFailureInternal))
 
       val application = baseApplicationBuilder

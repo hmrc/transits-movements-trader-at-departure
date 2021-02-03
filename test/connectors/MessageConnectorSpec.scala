@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.matching.StringValuePattern
 import config.AppConfig
 import generators.ModelGenerators
+import models.ChannelType.web
 import models.DepartureId
 import models.MessageStatus
 import models.MessageType
@@ -84,6 +85,7 @@ class MessageConnectorSpec
             .withHeader("X-Message-Type", equalTo(messageType.toString))
             .withHeader("X-Message-Sender", equalTo(messageSender))
             .withRequestBody(matchingXPath("/transitRequest"))
+            .withHeader("channel", equalTo(web.toString))
             .willReturn(
               aResponse()
                 .withStatus(202)
@@ -93,7 +95,7 @@ class MessageConnectorSpec
         val postValue   = MessageWithStatus(LocalDateTime.now(), messageType, <CC007A>test</CC007A>, MessageStatus.SubmissionPending, 1)
         val departureId = DepartureId(123)
 
-        val result = connector.post(departureId, postValue, OffsetDateTime.now())
+        val result = connector.post(departureId, postValue, OffsetDateTime.now(), web)
 
         whenReady(result) {
           response =>
@@ -111,6 +113,7 @@ class MessageConnectorSpec
             .withHeader("Accept", equalTo("application/xml"))
             .withHeader("X-Message-Type", equalTo(messageType.toString))
             .withHeader("X-Message-Sender", equalTo(messageSender))
+            .withHeader("channel", equalTo(web.toString))
             .willReturn(
               aResponse()
                 .withStatus(genFailedStatusCodes.sample.value)
@@ -120,7 +123,7 @@ class MessageConnectorSpec
         val postValue   = MessageWithStatus(LocalDateTime.now(), messageType, <CC007A>test</CC007A>, MessageStatus.SubmissionPending, 1)
         val departureId = DepartureId(123)
 
-        val result = connector.post(departureId, postValue, OffsetDateTime.now())
+        val result = connector.post(departureId, postValue, OffsetDateTime.now(), web)
 
         whenReady(result.failed) {
           response =>
