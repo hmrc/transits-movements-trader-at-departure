@@ -25,6 +25,7 @@ import connectors.MessageConnector.EisSubmissionResult.DownstreamBadGateway
 import connectors.MessageConnector.EisSubmissionResult.DownstreamInternalServerError
 import connectors.MessageConnector.EisSubmissionResult.EisSubmissionSuccessful
 import generators.ModelGenerators
+import models.ChannelType.web
 import models.DepartureId
 import models.MessageStatus
 import models.MessageType
@@ -85,6 +86,7 @@ class MessageConnectorSpec
             .withHeader("X-Message-Type", equalTo(messageType.toString))
             .withHeader("X-Message-Sender", equalTo(messageSender))
             .withRequestBody(matchingXPath("/transitRequest"))
+            .withHeader("channel", equalTo(web.toString))
             .willReturn(
               aResponse()
                 .withStatus(202)
@@ -97,9 +99,10 @@ class MessageConnectorSpec
 
         running(app) {
           val connector = app.injector.instanceOf[MessageConnector]
-          val result    = connector.post(departureId, postValue, OffsetDateTime.now())
+          val result = connector.post(departureId, postValue, OffsetDateTime.now(), web)
           result.futureValue mustEqual EisSubmissionSuccessful
         }
+
       }
 
       "return a BAD_GATEWAY for a return code of 502" in {
@@ -112,6 +115,7 @@ class MessageConnectorSpec
             .withHeader("Accept", equalTo("application/xml"))
             .withHeader("X-Message-Type", equalTo(messageType.toString))
             .withHeader("X-Message-Sender", equalTo(messageSender))
+            .withHeader("channel", equalTo(web.toString))
             .willReturn(
               aResponse()
                 .withStatus(502)
@@ -124,7 +128,7 @@ class MessageConnectorSpec
 
         running(app) {
           val connector = app.injector.instanceOf[MessageConnector]
-          val result    = connector.post(departureId, postValue, OffsetDateTime.now())
+          val result    = connector.post(departureId, postValue, OffsetDateTime.now(), web)
           result.futureValue mustEqual DownstreamBadGateway
         }
       }
@@ -151,7 +155,7 @@ class MessageConnectorSpec
 
         running(app) {
           val connector = app.injector.instanceOf[MessageConnector]
-          val result    = connector.post(departureId, postValue, OffsetDateTime.now())
+          val result = connector.post(departureId, postValue, OffsetDateTime.now(), web)
           result.futureValue mustEqual DownstreamInternalServerError
         }
       }
@@ -178,7 +182,7 @@ class MessageConnectorSpec
 
         running(app) {
           val connector = app.injector.instanceOf[MessageConnector]
-          val result    = connector.post(departureId, postValue, OffsetDateTime.now())
+          val result    = connector.post(departureId, postValue, OffsetDateTime.now(), web)
           result.futureValue.statusCode mustEqual 418
         }
       }

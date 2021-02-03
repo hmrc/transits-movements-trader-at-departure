@@ -19,6 +19,7 @@ package services
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
+
 import base.SpecBase
 import cats.data.NonEmptyList
 import connectors.MessageConnector
@@ -28,6 +29,7 @@ import connectors.MessageConnector.EisSubmissionResult.ErrorInPayload
 import connectors.MessageConnector.EisSubmissionResult.UnexpectedHttpResponse
 import connectors.MessageConnector.EisSubmissionResult.VirusFoundOrInvalidToken
 import generators.ModelGenerators
+import models.ChannelType.web
 import models.MessageStatus.SubmissionFailed
 import models.MessageStatus.SubmissionPending
 import models.Departure
@@ -104,7 +106,7 @@ class SubmitMessageServiceSpec extends SpecBase with ScalaCheckDrivenPropertyChe
 
       when(mockDepartureRepository.addNewMessage(any(), any())).thenReturn(Future.successful(Success(())))
       when(mockDepartureRepository.setDepartureStateAndMessageState(any(), any(), any(), any())).thenReturn(Future.successful(Some(())))
-      when(mockMessageConnector.post(any(), any(), any())(any())).thenReturn(Future.successful(EisSubmissionSuccessful))
+      when(mockMessageConnector.post(any(), any(), any(), any())(any())).thenReturn(Future.successful(EisSubmissionSuccessful))
 
       val application = baseApplicationBuilder
         .overrides(
@@ -122,12 +124,12 @@ class SubmitMessageServiceSpec extends SpecBase with ScalaCheckDrivenPropertyChe
         val movementMessage = arbitrary[MessageWithStatus].sample.value
         val departureStatus = DepartureStatus.DepartureSubmitted
 
-        val result = service.submitMessage(departureId, messageId, movementMessage, departureStatus)
+        val result = service.submitMessage(departureId, messageId, movementMessage, departureStatus, web)
 
         result.futureValue mustEqual SubmissionProcessingResult.SubmissionSuccess
 
         verify(mockDepartureRepository, times(1)).addNewMessage(eqTo(departureId), eqTo(movementMessage))
-        verify(mockMessageConnector, times(1)).post(eqTo(departureId), eqTo(movementMessage), any())(any())
+        verify(mockMessageConnector, times(1)).post(eqTo(departureId), eqTo(movementMessage), any(), any())(any())
         verify(mockDepartureRepository, times(1)).setDepartureStateAndMessageState(eqTo(departureId),
                                                                                    eqTo(messageId),
                                                                                    eqTo(DepartureStatus.DepartureSubmitted),
@@ -142,7 +144,7 @@ class SubmitMessageServiceSpec extends SpecBase with ScalaCheckDrivenPropertyChe
 
       when(mockDepartureRepository.addNewMessage(any(), any())).thenReturn(Future.successful(Success(())))
       when(mockDepartureRepository.setDepartureStateAndMessageState(any(), any(), any(), any())).thenReturn(Future.successful(None))
-      when(mockMessageConnector.post(any(), any(), any())(any())).thenReturn(Future.successful(EisSubmissionSuccessful))
+      when(mockMessageConnector.post(any(), any(), any(), any())(any())).thenReturn(Future.successful(EisSubmissionSuccessful))
 
       val application = baseApplicationBuilder
         .overrides(
@@ -160,11 +162,11 @@ class SubmitMessageServiceSpec extends SpecBase with ScalaCheckDrivenPropertyChe
         val movementMessage = arbitrary[MessageWithStatus].sample.value
         val departureStatus = DepartureStatus.DepartureSubmitted
 
-        val result = service.submitMessage(departureId, messageId, movementMessage, departureStatus)
+        val result = service.submitMessage(departureId, messageId, movementMessage, departureStatus, web)
 
         result.futureValue mustEqual SubmissionProcessingResult.SubmissionSuccess
         verify(mockDepartureRepository, times(1)).addNewMessage(eqTo(departureId), eqTo(movementMessage))
-        verify(mockMessageConnector, times(1)).post(eqTo(departureId), eqTo(movementMessage), any())(any())
+        verify(mockMessageConnector, times(1)).post(eqTo(departureId), eqTo(movementMessage), any(), any())(any())
         verify(mockDepartureRepository, times(1)).setDepartureStateAndMessageState(eqTo(departureId),
                                                                                    eqTo(messageId),
                                                                                    eqTo(DepartureStatus.DepartureSubmitted),
@@ -179,7 +181,7 @@ class SubmitMessageServiceSpec extends SpecBase with ScalaCheckDrivenPropertyChe
 
       when(mockDepartureRepository.addNewMessage(any(), any())).thenReturn(Future.successful(Success(())))
       when(mockDepartureRepository.setDepartureStateAndMessageState(any(), any(), any(), any())).thenReturn(Future.failed(new Exception("failed")))
-      when(mockMessageConnector.post(any(), any(), any())(any())).thenReturn(Future.successful(EisSubmissionSuccessful))
+      when(mockMessageConnector.post(any(), any(), any(), any())(any())).thenReturn(Future.successful(EisSubmissionSuccessful))
 
       val application = baseApplicationBuilder
         .overrides(
@@ -197,7 +199,7 @@ class SubmitMessageServiceSpec extends SpecBase with ScalaCheckDrivenPropertyChe
         val movementMessage = arbitrary[MessageWithStatus].sample.value
         val departureStatus = DepartureStatus.DepartureSubmitted
 
-        val result = service.submitMessage(departureId, messageId, movementMessage, departureStatus)
+        val result = service.submitMessage(departureId, messageId, movementMessage, departureStatus, web)
 
         result.futureValue mustEqual SubmissionProcessingResult.SubmissionFailureInternal
       }
@@ -224,10 +226,10 @@ class SubmitMessageServiceSpec extends SpecBase with ScalaCheckDrivenPropertyChe
         val movementMessage = arbitrary[MessageWithStatus].sample.value
         val departureStatus = arbitrary[DepartureStatus].sample.value
 
-        val result = service.submitMessage(departureId, messageId, movementMessage, departureStatus)
+        val result = service.submitMessage(departureId, messageId, movementMessage, departureStatus, web)
 
         result.futureValue mustEqual SubmissionProcessingResult.SubmissionFailureInternal
-        verify(mockMessageConnector, never()).post(eqTo(departureId), eqTo(movementMessage), any())(any())
+        verify(mockMessageConnector, never()).post(eqTo(departureId), eqTo(movementMessage), any(), any())(any())
       }
 
     }
@@ -253,18 +255,18 @@ class SubmitMessageServiceSpec extends SpecBase with ScalaCheckDrivenPropertyChe
                arbitrary[EisSubmissionFailureDownstream]) {
           (departureId, messageId, movementMessage, departureStatus, submissionFailure) =>
             when(mockDepartureRepository.addNewMessage(any(), any())).thenReturn(Future.successful(Success(())))
-            when(mockMessageConnector.post(any(), any(), any())(any())).thenReturn(Future.successful(submissionFailure))
+            when(mockMessageConnector.post(any(), any(), any(), any())(any())).thenReturn(Future.successful(submissionFailure))
             when(mockDepartureRepository.updateDeparture(any(), any())(any())).thenReturn(Future.successful((Success(()))))
             when(mockDepartureRepository.setDepartureStateAndMessageState(any(), any(), any(), any())).thenReturn(Future.successful(Some(())))
 
             val expectedModifier = MessageStatusUpdate(messageId, SubmissionFailed)
 
-            val result = service.submitMessage(departureId, messageId, movementMessage, departureStatus)
+            val result = service.submitMessage(departureId, messageId, movementMessage, departureStatus, web)
 
             result.futureValue mustEqual SubmissionProcessingResult.SubmissionFailureExternal
 
             verify(mockDepartureRepository, times(1)).addNewMessage(eqTo(departureId), eqTo(movementMessage))
-            verify(mockMessageConnector, times(1)).post(eqTo(departureId), eqTo(movementMessage), any())(any())
+            verify(mockMessageConnector, times(1)).post(eqTo(departureId), eqTo(movementMessage), any(), any())(any())
             verify(mockDepartureRepository, times(1)).updateDeparture(any(), eqTo(expectedModifier))(any())
 
         }
@@ -291,17 +293,17 @@ class SubmitMessageServiceSpec extends SpecBase with ScalaCheckDrivenPropertyChe
         val departureStatus = DepartureStatus.DepartureSubmitted
 
         when(mockDepartureRepository.addNewMessage(any(), any())).thenReturn(Future.successful(Success(())))
-        when(mockMessageConnector.post(any(), any(), any())(any())).thenReturn(Future.successful(ErrorInPayload))
+        when(mockMessageConnector.post(any(), any(), any(), any())(any())).thenReturn(Future.successful(ErrorInPayload))
         when(mockDepartureRepository.updateDeparture(any(), any())(any())).thenReturn(Future.successful((Success(()))))
 
         val expectedModifier = MessageStatusUpdate(messageId, SubmissionFailed)
 
-        val result = service.submitMessage(departureId, messageId, movementMessage, departureStatus)
+        val result = service.submitMessage(departureId, messageId, movementMessage, departureStatus, web)
 
         result.futureValue mustEqual SubmissionFailureRejected(ErrorInPayload.responseBody)
 
         verify(mockDepartureRepository, times(1)).addNewMessage(eqTo(departureId), eqTo(movementMessage))
-        verify(mockMessageConnector, times(1)).post(eqTo(departureId), eqTo(movementMessage), any())(any())
+        verify(mockMessageConnector, times(1)).post(eqTo(departureId), eqTo(movementMessage), any(), any())(any())
         verify(mockDepartureRepository, times(1)).updateDeparture(any(), eqTo(expectedModifier))(any())
       }
     }
@@ -321,7 +323,7 @@ class SubmitMessageServiceSpec extends SpecBase with ScalaCheckDrivenPropertyChe
         val service = application.injector.instanceOf[SubmitMessageService]
 
         when(mockDepartureRepository.addNewMessage(any(), any())).thenReturn(Future.successful(Success(())))
-        when(mockMessageConnector.post(any(), any(), any())(any())).thenReturn(Future.successful(VirusFoundOrInvalidToken))
+        when(mockMessageConnector.post(any(), any(), any(), any())(any())).thenReturn(Future.successful(VirusFoundOrInvalidToken))
         when(mockDepartureRepository.updateDeparture(any(), any())(any())).thenReturn(Future.successful((Success(()))))
 
         val departureId     = arbitrary[DepartureId].sample.value
@@ -329,7 +331,7 @@ class SubmitMessageServiceSpec extends SpecBase with ScalaCheckDrivenPropertyChe
         val movementMessage = arbitrary[MessageWithStatus].sample.value
         val departureStatus = DepartureStatus.DepartureSubmitted
 
-        val result = service.submitMessage(departureId, messageId, movementMessage, departureStatus)
+        val result = service.submitMessage(departureId, messageId, movementMessage, departureStatus, web)
 
         result.futureValue mustEqual SubmissionFailureInternal
       }
@@ -350,7 +352,7 @@ class SubmitMessageServiceSpec extends SpecBase with ScalaCheckDrivenPropertyChe
         val service = application.injector.instanceOf[SubmitMessageService]
 
         when(mockDepartureRepository.addNewMessage(any(), any())).thenReturn(Future.successful(Success(())))
-        when(mockMessageConnector.post(any(), any(), any())(any())).thenReturn(Future.successful(VirusFoundOrInvalidToken))
+        when(mockMessageConnector.post(any(), any(), any(), any())(any())).thenReturn(Future.successful(VirusFoundOrInvalidToken))
         when(mockDepartureRepository.updateDeparture(any(), any())(any())).thenReturn(Future.failed(new Exception("failed")))
 
         val departureId     = arbitrary[DepartureId].sample.value
@@ -358,7 +360,7 @@ class SubmitMessageServiceSpec extends SpecBase with ScalaCheckDrivenPropertyChe
         val movementMessage = arbitrary[MessageWithStatus].sample.value
         val departureStatus = DepartureStatus.DepartureSubmitted
 
-        val result = service.submitMessage(departureId, messageId, movementMessage, departureStatus)
+        val result = service.submitMessage(departureId, messageId, movementMessage, departureStatus, web)
 
         result.futureValue mustEqual SubmissionFailureInternal
       }
@@ -379,7 +381,7 @@ class SubmitMessageServiceSpec extends SpecBase with ScalaCheckDrivenPropertyChe
         val service = application.injector.instanceOf[SubmitMessageService]
 
         when(mockDepartureRepository.addNewMessage(any(), any())).thenReturn(Future.successful(Success(())))
-        when(mockMessageConnector.post(any(), any(), any())(any())).thenReturn(Future.successful(UnexpectedHttpResponse(HttpResponse(501, ""))))
+        when(mockMessageConnector.post(any(), any(), any(), any())(any())).thenReturn(Future.successful(UnexpectedHttpResponse(HttpResponse(501, ""))))
         when(mockDepartureRepository.updateDeparture(any(), any())(any())).thenReturn(Future.successful((Success(()))))
 
         val departureId     = arbitrary[DepartureId].sample.value
@@ -387,7 +389,7 @@ class SubmitMessageServiceSpec extends SpecBase with ScalaCheckDrivenPropertyChe
         val movementMessage = arbitrary[MessageWithStatus].sample.value
         val departureStatus = DepartureStatus.DepartureSubmitted
 
-        val result = service.submitMessage(departureId, messageId, movementMessage, departureStatus)
+        val result = service.submitMessage(departureId, messageId, movementMessage, departureStatus, web)
 
         result.futureValue mustEqual SubmissionFailureExternal
       }
@@ -408,7 +410,7 @@ class SubmitMessageServiceSpec extends SpecBase with ScalaCheckDrivenPropertyChe
         val service = application.injector.instanceOf[SubmitMessageService]
 
         when(mockDepartureRepository.addNewMessage(any(), any())).thenReturn(Future.successful(Success(())))
-        when(mockMessageConnector.post(any(), any(), any())(any())).thenReturn(Future.successful(UnexpectedHttpResponse(HttpResponse(501, ""))))
+        when(mockMessageConnector.post(any(), any(), any(), any())(any())).thenReturn(Future.successful(UnexpectedHttpResponse(HttpResponse(501, ""))))
         when(mockDepartureRepository.updateDeparture(any(), any())(any())).thenReturn(Future.failed(new Exception("failed")))
 
         val departureId     = arbitrary[DepartureId].sample.value
@@ -416,7 +418,7 @@ class SubmitMessageServiceSpec extends SpecBase with ScalaCheckDrivenPropertyChe
         val movementMessage = arbitrary[MessageWithStatus].sample.value
         val departureStatus = DepartureStatus.DepartureSubmitted
 
-        val result = service.submitMessage(departureId, messageId, movementMessage, departureStatus)
+        val result = service.submitMessage(departureId, messageId, movementMessage, departureStatus, web)
 
         result.futureValue mustEqual SubmissionFailureExternal
       }
@@ -432,7 +434,7 @@ class SubmitMessageServiceSpec extends SpecBase with ScalaCheckDrivenPropertyChe
       lazy val mockMessageConnector: MessageConnector       = mock[MessageConnector]
 
       when(mockDepartureRepository.insert(any())).thenReturn(Future.successful(()))
-      when(mockMessageConnector.post(any(), any(), any())(any())).thenReturn(Future.successful(EisSubmissionSuccessful))
+      when(mockMessageConnector.post(any(), any(), any(), any())(any())).thenReturn(Future.successful(EisSubmissionSuccessful))
       when(mockDepartureRepository.setDepartureStateAndMessageState(any(), any(), any(), any())).thenReturn(Future.successful(Some(())))
 
       val application = baseApplicationBuilder
@@ -451,7 +453,7 @@ class SubmitMessageServiceSpec extends SpecBase with ScalaCheckDrivenPropertyChe
         result.futureValue mustEqual SubmissionProcessingResult.SubmissionSuccess
 
         verify(mockDepartureRepository, times(1)).insert(eqTo(departure))
-        verify(mockMessageConnector, times(1)).post(eqTo(departure.departureId), eqTo(movementMessage), any())(any())
+        verify(mockMessageConnector, times(1)).post(eqTo(departure.departureId), eqTo(movementMessage), any(), any())(any())
         verify(mockDepartureRepository, times(1)).setDepartureStateAndMessageState(
           eqTo(departure.departureId),
           eqTo(messageId),
@@ -467,7 +469,7 @@ class SubmitMessageServiceSpec extends SpecBase with ScalaCheckDrivenPropertyChe
       val mockMessageConnector    = mock[MessageConnector]
 
       when(mockDepartureRepository.insert(any())).thenReturn(Future.successful(()))
-      when(mockMessageConnector.post(any(), any(), any())(any())).thenReturn(Future.successful(EisSubmissionSuccessful))
+      when(mockMessageConnector.post(any(), any(), any(), any())(any())).thenReturn(Future.successful(EisSubmissionSuccessful))
       when(mockDepartureRepository.setDepartureStateAndMessageState(any(), any(), any(), any())).thenReturn(Future.successful(None))
 
       val application = baseApplicationBuilder
@@ -485,7 +487,7 @@ class SubmitMessageServiceSpec extends SpecBase with ScalaCheckDrivenPropertyChe
 
         result.futureValue mustEqual SubmissionProcessingResult.SubmissionSuccess
         verify(mockDepartureRepository, times(1)).insert(eqTo(departure))
-        verify(mockMessageConnector, times(1)).post(eqTo(departure.departureId), eqTo(movementMessage), any())(any())
+        verify(mockMessageConnector, times(1)).post(eqTo(departure.departureId), eqTo(movementMessage), any(), any())(any())
         verify(mockDepartureRepository, times(1)).setDepartureStateAndMessageState(eqTo(departure.departureId),
                                                                                    eqTo(messageId),
                                                                                    eqTo(DepartureStatus.DepartureSubmitted),
@@ -499,7 +501,7 @@ class SubmitMessageServiceSpec extends SpecBase with ScalaCheckDrivenPropertyChe
       val mockMessageConnector    = mock[MessageConnector]
 
       when(mockDepartureRepository.insert(any())).thenReturn(Future.successful(()))
-      when(mockMessageConnector.post(any(), any(), any())(any())).thenReturn(Future.successful(EisSubmissionSuccessful))
+      when(mockMessageConnector.post(any(), any(), any(), any())(any())).thenReturn(Future.successful(EisSubmissionSuccessful))
       when(mockDepartureRepository.setDepartureStateAndMessageState(any(), any(), any(), any())).thenReturn(Future.failed(new Exception("failed")))
 
       val application = baseApplicationBuilder
@@ -539,7 +541,7 @@ class SubmitMessageServiceSpec extends SpecBase with ScalaCheckDrivenPropertyChe
         val result = service.submitDeparture(departure)
 
         result.futureValue mustEqual SubmissionProcessingResult.SubmissionFailureInternal
-        verify(mockMessageConnector, never()).post(eqTo(departure.departureId), eqTo(movementMessage), any())(any())
+        verify(mockMessageConnector, never()).post(eqTo(departure.departureId), eqTo(movementMessage), any(), any())(any())
       }
 
     }
@@ -564,7 +566,7 @@ class SubmitMessageServiceSpec extends SpecBase with ScalaCheckDrivenPropertyChe
             Mockito.reset(mockDepartureRepository, mockMessageConnector)
 
             when(mockDepartureRepository.insert(any())).thenReturn(Future.successful(()))
-            when(mockMessageConnector.post(any(), any(), any())(any())).thenReturn(Future.successful(submissionResult))
+            when(mockMessageConnector.post(any(), any(), any(), any())(any())).thenReturn(Future.successful(submissionResult))
             when(mockDepartureRepository.updateDeparture(any(), any())(any())).thenReturn(Future.successful(Success(())))
 
             val expectedModifier = MessageStatusUpdate(messageId, SubmissionFailed)
@@ -573,7 +575,7 @@ class SubmitMessageServiceSpec extends SpecBase with ScalaCheckDrivenPropertyChe
 
             result.futureValue mustEqual SubmissionProcessingResult.SubmissionFailureExternal
             verify(mockDepartureRepository, times(1)).insert(eqTo(departure))
-            verify(mockMessageConnector, times(1)).post(eqTo(departure.departureId), eqTo(movementMessage), any())(any())
+            verify(mockMessageConnector, times(1)).post(eqTo(departure.departureId), eqTo(movementMessage), any(), any())(any())
             verify(mockDepartureRepository, times(1)).updateDeparture(any(), eqTo(expectedModifier))(any())
         }
       }
@@ -594,7 +596,7 @@ class SubmitMessageServiceSpec extends SpecBase with ScalaCheckDrivenPropertyChe
         val service = application.injector.instanceOf[SubmitMessageService]
 
         when(mockDepartureRepository.insert(any())).thenReturn(Future.successful(()))
-        when(mockMessageConnector.post(any(), any(), any())(any())).thenReturn(Future.successful(ErrorInPayload))
+        when(mockMessageConnector.post(any(), any(), any(), any())(any())).thenReturn(Future.successful(ErrorInPayload))
         when(mockDepartureRepository.updateDeparture(any(), any())(any())).thenReturn(Future.successful((Success(()))))
 
         val expectedModifier = MessageStatusUpdate(messageId, SubmissionFailed)
@@ -604,7 +606,7 @@ class SubmitMessageServiceSpec extends SpecBase with ScalaCheckDrivenPropertyChe
         result.futureValue mustEqual SubmissionFailureRejected(ErrorInPayload.responseBody)
 
         verify(mockDepartureRepository, times(1)).insert(eqTo(departure))
-        verify(mockMessageConnector, times(1)).post(eqTo(departure.departureId), eqTo(movementMessage), any())(any())
+        verify(mockMessageConnector, times(1)).post(eqTo(departure.departureId), eqTo(movementMessage), any(), any())(any())
         verify(mockDepartureRepository, times(1)).updateDeparture(any(), eqTo(expectedModifier))(any())
       }
     }
@@ -624,7 +626,7 @@ class SubmitMessageServiceSpec extends SpecBase with ScalaCheckDrivenPropertyChe
         val service = application.injector.instanceOf[SubmitMessageService]
 
         when(mockDepartureRepository.insert(any())).thenReturn(Future.successful(()))
-        when(mockMessageConnector.post(any(), any(), any())(any())).thenReturn(Future.successful(VirusFoundOrInvalidToken))
+        when(mockMessageConnector.post(any(), any(), any(), any())(any())).thenReturn(Future.successful(VirusFoundOrInvalidToken))
         when(mockDepartureRepository.updateDeparture(any(), any())(any())).thenReturn(Future.successful((Success(()))))
 
         val result = service.submitDeparture(departure)
@@ -648,7 +650,7 @@ class SubmitMessageServiceSpec extends SpecBase with ScalaCheckDrivenPropertyChe
         val service = application.injector.instanceOf[SubmitMessageService]
 
         when(mockDepartureRepository.insert(any())).thenReturn(Future.successful(()))
-        when(mockMessageConnector.post(any(), any(), any())(any())).thenReturn(Future.successful(VirusFoundOrInvalidToken))
+        when(mockMessageConnector.post(any(), any(), any(), any())(any())).thenReturn(Future.successful(VirusFoundOrInvalidToken))
         when(mockDepartureRepository.updateDeparture(any(), any())(any())).thenReturn(Future.failed(new Exception("failed")))
 
         val result = service.submitDeparture(departure)
@@ -672,7 +674,7 @@ class SubmitMessageServiceSpec extends SpecBase with ScalaCheckDrivenPropertyChe
         val service = application.injector.instanceOf[SubmitMessageService]
 
         when(mockDepartureRepository.insert(any())).thenReturn(Future.successful(()))
-        when(mockMessageConnector.post(any(), any(), any())(any())).thenReturn(Future.successful(ErrorInPayload))
+        when(mockMessageConnector.post(any(), any(), any(), any())(any())).thenReturn(Future.successful(ErrorInPayload))
         when(mockDepartureRepository.updateDeparture(any(), any())(any())).thenReturn(Future.successful((Success(()))))
 
         val result = service.submitDeparture(departure)
@@ -696,7 +698,7 @@ class SubmitMessageServiceSpec extends SpecBase with ScalaCheckDrivenPropertyChe
         val service = application.injector.instanceOf[SubmitMessageService]
 
         when(mockDepartureRepository.insert(any())).thenReturn(Future.successful(()))
-        when(mockMessageConnector.post(any(), any(), any())(any())).thenReturn(Future.successful(UnexpectedHttpResponse(HttpResponse(501, ""))))
+        when(mockMessageConnector.post(any(), any(), any(), any())(any())).thenReturn(Future.successful(UnexpectedHttpResponse(HttpResponse(501, ""))))
         when(mockDepartureRepository.updateDeparture(any(), any())(any())).thenReturn(Future.successful((Success(()))))
 
         val result = service.submitDeparture(departure)
@@ -720,7 +722,7 @@ class SubmitMessageServiceSpec extends SpecBase with ScalaCheckDrivenPropertyChe
         val service = application.injector.instanceOf[SubmitMessageService]
 
         when(mockDepartureRepository.insert(any())).thenReturn(Future.successful(()))
-        when(mockMessageConnector.post(any(), any(), any())(any())).thenReturn(Future.successful(UnexpectedHttpResponse(HttpResponse(501, ""))))
+        when(mockMessageConnector.post(any(), any(), any(), any())(any())).thenReturn(Future.successful(UnexpectedHttpResponse(HttpResponse(501, ""))))
         when(mockDepartureRepository.updateDeparture(any(), any())(any())).thenReturn(Future.failed(new Exception("failed")))
 
         val result = service.submitDeparture(departure)
