@@ -99,7 +99,7 @@ class MessageConnectorSpec
 
         running(app) {
           val connector = app.injector.instanceOf[MessageConnector]
-          val result = connector.post(departureId, postValue, OffsetDateTime.now(), web)
+          val result    = connector.post(departureId, postValue, OffsetDateTime.now(), web)
           result.futureValue mustEqual EisSubmissionSuccessful
         }
 
@@ -155,7 +155,7 @@ class MessageConnectorSpec
 
         running(app) {
           val connector = app.injector.instanceOf[MessageConnector]
-          val result = connector.post(departureId, postValue, OffsetDateTime.now(), web)
+          val result    = connector.post(departureId, postValue, OffsetDateTime.now(), web)
           result.futureValue mustEqual DownstreamInternalServerError
         }
       }
