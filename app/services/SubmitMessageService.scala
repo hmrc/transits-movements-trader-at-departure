@@ -40,7 +40,7 @@ class SubmitMessageService @Inject()(departureRepository: DepartureRepository, m
 
   val logger = Logger(this.getClass)
 
-  def submitMessage(departureId: DepartureId, messageId: MessageId, message: MessageWithStatus, departureStatus: DepartureStatus)(
+  def submitMessage(departureId: DepartureId, messageId: MessageId, message: MessageWithStatus, departureStatus: DepartureStatus, channelType: ChannelType)(
     implicit hc: HeaderCarrier): Future[SubmissionProcessingResult] =
     departureRepository.addNewMessage(departureId, message) flatMap {
       case Failure(_) =>
@@ -48,7 +48,7 @@ class SubmitMessageService @Inject()(departureRepository: DepartureRepository, m
 
       case Success(_) => {
         messageConnector
-          .post(departureId, message, OffsetDateTime.now)
+          .post(departureId, message, OffsetDateTime.now, channelType)
           .flatMap {
             case submissionResult @ EisSubmissionSuccessful =>
               val newStatus = message.status.transition(submissionResult)
@@ -113,7 +113,7 @@ class SubmitMessageService @Inject()(departureRepository: DepartureRepository, m
           val (message, messageId) = departure.messagesWithId.head.leftMap(_.asInstanceOf[MessageWithStatus])
 
           messageConnector
-            .post(departure.departureId, message, OffsetDateTime.now)
+            .post(departure.departureId, message, OffsetDateTime.now, departure.channel)
             .flatMap {
               case submissionResult @ EisSubmissionSuccessful =>
                 departureRepository

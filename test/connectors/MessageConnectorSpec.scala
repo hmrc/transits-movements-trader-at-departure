@@ -25,6 +25,8 @@ import connectors.MessageConnector.EisSubmissionResult.DownstreamBadGateway
 import connectors.MessageConnector.EisSubmissionResult.DownstreamInternalServerError
 import connectors.MessageConnector.EisSubmissionResult.EisSubmissionSuccessful
 import generators.ModelGenerators
+import models.ChannelType.api
+import models.ChannelType.web
 import models.DepartureId
 import models.MessageStatus
 import models.MessageType
@@ -70,116 +72,137 @@ class MessageConnectorSpec
   private val serviceConfig = new ServicesConfig(configuration, new RunMode(configuration, Mode.Dev))
   private val appConfig     = new AppConfig(configuration, serviceConfig)
 
+  private val channelGen = Gen.oneOf(web, api)
+
   "MessageConnector" - {
 
     "post" - {
 
       "return HttpResponse with status Accepted when when post is successful with Accepted" in {
 
-        val messageSender = "MDTP-000000000000000000000000123-01"
+        forAll(channelGen) {
+          channel =>
+            val messageSender = "MDTP-000000000000000000000000123-01"
 
-        server.stubFor(
-          post(urlEqualTo(postUrl))
-            .withHeader("Content-Type", equalTo("application/xml"))
-            .withHeader("Accept", equalTo("application/xml"))
-            .withHeader("X-Message-Type", equalTo(messageType.toString))
-            .withHeader("X-Message-Sender", equalTo(messageSender))
-            .withRequestBody(matchingXPath("/transitRequest"))
-            .willReturn(
-              aResponse()
-                .withStatus(202)
+            server.stubFor(
+              post(urlEqualTo(postUrl))
+                .withHeader("Content-Type", equalTo("application/xml"))
+                .withHeader("Accept", equalTo("application/xml"))
+                .withHeader("X-Message-Type", equalTo(messageType.toString))
+                .withHeader("X-Message-Sender", equalTo(messageSender))
+                .withRequestBody(matchingXPath("/transitRequest"))
+                .withHeader("channel", equalTo(channel.toString))
+                .willReturn(
+                  aResponse()
+                    .withStatus(202)
+                )
             )
-        )
-        val app         = appBuilder.build()
-        val connector   = app.injector.instanceOf[MessageConnector]
-        val postValue   = MessageWithStatus(LocalDateTime.now(), messageType, <CC007A>test</CC007A>, MessageStatus.SubmissionPending, 1)
-        val departureId = DepartureId(123)
+            val app         = appBuilder.build()
+            val connector   = app.injector.instanceOf[MessageConnector]
+            val postValue   = MessageWithStatus(LocalDateTime.now(), messageType, <CC007A>test</CC007A>, MessageStatus.SubmissionPending, 1)
+            val departureId = DepartureId(123)
 
-        running(app) {
-          val connector = app.injector.instanceOf[MessageConnector]
-          val result    = connector.post(departureId, postValue, OffsetDateTime.now())
-          result.futureValue mustEqual EisSubmissionSuccessful
+            running(app) {
+              val connector = app.injector.instanceOf[MessageConnector]
+              val result    = connector.post(departureId, postValue, OffsetDateTime.now(), channel)
+              result.futureValue mustEqual EisSubmissionSuccessful
+            }
         }
       }
 
       "return a BAD_GATEWAY for a return code of 502" in {
 
-        val messageSender = "MDTP-000000000000000000000000123-01"
+        forAll(channelGen) {
+          channel =>
+            val messageSender = "MDTP-000000000000000000000000123-01"
 
-        server.stubFor(
-          post(urlEqualTo(postUrl))
-            .withHeader("Content-Type", equalTo("application/xml"))
-            .withHeader("Accept", equalTo("application/xml"))
-            .withHeader("X-Message-Type", equalTo(messageType.toString))
-            .withHeader("X-Message-Sender", equalTo(messageSender))
-            .willReturn(
-              aResponse()
-                .withStatus(502)
+            server.stubFor(
+              post(urlEqualTo(postUrl))
+                .withHeader("Content-Type", equalTo("application/xml"))
+                .withHeader("Accept", equalTo("application/xml"))
+                .withHeader("X-Message-Type", equalTo(messageType.toString))
+                .withHeader("X-Message-Sender", equalTo(messageSender))
+                .withHeader("channel", equalTo(channel.toString))
+                .willReturn(
+                  aResponse()
+                    .withStatus(502)
+                )
             )
-        )
 
-        val postValue   = MessageWithStatus(LocalDateTime.now(), messageType, <CC007A>test</CC007A>, MessageStatus.SubmissionPending, 1)
-        val departureId = DepartureId(123)
-        val app         = appBuilder.build()
+            val postValue   = MessageWithStatus(LocalDateTime.now(), messageType, <CC007A>test</CC007A>, MessageStatus.SubmissionPending, 1)
+            val departureId = DepartureId(123)
+            val app         = appBuilder.build()
 
-        running(app) {
-          val connector = app.injector.instanceOf[MessageConnector]
-          val result    = connector.post(departureId, postValue, OffsetDateTime.now())
-          result.futureValue mustEqual DownstreamBadGateway
+            running(app) {
+              val connector = app.injector.instanceOf[MessageConnector]
+              val result    = connector.post(departureId, postValue, OffsetDateTime.now(), channel)
+              result.futureValue mustEqual DownstreamBadGateway
+            }
         }
+
       }
 
       "return a BAD_GATEWAY for a return code of 500" in {
 
-        val messageSender = "MDTP-000000000000000000000000123-01"
+        forAll(channelGen) {
+          channel =>
+            val messageSender = "MDTP-000000000000000000000000123-01"
 
-        server.stubFor(
-          post(urlEqualTo(postUrl))
-            .withHeader("Content-Type", equalTo("application/xml"))
-            .withHeader("Accept", equalTo("application/xml"))
-            .withHeader("X-Message-Type", equalTo(messageType.toString))
-            .withHeader("X-Message-Sender", equalTo(messageSender))
-            .willReturn(
-              aResponse()
-                .withStatus(500)
+            server.stubFor(
+              post(urlEqualTo(postUrl))
+                .withHeader("Content-Type", equalTo("application/xml"))
+                .withHeader("Accept", equalTo("application/xml"))
+                .withHeader("X-Message-Type", equalTo(messageType.toString))
+                .withHeader("X-Message-Sender", equalTo(messageSender))
+                .withHeader("channel", equalTo(channel.toString))
+                .willReturn(
+                  aResponse()
+                    .withStatus(500)
+                )
             )
-        )
 
-        val postValue   = MessageWithStatus(LocalDateTime.now(), messageType, <CC007A>test</CC007A>, MessageStatus.SubmissionPending, 1)
-        val departureId = DepartureId(123)
-        val app         = appBuilder.build()
+            val postValue   = MessageWithStatus(LocalDateTime.now(), messageType, <CC007A>test</CC007A>, MessageStatus.SubmissionPending, 1)
+            val departureId = DepartureId(123)
+            val app         = appBuilder.build()
 
-        running(app) {
-          val connector = app.injector.instanceOf[MessageConnector]
-          val result    = connector.post(departureId, postValue, OffsetDateTime.now())
-          result.futureValue mustEqual DownstreamInternalServerError
+            running(app) {
+              val connector = app.injector.instanceOf[MessageConnector]
+              val result    = connector.post(departureId, postValue, OffsetDateTime.now(), channel)
+              result.futureValue mustEqual DownstreamInternalServerError
+            }
+
         }
+
       }
 
       "return an UnexpectedHttpResonse for an error code other than 202, 400, 403, 500 and 502" in {
 
-        val messageSender = "MDTP-000000000000000000000000123-01"
+        forAll(channelGen) {
+          channel =>
+            val messageSender = "MDTP-000000000000000000000000123-01"
 
-        server.stubFor(
-          post(urlEqualTo(postUrl))
-            .withHeader("Content-Type", equalTo("application/xml"))
-            .withHeader("Accept", equalTo("application/xml"))
-            .withHeader("X-Message-Type", equalTo(messageType.toString))
-            .withHeader("X-Message-Sender", equalTo(messageSender))
-            .willReturn(
-              aResponse()
-                .withStatus(418)
+            server.stubFor(
+              post(urlEqualTo(postUrl))
+                .withHeader("Content-Type", equalTo("application/xml"))
+                .withHeader("Accept", equalTo("application/xml"))
+                .withHeader("X-Message-Type", equalTo(messageType.toString))
+                .withHeader("X-Message-Sender", equalTo(messageSender))
+                .withHeader("channel", equalTo(channel.toString))
+                .willReturn(
+                  aResponse()
+                    .withStatus(418)
+                )
             )
-        )
 
-        val postValue   = MessageWithStatus(LocalDateTime.now(), messageType, <CC007A>test</CC007A>, MessageStatus.SubmissionPending, 1)
-        val departureId = DepartureId(123)
-        val app         = appBuilder.build()
+            val postValue   = MessageWithStatus(LocalDateTime.now(), messageType, <CC007A>test</CC007A>, MessageStatus.SubmissionPending, 1)
+            val departureId = DepartureId(123)
+            val app         = appBuilder.build()
 
-        running(app) {
-          val connector = app.injector.instanceOf[MessageConnector]
-          val result    = connector.post(departureId, postValue, OffsetDateTime.now())
-          result.futureValue.statusCode mustEqual 418
+            running(app) {
+              val connector = app.injector.instanceOf[MessageConnector]
+              val result    = connector.post(departureId, postValue, OffsetDateTime.now(), channel)
+              result.futureValue.statusCode mustEqual 418
+            }
         }
       }
 
