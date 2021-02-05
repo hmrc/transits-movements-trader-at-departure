@@ -16,6 +16,7 @@
 
 package controllers
 import controllers.actions.AuthenticatedGetDepartureForReadActionProvider
+
 import javax.inject.Inject
 import models.DepartureId
 import play.api.libs.json.Json
@@ -23,7 +24,7 @@ import play.api.mvc.Action
 import play.api.mvc.AnyContent
 import play.api.mvc.ControllerComponents
 import services.MessageSummaryService
-import uk.gov.hmrc.play.bootstrap.controller.BackendController
+import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 class MessagesSummaryController @Inject()(
   authenticateForRead: AuthenticatedGetDepartureForReadActionProvider,

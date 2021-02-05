@@ -18,7 +18,6 @@ package models.request
 
 import models.Departure
 import models.MessageResponse
-import play.api.mvc.Request
 import play.api.mvc.WrappedRequest
 
 case class DepartureResponseRequest[A](request: DepartureRequest[A], messageResponse: MessageResponse) extends WrappedRequest[A](request) {

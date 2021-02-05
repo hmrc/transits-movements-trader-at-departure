@@ -44,7 +44,6 @@ import play.api.Environment
 import play.api.Mode
 import play.api.test.Helpers.running
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.bootstrap.config.RunMode
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 class MessageConnectorSpec
@@ -69,7 +68,7 @@ class MessageConnectorSpec
   private val env           = Environment.simple()
   private val configuration = Configuration.load(env)
 
-  private val serviceConfig = new ServicesConfig(configuration, new RunMode(configuration, Mode.Dev))
+  private val serviceConfig = new ServicesConfig(configuration)
   private val appConfig     = new AppConfig(configuration, serviceConfig)
 
   private val channelGen = Gen.oneOf(web, api)

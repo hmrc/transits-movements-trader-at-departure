@@ -19,6 +19,7 @@ package controllers
 import audit.AuditService
 import audit.AuditType._
 import controllers.actions._
+
 import javax.inject.Inject
 import models._
 import models.response.ResponseDeparture
@@ -30,7 +31,7 @@ import play.api.mvc.AnyContent
 import play.api.mvc.ControllerComponents
 import repositories.DepartureRepository
 import services._
-import uk.gov.hmrc.play.bootstrap.controller.BackendController
+import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future

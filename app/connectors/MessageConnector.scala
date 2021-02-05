@@ -23,8 +23,8 @@ import connectors.MessageConnector.EisSubmissionResult
 import connectors.MessageConnector.EisSubmissionResult._
 import models._
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.HttpClient
 import uk.gov.hmrc.http.HttpResponse
-import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import utils.Format
 import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
 

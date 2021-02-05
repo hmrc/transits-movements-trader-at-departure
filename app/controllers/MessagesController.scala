@@ -20,6 +20,7 @@ import audit.AuditService
 import audit.AuditType.DepartureCancellationRequestSubmitted
 import controllers.actions.AuthenticatedGetDepartureForReadActionProvider
 import controllers.actions.AuthenticatedGetDepartureForWriteActionProvider
+
 import javax.inject.Inject
 import models.MessageStatus.SubmissionFailed
 import models._
@@ -33,7 +34,7 @@ import play.api.mvc.AnyContent
 import play.api.mvc.ControllerComponents
 import services.DepartureService
 import services.SubmitMessageService
-import uk.gov.hmrc.play.bootstrap.controller.BackendController
+import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
