@@ -19,6 +19,7 @@ package controllers
 import audit.AuditService
 import controllers.actions.CheckMessageTypeActionProvider
 import controllers.actions.GetDepartureForWriteActionProvider
+
 import javax.inject.Inject
 import models.MessageSender
 import models.MessageType
@@ -30,7 +31,7 @@ import play.api.mvc.Action
 import play.api.mvc.ControllerComponents
 import services.SaveMessageService
 import services.XmlMessageParser
-import uk.gov.hmrc.play.bootstrap.controller.BackendController
+import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
