@@ -17,7 +17,10 @@ lazy val microservice = Project(appName, file("."))
     majorVersion := 0,
     libraryDependencies ++= AppDependencies.compile ++ AppDependencies.test,
     scalafmtOnCompile in ThisBuild := true,
-    useSuperShell in ThisBuild := false
+    useSuperShell in ThisBuild := false,
+    javaOptions ++= Seq(
+      "-Djdk.xml.maxOccurLimit=10000"
+    )
   )
   .settings(publishingSettings: _*)
   .settings(resolvers += Resolver.jcenterRepo)
