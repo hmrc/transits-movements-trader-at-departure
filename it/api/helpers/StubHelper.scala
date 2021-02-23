@@ -1,7 +1,7 @@
 package api.helpers
 
 import com.github.tomakehurst.wiremock.WireMockServer
-import com.github.tomakehurst.wiremock.client.WireMock.{aResponse, equalTo, post, urlEqualTo, any}
+import com.github.tomakehurst.wiremock.client.WireMock.{aResponse, equalTo, post, urlEqualTo}
 import com.github.tomakehurst.wiremock.stubbing.StubMapping
 
 trait StubHelper {

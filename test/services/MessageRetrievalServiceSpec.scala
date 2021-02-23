@@ -19,7 +19,6 @@ package services
 import base.SpecBase
 import cats.data.NonEmptyList
 import cats.data.Reader
-import cats.data.ReaderT
 import models.ChannelType
 import models.Departure
 import models.DepartureId
@@ -28,9 +27,7 @@ import models.Message
 import models.MessageId
 import models.MessageType
 import models.MessageWithoutStatus
-import models.MessagesSummary
 import models.request.TadPdfRequest
-import org.mockito.ArgumentMatchers
 import org.mockito.Mockito.when
 
 import java.time.LocalDateTime

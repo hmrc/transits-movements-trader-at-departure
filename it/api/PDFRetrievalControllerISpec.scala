@@ -27,7 +27,7 @@ class PDFRetrievalControllerISpec extends ApiSpecBase {
     "microservice.services.manage-documents.port"
   )
 
-  "/transit-accompanying-document/:id" - {
+  "/movements/departures/:departureId/transit-accompanying-document" - {
     "should return a PDF if all data is present" in {
 
       val requestId: String = UUID.randomUUID().toString
