@@ -13,3 +13,5 @@ POST       /movements/departures/:departureId/messages                  controll
 GET        /movements/departures/:departureId/messages/:messageId       controllers.MessagesController.getMessage(departureId: DepartureId, messageId: MessageId)
 
 POST       /movements/departures/:messageSender/messages/eis            controllers.NCTSMessageController.post(messageSender: MessageSender)
+
+GET        /movements/departures/:departureId/transit-accompanying-document controllers.PDFRetrievalController.getTransitAccompanyingDocument(departureId: DepartureId)
