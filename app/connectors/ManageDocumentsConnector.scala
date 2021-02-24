@@ -21,7 +21,6 @@ import config.AppConfig
 import models.request.TadPdfRequest
 import play.api.libs.ws.WSClient
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.http.HeaderNames
 import utils.Logging
 
 import javax.inject.Inject
@@ -39,7 +38,7 @@ class ManageDocumentsConnector @Inject()(
     val headers = Seq(
       "Content-Type" -> "application/xml",
       "User-Agent"   -> config.appName
-    ) ++ hc.headers(HeaderNames.explicitlyIncludedHeaders) ++ hc.otherHeaders
+    ) ++ hc.headers
 
     ws.url(serviceUrl)
       .withHttpHeaders(headers: _*)
