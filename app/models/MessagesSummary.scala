@@ -26,7 +26,8 @@ case class MessagesSummary(departure: Departure,
                            cancellationDecision: Option[MessageId] = None,
                            declarationCancellationRequest: Option[MessageId] = None,
                            noReleaseForTransit: Option[MessageId] = None,
-                           controlDecision: Option[MessageId] = None)
+                           controlDecision: Option[MessageId] = None,
+                           releaseForTransit: Option[MessageId] = None)
 
 object MessagesSummary {
 
@@ -40,7 +41,8 @@ object MessagesSummary {
                            cancellationDecision,
                            declarationCancellationRequest,
                            noReleaseForTransit,
-                           controlDecision) =>
+                           controlDecision,
+                           _) =>
         Json
           .obj(
             "departureId" -> departure.departureId,
