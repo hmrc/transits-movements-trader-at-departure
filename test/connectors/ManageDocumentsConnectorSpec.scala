@@ -19,7 +19,6 @@ package connectors
 import akka.util.ByteString
 import com.github.tomakehurst.wiremock.client.WireMock._
 import generators.ModelGenerators
-import models.request.TadPdfRequest
 import org.scalacheck.Gen
 import org.scalatest.OptionValues
 import org.scalatest.concurrent.IntegrationPatience
@@ -52,26 +51,15 @@ class ManageDocumentsConnectorSpec
 
     "getUnloadingPermissionPdf" - {
 
-      val declarationXml = <declaration>
-        <fieldOne>Field One's Value</fieldOne>
-      </declaration>
-
       val releasedForTransitXml = <releaseForTransit>
         <fieldTwo>Field Twos Value</fieldTwo>
       </releaseForTransit>
 
       val expectedXml =
-        """<pdfGenerationMessage>
-          |  <declaration>
-          |    <fieldOne>Field One's Value</fieldOne>
-          |  </declaration>
-          |  <releaseForTransit>
+        """<releaseForTransit>
           |   <fieldTwo>Field Twos Value</fieldTwo>
           |  </releaseForTransit>
-          |</pdfGenerationMessage>
           |""".stripMargin
-
-      val pdfRequest = TadPdfRequest(declarationXml, releasedForTransitXml)
 
       "must return status Ok and PDF" in {
 
@@ -92,7 +80,7 @@ class ManageDocumentsConnectorSpec
         running(app) {
           val connector = app.injector.instanceOf[ManageDocumentsConnector]
 
-          val result: Future[Either[TADErrorResponse, ByteString]] = connector.getTadPDF(pdfRequest)
+          val result: Future[Either[TADErrorResponse, ByteString]] = connector.getTadPDF(releasedForTransitXml)
           result.futureValue mustBe Right(ByteString("Hello".getBytes()))
         }
       }
@@ -117,7 +105,7 @@ class ManageDocumentsConnectorSpec
         running(app) {
           val connector = app.injector.instanceOf[ManageDocumentsConnector]
 
-          val result: Future[Either[TADErrorResponse, ByteString]] = connector.getTadPDF(pdfRequest)
+          val result: Future[Either[TADErrorResponse, ByteString]] = connector.getTadPDF(releasedForTransitXml)
           result.futureValue mustBe Left(UnexpectedResponse(genErrorResponse))
         }
       }

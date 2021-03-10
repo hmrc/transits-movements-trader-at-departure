@@ -26,7 +26,6 @@ import models.DepartureId
 import models.DepartureStatus
 import models.MessageType
 import models.MessageWithoutStatus
-import models.request.TadPdfRequest
 import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.{eq => eqTo}
 import org.mockito.Mockito.when
@@ -59,37 +58,37 @@ class PDFRetrievalServiceSpec extends SpecBase with IntegrationPatience {
 
     "getTadPDF" - {
       "should return the WSResponse if all messages found and returned from manage documents" in {
-        when(mockMessageRetrievalService.getTadRequest(eqTo(departure)))
-          .thenReturn(Some(TadPdfRequest(<blank></blank>, <blank2></blank2>)))
+        when(mockMessageRetrievalService.getReleaseForTransitMessage(eqTo(departure)))
+          .thenReturn(Some(MessageWithoutStatus(LocalDateTime.now, MessageType.ReleaseForTransit, <blank2></blank2>, 2)))
 
-        when(mockManageDocumentsConnector.getTadPDF(eqTo(TadPdfRequest(<blank></blank>, <blank2></blank2>)))(any()))
+        when(mockManageDocumentsConnector.getTadPDF(eqTo(<blank2></blank2>))(any()))
           .thenReturn(Future.successful(Right(ByteString("Hello".getBytes()))))
 
         service.getTadPDF(departure).futureValue mustBe Right(ByteString("Hello".getBytes()))
       }
 
       "should return an UnexpectedError an unexpected response PDF" in {
-        when(mockMessageRetrievalService.getTadRequest(eqTo(departure)))
-          .thenReturn(Some(TadPdfRequest(<blank2></blank2>, <blank3></blank3>)))
+        when(mockMessageRetrievalService.getReleaseForTransitMessage(eqTo(departure)))
+          .thenReturn(Some(MessageWithoutStatus(LocalDateTime.now, MessageType.ReleaseForTransit, <blank1></blank1>, 2)))
 
-        when(mockManageDocumentsConnector.getTadPDF(eqTo(TadPdfRequest(<blank2></blank2>, <blank3></blank3>)))(any()))
+        when(mockManageDocumentsConnector.getTadPDF(eqTo(<blank1></blank1>))(any()))
           .thenReturn(Future.failed(new NotFoundException("Sorry An Exception Occurred")))
 
         service.getTadPDF(departure).futureValue mustBe Left(UnexpectedError)
       }
 
       "should return an UnexpectedError if there is a failure in retrieving the PDF" in {
-        when(mockMessageRetrievalService.getTadRequest(eqTo(departure)))
-          .thenReturn(Some(TadPdfRequest(<blank2></blank2>, <blank3></blank3>)))
+        when(mockMessageRetrievalService.getReleaseForTransitMessage(eqTo(departure)))
+          .thenReturn(Some(MessageWithoutStatus(LocalDateTime.now, MessageType.ReleaseForTransit, <blank1></blank1>, 2)))
 
-        when(mockManageDocumentsConnector.getTadPDF(eqTo(TadPdfRequest(<blank2></blank2>, <blank3></blank3>)))(any()))
+        when(mockManageDocumentsConnector.getTadPDF(eqTo(<blank1></blank1>))(any()))
           .thenReturn(Future.failed(new NotFoundException("Sorry An Exception Occurred")))
 
         service.getTadPDF(departure).futureValue mustBe Left(UnexpectedError)
       }
 
       "should return an IncorrectStateError if there no TAD pdf request can be generated" in {
-        when(mockMessageRetrievalService.getTadRequest(eqTo(departure)))
+        when(mockMessageRetrievalService.getReleaseForTransitMessage(eqTo(departure)))
           .thenReturn(None)
 
         service.getTadPDF(departure).futureValue.left.value mustBe IncorrectStateError

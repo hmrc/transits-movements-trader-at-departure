@@ -18,7 +18,6 @@ package connectors
 
 import akka.util.ByteString
 import config.AppConfig
-import models.request.TadPdfRequest
 import play.api.libs.ws.WSClient
 import uk.gov.hmrc.http.HeaderCarrier
 import utils.Logging
@@ -26,6 +25,7 @@ import utils.Logging
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
+import scala.xml.NodeSeq
 
 class ManageDocumentsConnector @Inject()(
   config: AppConfig,
@@ -33,7 +33,7 @@ class ManageDocumentsConnector @Inject()(
 )(implicit val ec: ExecutionContext)
     extends Logging {
 
-  def getTadPDF(tadRequest: TadPdfRequest)(implicit hc: HeaderCarrier): Future[Either[TADErrorResponse, ByteString]] = {
+  def getTadPDF(ie29Message: NodeSeq)(implicit hc: HeaderCarrier): Future[Either[TADErrorResponse, ByteString]] = {
     val serviceUrl = s"${config.manageDocumentsUrl}/transit-accompanying-document"
     val headers = Seq(
       "Content-Type" -> "application/xml",
@@ -42,7 +42,7 @@ class ManageDocumentsConnector @Inject()(
 
     ws.url(serviceUrl)
       .withHttpHeaders(headers: _*)
-      .post(tadRequest.pdfGenerationMessage)
+      .post(ie29Message)
       .map(response =>
         if (response.status == 200) {
           Right(response.bodyAsBytes)

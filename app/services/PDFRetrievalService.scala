@@ -34,10 +34,10 @@ class PDFRetrievalService @Inject()(
     extends Logging {
 
   def getTadPDF(departure: Departure)(implicit hc: HeaderCarrier): Future[Either[PDFGenerationResponse, ByteString]] =
-    messageRetrievalService.getTadRequest(departure) match {
-      case Some(tadPdfRequest) =>
+    messageRetrievalService.getReleaseForTransitMessage(departure) match {
+      case Some(ie29Message) =>
         manageDocumentsConnector
-          .getTadPDF(tadPdfRequest)
+          .getTadPDF(ie29Message.message)
           .map {
             case Right(pdf)                  => Right(pdf)
             case Left(UnexpectedResponse(_)) => Left(UnexpectedError)
