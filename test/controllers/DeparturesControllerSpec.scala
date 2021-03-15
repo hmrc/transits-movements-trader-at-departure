@@ -457,14 +457,16 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
       val mockDepartureRepository = mock[DepartureRepository]
 
       val departure = Arbitrary.arbitrary[Departure].sample.value.copy(eoriNumber = "eori")
-      val departureWithoutMessages = DepartureWithoutMessages(departure.departureId,
-                                                              departure.channel,
-                                                              departure.eoriNumber,
-                                                              departure.movementReferenceNumber,
-                                                              departure.referenceNumber,
-                                                              departure.status,
-                                                              departure.created,
-                                                              departure.updated)
+      val departureWithoutMessages = DepartureWithoutMessages(
+        departure.departureId,
+        departure.channel,
+        departure.eoriNumber,
+        departure.movementReferenceNumber,
+        departure.referenceNumber,
+        departure.status,
+        departure.created,
+        departure.updated
+      )
       val responseDeparture = ResponseDeparture.build(departure)
 
       when(mockDepartureRepository.fetchAllDepartures(any(), any())).thenReturn(Future.successful(Seq(departureWithoutMessages)))
