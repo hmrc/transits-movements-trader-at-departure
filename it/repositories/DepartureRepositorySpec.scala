@@ -484,7 +484,12 @@ class DepartureRepositorySpec
     }
 
     "fetchAllDepartures" - {
-      "return Departures that match an eoriNumber and channel type" in {
+
+      def convertToDepartureWithoutMessages(departure: Departure): DepartureWithoutMessages =
+        DepartureWithoutMessages(departure.departureId, departure.channel, departure.eoriNumber, departure.movementReferenceNumber, departure.referenceNumber, departure.status, departure.created, departure.updated)
+
+
+      "return DeparturesWithoutMessages that match an eoriNumber and channel type" in {
         database.flatMap(_.drop()).futureValue
 
         val app = new GuiceApplicationBuilder().build()
@@ -504,8 +509,8 @@ class DepartureRepositorySpec
               db.collection[JSONCollection](DepartureRepository.collectionName).insert(false).many(jsonArr)
           }.futureValue
 
-          repository.fetchAllDepartures(eoriNumber, api).futureValue mustBe Seq(departure1)
-          repository.fetchAllDepartures(eoriNumber, web).futureValue mustBe Seq(departure3)
+          repository.fetchAllDepartures(eoriNumber, api).futureValue mustBe Seq(convertToDepartureWithoutMessages(departure1))
+          repository.fetchAllDepartures(eoriNumber, web).futureValue mustBe Seq(convertToDepartureWithoutMessages(departure3))
         }
       }
 
@@ -532,7 +537,7 @@ class DepartureRepositorySpec
 
           val result = respository.fetchAllDepartures(eoriNumber, api).futureValue
 
-          result mustBe Seq.empty[Departure]
+          result mustBe Seq.empty[DepartureWithoutMessages]
         }
       }
     }

@@ -23,6 +23,17 @@ import cats.implicits._
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
+trait BaseDeparture {
+  def departureId: DepartureId
+  def channel: ChannelType
+  def eoriNumber: String
+  def movementReferenceNumber: Option[MovementReferenceNumber]
+  def referenceNumber: String
+  def status: DepartureStatus
+  def created: LocalDateTime
+  def updated: LocalDateTime
+}
+
 case class Departure(departureId: DepartureId,
                      channel: ChannelType,
                      eoriNumber: String,
@@ -32,7 +43,8 @@ case class Departure(departureId: DepartureId,
                      created: LocalDateTime,
                      updated: LocalDateTime,
                      nextMessageCorrelationId: Int,
-                     messages: NonEmptyList[Message]) {
+                     messages: NonEmptyList[Message])
+    extends BaseDeparture {
 
   def nextMessageId: MessageId = MessageId.fromIndex(messages.length)
 

@@ -22,6 +22,7 @@ import controllers.routes
 import models.Departure
 import models.DepartureId
 import models.DepartureStatus
+import models.DepartureWithoutMessages
 import models.MovementReferenceNumber
 import play.api.libs.json.Json
 import play.api.libs.json.OWrites
@@ -47,6 +48,18 @@ object ResponseDeparture {
       departure.status,
       departure.created,
       departure.updated
+    )
+
+  def build(departureWithoutMessages: DepartureWithoutMessages): ResponseDeparture =
+    ResponseDeparture(
+      departureWithoutMessages.departureId,
+      routes.DeparturesController.get(departureWithoutMessages.departureId).url,
+      routes.MessagesController.getMessages(departureWithoutMessages.departureId).url,
+      departureWithoutMessages.movementReferenceNumber,
+      departureWithoutMessages.referenceNumber,
+      departureWithoutMessages.status,
+      departureWithoutMessages.created,
+      departureWithoutMessages.updated
     )
 
   implicit val writes: OWrites[ResponseDeparture] = Json.writes[ResponseDeparture]

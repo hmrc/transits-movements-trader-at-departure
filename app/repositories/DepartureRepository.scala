@@ -250,10 +250,10 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfi
     }
   }
 
-  def fetchAllDepartures(eoriNumber: String, channelFilter: ChannelType): Future[Seq[Departure]] =
+  def fetchAllDepartures(eoriNumber: String, channelFilter: ChannelType): Future[Seq[DepartureWithoutMessages]] =
     collection.flatMap {
       _.find(Json.obj("eoriNumber" -> eoriNumber, "channel" -> channelFilter), Option.empty[JsObject])
-        .cursor[Departure]()
+        .cursor[DepartureWithoutMessages]()
         .collect[Seq](-1, Cursor.FailOnError())
     }
 

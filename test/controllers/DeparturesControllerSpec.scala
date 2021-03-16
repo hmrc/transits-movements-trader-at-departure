@@ -19,6 +19,7 @@ package controllers
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
+
 import audit.AuditService
 import audit.AuditType
 import base.SpecBase
@@ -36,14 +37,15 @@ import models.MessageStatus.SubmissionSucceeded
 import models.Departure
 import models.DepartureId
 import models.DepartureStatus
-import models.ChannelType.api
-import models.ChannelType.web
+import models.DepartureWithoutMessages
 import models.MessageId
 import models.MessageSender
 import models.MessageType
 import models.MessageWithStatus
 import models.MovementReferenceNumber
 import models.SubmissionProcessingResult
+import models.ChannelType.api
+import models.ChannelType.web
 import models.SubmissionProcessingResult.SubmissionFailureExternal
 import models.SubmissionProcessingResult.SubmissionFailureInternal
 import models.SubmissionProcessingResult.SubmissionFailureRejected
@@ -454,10 +456,20 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
     "must return all departures from database" in {
       val mockDepartureRepository = mock[DepartureRepository]
 
-      val departure         = Arbitrary.arbitrary[Departure].sample.value.copy(eoriNumber = "eori")
+      val departure = Arbitrary.arbitrary[Departure].sample.value.copy(eoriNumber = "eori")
+      val departureWithoutMessages = DepartureWithoutMessages(
+        departure.departureId,
+        departure.channel,
+        departure.eoriNumber,
+        departure.movementReferenceNumber,
+        departure.referenceNumber,
+        departure.status,
+        departure.created,
+        departure.updated
+      )
       val responseDeparture = ResponseDeparture.build(departure)
 
-      when(mockDepartureRepository.fetchAllDepartures(any(), any())).thenReturn(Future.successful(Seq(departure)))
+      when(mockDepartureRepository.fetchAllDepartures(any(), any())).thenReturn(Future.successful(Seq(departureWithoutMessages)))
 
       val application = baseApplicationBuilder
         .overrides(bind[DepartureRepository].toInstance(mockDepartureRepository))
