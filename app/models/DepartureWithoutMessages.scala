@@ -20,6 +20,7 @@ import java.time.LocalDateTime
 
 import cats.data.NonEmptyList
 import play.api.libs.json.Format
+import play.api.libs.json.JsObject
 import play.api.libs.json.JsResult
 import play.api.libs.json.JsValue
 import play.api.libs.json.Json
@@ -57,4 +58,15 @@ object DepartureWithoutMessages {
         (__ \ "created").read(MongoDateTimeFormats.localDateTimeRead) and
         (__ \ "updated").read(MongoDateTimeFormats.localDateTimeRead)
     )(DepartureWithoutMessages.apply _)
+
+  val projection: JsObject = Json.obj(
+    "_id"                     -> 1,
+    "channel"                 -> 1,
+    "eoriNumber"              -> 1,
+    "movementReferenceNumber" -> 1,
+    "referenceNumber"         -> 1,
+    "status"                  -> 1,
+    "created"                 -> 1,
+    "updated"                 -> 1
+  )
 }
