@@ -27,7 +27,6 @@ import models.Message
 import models.MessageId
 import models.MessageType
 import models.MessageWithoutStatus
-import models.request.TadPdfRequest
 import org.mockito.Mockito.when
 
 import java.time.LocalDateTime
@@ -58,22 +57,17 @@ class MessageRetrievalServiceSpec extends SpecBase {
           )
         )
 
-        when(mockMessageSummaryService.declarationMessage)
-          .thenReturn(
-            Reader[Departure, (Message, MessageId)](_ =>
-              (MessageWithoutStatus(LocalDateTime.now(), MessageType.DepartureDeclaration, <departure></departure>, 1), MessageId.fromIndex(1)))
-          )
+        val date = LocalDateTime.now()
 
         when(mockMessageSummaryService.releaseForTransitMessage)
           .thenReturn(
             Reader[Departure, Option[(Message, MessageId)]](_ =>
-              Some((MessageWithoutStatus(LocalDateTime.now(), MessageType.ReleaseForTransit, <released></released>, 2), MessageId.fromIndex(2))))
+              Some((MessageWithoutStatus(date, MessageType.ReleaseForTransit, <released></released>, 2), MessageId.fromIndex(2))))
           )
 
-        service.getTadRequest(departure).value mustBe TadPdfRequest(
-          <departure></departure>,
-          <released></released>
-        )
+        service
+          .getReleaseForTransitMessage(departure)
+          .value mustBe MessageWithoutStatus(date, MessageType.ReleaseForTransit, <released></released>, 2)
       }
       "Return a None if releaseFromTransit message is not present" in new Setup {
         val departure: Departure = Departure(
@@ -92,18 +86,12 @@ class MessageRetrievalServiceSpec extends SpecBase {
           )
         )
 
-        when(mockMessageSummaryService.declarationMessage)
-          .thenReturn(
-            Reader[Departure, (Message, MessageId)](_ =>
-              (MessageWithoutStatus(LocalDateTime.now(), MessageType.DepartureDeclaration, <departure></departure>, 1), MessageId.fromIndex(1)))
-          )
-
         when(mockMessageSummaryService.releaseForTransitMessage)
           .thenReturn(
             Reader[Departure, Option[(Message, MessageId)]](_ => None)
           )
 
-        service.getTadRequest(departure) mustBe None
+        service.getReleaseForTransitMessage(departure) mustBe None
       }
     }
   }
