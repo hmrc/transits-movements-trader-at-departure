@@ -27,7 +27,7 @@ class PDFRetrievalControllerISpec extends ApiSpecBase {
     "microservice.services.manage-documents.port"
   )
 
-  "/movements/departures/:departureId/transit-accompanying-document" - {
+  "/movements/departures/:departureId/accompanying-document" - {
     "should return a PDF if all data is present" in {
 
       val requestId: String = UUID.randomUUID().toString
@@ -75,7 +75,7 @@ class PDFRetrievalControllerISpec extends ApiSpecBase {
       )
 
       val response = wsClient
-        .url(s"http://localhost:$port/transits-movements-trader-at-departure/movements/departures/12/transit-accompanying-document")
+        .url(s"http://localhost:$port/transits-movements-trader-at-departure/movements/departures/12/accompanying-document")
         .withHttpHeaders("channel" -> "web", "X-Request-ID" -> requestId)
         .get().futureValue
 
@@ -131,7 +131,7 @@ class PDFRetrievalControllerISpec extends ApiSpecBase {
       )
 
       val response = wsClient
-        .url(s"http://localhost:$port/transits-movements-trader-at-departure/movements/departures/12/transit-accompanying-document")
+        .url(s"http://localhost:$port/transits-movements-trader-at-departure/movements/departures/12/accompanying-document")
         .withHttpHeaders("channel" -> "web", "X-Request-ID" -> requestId)
         .get().futureValue
 

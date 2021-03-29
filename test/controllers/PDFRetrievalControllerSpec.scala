@@ -78,7 +78,7 @@ class PDFRetrievalControllerSpec extends SpecBase with ScalaCheckPropertyChecks 
         when(mockPDFGenerationService.getAccompanyingDocumentPDF(eqTo(testDeparture))(any()))
           .thenReturn(Future.successful(Right(ByteString("Hello".getBytes()))))
 
-        val result: Future[Result] = controller.getTransitAccompanyingDocument(DepartureId(23)).apply(fakeRequest)
+        val result: Future[Result] = controller.getAccompanyingDocument(DepartureId(23)).apply(fakeRequest)
 
         status(result) mustBe 200
         contentAsBytes(result) mustBe "Hello".getBytes()
@@ -88,7 +88,7 @@ class PDFRetrievalControllerSpec extends SpecBase with ScalaCheckPropertyChecks 
         when(mockPDFGenerationService.getAccompanyingDocumentPDF(eqTo(testDeparture))(any()))
           .thenReturn(Future.successful(Left(IncorrectStateError)))
 
-        val result: Future[Result] = controller.getTransitAccompanyingDocument(DepartureId(24)).apply(fakeRequest)
+        val result: Future[Result] = controller.getAccompanyingDocument(DepartureId(24)).apply(fakeRequest)
 
         status(result) mustBe 409
       }
@@ -97,7 +97,7 @@ class PDFRetrievalControllerSpec extends SpecBase with ScalaCheckPropertyChecks 
         when(mockPDFGenerationService.getAccompanyingDocumentPDF(eqTo(testDeparture))(any()))
           .thenReturn(Future.successful(Left(UnexpectedError)))
 
-        val result: Future[Result] = controller.getTransitAccompanyingDocument(DepartureId(25)).apply(fakeRequest)
+        val result: Future[Result] = controller.getAccompanyingDocument(DepartureId(25)).apply(fakeRequest)
 
         status(result) mustBe 502
       }

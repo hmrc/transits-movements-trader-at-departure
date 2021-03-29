@@ -38,15 +38,15 @@ class PDFRetrievalController @Inject()(
     extends BackendController(cc)
     with Logging {
 
-  def getTransitAccompanyingDocument(departureId: DepartureId): Action[AnyContent] = authenticateForRead(departureId).async {
+  def getAccompanyingDocument(departureId: DepartureId): Action[AnyContent] = authenticateForRead(departureId).async {
     implicit request =>
       pdfGenerationService.getAccompanyingDocumentPDF(request.departure).map {
         case Right(response) => Ok(response)
         case Left(UnexpectedError) =>
-          logger.warn(s"[getTransitAccompanyingDocument] returning $BAD_GATEWAY due to an unexpected error in getting the PDF")
+          logger.warn(s"[getAccompanyingDocument] returning $BAD_GATEWAY due to an unexpected error in getting the PDF")
           BadGateway
         case Left(IncorrectStateError) =>
-          logger.warn(s"[getTransitAccompanyingDocument] returning $CONFLICT due to an IncorrectStateError in getting the PDF")
+          logger.warn(s"[getAccompanyingDocument] returning $CONFLICT due to an IncorrectStateError in getting the PDF")
           Conflict
       }
   }

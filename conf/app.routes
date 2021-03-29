@@ -14,4 +14,4 @@ GET        /movements/departures/:departureId/messages/:messageId               
 
 POST       /movements/departures/:messageSender/messages/eis                    controllers.NCTSMessageController.post(messageSender: MessageSender)
 
-GET        /movements/departures/:departureId/transit-accompanying-document     controllers.PDFRetrievalController.getTransitAccompanyingDocument(departureId: DepartureId)
+GET        /movements/departures/:departureId/accompanying-document             controllers.PDFRetrievalController.getAccompanyingDocument(departureId: DepartureId)
