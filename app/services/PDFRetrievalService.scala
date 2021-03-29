@@ -18,6 +18,7 @@ package services
 
 import akka.util.ByteString
 import connectors.ManageDocumentsConnector
+import connectors.TADErrorResponse
 import connectors.UnexpectedResponse
 import models.Departure
 import uk.gov.hmrc.http.HeaderCarrier
@@ -26,6 +27,7 @@ import utils.Logging
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
+import scala.xml.NodeSeq
 
 class PDFRetrievalService @Inject()(
   manageDocumentsConnector: ManageDocumentsConnector,
@@ -33,22 +35,29 @@ class PDFRetrievalService @Inject()(
 )(implicit val ec: ExecutionContext)
     extends Logging {
 
-  def getTadPDF(departure: Departure)(implicit hc: HeaderCarrier): Future[Either[PDFGenerationResponse, ByteString]] =
+  private def responseHandler(functionName: String)(
+    f: => Future[Either[TADErrorResponse, ByteString]]
+  ): Future[Either[PDFGenerationResponse, ByteString]] =
+    f.map {
+        case Right(pdf)                  => Right(pdf)
+        case Left(UnexpectedResponse(_)) => Left(UnexpectedError)
+      }
+      .recover {
+        case e =>
+          logger.error(s"[getAccompanyingDocumentPDF][$functionName] an unexpected exception happened", e)
+          Left(UnexpectedError)
+      }
+
+  private def messageIsSafety(message: NodeSeq): Boolean = (message \ "HEAHEA" \ "SecHEA358").headOption.exists(_.text == "1")
+
+  def getAccompanyingDocumentPDF(departure: Departure)(implicit hc: HeaderCarrier): Future[Either[PDFGenerationResponse, ByteString]] =
     messageRetrievalService.getReleaseForTransitMessage(departure) match {
+      case Some(ie29Message) if messageIsSafety(ie29Message.message) =>
+        responseHandler("TSAD")(manageDocumentsConnector.getTsadPDF(ie29Message.message))
       case Some(ie29Message) =>
-        manageDocumentsConnector
-          .getTadPDF(ie29Message.message)
-          .map {
-            case Right(pdf)                  => Right(pdf)
-            case Left(UnexpectedResponse(_)) => Left(UnexpectedError)
-          }
-          .recover {
-            case e =>
-              logger.error("[getTadPDF] an unexpected exception happened", e)
-              Left(UnexpectedError)
-          }
+        responseHandler("TAD")(manageDocumentsConnector.getTadPDF(ie29Message.message))
       case _ =>
-        logger.warn("[getTadPDF] no releaseForTransitMessageId or Departure found")
+        logger.warn("[getAccompanyingDocumentPDF] no releaseForTransitMessageId or Departure found")
         Future.successful(Left(IncorrectStateError))
     }
 }

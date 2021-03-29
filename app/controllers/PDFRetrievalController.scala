@@ -40,7 +40,7 @@ class PDFRetrievalController @Inject()(
 
   def getTransitAccompanyingDocument(departureId: DepartureId): Action[AnyContent] = authenticateForRead(departureId).async {
     implicit request =>
-      pdfGenerationService.getTadPDF(request.departure).map {
+      pdfGenerationService.getAccompanyingDocumentPDF(request.departure).map {
         case Right(response) => Ok(response)
         case Left(UnexpectedError) =>
           logger.warn(s"[getTransitAccompanyingDocument] returning $BAD_GATEWAY due to an unexpected error in getting the PDF")
