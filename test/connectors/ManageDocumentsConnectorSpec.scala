@@ -31,6 +31,7 @@ import play.api.test.Helpers.running
 import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.Future
+import scala.xml.Elem
 
 class ManageDocumentsConnectorSpec
     extends AnyFreeSpec
@@ -47,19 +48,19 @@ class ManageDocumentsConnectorSpec
 
   implicit val headerCarrier: HeaderCarrier = HeaderCarrier()
 
+  val releasedForTransitXml: Elem = <releaseForTransit>
+    <fieldTwo>Field Twos Value</fieldTwo>
+  </releaseForTransit>
+
+  val expectedXml: String =
+    """<releaseForTransit>
+      |   <fieldTwo>Field Twos Value</fieldTwo>
+      |  </releaseForTransit>
+      |""".stripMargin
+
   "ManageDocumentsConnector" - {
 
-    "getUnloadingPermissionPdf" - {
-
-      val releasedForTransitXml = <releaseForTransit>
-        <fieldTwo>Field Twos Value</fieldTwo>
-      </releaseForTransit>
-
-      val expectedXml =
-        """<releaseForTransit>
-          |   <fieldTwo>Field Twos Value</fieldTwo>
-          |  </releaseForTransit>
-          |""".stripMargin
+    "getTadPDF" - {
 
       "must return status Ok and PDF" in {
 
@@ -106,6 +107,57 @@ class ManageDocumentsConnectorSpec
           val connector = app.injector.instanceOf[ManageDocumentsConnector]
 
           val result: Future[Either[TADErrorResponse, ByteString]] = connector.getTadPDF(releasedForTransitXml)
+          result.futureValue mustBe Left(UnexpectedResponse(genErrorResponse))
+        }
+      }
+    }
+    "getTsadPDF" - {
+
+      "must return status Ok and PDF" in {
+
+        server.stubFor(
+          post(urlEqualTo("/transit-movements-trader-manage-documents/transit-security-accompanying-document"))
+            .withHeader("User-Agent", equalTo("transits-movements-trader-at-departure"))
+            .withHeader("Content-Type", equalTo("application/xml"))
+            .withRequestBody(equalToXml(expectedXml))
+            .willReturn(
+              aResponse()
+                .withStatus(200)
+                .withBody("Hello")
+            )
+        )
+
+        val app = appBuilder.build()
+
+        running(app) {
+          val connector = app.injector.instanceOf[ManageDocumentsConnector]
+
+          val result: Future[Either[TADErrorResponse, ByteString]] = connector.getTsadPDF(releasedForTransitXml)
+          result.futureValue mustBe Right(ByteString("Hello".getBytes()))
+        }
+      }
+
+      "must return other response without exceptions" in {
+
+        val genErrorResponse = Gen.oneOf(300, 500).sample.value
+
+        server.stubFor(
+          post(urlEqualTo("/transit-movements-trader-manage-documents/transit-security-accompanying-document"))
+            .withHeader("User-Agent", equalTo("transits-movements-trader-at-departure"))
+            .withHeader("Content-Type", equalTo("application/xml"))
+            .withRequestBody(equalToXml(expectedXml))
+            .willReturn(
+              aResponse()
+                .withStatus(genErrorResponse)
+            )
+        )
+
+        val app = appBuilder.build()
+
+        running(app) {
+          val connector = app.injector.instanceOf[ManageDocumentsConnector]
+
+          val result: Future[Either[TADErrorResponse, ByteString]] = connector.getTsadPDF(releasedForTransitXml)
           result.futureValue mustBe Left(UnexpectedResponse(genErrorResponse))
         }
       }
