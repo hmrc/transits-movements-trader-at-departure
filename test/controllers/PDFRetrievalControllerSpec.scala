@@ -75,29 +75,29 @@ class PDFRetrievalControllerSpec extends SpecBase with ScalaCheckPropertyChecks 
     "getTransitAccompanyingDocument" - {
 
       "should return a 200 if there is data found" in new Setup(DepartureId(23)) {
-        when(mockPDFGenerationService.getTadPDF(eqTo(testDeparture))(any()))
+        when(mockPDFGenerationService.getAccompanyingDocumentPDF(eqTo(testDeparture))(any()))
           .thenReturn(Future.successful(Right(ByteString("Hello".getBytes()))))
 
-        val result: Future[Result] = controller.getTransitAccompanyingDocument(DepartureId(23)).apply(fakeRequest)
+        val result: Future[Result] = controller.getAccompanyingDocument(DepartureId(23)).apply(fakeRequest)
 
         status(result) mustBe 200
         contentAsBytes(result) mustBe "Hello".getBytes()
       }
 
       "should return a conflict if there is incorrect state error" in new Setup(DepartureId(24)) {
-        when(mockPDFGenerationService.getTadPDF(eqTo(testDeparture))(any()))
+        when(mockPDFGenerationService.getAccompanyingDocumentPDF(eqTo(testDeparture))(any()))
           .thenReturn(Future.successful(Left(IncorrectStateError)))
 
-        val result: Future[Result] = controller.getTransitAccompanyingDocument(DepartureId(24)).apply(fakeRequest)
+        val result: Future[Result] = controller.getAccompanyingDocument(DepartureId(24)).apply(fakeRequest)
 
         status(result) mustBe 409
       }
 
       "should return an internal server error if there is unexpected error" in new Setup(DepartureId(25)) {
-        when(mockPDFGenerationService.getTadPDF(eqTo(testDeparture))(any()))
+        when(mockPDFGenerationService.getAccompanyingDocumentPDF(eqTo(testDeparture))(any()))
           .thenReturn(Future.successful(Left(UnexpectedError)))
 
-        val result: Future[Result] = controller.getTransitAccompanyingDocument(DepartureId(25)).apply(fakeRequest)
+        val result: Future[Result] = controller.getAccompanyingDocument(DepartureId(25)).apply(fakeRequest)
 
         status(result) mustBe 502
       }

@@ -52,6 +52,25 @@ class ManageDocumentsConnector @Inject()(
       })
   }
 
+  def getTsadPDF(ie29Message: NodeSeq)(implicit hc: HeaderCarrier): Future[Either[TADErrorResponse, ByteString]] = {
+    val serviceUrl = s"${config.manageDocumentsUrl}/transit-security-accompanying-document"
+    val headers = Seq(
+      "Content-Type" -> "application/xml",
+      "User-Agent"   -> config.appName
+    ) ++ hc.headers
+
+    ws.url(serviceUrl)
+      .withHttpHeaders(headers: _*)
+      .post(ie29Message)
+      .map(response =>
+        if (response.status == 200) {
+          Right(response.bodyAsBytes)
+        } else {
+          logger.warn(s"[getTsadPDF] returned an unexpected status (${response.status}) while trying to retrieve the TAD")
+          Left(UnexpectedResponse(response.status))
+      })
+  }
+
 }
 
 sealed trait TADErrorResponse

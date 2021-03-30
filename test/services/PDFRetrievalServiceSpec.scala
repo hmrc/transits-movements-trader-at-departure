@@ -28,7 +28,11 @@ import models.MessageType
 import models.MessageWithoutStatus
 import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.{eq => eqTo}
+import org.mockito.Mockito.reset
+import org.mockito.Mockito.times
+import org.mockito.Mockito.verify
 import org.mockito.Mockito.when
+import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.IntegrationPatience
 import uk.gov.hmrc.http.NotFoundException
 
@@ -36,11 +40,16 @@ import java.time.LocalDateTime
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class PDFRetrievalServiceSpec extends SpecBase with IntegrationPatience {
+class PDFRetrievalServiceSpec extends SpecBase with IntegrationPatience with BeforeAndAfterEach {
 
   val mockManageDocumentsConnector: ManageDocumentsConnector = mock[ManageDocumentsConnector]
   val mockMessageRetrievalService: MessageRetrievalService   = mock[MessageRetrievalService]
   lazy val service                                           = new PDFRetrievalService(mockManageDocumentsConnector, mockMessageRetrievalService)
+
+  override def beforeEach(): Unit = {
+    super.beforeEach()
+    reset(mockManageDocumentsConnector, mockMessageRetrievalService)
+  }
 
   "PDFRetrievalService" - {
     val departure = Departure(
@@ -56,42 +65,130 @@ class PDFRetrievalServiceSpec extends SpecBase with IntegrationPatience {
       NonEmptyList(MessageWithoutStatus(LocalDateTime.now(), MessageType.DepartureDeclaration, <node></node>, 1), Nil)
     )
 
-    "getTadPDF" - {
-      "should return the WSResponse if all messages found and returned from manage documents" in {
-        when(mockMessageRetrievalService.getReleaseForTransitMessage(eqTo(departure)))
-          .thenReturn(Some(MessageWithoutStatus(LocalDateTime.now, MessageType.ReleaseForTransit, <blank2></blank2>, 2)))
+    def safetyXML(value: Int) = <CC029B><HEAHEA><SecHEA358>{value}</SecHEA358></HEAHEA></CC029B>
 
-        when(mockManageDocumentsConnector.getTadPDF(eqTo(<blank2></blank2>))(any()))
-          .thenReturn(Future.successful(Right(ByteString("Hello".getBytes()))))
+    "getAccompanyingDocumentPDF" - {
+      "TAD" - {
+        "should return the WSResponse if all messages found and returned from manage documents where message does not contain safety and security" in {
+          when(mockMessageRetrievalService.getReleaseForTransitMessage(eqTo(departure)))
+            .thenReturn(Some(MessageWithoutStatus(LocalDateTime.now, MessageType.ReleaseForTransit, <blank2></blank2>, 2)))
 
-        service.getTadPDF(departure).futureValue mustBe Right(ByteString("Hello".getBytes()))
+          when(mockManageDocumentsConnector.getTadPDF(eqTo(<blank2></blank2>))(any()))
+            .thenReturn(Future.successful(Right(ByteString("Hello".getBytes()))))
+
+          service.getAccompanyingDocumentPDF(departure).futureValue mustBe Right(ByteString("Hello".getBytes()))
+
+          verify(mockManageDocumentsConnector, times(0)).getTsadPDF(any())(any())
+          verify(mockManageDocumentsConnector, times(1)).getTadPDF(eqTo(<blank2></blank2>))(any())
+        }
+
+        "should return the WSResponse if all messages found and returned from manage documents where safety and security is 0" in {
+          when(mockMessageRetrievalService.getReleaseForTransitMessage(eqTo(departure)))
+            .thenReturn(Some(MessageWithoutStatus(LocalDateTime.now, MessageType.ReleaseForTransit, safetyXML(0), 2)))
+
+          when(mockManageDocumentsConnector.getTadPDF(eqTo(safetyXML(0)))(any()))
+            .thenReturn(Future.successful(Right(ByteString("Hello".getBytes()))))
+
+          service.getAccompanyingDocumentPDF(departure).futureValue mustBe Right(ByteString("Hello".getBytes()))
+
+          verify(mockManageDocumentsConnector, times(0)).getTsadPDF(any())(any())
+          verify(mockManageDocumentsConnector, times(1)).getTadPDF(eqTo(safetyXML(0)))(any())
+        }
+
+        "should return an UnexpectedError an unexpected response PDF" in {
+          when(mockMessageRetrievalService.getReleaseForTransitMessage(eqTo(departure)))
+            .thenReturn(Some(MessageWithoutStatus(LocalDateTime.now, MessageType.ReleaseForTransit, <blank1></blank1>, 2)))
+
+          when(mockManageDocumentsConnector.getTadPDF(eqTo(<blank1></blank1>))(any()))
+            .thenReturn(Future.failed(new NotFoundException("Sorry An Exception Occurred")))
+
+          service.getAccompanyingDocumentPDF(departure).futureValue mustBe Left(UnexpectedError)
+
+          verify(mockManageDocumentsConnector, times(0)).getTsadPDF(any())(any())
+          verify(mockManageDocumentsConnector, times(1)).getTadPDF(eqTo(<blank1></blank1>))(any())
+        }
+
+        "should return an UnexpectedError if there is a failure in retrieving the PDF" in {
+          when(mockMessageRetrievalService.getReleaseForTransitMessage(eqTo(departure)))
+            .thenReturn(Some(MessageWithoutStatus(LocalDateTime.now, MessageType.ReleaseForTransit, <blank1></blank1>, 2)))
+
+          when(mockManageDocumentsConnector.getTadPDF(eqTo(<blank1></blank1>))(any()))
+            .thenReturn(Future.failed(new NotFoundException("Sorry An Exception Occurred")))
+
+          service.getAccompanyingDocumentPDF(departure).futureValue mustBe Left(UnexpectedError)
+
+          verify(mockManageDocumentsConnector, times(0)).getTsadPDF(any())(any())
+          verify(mockManageDocumentsConnector, times(1)).getTadPDF(eqTo(<blank1></blank1>))(any())
+        }
+
+        "should return an IncorrectStateError if there no TAD pdf request can be generated" in {
+          when(mockMessageRetrievalService.getReleaseForTransitMessage(eqTo(departure)))
+            .thenReturn(None)
+
+          service.getAccompanyingDocumentPDF(departure).futureValue.left.value mustBe IncorrectStateError
+
+          verify(mockManageDocumentsConnector, times(0)).getTsadPDF(any())(any())
+          verify(mockManageDocumentsConnector, times(0)).getTadPDF(any())(any())
+        }
       }
 
-      "should return an UnexpectedError an unexpected response PDF" in {
-        when(mockMessageRetrievalService.getReleaseForTransitMessage(eqTo(departure)))
-          .thenReturn(Some(MessageWithoutStatus(LocalDateTime.now, MessageType.ReleaseForTransit, <blank1></blank1>, 2)))
+      "TSAD" - {
+        val xml = safetyXML(1)
+        "should return the WSResponse if all messages found and returned from manage documents where message contains safety and security" in {
+          when(mockMessageRetrievalService.getReleaseForTransitMessage(eqTo(departure)))
+            .thenReturn(Some(MessageWithoutStatus(LocalDateTime.now, MessageType.ReleaseForTransit, xml, 2)))
 
-        when(mockManageDocumentsConnector.getTadPDF(eqTo(<blank1></blank1>))(any()))
-          .thenReturn(Future.failed(new NotFoundException("Sorry An Exception Occurred")))
+          when(mockManageDocumentsConnector.getTsadPDF(eqTo(xml))(any()))
+            .thenReturn(Future.successful(Right(ByteString("Hello".getBytes()))))
 
-        service.getTadPDF(departure).futureValue mustBe Left(UnexpectedError)
-      }
+          service.getAccompanyingDocumentPDF(departure).futureValue mustBe Right(ByteString("Hello".getBytes()))
 
-      "should return an UnexpectedError if there is a failure in retrieving the PDF" in {
-        when(mockMessageRetrievalService.getReleaseForTransitMessage(eqTo(departure)))
-          .thenReturn(Some(MessageWithoutStatus(LocalDateTime.now, MessageType.ReleaseForTransit, <blank1></blank1>, 2)))
+          verify(mockManageDocumentsConnector, times(1))
+            .getTsadPDF(eqTo(xml))(any())
 
-        when(mockManageDocumentsConnector.getTadPDF(eqTo(<blank1></blank1>))(any()))
-          .thenReturn(Future.failed(new NotFoundException("Sorry An Exception Occurred")))
+          verify(mockManageDocumentsConnector, times(0)).getTadPDF(any())(any())
+        }
 
-        service.getTadPDF(departure).futureValue mustBe Left(UnexpectedError)
-      }
+        "should return an UnexpectedError an unexpected response PDF" in {
+          when(mockMessageRetrievalService.getReleaseForTransitMessage(eqTo(departure)))
+            .thenReturn(Some(MessageWithoutStatus(LocalDateTime.now, MessageType.ReleaseForTransit, xml, 2)))
 
-      "should return an IncorrectStateError if there no TAD pdf request can be generated" in {
-        when(mockMessageRetrievalService.getReleaseForTransitMessage(eqTo(departure)))
-          .thenReturn(None)
+          when(mockManageDocumentsConnector.getTsadPDF(eqTo(xml))(any()))
+            .thenReturn(Future.failed(new NotFoundException("Sorry An Exception Occurred")))
 
-        service.getTadPDF(departure).futureValue.left.value mustBe IncorrectStateError
+          service.getAccompanyingDocumentPDF(departure).futureValue mustBe Left(UnexpectedError)
+
+          verify(mockManageDocumentsConnector, times(1))
+            .getTsadPDF(eqTo(xml))(any())
+
+          verify(mockManageDocumentsConnector, times(0)).getTadPDF(any())(any())
+        }
+
+        "should return an UnexpectedError if there is a failure in retrieving the PDF" in {
+          when(mockMessageRetrievalService.getReleaseForTransitMessage(eqTo(departure)))
+            .thenReturn(Some(MessageWithoutStatus(LocalDateTime.now, MessageType.ReleaseForTransit, xml, 2)))
+
+          when(mockManageDocumentsConnector.getTsadPDF(eqTo(xml))(any()))
+            .thenReturn(Future.failed(new NotFoundException("Sorry An Exception Occurred")))
+
+          service.getAccompanyingDocumentPDF(departure).futureValue mustBe Left(UnexpectedError)
+
+          verify(mockManageDocumentsConnector, times(1))
+            .getTsadPDF(eqTo(xml))(any())
+
+          verify(mockManageDocumentsConnector, times(0)).getTadPDF(any())(any())
+        }
+
+        "should return an IncorrectStateError if there no TAD pdf request can be generated" in {
+          when(mockMessageRetrievalService.getReleaseForTransitMessage(eqTo(departure)))
+            .thenReturn(None)
+
+          service.getAccompanyingDocumentPDF(departure).futureValue.left.value mustBe IncorrectStateError
+
+          verify(mockManageDocumentsConnector, times(0)).getTsadPDF(any())(any())
+
+          verify(mockManageDocumentsConnector, times(0)).getTadPDF(any())(any())
+        }
       }
     }
   }
