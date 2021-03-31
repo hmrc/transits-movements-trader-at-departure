@@ -22,7 +22,7 @@ import scala.util.Try
 
 final case class MessageSender(departureId: DepartureId, messageCorrelationId: Int) {
   override val toString: String = {
-    s"MDTP-${pad(departureId.index, 27)}-${pad(messageCorrelationId, 2)}"
+    s"MDTP-1${pad(departureId.index, 26)}-${pad(messageCorrelationId, 2)}"
   }
 
   private def pad(value: Int, length: Int): String =

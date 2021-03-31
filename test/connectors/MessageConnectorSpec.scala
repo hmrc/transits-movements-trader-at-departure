@@ -81,7 +81,7 @@ class MessageConnectorSpec
 
         forAll(channelGen) {
           channel =>
-            val messageSender = "MDTP-000000000000000000000000123-01"
+            val messageSender = "MDTP-100000000000000000000000123-01"
 
             server.stubFor(
               post(urlEqualTo(postUrl))
@@ -113,7 +113,7 @@ class MessageConnectorSpec
 
         forAll(channelGen) {
           channel =>
-            val messageSender = "MDTP-000000000000000000000000123-01"
+            val messageSender = "MDTP-100000000000000000000000123-01"
 
             server.stubFor(
               post(urlEqualTo(postUrl))
@@ -145,7 +145,7 @@ class MessageConnectorSpec
 
         forAll(channelGen) {
           channel =>
-            val messageSender = "MDTP-000000000000000000000000123-01"
+            val messageSender = "MDTP-100000000000000000000000123-01"
 
             server.stubFor(
               post(urlEqualTo(postUrl))
@@ -178,7 +178,7 @@ class MessageConnectorSpec
 
         forAll(channelGen) {
           channel =>
-            val messageSender = "MDTP-000000000000000000000000123-01"
+            val messageSender = "MDTP-100000000000000000000000123-01"
 
             server.stubFor(
               post(urlEqualTo(postUrl))

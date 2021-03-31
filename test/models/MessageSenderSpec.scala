@@ -52,7 +52,7 @@ class MessageSenderSpec extends AnyFreeSpec with Matchers with ScalaCheckPropert
 
       val messageSender = MessageSender(DepartureId(123), 1)
 
-      messageSender.toString mustEqual "MDTP-000000000000000000000000123-01"
+      messageSender.toString mustEqual "MDTP-100000000000000000000000123-01"
     }
 
     "must convert to string and apply correct padding to specified length" in {
