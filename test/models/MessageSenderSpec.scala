@@ -31,14 +31,14 @@ class MessageSenderSpec extends AnyFreeSpec with Matchers with ScalaCheckPropert
 
     "must build from a valid string" in {
 
-      val validString = "MDTP-123-1"
+      val validString = "MDTP-DEP-123-1"
 
       MessageSender(validString).value mustEqual MessageSender(DepartureId(123), 1)
     }
 
     "must not build from an invalid string" in {
 
-      val pattern = "MDTP-(\\d+)-(\\d+)".r.anchored
+      val pattern = "MDTP-DEP-(\\d+)-(\\d+)".r.anchored
 
       forAll(arbitrary[String]) {
         value =>
@@ -52,7 +52,7 @@ class MessageSenderSpec extends AnyFreeSpec with Matchers with ScalaCheckPropert
 
       val messageSender = MessageSender(DepartureId(123), 1)
 
-      messageSender.toString mustEqual "MDTP-100000000000000000000000123-01"
+      messageSender.toString mustEqual "MDTP-DEP-00000000000000000000123-01"
     }
 
     "must convert to string and apply correct padding to specified length" in {
