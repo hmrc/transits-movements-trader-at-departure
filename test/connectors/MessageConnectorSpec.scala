@@ -41,7 +41,6 @@ import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.Configuration
 import play.api.Environment
-import play.api.Mode
 import play.api.test.Helpers.running
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
@@ -81,7 +80,7 @@ class MessageConnectorSpec
 
         forAll(channelGen) {
           channel =>
-            val messageSender = "MDTP-000000000000000000000000123-01"
+            val messageSender = "MDTP-DEP-00000000000000000000123-01"
 
             server.stubFor(
               post(urlEqualTo(postUrl))
@@ -113,7 +112,7 @@ class MessageConnectorSpec
 
         forAll(channelGen) {
           channel =>
-            val messageSender = "MDTP-000000000000000000000000123-01"
+            val messageSender = "MDTP-DEP-00000000000000000000123-01"
 
             server.stubFor(
               post(urlEqualTo(postUrl))
@@ -145,7 +144,7 @@ class MessageConnectorSpec
 
         forAll(channelGen) {
           channel =>
-            val messageSender = "MDTP-000000000000000000000000123-01"
+            val messageSender = "MDTP-DEP-00000000000000000000123-01"
 
             server.stubFor(
               post(urlEqualTo(postUrl))
@@ -178,7 +177,7 @@ class MessageConnectorSpec
 
         forAll(channelGen) {
           channel =>
-            val messageSender = "MDTP-000000000000000000000000123-01"
+            val messageSender = "MDTP-DEP-00000000000000000000123-01"
 
             server.stubFor(
               post(urlEqualTo(postUrl))
