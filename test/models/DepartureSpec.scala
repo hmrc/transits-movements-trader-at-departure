@@ -17,10 +17,13 @@
 package models
 
 import base.SpecBase
+import cats.data.NonEmptyList
 import generators.ModelGenerators
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
+
+import java.time.LocalDateTime
 
 class DepartureSpec extends SpecBase with ScalaCheckDrivenPropertyChecks with ModelGenerators {
 
@@ -45,6 +48,45 @@ class DepartureSpec extends SpecBase with ScalaCheckDrivenPropertyChecks with Mo
             message mustEqual departure.messages.toList(index)
             (MessageId.unapply(messageId).value - index) mustEqual 1
         }
+    }
+  }
+
+  "latestMRNAllocatedMessage" - {
+    "return the latest mrn allocated message if multiple exist" in {
+      val now       = LocalDateTime.now()
+      val departure = departureGenerator.sample.value
+
+      val messages = NonEmptyList[Message](
+        MessageWithStatus(now, MessageType.DepartureDeclaration, <one>one</one>, MessageStatus.SubmissionSucceeded, 1),
+        MessageWithoutStatus(now, MessageType.MrnAllocated, <two>two</two>, 4) ::
+          MessageWithoutStatus(now, MessageType.PositiveAcknowledgement, <three>three</three>, 3) ::
+          MessageWithoutStatus(now, MessageType.MrnAllocated, <four>four</four>, 2) :: Nil,
+      )
+
+      departure.copy(messages = messages).latestMRNAllocatedMessage.value mustBe <two>two</two>
+    }
+    "return the mrn allocated message if one exist" in {
+      val now       = LocalDateTime.now()
+      val departure = departureGenerator.sample.value
+
+      val messages = NonEmptyList[Message](
+        MessageWithStatus(now, MessageType.DepartureDeclaration, <one>one</one>, MessageStatus.SubmissionSucceeded, 1),
+        MessageWithoutStatus(now, MessageType.MrnAllocated, <seven>two</seven>, 2) ::
+          MessageWithoutStatus(now, MessageType.PositiveAcknowledgement, <three>three</three>, 3) :: Nil,
+      )
+
+      departure.copy(messages = messages).latestMRNAllocatedMessage.value mustBe <seven>two</seven>
+    }
+    "return None if no MrnAllocated message exist" in {
+      val now       = LocalDateTime.now()
+      val departure = departureGenerator.sample.value
+
+      val messages = NonEmptyList[Message](
+        MessageWithStatus(now, MessageType.DepartureDeclaration, <one>one</one>, MessageStatus.SubmissionSucceeded, 1),
+        MessageWithoutStatus(now, MessageType.PositiveAcknowledgement, <two>two</two>, 2) :: Nil,
+      )
+
+      departure.copy(messages = messages).latestMRNAllocatedMessage mustBe None
     }
   }
 

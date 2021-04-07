@@ -16,36 +16,27 @@
 
 package controllers
 
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.LocalTime
-
 import audit.AuditService
 import audit.AuditType
 import base.SpecBase
 import cats.data.NonEmptyList
-import connectors.MessageConnector
 import connectors.MessageConnector.EisSubmissionResult.ErrorInPayload
-import controllers.actions.AuthenticateActionProvider
-import controllers.actions.AuthenticatedGetDepartureForReadActionProvider
-import controllers.actions.FakeAuthenticateActionProvider
-import controllers.actions.FakeAuthenticatedGetDepartureForReadActionProvider
 import generators.ModelGenerators
-import models.MessageStatus.SubmissionFailed
+import models.ChannelType.api
+import models.ChannelType.web
 import models.MessageStatus.SubmissionPending
-import models.MessageStatus.SubmissionSucceeded
 import models.Departure
 import models.DepartureId
 import models.DepartureStatus
 import models.DepartureWithoutMessages
-import models.MessageId
+import models.Message
 import models.MessageSender
+import models.MessageStatus
 import models.MessageType
 import models.MessageWithStatus
+import models.MessageWithoutStatus
 import models.MovementReferenceNumber
 import models.SubmissionProcessingResult
-import models.ChannelType.api
-import models.ChannelType.web
 import models.SubmissionProcessingResult.SubmissionFailureExternal
 import models.SubmissionProcessingResult.SubmissionFailureInternal
 import models.SubmissionProcessingResult.SubmissionFailureRejected
@@ -57,22 +48,24 @@ import org.mockito.ArgumentMatchers.{eq => eqTo}
 import org.mockito.Mockito._
 import org.scalacheck.Arbitrary
 import org.scalacheck.Arbitrary.arbitrary
-import org.scalatest.concurrent.IntegrationPatience
 import org.scalatest.BeforeAndAfterEach
+import org.scalatest.concurrent.IntegrationPatience
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.inject.bind
 import play.api.libs.json.Json
 import play.api.test.FakeRequest
+import play.api.test.Helpers
 import play.api.test.Helpers._
 import repositories.DepartureIdRepository
 import repositories.DepartureRepository
-import repositories.LockRepository
 import services.SubmitMessageService
 import utils.Format
 
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
 import scala.concurrent.Future
 import scala.xml.Utility.trim
-import scala.xml.NodeSeq
 
 class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with ModelGenerators with BeforeAndAfterEach with IntegrationPatience {
 
@@ -519,6 +512,65 @@ class DeparturesControllerSpec extends SpecBase with ScalaCheckPropertyChecks wi
 
         contentAsString(result) mustBe empty
         status(result) mustEqual INTERNAL_SERVER_ERROR
+      }
+    }
+  }
+  "get mrn allocated message" - {
+    "return OK if the departure has an MRN allocated Message" in {
+      val mockDepartureRepository = mock[DepartureRepository]
+
+      val application = baseApplicationBuilder
+        .overrides(bind[DepartureRepository].toInstance(mockDepartureRepository))
+        .build()
+
+      val now = LocalDateTime.now()
+
+      val messages = NonEmptyList[Message](
+        MessageWithStatus(now, MessageType.DepartureDeclaration, <one>one</one>, MessageStatus.SubmissionSucceeded, 1),
+        MessageWithoutStatus(now, MessageType.MrnAllocated, <seven>two</seven>, 2) ::
+          MessageWithoutStatus(now, MessageType.PositiveAcknowledgement, <three>three</three>, 3) :: Nil,
+      )
+
+      val departureId: DepartureId = DepartureId(24)
+
+      val departure = Arbitrary.arbitrary[Departure].sample.value.copy(messages = messages, eoriNumber = "eori")
+      when(mockDepartureRepository.get(any(), any())).thenReturn(Future.successful(Some(departure)))
+
+      running(application) {
+        val request = FakeRequest(GET, routes.DeparturesController.getMrnAllocatedMessage(departureId).url)
+          .withHeaders("channel" -> web.toString)
+        val result = route(application, request).value
+
+        status(result) mustBe Helpers.OK
+        contentAsString(result) mustBe <seven>two</seven>.toString()
+      }
+    }
+    "return NOT_FOUND if the departure has no MRN allocated Message" in {
+      val mockDepartureRepository = mock[DepartureRepository]
+
+      val application = baseApplicationBuilder
+        .overrides(bind[DepartureRepository].toInstance(mockDepartureRepository))
+        .build()
+
+      val now = LocalDateTime.now()
+
+      val messages = NonEmptyList[Message](
+        MessageWithStatus(now, MessageType.DepartureDeclaration, <one>one</one>, MessageStatus.SubmissionSucceeded, 1),
+        MessageWithoutStatus(now, MessageType.PositiveAcknowledgement, <three>three</three>, 3) :: Nil,
+      )
+
+      val departureId: DepartureId = DepartureId(24)
+
+      val departure = Arbitrary.arbitrary[Departure].sample.value.copy(messages = messages, eoriNumber = "eori")
+      when(mockDepartureRepository.get(any(), any())).thenReturn(Future.successful(Some(departure)))
+
+      running(application) {
+        val request = FakeRequest(GET, routes.DeparturesController.getMrnAllocatedMessage(departureId).url)
+          .withHeaders("channel" -> web.toString)
+        val result = route(application, request).value
+
+        status(result) mustBe Helpers.NOT_FOUND
+        contentAsString(result) mustBe "Could not retrieve the mrn allocated message"
       }
     }
   }

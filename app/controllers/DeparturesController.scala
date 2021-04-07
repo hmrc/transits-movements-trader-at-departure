@@ -19,8 +19,6 @@ package controllers
 import audit.AuditService
 import audit.AuditType._
 import controllers.actions._
-
-import javax.inject.Inject
 import models._
 import models.response.ResponseDeparture
 import models.response.ResponseDepartures
@@ -32,7 +30,9 @@ import play.api.mvc.ControllerComponents
 import repositories.DepartureRepository
 import services._
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
+import utils.Logging
 
+import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.xml.NodeSeq
@@ -44,7 +44,8 @@ class DeparturesController @Inject()(cc: ControllerComponents,
                                      departureService: DepartureService,
                                      auditService: AuditService,
                                      submitMessageService: SubmitMessageService)(implicit ec: ExecutionContext)
-    extends BackendController(cc) {
+    extends BackendController(cc)
+    with Logging {
 
   def post: Action[NodeSeq] = authenticate().async(parse.xml) {
     implicit request =>
@@ -86,6 +87,16 @@ class DeparturesController @Inject()(cc: ControllerComponents,
   def get(departureId: DepartureId): Action[AnyContent] = authenticatedDepartureForRead(departureId) {
     implicit request =>
       Ok(Json.toJsObject(ResponseDeparture.build(request.departure)))
+  }
+
+  def getMrnAllocatedMessage(departureId: DepartureId): Action[AnyContent] = authenticatedDepartureForRead(departureId) {
+    implicit request =>
+      request.departure.latestMRNAllocatedMessage match {
+        case Some(message) => Ok(message)
+        case None =>
+          logger.warn(s"[getMrnAllocatedMessage] Could not find MRN Allocated message in departure for departure id: ${request.departure.departureId.index}")
+          NotFound("Could not retrieve the mrn allocated message")
+      }
   }
 
   def getDepartures(): Action[AnyContent] = authenticate().async {

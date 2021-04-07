@@ -4,6 +4,7 @@ POST       /movements/departures                                                
 GET        /movements/departures                                                controllers.DeparturesController.getDepartures()
 
 GET        /movements/departures/:departureId                                   controllers.DeparturesController.get(departureId: DepartureId)
+GET        /movements/departures/:departureId/mrn-allocated-message             controllers.DeparturesController.getMrnAllocatedMessage(departureId: DepartureId)
 
 
 GET        /movements/departures/:departureId/messages/summary                  controllers.MessagesSummaryController.messagesSummary(departureId: DepartureId)

@@ -28,6 +28,7 @@ sealed trait Message {
   def messageType: MessageType
   def message: NodeSeq
   def optStatus: Option[MessageStatus]
+  def messageCorrelationId: Int
 }
 
 final case class MessageWithStatus(dateTime: LocalDateTime, messageType: MessageType, message: NodeSeq, status: MessageStatus, messageCorrelationId: Int)

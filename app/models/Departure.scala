@@ -17,11 +17,12 @@
 package models
 
 import java.time.LocalDateTime
-
 import cats.data._
 import cats.implicits._
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
+
+import scala.xml.NodeSeq
 
 trait BaseDeparture {
   def departureId: DepartureId
@@ -50,6 +51,13 @@ case class Departure(departureId: DepartureId,
 
   def messagesWithId: NonEmptyList[(Message, MessageId)] =
     messages.mapWithIndex(_ -> MessageId.fromIndex(_))
+
+  lazy val latestMRNAllocatedMessage: Option[NodeSeq] = messages
+    .sortBy(_.messageCorrelationId)
+    .reverse
+    .collectFirst {
+      case message if message.messageType == MessageType.MrnAllocated => message.message
+    }
 
 }
 
