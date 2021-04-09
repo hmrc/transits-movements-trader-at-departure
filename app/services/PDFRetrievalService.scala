@@ -22,9 +22,9 @@ import connectors.TADErrorResponse
 import connectors.UnexpectedResponse
 import models.Departure
 import uk.gov.hmrc.http.HeaderCarrier
-import utils.Logging
-
 import javax.inject.Inject
+import logging.Logging
+
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.xml.NodeSeq

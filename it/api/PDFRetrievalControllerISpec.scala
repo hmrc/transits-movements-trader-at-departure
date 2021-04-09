@@ -7,13 +7,16 @@ import play.api.Application
 import play.api.libs.ws.WSClient
 import play.api.test.Helpers.{BAD_GATEWAY, OK}
 import repositories.DepartureRepository
-
 import java.nio.file.{Files, Path, Paths}
 import java.time.LocalDateTime
 import java.util.UUID
+
+import play.api.libs.json.Json
+import utils.JsonHelper
+
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class PDFRetrievalControllerISpec extends ApiSpecBase {
+class PDFRetrievalControllerISpec extends ApiSpecBase with JsonHelper {
 
   override implicit lazy val app: Application = appBuilder.build()
 
@@ -43,8 +46,8 @@ class PDFRetrievalControllerISpec extends ApiSpecBase {
         LocalDateTime.now(),
         3,
         NonEmptyList(
-          MessageWithStatus(LocalDateTime.now(), MessageType.DepartureDeclaration, <departure></departure>, MessageStatus.SubmissionSucceeded, 1),
-          List(MessageWithoutStatus(LocalDateTime.now(), MessageType.ReleaseForTransit, <released></released>, 2))
+          MessageWithStatus(LocalDateTime.now(), MessageType.DepartureDeclaration, <departure></departure>, MessageStatus.SubmissionSucceeded, 1, convertXmlToJson(<departure></departure>.toString)),
+          List(MessageWithoutStatus(LocalDateTime.now(), MessageType.ReleaseForTransit, <released></released>, 2, convertXmlToJson(<released></released>.toString)))
         )
       )
 
@@ -98,8 +101,8 @@ class PDFRetrievalControllerISpec extends ApiSpecBase {
         LocalDateTime.now(),
         3,
         NonEmptyList(
-          MessageWithStatus(LocalDateTime.now(), MessageType.DepartureDeclaration, <departure></departure>, MessageStatus.SubmissionSucceeded, 1),
-          List(MessageWithoutStatus(LocalDateTime.now(), MessageType.ReleaseForTransit, <released></released>, 2))
+          MessageWithStatus(LocalDateTime.now(), MessageType.DepartureDeclaration, <departure></departure>, MessageStatus.SubmissionSucceeded, 1, Json.obj()),
+          List(MessageWithoutStatus(LocalDateTime.now(), MessageType.ReleaseForTransit, <released></released>, 2, Json.obj()))
         )
       )
 

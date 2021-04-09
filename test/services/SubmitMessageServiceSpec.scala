@@ -29,6 +29,7 @@ import connectors.MessageConnector.EisSubmissionResult.ErrorInPayload
 import connectors.MessageConnector.EisSubmissionResult.UnexpectedHttpResponse
 import connectors.MessageConnector.EisSubmissionResult.VirusFoundOrInvalidToken
 import generators.ModelGenerators
+import javax.inject.Inject
 import models.ChannelType.web
 import models.MessageStatus.SubmissionFailed
 import models.MessageStatus.SubmissionPending
@@ -56,13 +57,14 @@ import play.api.inject.bind
 import play.api.test.Helpers.running
 import repositories.DepartureRepository
 import utils.Format
+import utils.JsonHelper
 
 import scala.concurrent.Future
 import scala.util.Failure
 import scala.util.Success
 import uk.gov.hmrc.http.HttpResponse
 
-class SubmitMessageServiceSpec extends SpecBase with ScalaCheckDrivenPropertyChecks with ModelGenerators with IntegrationPatience {
+class SubmitMessageServiceSpec extends SpecBase with JsonHelper with ScalaCheckDrivenPropertyChecks with ModelGenerators with IntegrationPatience {
 
   val localDate     = LocalDate.now()
   val localTime     = LocalTime.of(1, 1)
@@ -78,6 +80,8 @@ class SubmitMessageServiceSpec extends SpecBase with ScalaCheckDrivenPropertyChe
       </HEAHEA>
     </CC015B>
 
+  val requestJsonBody = convertXmlToJson(requestXmlBody.toString())
+
   val messageId = MessageId.fromIndex(0)
 
   val movementMessage = MessageWithStatus(
@@ -85,7 +89,8 @@ class SubmitMessageServiceSpec extends SpecBase with ScalaCheckDrivenPropertyChe
     MessageType.DepartureDeclaration,
     requestXmlBody,
     SubmissionPending,
-    2
+    2,
+    requestJsonBody
   )
 
   val departureWithOneMessage: Gen[Departure] = for {

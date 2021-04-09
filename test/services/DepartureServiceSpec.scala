@@ -22,6 +22,7 @@ import java.time.LocalTime
 
 import base.SpecBase
 import cats.data.NonEmptyList
+import javax.inject.Inject
 import models.ChannelType.api
 import models.MessageStatus.SubmissionPending
 import models._
@@ -31,10 +32,11 @@ import org.scalatest.concurrent.IntegrationPatience
 import play.api.inject.bind
 import repositories.DepartureIdRepository
 import utils.Format
+import utils.JsonHelper
 
 import scala.concurrent.Future
 
-class DepartureServiceSpec extends SpecBase with IntegrationPatience with StreamlinedXmlEquality {
+class DepartureServiceSpec extends SpecBase with JsonHelper with IntegrationPatience with StreamlinedXmlEquality {
 
   "createDeparture" - {
     "creates a departure declaration with an internal ref number and a mrn, date and time of creation from the message submitted with a message id of 1 and next correlation id of 2" in {
@@ -86,7 +88,12 @@ class DepartureServiceSpec extends SpecBase with IntegrationPatience with Stream
         created = dateTime,
         updated = dateTime,
         messages = NonEmptyList.one(
-          MessageWithStatus(dateTime, MessageType.DepartureDeclaration, savedMovement, MessageStatus.SubmissionPending, 1)
+          MessageWithStatus(dateTime,
+                            MessageType.DepartureDeclaration,
+                            savedMovement,
+                            MessageStatus.SubmissionPending,
+                            1,
+                            convertXmlToJson(savedMovement.toString))
         ),
         nextMessageCorrelationId = 2
       )
@@ -164,7 +171,14 @@ class DepartureServiceSpec extends SpecBase with IntegrationPatience with Stream
 
       val messageCorrelationId = 1
       val expectedMessage =
-        MessageWithStatus(LocalDateTime.of(dateOfPrep, timeOfPrep), MessageType.DepartureDeclaration, savedMovement, SubmissionPending, messageCorrelationId)
+        MessageWithStatus(
+          LocalDateTime.of(dateOfPrep, timeOfPrep),
+          MessageType.DepartureDeclaration,
+          savedMovement,
+          SubmissionPending,
+          messageCorrelationId,
+          convertXmlToJson(savedMovement.toString)
+        )
 
       val result = service.makeMessageWithStatus(id, messageCorrelationId, MessageType.DepartureDeclaration)(movement)
       result.right.get mustEqual expectedMessage

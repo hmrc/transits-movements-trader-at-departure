@@ -65,8 +65,8 @@ class DeparturesController @Inject()(cc: ControllerComponents,
                 case submissionFailureRejected: SubmissionProcessingResult.SubmissionFailureRejected =>
                   BadRequest(submissionFailureRejected.responseBody)
                 case SubmissionProcessingResult.SubmissionSuccess =>
-                  auditService.auditEvent(DepartureDeclarationSubmitted, departure.messages.head.message, request.channel)
-                  auditService.auditEvent(MesSenMES3Added, departure.messages.head.message, request.channel)
+                  auditService.auditEvent(DepartureDeclarationSubmitted, departure.messages.head, request.channel)
+                  auditService.auditEvent(MesSenMES3Added, departure.messages.head, request.channel)
                   Accepted
                     .withHeaders("Location" -> routes.DeparturesController.get(departure.departureId).url)
               }

@@ -70,7 +70,7 @@ class MessagesController @Inject()(
                       case submissionFailureRejected: SubmissionProcessingResult.SubmissionFailureRejected =>
                         BadRequest(submissionFailureRejected.responseBody)
                       case SubmissionProcessingResult.SubmissionSuccess =>
-                        auditService.auditEvent(DepartureCancellationRequestSubmitted, request.body, request.channel)
+                        auditService.auditEvent(DepartureCancellationRequestSubmitted, message, request.channel)
                         Accepted
                           .withHeaders("Location" -> routes.MessagesController.getMessage(request.departure.departureId, request.departure.nextMessageId).url)
                     }

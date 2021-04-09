@@ -67,15 +67,15 @@ class MessageSummaryService {
       case NonEmptyList(declaration, _ :: Nil) =>
         declaration
 
-      case NonEmptyList((msg @ MessageWithStatus(_, DepartureDeclaration, _, _, _), id), tail) =>
+      case NonEmptyList((msg @ MessageWithStatus(_, DepartureDeclaration, _, _, _, _), id), tail) =>
         // This is a workaround since we cannot infer the type of head
         // to be (MovementMessageWithStatus, MessageId) using @ in the pattern match
         val head: (MessageWithStatus, MessageId) = (msg, id)
 
         tail
           .foldLeft(NonEmptyList.of(head))({
-            case (acc, (m @ MessageWithStatus(_, DepartureDeclaration, _, _, _), mid)) => acc :+ Tuple2(m, mid)
-            case (acc, _)                                                              => acc
+            case (acc, (m @ MessageWithStatus(_, DepartureDeclaration, _, _, _, _), mid)) => acc :+ Tuple2(m, mid)
+            case (acc, _)                                                                 => acc
           })
           .toList
           .maxBy(_._1.messageCorrelationId)
@@ -196,8 +196,8 @@ object MessageSummaryService {
   private val departureDeclarationCount: NonEmptyList[Message] => Int = {
     movementMessages =>
       movementMessages.toList.count {
-        case MessageWithStatus(_, DepartureDeclaration, _, _, _) => true
-        case _                                                   => false
+        case MessageWithStatus(_, DepartureDeclaration, _, _, _, _) => true
+        case _                                                      => false
       }
   }
 
@@ -205,8 +205,8 @@ object MessageSummaryService {
     messagesWithId => messageType =>
       messagesWithId
         .foldLeft(Seq.empty[(MessageWithoutStatus, MessageId)]) {
-          case (acc, (m @ MessageWithoutStatus(_, `messageType`, _, _), mid)) => acc :+ Tuple2(m, mid)
-          case (acc, _)                                                       => acc
+          case (acc, (m @ MessageWithoutStatus(_, `messageType`, _, _, _), mid)) => acc :+ Tuple2(m, mid)
+          case (acc, _)                                                          => acc
         }
   }
 }

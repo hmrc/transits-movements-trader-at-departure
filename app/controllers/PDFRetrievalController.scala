@@ -25,7 +25,7 @@ import services.IncorrectStateError
 import services.PDFRetrievalService
 import services.UnexpectedError
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
-import utils.Logging
+import logging.Logging
 
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
