@@ -18,6 +18,7 @@ package generators
 
 import java.time.LocalDate
 import java.time.LocalDateTime
+
 import models.MessageStatus.SubmissionPending
 import models._
 import models.SubmissionProcessingResult.SubmissionFailure
@@ -36,8 +37,9 @@ import connectors.MessageConnector.EisSubmissionResult.ErrorInPayload
 import connectors.MessageConnector.EisSubmissionResult.UnexpectedHttpResponse
 import connectors.MessageConnector.EisSubmissionResult.VirusFoundOrInvalidToken
 import uk.gov.hmrc.http.HttpResponse
+import utils.JsonHelper
 
-trait ModelGenerators extends BaseGenerators with JavaTimeGenerators {
+trait ModelGenerators extends BaseGenerators with JavaTimeGenerators with JsonHelper {
 
   private val pastDate: LocalDate = LocalDate.of(1900, 1, 1)
   private val dateNow: LocalDate  = LocalDate.now
@@ -110,7 +112,7 @@ trait ModelGenerators extends BaseGenerators with JavaTimeGenerators {
         xml         <- Gen.const(<blankXml>message</blankXml>)
         messageType <- Gen.oneOf(MessageType.values)
         status = SubmissionPending
-      } yield MessageWithStatus(LocalDateTime.of(date, time), messageType, xml, status, 1)
+      } yield MessageWithStatus(LocalDateTime.of(date, time), messageType, xml, status, 1, convertXmlToJson(xml.toString()))
     }
   }
 
@@ -121,7 +123,7 @@ trait ModelGenerators extends BaseGenerators with JavaTimeGenerators {
         time        <- timesBetween(pastDate, dateNow)
         xml         <- Gen.const(<blankXml>message</blankXml>)
         messageType <- Gen.oneOf(MessageType.values)
-      } yield MessageWithoutStatus(LocalDateTime.of(date, time), messageType, xml, 1)
+      } yield MessageWithoutStatus(LocalDateTime.of(date, time), messageType, xml, 1, convertXmlToJson(xml.toString()))
     }
   }
 

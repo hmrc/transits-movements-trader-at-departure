@@ -35,12 +35,12 @@ import org.mockito.Mockito.when
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.IntegrationPatience
 import uk.gov.hmrc.http.NotFoundException
-
 import java.time.LocalDateTime
+import utils.JsonHelper
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class PDFRetrievalServiceSpec extends SpecBase with IntegrationPatience with BeforeAndAfterEach {
+class PDFRetrievalServiceSpec extends SpecBase with JsonHelper with IntegrationPatience with BeforeAndAfterEach {
 
   val mockManageDocumentsConnector: ManageDocumentsConnector = mock[ManageDocumentsConnector]
   val mockMessageRetrievalService: MessageRetrievalService   = mock[MessageRetrievalService]
@@ -62,7 +62,8 @@ class PDFRetrievalServiceSpec extends SpecBase with IntegrationPatience with Bef
       LocalDateTime.now(),
       LocalDateTime.now(),
       2,
-      NonEmptyList(MessageWithoutStatus(LocalDateTime.now(), MessageType.DepartureDeclaration, <node></node>, 1), Nil)
+      NonEmptyList(MessageWithoutStatus(LocalDateTime.now(), MessageType.DepartureDeclaration, <node></node>, 1, convertXmlToJson(<node></node>.toString())),
+                   Nil)
     )
 
     def safetyXML(value: Int) = <CC029B><HEAHEA><SecHEA358>{value}</SecHEA358></HEAHEA></CC029B>
@@ -71,7 +72,8 @@ class PDFRetrievalServiceSpec extends SpecBase with IntegrationPatience with Bef
       "TAD" - {
         "should return the WSResponse if all messages found and returned from manage documents where message does not contain safety and security" in {
           when(mockMessageRetrievalService.getReleaseForTransitMessage(eqTo(departure)))
-            .thenReturn(Some(MessageWithoutStatus(LocalDateTime.now, MessageType.ReleaseForTransit, <blank2></blank2>, 2)))
+            .thenReturn(Some(
+              MessageWithoutStatus(LocalDateTime.now, MessageType.ReleaseForTransit, <blank2></blank2>, 2, convertXmlToJson(<blank2></blank2>.toString()))))
 
           when(mockManageDocumentsConnector.getTadPDF(eqTo(<blank2></blank2>))(any()))
             .thenReturn(Future.successful(Right(ByteString("Hello".getBytes()))))
@@ -84,7 +86,8 @@ class PDFRetrievalServiceSpec extends SpecBase with IntegrationPatience with Bef
 
         "should return the WSResponse if all messages found and returned from manage documents where safety and security is 0" in {
           when(mockMessageRetrievalService.getReleaseForTransitMessage(eqTo(departure)))
-            .thenReturn(Some(MessageWithoutStatus(LocalDateTime.now, MessageType.ReleaseForTransit, safetyXML(0), 2)))
+            .thenReturn(
+              Some(MessageWithoutStatus(LocalDateTime.now, MessageType.ReleaseForTransit, safetyXML(0), 2, convertXmlToJson(<blank2></blank2>.toString()))))
 
           when(mockManageDocumentsConnector.getTadPDF(eqTo(safetyXML(0)))(any()))
             .thenReturn(Future.successful(Right(ByteString("Hello".getBytes()))))
@@ -97,7 +100,8 @@ class PDFRetrievalServiceSpec extends SpecBase with IntegrationPatience with Bef
 
         "should return an UnexpectedError an unexpected response PDF" in {
           when(mockMessageRetrievalService.getReleaseForTransitMessage(eqTo(departure)))
-            .thenReturn(Some(MessageWithoutStatus(LocalDateTime.now, MessageType.ReleaseForTransit, <blank1></blank1>, 2)))
+            .thenReturn(Some(
+              MessageWithoutStatus(LocalDateTime.now, MessageType.ReleaseForTransit, <blank1></blank1>, 2, convertXmlToJson(<blank1></blank1>.toString()))))
 
           when(mockManageDocumentsConnector.getTadPDF(eqTo(<blank1></blank1>))(any()))
             .thenReturn(Future.failed(new NotFoundException("Sorry An Exception Occurred")))
@@ -110,7 +114,8 @@ class PDFRetrievalServiceSpec extends SpecBase with IntegrationPatience with Bef
 
         "should return an UnexpectedError if there is a failure in retrieving the PDF" in {
           when(mockMessageRetrievalService.getReleaseForTransitMessage(eqTo(departure)))
-            .thenReturn(Some(MessageWithoutStatus(LocalDateTime.now, MessageType.ReleaseForTransit, <blank1></blank1>, 2)))
+            .thenReturn(Some(
+              MessageWithoutStatus(LocalDateTime.now, MessageType.ReleaseForTransit, <blank1></blank1>, 2, convertXmlToJson(<blank1></blank1>.toString()))))
 
           when(mockManageDocumentsConnector.getTadPDF(eqTo(<blank1></blank1>))(any()))
             .thenReturn(Future.failed(new NotFoundException("Sorry An Exception Occurred")))
@@ -136,7 +141,7 @@ class PDFRetrievalServiceSpec extends SpecBase with IntegrationPatience with Bef
         val xml = safetyXML(1)
         "should return the WSResponse if all messages found and returned from manage documents where message contains safety and security" in {
           when(mockMessageRetrievalService.getReleaseForTransitMessage(eqTo(departure)))
-            .thenReturn(Some(MessageWithoutStatus(LocalDateTime.now, MessageType.ReleaseForTransit, xml, 2)))
+            .thenReturn(Some(MessageWithoutStatus(LocalDateTime.now, MessageType.ReleaseForTransit, xml, 2, convertXmlToJson(xml.toString()))))
 
           when(mockManageDocumentsConnector.getTsadPDF(eqTo(xml))(any()))
             .thenReturn(Future.successful(Right(ByteString("Hello".getBytes()))))
@@ -151,7 +156,7 @@ class PDFRetrievalServiceSpec extends SpecBase with IntegrationPatience with Bef
 
         "should return an UnexpectedError an unexpected response PDF" in {
           when(mockMessageRetrievalService.getReleaseForTransitMessage(eqTo(departure)))
-            .thenReturn(Some(MessageWithoutStatus(LocalDateTime.now, MessageType.ReleaseForTransit, xml, 2)))
+            .thenReturn(Some(MessageWithoutStatus(LocalDateTime.now, MessageType.ReleaseForTransit, xml, 2, convertXmlToJson(xml.toString()))))
 
           when(mockManageDocumentsConnector.getTsadPDF(eqTo(xml))(any()))
             .thenReturn(Future.failed(new NotFoundException("Sorry An Exception Occurred")))
@@ -166,7 +171,7 @@ class PDFRetrievalServiceSpec extends SpecBase with IntegrationPatience with Bef
 
         "should return an UnexpectedError if there is a failure in retrieving the PDF" in {
           when(mockMessageRetrievalService.getReleaseForTransitMessage(eqTo(departure)))
-            .thenReturn(Some(MessageWithoutStatus(LocalDateTime.now, MessageType.ReleaseForTransit, xml, 2)))
+            .thenReturn(Some(MessageWithoutStatus(LocalDateTime.now, MessageType.ReleaseForTransit, xml, 2, convertXmlToJson(xml.toString()))))
 
           when(mockManageDocumentsConnector.getTsadPDF(eqTo(xml))(any()))
             .thenReturn(Future.failed(new NotFoundException("Sorry An Exception Occurred")))

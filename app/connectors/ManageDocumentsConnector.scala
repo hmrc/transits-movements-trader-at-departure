@@ -20,7 +20,7 @@ import akka.util.ByteString
 import config.AppConfig
 import play.api.libs.ws.WSClient
 import uk.gov.hmrc.http.HeaderCarrier
-import utils.Logging
+import logging.Logging
 
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext

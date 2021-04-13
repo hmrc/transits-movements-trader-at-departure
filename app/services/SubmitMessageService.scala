@@ -115,7 +115,7 @@ class SubmitMessageService @Inject()(departureRepository: DepartureRepository, m
           messageConnector
             .post(departure.departureId, message, OffsetDateTime.now, departure.channel)
             .flatMap {
-              case submissionResult @ EisSubmissionSuccessful =>
+              case _ @EisSubmissionSuccessful =>
                 departureRepository
                   .setDepartureStateAndMessageState(departure.departureId, messageId, DepartureStatus.DepartureSubmitted, MessageStatus.SubmissionSucceeded)
                   .map(_ => SubmissionProcessingResult.SubmissionSuccess)

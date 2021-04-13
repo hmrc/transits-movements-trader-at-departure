@@ -28,10 +28,10 @@ import models.MessageId
 import models.MessageType
 import models.MessageWithoutStatus
 import org.mockito.Mockito.when
-
 import java.time.LocalDateTime
+import utils.JsonHelper
 
-class MessageRetrievalServiceSpec extends SpecBase {
+class MessageRetrievalServiceSpec extends SpecBase with JsonHelper {
 
   class Setup {
     val mockMessageSummaryService: MessageSummaryService = mock[MessageSummaryService]
@@ -52,8 +52,17 @@ class MessageRetrievalServiceSpec extends SpecBase {
           LocalDateTime.now(),
           3,
           NonEmptyList(
-            MessageWithoutStatus(LocalDateTime.now(), MessageType.DepartureDeclaration, <departure></departure>, 1),
-            List(MessageWithoutStatus(LocalDateTime.now(), MessageType.ReleaseForTransit, <released></released>, 2))
+            MessageWithoutStatus(LocalDateTime.now(),
+                                 MessageType.DepartureDeclaration,
+                                 <departure></departure>,
+                                 1,
+                                 convertXmlToJson(<departure></departure>.toString)),
+            List(
+              MessageWithoutStatus(LocalDateTime.now(),
+                                   MessageType.ReleaseForTransit,
+                                   <released></released>,
+                                   2,
+                                   convertXmlToJson(<released></released>.toString)))
           )
         )
 
@@ -62,12 +71,13 @@ class MessageRetrievalServiceSpec extends SpecBase {
         when(mockMessageSummaryService.releaseForTransitMessage)
           .thenReturn(
             Reader[Departure, Option[(Message, MessageId)]](_ =>
-              Some((MessageWithoutStatus(date, MessageType.ReleaseForTransit, <released></released>, 2), MessageId.fromIndex(2))))
+              Some((MessageWithoutStatus(date, MessageType.ReleaseForTransit, <released></released>, 2, convertXmlToJson(<released></released>.toString)),
+                    MessageId.fromIndex(2))))
           )
 
         service
           .getReleaseForTransitMessage(departure)
-          .value mustBe MessageWithoutStatus(date, MessageType.ReleaseForTransit, <released></released>, 2)
+          .value mustBe MessageWithoutStatus(date, MessageType.ReleaseForTransit, <released></released>, 2, convertXmlToJson(<released></released>.toString))
       }
       "Return a None if releaseFromTransit message is not present" in new Setup {
         val departure: Departure = Departure(
@@ -81,7 +91,11 @@ class MessageRetrievalServiceSpec extends SpecBase {
           LocalDateTime.now(),
           3,
           NonEmptyList(
-            MessageWithoutStatus(LocalDateTime.now(), MessageType.DepartureDeclaration, <departure></departure>, 1),
+            MessageWithoutStatus(LocalDateTime.now(),
+                                 MessageType.DepartureDeclaration,
+                                 <departure></departure>,
+                                 1,
+                                 convertXmlToJson(<departure></departure>.toString)),
             Nil
           )
         )

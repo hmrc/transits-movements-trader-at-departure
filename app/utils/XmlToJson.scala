@@ -16,8 +16,22 @@
 
 package utils
 
-import play.api.Logger
+import logging.Logging
+import org.json.XML
+import play.api.libs.json.JsObject
+import play.api.libs.json.Json
 
-trait Logging {
-  lazy val logger: Logger = Logger(s"application.${getClass.getCanonicalName}")
+import scala.util.Failure
+import scala.util.Success
+import scala.util.Try
+import scala.xml.NodeSeq
+
+trait XmlToJson extends Logging {
+  protected def toJson(xml: NodeSeq): JsObject =
+    Try(Json.parse(XML.toJSONObject(xml.toString).toString).as[JsObject]) match {
+      case Success(data) => data
+      case Failure(error) =>
+        logger.error(s"Failed to convert xml to json with error: ${error.getMessage}")
+        Json.obj()
+    }
 }

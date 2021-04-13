@@ -19,6 +19,7 @@ package controllers
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
+
 import audit.AuditService
 import audit.AuditType._
 import base.SpecBase
@@ -57,10 +58,16 @@ import repositories.DepartureRepository
 import repositories.LockRepository
 import services.SubmitMessageService
 import utils.Format
-
+import utils.JsonHelper
 import scala.concurrent.Future
 
-class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with ModelGenerators with BeforeAndAfterEach with IntegrationPatience {
+class MessagesControllerSpec
+    extends SpecBase
+    with JsonHelper
+    with ScalaCheckPropertyChecks
+    with ModelGenerators
+    with BeforeAndAfterEach
+    with IntegrationPatience {
 
   implicit val responseDepartureWrite = ResponseDepartureWithMessages.writes
   implicit val responseMessageWrite   = ResponseMessage.writes
@@ -92,6 +99,8 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
       </HEAHEA>
     </CC014A>
 
+  val savedDeclarationCancellationRequestJsonBody = convertXmlToJson(savedDeclarationCancellationRequestXml.toString)
+
   val departureDeclarationRequestXmlBody =
     <CC015A>
       <DatOfPreMES9>{Format.dateFormatted(localDate)}</DatOfPreMES9>
@@ -106,7 +115,8 @@ class MessagesControllerSpec extends SpecBase with ScalaCheckPropertyChecks with
     MessageType.DeclarationCancellationRequest,
     savedDeclarationCancellationRequestXml,
     SubmissionPending,
-    2
+    2,
+    savedDeclarationCancellationRequestJsonBody
   )
 
   val messageId = MessageId.fromIndex(0)

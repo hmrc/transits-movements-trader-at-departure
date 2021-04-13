@@ -23,21 +23,23 @@ import play.api.libs.json.JsObject
 import play.api.libs.json.Json
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
-import utils.JsonHelper
+import utils.MessageTranslation
+import utils.XmlToJson
 
 import scala.concurrent.ExecutionContext
 import scala.xml.NodeSeq
 
-class AuditService @Inject()(auditConnector: AuditConnector, jsonHelper: JsonHelper)(implicit ec: ExecutionContext) {
+class AuditService @Inject()(auditConnector: AuditConnector, messageTranslator: MessageTranslation)(implicit ec: ExecutionContext) extends XmlToJson {
 
-  def auditEvent(auditType: AuditType, xmlRequestBody: NodeSeq, channel: ChannelType)(implicit hc: HeaderCarrier): Unit = {
-    val json: JsObject = jsonHelper.convertXmlToJson(xmlRequestBody.toString())
+  def auditEvent(auditType: AuditType, message: Message, channel: ChannelType)(implicit hc: HeaderCarrier): Unit =
+    internal_auditEvent(auditType, message.message, message.messageJson, channel)
 
-    val details = AuditDetails(channel, json, xmlRequestBody.toString())
+  private def internal_auditEvent(auditType: AuditType, xml: NodeSeq, json: JsObject, channel: ChannelType)(implicit hc: HeaderCarrier) = {
+    val details = AuditDetails(channel, messageTranslator.translate(json), xml.toString())
     auditConnector.sendExplicitAudit(auditType.toString(), Json.toJson(details))
   }
 
-  def auditNCTSMessages(channel: ChannelType, messageResponse: MessageResponse, xmlRequestBody: NodeSeq)(implicit hc: HeaderCarrier): Unit = {
+  def auditNCTSMessages(channel: ChannelType, messageResponse: MessageResponse, xml: NodeSeq)(implicit hc: HeaderCarrier): Unit = {
     val auditType: AuditType = messageResponse match {
       case PositiveAcknowledgementResponse     => PositiveAcknowledgementReceived
       case MrnAllocatedResponse                => MrnAllocatedReceived
@@ -49,7 +51,7 @@ class AuditService @Inject()(auditConnector: AuditConnector, jsonHelper: JsonHel
       case WriteOffNotificationResponse        => WriteOffNotificationReceived
       case GuaranteeNotValidResponse           => GuaranteeNotValidReceived
     }
-    auditEvent(auditType, xmlRequestBody, channel)
+    internal_auditEvent(auditType, xml, toJson(xml), channel)
   }
 
 }

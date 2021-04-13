@@ -3,6 +3,7 @@ package repositories
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
+
 import cats.data.NonEmptyList
 import generators.ModelGenerators
 import models.ChannelType.{api, web}
@@ -26,7 +27,7 @@ import play.api.libs.json.Json
 import play.api.test.Helpers.running
 import reactivemongo.play.json.ImplicitBSONHandlers.JsObjectDocumentWriter
 import reactivemongo.play.json.collection.JSONCollection
-import utils.Format
+import utils.{Format, JsonHelper}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.reflect.ClassTag
@@ -43,7 +44,8 @@ class DepartureRepositorySpec
     with MongoSuite
     with GuiceOneAppPerSuite
     with IntegrationPatience
-    with MongoDateTimeFormats {
+    with MongoDateTimeFormats
+    with JsonHelper {
 
   private val service = app.injector.instanceOf[DepartureRepository]
 
@@ -212,7 +214,7 @@ class DepartureRepositorySpec
           </CC015B>
 
         val departureDeclarationMessage =
-          MessageWithoutStatus(LocalDateTime.of(dateOfPrep, timeOfPrep), MessageType.DepartureDeclaration, messageBody, departure.nextMessageCorrelationId)
+          MessageWithoutStatus(LocalDateTime.of(dateOfPrep, timeOfPrep), MessageType.DepartureDeclaration, messageBody, departure.nextMessageCorrelationId, convertXmlToJson(messageBody.toString))
 
         service.insert(departure).futureValue
         service.addNewMessage(departure.departureId, departureDeclarationMessage).futureValue.success
@@ -253,7 +255,7 @@ class DepartureRepositorySpec
           </CC015B>
 
         val departureDeclaration =
-          MessageWithoutStatus(LocalDateTime.of(dateOfPrep, timeOfPrep), MessageType.DepartureDeclaration, messageBody, messageCorrelationId = 1)
+          MessageWithoutStatus(LocalDateTime.of(dateOfPrep, timeOfPrep), MessageType.DepartureDeclaration, messageBody, messageCorrelationId = 1, convertXmlToJson(messageBody.toString))
 
         service.insert(departure).futureValue
         val result = service.addNewMessage(DepartureId(2), departureDeclaration)
@@ -362,7 +364,7 @@ class DepartureRepositorySpec
           </CC016A>
 
         val declarationRejectedMessage =
-          MessageWithoutStatus(LocalDateTime.of(dateOfPrep, timeOfPrep), MessageType.DeclarationRejected, messageBody, departure.nextMessageCorrelationId)
+          MessageWithoutStatus(LocalDateTime.of(dateOfPrep, timeOfPrep), MessageType.DeclarationRejected, messageBody, departure.nextMessageCorrelationId, convertXmlToJson(messageBody.toString))
         val newState = DepartureStatus.DepartureRejected
 
         service.insert(departure).futureValue
@@ -401,7 +403,7 @@ class DepartureRepositorySpec
           </CC025A>
 
         val declarationRejected =
-          MessageWithoutStatus(LocalDateTime.of(dateOfPrep, timeOfPrep), MessageType.DeclarationRejected, messageBody, messageCorrelationId = 1)
+          MessageWithoutStatus(LocalDateTime.of(dateOfPrep, timeOfPrep), MessageType.DeclarationRejected, messageBody, messageCorrelationId = 1, convertXmlToJson(messageBody.toString))
         val newState = DepartureStatus.DepartureRejected
 
         service.insert(departure).futureValue
@@ -430,7 +432,7 @@ class DepartureRepositorySpec
           </CC028A>
 
         val mrnAllocatedMessage =
-          MessageWithoutStatus(LocalDateTime.of(dateOfPrep, timeOfPrep), MessageType.MrnAllocated, messageBody, departure.nextMessageCorrelationId)
+          MessageWithoutStatus(LocalDateTime.of(dateOfPrep, timeOfPrep), MessageType.MrnAllocated, messageBody, departure.nextMessageCorrelationId, convertXmlToJson(messageBody.toString))
         val newState = DepartureStatus.MrnAllocated
 
         service.insert(departure).futureValue
@@ -473,7 +475,7 @@ class DepartureRepositorySpec
           </CC028A>
 
         val mrnAllocatedMessage =
-          MessageWithoutStatus(LocalDateTime.of(dateOfPrep, timeOfPrep), MessageType.MrnAllocated, messageBody, departure.nextMessageCorrelationId)
+          MessageWithoutStatus(LocalDateTime.of(dateOfPrep, timeOfPrep), MessageType.MrnAllocated, messageBody, departure.nextMessageCorrelationId, convertXmlToJson(messageBody.toString))
         val newState = DepartureStatus.DepartureRejected
 
         service.insert(departure).futureValue

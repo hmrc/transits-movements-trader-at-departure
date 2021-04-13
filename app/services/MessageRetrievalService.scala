@@ -18,7 +18,7 @@ package services
 
 import models.Departure
 import models.Message
-import utils.Logging
+import logging.Logging
 
 import javax.inject.Inject
 

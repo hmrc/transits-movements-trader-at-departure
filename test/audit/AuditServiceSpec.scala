@@ -16,15 +16,16 @@
 
 package audit
 
+import org.scalacheck.Arbitrary.arbitrary
 import audit.AuditType._
 import base.SpecBase
-import cats.laws.discipline.arbitrary
 import generators.ModelGenerators
 import models.CancellationDecisionResponse
 import models.ControlDecisionNotificationResponse
 import models.Departure
 import models.DepartureRejectedResponse
 import models.GuaranteeNotValidResponse
+import models.MessageWithStatus
 import models.MrnAllocatedResponse
 import models.NoReleaseForTransitResponse
 import models.PositiveAcknowledgementResponse
@@ -41,9 +42,12 @@ import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.inject.bind
+import play.api.libs.json.JsObject
 import play.api.libs.json.Json
 import play.api.test.Helpers.running
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
+
+import scala.xml.NodeSeq
 
 class AuditServiceSpec extends SpecBase with ScalaCheckPropertyChecks with BeforeAndAfterEach with ModelGenerators {
 
@@ -57,8 +61,16 @@ class AuditServiceSpec extends SpecBase with ScalaCheckPropertyChecks with Befor
   "AuditService" - {
     "must audit notification message event" in {
 
+      def gen(xml: NodeSeq, jsObj: JsObject): Gen[MessageWithStatus] =
+        for {
+          message <- arbitrary[MessageWithStatus]
+        } yield {
+          message.copy(message = xml, messageJson = jsObj)
+        }
+
       val requestXml         = <xml>test</xml>
-      val requestedXmlToJson = Json.parse("{\"channel\":\"api\",\"xml\":\"test\"}")
+      val requestedXmlToJson = Json.obj("channel" -> "api", "xml" -> "test")
+      val message            = gen(requestXml, requestedXmlToJson).sample.get
 
       forAll(Gen.oneOf(AuditType.values)) {
         auditType =>
@@ -68,8 +80,8 @@ class AuditServiceSpec extends SpecBase with ScalaCheckPropertyChecks with Befor
               .build()
             running(application) {
               val auditService = application.injector.instanceOf[AuditService]
-              auditService.auditEvent(auditType, requestXml, api)
-              verify(mockAuditConnector, times(1)).sendExplicitAudit(eqTo(auditType.toString()), eqTo(requestedXmlToJson))(any(), any(), any())
+              auditService.auditEvent(auditType, message, api)
+              verify(mockAuditConnector, times(1)).sendExplicitAudit[AuditDetails](eqTo(auditType.toString()), any())(any(), any(), any())
               reset(mockAuditConnector)
             }
           }
