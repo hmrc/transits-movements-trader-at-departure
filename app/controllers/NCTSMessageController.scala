@@ -16,17 +16,18 @@
 
 package controllers
 
+import javax.inject.Inject
+
 import audit.AuditService
 import controllers.actions.CheckMessageTypeActionProvider
 import controllers.actions.GetDepartureForWriteActionProvider
-
-import javax.inject.Inject
 import models.MessageSender
 import models.MessageType
+import models.StatusTransition
 import models.SubmissionProcessingResult.SubmissionFailureExternal
 import models.SubmissionProcessingResult.SubmissionFailureInternal
 import models.SubmissionProcessingResult.SubmissionSuccess
-import play.api.Logger
+import play.api.Logging
 import play.api.mvc.Action
 import play.api.mvc.ControllerComponents
 import services.SaveMessageService
@@ -42,20 +43,21 @@ class NCTSMessageController @Inject()(cc: ControllerComponents,
                                       checkMessageType: CheckMessageTypeActionProvider,
                                       auditService: AuditService,
                                       saveMessageService: SaveMessageService)(implicit ec: ExecutionContext)
-    extends BackendController(cc) {
+    extends BackendController(cc)
+    with Logging {
 
   def post(messageSender: MessageSender): Action[NodeSeq] = (getDeparture(messageSender.departureId) andThen checkMessageType())(parse.xml).async {
     implicit request =>
       val xml: NodeSeq = request.request.body
       val response     = request.messageResponse
 
-      request.departure.status.transition(response.messageReceived) match {
+      StatusTransition.transition(request.departure.status, response.messageReceived) match {
         case Right(newState) =>
           response.messageType match {
             case MessageType.MrnAllocated =>
               XmlMessageParser.mrnR(xml) match {
                 case Left(error) =>
-                  Logger.warn(error.message)
+                  logger.warn(error.message)
                   Future.successful(BadRequest(error.message))
                 case Right(mrn) =>
                   val processingResult = saveMessageService.validateXmlSaveMessageUpdateMrn(xml, messageSender, response, newState, mrn)
@@ -66,11 +68,11 @@ class NCTSMessageController @Inject()(cc: ControllerComponents,
                         LOCATION -> routes.MessagesController.getMessage(request.request.departure.departureId, request.request.departure.nextMessageId).url)
                     case SubmissionFailureInternal =>
                       val message = "Internal Submission Failure " + processingResult
-                      Logger.warn(message)
+                      logger.warn(message)
                       InternalServerError
                     case SubmissionFailureExternal =>
                       val message = "External Submission Failure " + processingResult
-                      Logger.warn(message)
+                      logger.warn(message)
                       BadRequest
                   }
               }
@@ -83,11 +85,11 @@ class NCTSMessageController @Inject()(cc: ControllerComponents,
                     LOCATION -> routes.MessagesController.getMessage(request.request.departure.departureId, request.request.departure.nextMessageId).url)
                 case SubmissionFailureInternal =>
                   val message = "Internal Submission Failure " + processingResult
-                  Logger.warn(message)
+                  logger.warn(message)
                   InternalServerError
                 case SubmissionFailureExternal =>
                   val message = "External Submission Failure " + processingResult
-                  Logger.warn(message)
+                  logger.warn(message)
                   BadRequest
               }
           }
