@@ -25,6 +25,7 @@ object StatusTransition {
     Initialized -> DepartureSubmitted,
     Initialized -> MrnAllocated,
     Initialized -> DepartureRejected,
+    Initialized -> PositiveAcknowledgement,
     // DepartureSubmitted transitions
     DepartureSubmitted -> DepartureSubmitted,
     DepartureSubmitted -> PositiveAcknowledgement,
@@ -93,10 +94,18 @@ object StatusTransition {
   def transitionError(
     currentStatus: DepartureStatus,
     requiredStatuses: Set[DepartureStatus],
+    targetStatus: DepartureStatus,
     messageReceived: MessageReceivedEvent
   ): Either[TransitionError, DepartureStatus] = {
-    val messageType            = messageReceived.toString
-    val requiredStatusesString = requiredStatuses.map(_.toString).mkString(" or ")
+    val messageType = messageReceived.toString
+
+    val requiredStatusesString = requiredStatuses
+      .filterNot(_ == targetStatus)
+      .map(_.toString)
+      .toList
+      .sorted
+      .mkString(" or ")
+
     Left(
       TransitionError(
         s"Can only accept a message of type [$messageType] directly after [$requiredStatusesString] messages. Current state is [${currentStatus.toString}]."
@@ -126,6 +135,6 @@ object StatusTransition {
     if (allowedFromThisStatus.contains(transitionToStatus))
       Right(transitionToStatus)
     else
-      transitionError(currentStatus, requiredForTargetStatus, messageReceived)
+      transitionError(currentStatus, requiredForTargetStatus, transitionToStatus, messageReceived)
   }
 }

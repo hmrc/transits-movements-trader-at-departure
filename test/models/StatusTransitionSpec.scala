@@ -37,8 +37,18 @@ class StatusTransitionSpec extends SpecBase with ScalaCheckDrivenPropertyChecks 
       StatusTransition.transition(DepartureStatus.Initialized, MessageReceivedEvent.DepartureRejected) mustEqual Right(DepartureStatus.DepartureRejected)
     }
 
+    "transition to PositiveAcknowledgement when receiving a PositiveAcknowledgement event" in {
+      StatusTransition.transition(DepartureStatus.Initialized, MessageReceivedEvent.PositiveAcknowledgement) mustEqual Right(
+        DepartureStatus.PositiveAcknowledgement)
+    }
+
     "return an error message when receiving any other event" in {
-      val validMessages   = Seq(MessageReceivedEvent.DepartureSubmitted, MessageReceivedEvent.MrnAllocated, MessageReceivedEvent.DepartureRejected)
+      val validMessages = Seq(
+        MessageReceivedEvent.DepartureSubmitted,
+        MessageReceivedEvent.MrnAllocated,
+        MessageReceivedEvent.DepartureRejected,
+        MessageReceivedEvent.PositiveAcknowledgement
+      )
       val invalidMessages = MessageReceivedEvent.values.diff(validMessages)
       invalidMessages.foreach {
         m =>
