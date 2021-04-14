@@ -108,7 +108,7 @@ object StatusTransition {
 
     Left(
       TransitionError(
-        s"Can only accept a message of type [$messageType] directly after [$requiredStatusesString] messages. Current state is [${currentStatus.toString}]."
+        s"Can only accept this type of message [$messageType] directly after [$requiredStatusesString] messages. Current message state is [${currentStatus.toString}]."
       )
     )
   }

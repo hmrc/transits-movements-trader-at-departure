@@ -178,7 +178,7 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
             .withHeaders("X-Message-Type" -> MessageType.CancellationDecision.code)
 
           val result = route(application, request).value
-          contentAsString(result) mustEqual "Can only accept a message of type [CancellationDecision] directly after [DeclarationCancellationRequest or ReleaseForTransit] messages. Current state is [PositiveAcknowledgement]."
+          contentAsString(result) mustEqual "Can only accept this type of message [CancellationDecision] directly after [DeclarationCancellationRequest or ReleaseForTransit] messages. Current message state is [PositiveAcknowledgement]."
           status(result) mustEqual BAD_REQUEST
         }
       }
