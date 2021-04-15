@@ -16,18 +16,20 @@
 
 package controllers
 
+import javax.inject.Inject
+
 import audit.AuditService
 import audit.AuditType.DepartureCancellationRequestSubmitted
+import com.kenshoo.play.metrics.Metrics
 import controllers.actions.AuthenticatedGetDepartureForReadActionProvider
 import controllers.actions.AuthenticatedGetDepartureForWriteActionProvider
-
-import javax.inject.Inject
+import logging.Logging
+import metrics.HasActionMetrics
 import models.MessageStatus.SubmissionFailed
 import models._
 import models.request.DepartureRequest
 import models.response.ResponseDepartureWithMessages
 import models.response.ResponseMessage
-import play.api.Logger
 import play.api.libs.json.Json
 import play.api.mvc.Action
 import play.api.mvc.AnyContent
@@ -46,58 +48,73 @@ class MessagesController @Inject()(
   authenticateForWrite: AuthenticatedGetDepartureForWriteActionProvider,
   departureService: DepartureService,
   auditService: AuditService,
-  submitMessageService: SubmitMessageService
+  submitMessageService: SubmitMessageService,
+  val metrics: Metrics
 )(implicit ec: ExecutionContext)
-    extends BackendController(cc) {
+    extends BackendController(cc)
+    with Logging
+    with HasActionMetrics {
 
-  def post(departureId: DepartureId): Action[NodeSeq] = authenticateForWrite(departureId).async(parse.xml) {
-    implicit request: DepartureRequest[NodeSeq] =>
-      MessageType.getMessageType(request.body) match {
-        case Some(MessageType.DeclarationCancellationRequest) =>
-          departureService
-            .makeMessageWithStatus(request.departure.departureId, request.departure.nextMessageCorrelationId, MessageType.DeclarationCancellationRequest)(
-              request.body) match {
-            case Right(message) => {
-              request.departure.status.transition(MessageReceivedEvent.DeclarationCancellationRequest) match {
-                case Right(status) =>
-                  submitMessageService
-                    .submitMessage(departureId, request.departure.nextMessageId, message, status, request.channel)
-                    .map {
-                      case SubmissionProcessingResult.SubmissionFailureInternal =>
-                        InternalServerError
-                      case SubmissionProcessingResult.SubmissionFailureExternal =>
-                        BadGateway
-                      case submissionFailureRejected: SubmissionProcessingResult.SubmissionFailureRejected =>
-                        BadRequest(submissionFailureRejected.responseBody)
-                      case SubmissionProcessingResult.SubmissionSuccess =>
-                        auditService.auditEvent(DepartureCancellationRequestSubmitted, message, request.channel)
-                        Accepted
-                          .withHeaders("Location" -> routes.MessagesController.getMessage(request.departure.departureId, request.departure.nextMessageId).url)
-                    }
+  def post(departureId: DepartureId): Action[NodeSeq] =
+    withMetricsTimerAction("post-submit-message") {
+      authenticateForWrite(departureId).async(parse.xml) {
+        implicit request: DepartureRequest[NodeSeq] =>
+          MessageType.getMessageType(request.body) match {
+            case Some(MessageType.DeclarationCancellationRequest) =>
+              departureService
+                .makeMessageWithStatus(request.departure.departureId, request.departure.nextMessageCorrelationId, MessageType.DeclarationCancellationRequest)(
+                  request.body
+                ) match {
+                case Right(message) =>
+                  request.departure.status.transition(MessageReceivedEvent.DeclarationCancellationRequest) match {
+                    case Right(status) =>
+                      submitMessageService
+                        .submitMessage(departureId, request.departure.nextMessageId, message, status, request.channel)
+                        .map {
+                          case SubmissionProcessingResult.SubmissionFailureInternal =>
+                            InternalServerError
+                          case SubmissionProcessingResult.SubmissionFailureExternal =>
+                            BadGateway
+                          case submissionFailureRejected: SubmissionProcessingResult.SubmissionFailureRejected =>
+                            BadRequest(submissionFailureRejected.responseBody)
+                          case SubmissionProcessingResult.SubmissionSuccess =>
+                            auditService.auditEvent(DepartureCancellationRequestSubmitted, message, request.channel)
+                            Accepted
+                              .withHeaders(
+                                "Location" -> routes.MessagesController.getMessage(request.departure.departureId, request.departure.nextMessageId).url
+                              )
+                        }
+                    case Left(error) =>
+                      Future.successful(BadRequest(error.reason))
+                  }
                 case Left(error) =>
-                  Future.successful(BadRequest(error.reason))
+                  logger.warn(error.message)
+                  Future.successful(BadRequest(error.message))
               }
-            }
-            case Left(error) =>
-              Logger.warn(error.message)
-              Future.successful(BadRequest(error.message))
+            case _ =>
+              Future.successful(NotImplemented)
           }
-        case _ =>
-          Future.successful(NotImplemented)
       }
-  }
 
-  def getMessages(departureId: DepartureId): Action[AnyContent] = authenticateForRead(departureId) {
-    implicit request =>
-      Ok(Json.toJsObject(ResponseDepartureWithMessages.build(request.departure)))
-  }
+    }
 
-  def getMessage(departureId: DepartureId, messageId: MessageId): Action[AnyContent] = authenticateForRead(departureId) {
-    implicit request =>
-      val messages = request.departure.messages.toList
+  def getMessages(departureId: DepartureId): Action[AnyContent] =
+    withMetricsTimerAction("get-all-departure-messages") {
+      authenticateForRead(departureId) {
+        implicit request =>
+          Ok(Json.toJsObject(ResponseDepartureWithMessages.build(request.departure)))
+      }
+    }
 
-      if (messages.isDefinedAt(messageId.index) && messages(messageId.index).optStatus != Some(SubmissionFailed))
-        Ok(Json.toJsObject(ResponseMessage.build(departureId, messageId, messages(messageId.index))))
-      else NotFound
-  }
+  def getMessage(departureId: DepartureId, messageId: MessageId): Action[AnyContent] =
+    withMetricsTimerAction("get-departure-message") {
+      authenticateForRead(departureId) {
+        implicit request =>
+          val messages = request.departure.messages.toList
+
+          if (messages.isDefinedAt(messageId.index) && messages(messageId.index).optStatus != Some(SubmissionFailed))
+            Ok(Json.toJsObject(ResponseMessage.build(departureId, messageId, messages(messageId.index))))
+          else NotFound
+      }
+    }
 }

@@ -44,6 +44,7 @@ import services.UnexpectedError
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import utils.TestMetrics
 
 class PDFRetrievalControllerSpec extends SpecBase with ScalaCheckPropertyChecks with ModelGenerators with BeforeAndAfterEach {
 
@@ -52,7 +53,7 @@ class PDFRetrievalControllerSpec extends SpecBase with ScalaCheckPropertyChecks 
     val mockPDFGenerationService: PDFRetrievalService              = mock[PDFRetrievalService]
     val mockAction: AuthenticatedGetDepartureForReadActionProvider = mock[AuthenticatedGetDepartureForReadActionProvider]
 
-    val controller: PDFRetrievalController = new PDFRetrievalController(mockPDFGenerationService, mockAction, stubControllerComponents())
+    val controller: PDFRetrievalController = new PDFRetrievalController(mockPDFGenerationService, mockAction, stubControllerComponents(), new TestMetrics)
 
     private val fakeActionBuilder: ActionBuilder[DepartureRequest, AnyContent] = mock[ActionBuilder[DepartureRequest, AnyContent]]
 

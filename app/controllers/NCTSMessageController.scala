@@ -16,11 +16,13 @@
 
 package controllers
 
+import javax.inject.Inject
+
 import audit.AuditService
+import com.kenshoo.play.metrics.Metrics
 import controllers.actions.CheckMessageTypeActionProvider
 import controllers.actions.GetDepartureForWriteActionProvider
-
-import javax.inject.Inject
+import metrics.HasActionMetrics
 import models.MessageSender
 import models.MessageType
 import models.SubmissionProcessingResult.SubmissionFailureExternal
@@ -36,63 +38,75 @@ import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.xml.NodeSeq
+import logging.Logging
 
-class NCTSMessageController @Inject()(cc: ControllerComponents,
-                                      getDeparture: GetDepartureForWriteActionProvider,
-                                      checkMessageType: CheckMessageTypeActionProvider,
-                                      auditService: AuditService,
-                                      saveMessageService: SaveMessageService)(implicit ec: ExecutionContext)
-    extends BackendController(cc) {
+class NCTSMessageController @Inject()(
+  cc: ControllerComponents,
+  getDeparture: GetDepartureForWriteActionProvider,
+  checkMessageType: CheckMessageTypeActionProvider,
+  auditService: AuditService,
+  saveMessageService: SaveMessageService,
+  val metrics: Metrics
+)(implicit ec: ExecutionContext)
+    extends BackendController(cc)
+    with Logging
+    with HasActionMetrics {
 
-  def post(messageSender: MessageSender): Action[NodeSeq] = (getDeparture(messageSender.departureId) andThen checkMessageType())(parse.xml).async {
-    implicit request =>
-      val xml: NodeSeq = request.request.body
-      val response     = request.messageResponse
+  def post(messageSender: MessageSender): Action[NodeSeq] =
+    withMetricsTimerAction("post-receive-ncts-message") {
+      (getDeparture(messageSender.departureId) andThen checkMessageType())(parse.xml).async {
+        implicit request =>
+          val xml: NodeSeq = request.request.body
+          val response     = request.messageResponse
 
-      request.departure.status.transition(response.messageReceived) match {
-        case Right(newState) =>
-          response.messageType match {
-            case MessageType.MrnAllocated =>
-              XmlMessageParser.mrnR(xml) match {
-                case Left(error) =>
-                  Logger.warn(error.message)
-                  Future.successful(BadRequest(error.message))
-                case Right(mrn) =>
-                  val processingResult = saveMessageService.validateXmlSaveMessageUpdateMrn(xml, messageSender, response, newState, mrn)
+          request.departure.status.transition(response.messageReceived) match {
+            case Right(newState) =>
+              response.messageType match {
+                case MessageType.MrnAllocated =>
+                  XmlMessageParser.mrnR(xml) match {
+                    case Left(error) =>
+                      logger.warn(error.message)
+                      Future.successful(BadRequest(error.message))
+                    case Right(mrn) =>
+                      val processingResult = saveMessageService.validateXmlSaveMessageUpdateMrn(xml, messageSender, response, newState, mrn)
+                      processingResult map {
+                        case SubmissionSuccess =>
+                          auditService.auditNCTSMessages(request.request.departure.channel, response, xml)
+                          Ok.withHeaders(
+                            LOCATION -> routes.MessagesController.getMessage(request.request.departure.departureId, request.request.departure.nextMessageId).url
+                          )
+                        case SubmissionFailureInternal =>
+                          val message = "Internal Submission Failure " + processingResult
+                          logger.warn(message)
+                          InternalServerError
+                        case SubmissionFailureExternal =>
+                          val message = "External Submission Failure " + processingResult
+                          logger.warn(message)
+                          BadRequest
+                      }
+                  }
+                case _ =>
+                  val processingResult = saveMessageService.validateXmlAndSaveMessage(xml, messageSender, response, newState)
                   processingResult map {
                     case SubmissionSuccess =>
                       auditService.auditNCTSMessages(request.request.departure.channel, response, xml)
                       Ok.withHeaders(
-                        LOCATION -> routes.MessagesController.getMessage(request.request.departure.departureId, request.request.departure.nextMessageId).url)
+                        LOCATION -> routes.MessagesController.getMessage(request.request.departure.departureId, request.request.departure.nextMessageId).url
+                      )
                     case SubmissionFailureInternal =>
                       val message = "Internal Submission Failure " + processingResult
-                      Logger.warn(message)
+                      logger.warn(message)
                       InternalServerError
                     case SubmissionFailureExternal =>
                       val message = "External Submission Failure " + processingResult
-                      Logger.warn(message)
+                      logger.warn(message)
                       BadRequest
                   }
               }
-            case _ =>
-              val processingResult = saveMessageService.validateXmlAndSaveMessage(xml, messageSender, response, newState)
-              processingResult map {
-                case SubmissionSuccess =>
-                  auditService.auditNCTSMessages(request.request.departure.channel, response, xml)
-                  Ok.withHeaders(
-                    LOCATION -> routes.MessagesController.getMessage(request.request.departure.departureId, request.request.departure.nextMessageId).url)
-                case SubmissionFailureInternal =>
-                  val message = "Internal Submission Failure " + processingResult
-                  Logger.warn(message)
-                  InternalServerError
-                case SubmissionFailureExternal =>
-                  val message = "External Submission Failure " + processingResult
-                  Logger.warn(message)
-                  BadRequest
-              }
+            case Left(error) =>
+              Future.successful(BadRequest(error.reason))
           }
-        case Left(error) =>
-          Future.successful(BadRequest(error.reason))
       }
-  }
+
+    }
 }

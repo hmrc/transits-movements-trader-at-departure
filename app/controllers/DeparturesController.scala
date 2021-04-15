@@ -16,15 +16,17 @@
 
 package controllers
 
+import javax.inject.Inject
+
 import audit.AuditService
 import audit.AuditType._
+import com.kenshoo.play.metrics.Metrics
 import controllers.actions._
-
-import javax.inject.Inject
+import logging.Logging
 import models._
 import models.response.ResponseDeparture
 import models.response.ResponseDepartures
-import play.api.Logger
+import metrics.HasActionMetrics
 import play.api.libs.json.Json
 import play.api.mvc.Action
 import play.api.mvc.AnyContent
@@ -37,72 +39,84 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.xml.NodeSeq
 
-class DeparturesController @Inject()(cc: ControllerComponents,
-                                     departureRepository: DepartureRepository,
-                                     authenticate: AuthenticateActionProvider,
-                                     authenticatedDepartureForRead: AuthenticatedGetDepartureForReadActionProvider,
-                                     departureService: DepartureService,
-                                     auditService: AuditService,
-                                     submitMessageService: SubmitMessageService)(implicit ec: ExecutionContext)
-    extends BackendController(cc) {
+class DeparturesController @Inject()(
+  cc: ControllerComponents,
+  departureRepository: DepartureRepository,
+  authenticate: AuthenticateActionProvider,
+  authenticatedDepartureForRead: AuthenticatedGetDepartureForReadActionProvider,
+  departureService: DepartureService,
+  auditService: AuditService,
+  submitMessageService: SubmitMessageService,
+  val metrics: Metrics
+)(implicit ec: ExecutionContext)
+    extends BackendController(cc)
+    with Logging
+    with HasActionMetrics {
 
-  def post: Action[NodeSeq] = authenticate().async(parse.xml) {
-    implicit request =>
-      departureService
-        .createDeparture(request.eoriNumber, request.body, request.channel)
-        .flatMap {
-          case Left(error) =>
-            Logger.error(error.message)
-            Future.successful(BadRequest(error.message))
-          case Right(departure) =>
-            submitMessageService
-              .submitDeparture(departure)
-              .map {
-                case SubmissionProcessingResult.SubmissionFailureInternal =>
-                  InternalServerError
-                case SubmissionProcessingResult.SubmissionFailureExternal =>
-                  BadGateway
-                case submissionFailureRejected: SubmissionProcessingResult.SubmissionFailureRejected =>
-                  BadRequest(submissionFailureRejected.responseBody)
-                case SubmissionProcessingResult.SubmissionSuccess =>
-                  auditService.auditEvent(DepartureDeclarationSubmitted, departure.messages.head, request.channel)
-                  auditService.auditEvent(MesSenMES3Added, departure.messages.head, request.channel)
-                  Accepted
-                    .withHeaders("Location" -> routes.DeparturesController.get(departure.departureId).url)
-              }
-              .recover {
-                case _ => {
-                  InternalServerError
-                }
-              }
-        }
-        .recover {
-          case _ => {
-            InternalServerError
-          }
-        }
-  }
+  def post: Action[NodeSeq] =
+    withMetricsTimerAction("post-create-departure") {
+      authenticate().async(parse.xml) {
+        implicit request =>
+          departureService
+            .createDeparture(request.eoriNumber, request.body, request.channel)
+            .flatMap {
+              case Left(error) =>
+                logger.error(error.message)
+                Future.successful(BadRequest(error.message))
+              case Right(departure) =>
+                submitMessageService
+                  .submitDeparture(departure)
+                  .map {
+                    case SubmissionProcessingResult.SubmissionFailureInternal =>
+                      InternalServerError
+                    case SubmissionProcessingResult.SubmissionFailureExternal =>
+                      BadGateway
+                    case submissionFailureRejected: SubmissionProcessingResult.SubmissionFailureRejected =>
+                      BadRequest(submissionFailureRejected.responseBody)
+                    case SubmissionProcessingResult.SubmissionSuccess =>
+                      auditService.auditEvent(DepartureDeclarationSubmitted, departure.messages.head, request.channel)
+                      auditService.auditEvent(MesSenMES3Added, departure.messages.head, request.channel)
+                      Accepted
+                        .withHeaders("Location" -> routes.DeparturesController.get(departure.departureId).url)
+                  }
+                  .recover {
+                    case _ =>
+                      InternalServerError
+                  }
+            }
+            .recover {
+              case _ =>
+                InternalServerError
+            }
+      }
+    }
 
-  def get(departureId: DepartureId): Action[AnyContent] = authenticatedDepartureForRead(departureId) {
-    implicit request =>
-      Ok(Json.toJsObject(ResponseDeparture.build(request.departure)))
-  }
+  def get(departureId: DepartureId): Action[AnyContent] =
+    withMetricsTimerAction("get-departure-by-id") {
+      authenticatedDepartureForRead(departureId) {
+        implicit request =>
+          Ok(Json.toJsObject(ResponseDeparture.build(request.departure)))
+      }
+    }
 
-  def getDepartures(): Action[AnyContent] = authenticate().async {
-    implicit request =>
-      departureRepository
-        .fetchAllDepartures(request.eoriNumber, request.channel)
-        .map {
-          allDepartures =>
-            Ok(Json.toJsObject(ResponseDepartures(allDepartures.map {
-              departure =>
-                ResponseDeparture.build(departure)
-            })))
-        }
-        .recover {
-          case e =>
-            Logger.error(s"Failed to create departure", e)
-            InternalServerError
-        }
-  }
+  def getDepartures(): Action[AnyContent] =
+    withMetricsTimerAction("get-all-departures") {
+      authenticate().async {
+        implicit request =>
+          departureRepository
+            .fetchAllDepartures(request.eoriNumber, request.channel)
+            .map {
+              allDepartures =>
+                Ok(Json.toJsObject(ResponseDepartures(allDepartures.map {
+                  departure =>
+                    ResponseDeparture.build(departure)
+                })))
+            }
+            .recover {
+              case e =>
+                logger.error(s"Failed to create departure", e)
+                InternalServerError
+            }
+      }
+    }
 }

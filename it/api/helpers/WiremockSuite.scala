@@ -1,8 +1,11 @@
 package api.helpers
 
 import com.github.tomakehurst.wiremock.WireMockServer
+import com.kenshoo.play.metrics.Metrics
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, Suite}
+import play.api.inject.bind
 import play.api.inject.guice.{GuiceApplicationBuilder, GuiceableModule}
+import utils.TestMetrics
 
 trait WiremockSuite extends BeforeAndAfterAll with BeforeAndAfterEach {
   this: Suite =>
@@ -18,7 +21,9 @@ trait WiremockSuite extends BeforeAndAfterAll with BeforeAndAfterEach {
       .configure(portConfigKeysAndValues: _*)
       .overrides(bindings: _*)
 
-  protected def bindings: Seq[GuiceableModule] = Seq.empty
+  protected def bindings: Seq[GuiceableModule] = Seq(
+    bind[Metrics].toInstance(new TestMetrics)
+  )
 
   override def beforeAll(): Unit = {
     server.start()

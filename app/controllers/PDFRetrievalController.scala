@@ -16,7 +16,12 @@
 
 package controllers
 
+import javax.inject.Inject
+
+import com.kenshoo.play.metrics.Metrics
 import controllers.actions.AuthenticatedGetDepartureForReadActionProvider
+import logging.Logging
+import metrics.HasActionMetrics
 import models.DepartureId
 import play.api.mvc.Action
 import play.api.mvc.AnyContent
@@ -25,29 +30,32 @@ import services.IncorrectStateError
 import services.PDFRetrievalService
 import services.UnexpectedError
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
-import logging.Logging
 
-import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 
 class PDFRetrievalController @Inject()(
   pdfGenerationService: PDFRetrievalService,
   authenticateForRead: AuthenticatedGetDepartureForReadActionProvider,
-  cc: ControllerComponents
+  cc: ControllerComponents,
+  val metrics: Metrics
 )(implicit ec: ExecutionContext)
     extends BackendController(cc)
-    with Logging {
+    with Logging
+    with HasActionMetrics {
 
-  def getAccompanyingDocument(departureId: DepartureId): Action[AnyContent] = authenticateForRead(departureId).async {
-    implicit request =>
-      pdfGenerationService.getAccompanyingDocumentPDF(request.departure).map {
-        case Right(response) => Ok(response)
-        case Left(UnexpectedError) =>
-          logger.warn(s"[getAccompanyingDocument] returning $BAD_GATEWAY due to an unexpected error in getting the PDF")
-          BadGateway
-        case Left(IncorrectStateError) =>
-          logger.warn(s"[getAccompanyingDocument] returning $CONFLICT due to an IncorrectStateError in getting the PDF")
-          Conflict
-      }
-  }
+  def getAccompanyingDocument(departureId: DepartureId): Action[AnyContent] =
+    //withMetricsTimerAction("get-accompanying-document") {
+    authenticateForRead(departureId).async {
+      implicit request =>
+        pdfGenerationService.getAccompanyingDocumentPDF(request.departure).map {
+          case Right(response) => Ok(response)
+          case Left(UnexpectedError) =>
+            logger.warn(s"[getAccompanyingDocument] returning $BAD_GATEWAY due to an unexpected error in getting the PDF")
+            BadGateway
+          case Left(IncorrectStateError) =>
+            logger.warn(s"[getAccompanyingDocument] returning $CONFLICT due to an IncorrectStateError in getting the PDF")
+            Conflict
+        }
+    }
+  //}
 }
