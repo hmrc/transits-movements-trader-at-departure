@@ -1,3 +1,4 @@
+import uk.gov.hmrc.DefaultBuildSettings
 import play.sbt.routes.RoutesKeys
 import scoverage.ScoverageKeys
 import uk.gov.hmrc.SbtArtifactory
@@ -7,16 +8,22 @@ val appName = "transits-movements-trader-at-departure"
 
 lazy val microservice = Project(appName, file("."))
   .enablePlugins(play.sbt.PlayScala, SbtAutoBuildPlugin, SbtGitVersioning, SbtDistributablesPlugin, SbtArtifactory)
-  .disablePlugins(JUnitXmlReportPlugin)
+  .disablePlugins(JUnitXmlReportPlugin) //Required to prevent https://github.com/scalatest/scalatest/issues/1427
   .configs(IntegrationTest)
+  .settings(DefaultBuildSettings.integrationTestSettings(): _*)
   .settings(inConfig(IntegrationTest)(itSettings): _*)
-  .settings(inConfig(IntegrationTest)(scalafmtSettings): _*)
+  .settings(inConfig(IntegrationTest)(ScalafmtPlugin.scalafmtConfigSettings): _*)
   .settings(inConfig(Test)(testSettings): _*)
-  .settings(scalaVersion := "2.12.11")
+  .settings(scalaVersion := "2.12.13")
   .settings(
     majorVersion := 0,
     libraryDependencies ++= AppDependencies.compile ++ AppDependencies.test,
-    scalafmtOnCompile in ThisBuild := true,
+    // Disable fatal warnings and warnings from discarding values
+    scalacOptions ~= { opts => opts.filterNot(Set("-Xfatal-warnings", "-Ywarn-value-discard")) },
+    // Disable warnings arising from generated routing code
+    scalacOptions += "-Wconf:src=routes/.*:silent",
+    // Disable dead code warning as it is triggered by Mockito any()
+    Test / scalacOptions ~= { opts => opts.filterNot(Set("-Ywarn-dead-code")) },
     useSuperShell in ThisBuild := false,
     javaOptions ++= Seq(
       "-Djdk.xml.maxOccurLimit=10000"
@@ -26,9 +33,6 @@ lazy val microservice = Project(appName, file("."))
   .settings(resolvers += Resolver.jcenterRepo)
   .settings(PlayKeys.playDefaultPort := 9490)
   .settings(scoverageSettings: _*)
-  .settings(
-    scalacOptions += "-Ypartial-unification"
-  )
   .settings(RoutesKeys.routesImport ++= Seq(
     "models._"
   ))
@@ -52,13 +56,10 @@ lazy val itSettings = Defaults.itSettings ++ Seq(
   unmanagedResourceDirectories := Seq(
     baseDirectory.value / "it" / "resources"
   ),
-  parallelExecution := false,
-  fork := true,
   javaOptions ++= Seq(
     "-Dconfig.resource=it.application.conf",
     "-Dlogger.resource=it.logback.xml"
-  ),
-  scalafmtTestOnCompile in ThisBuild := true
+  )
 )
 
 lazy val testSettings = Seq(
