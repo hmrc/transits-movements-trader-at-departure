@@ -16,18 +16,18 @@
 
 package controllers
 
+import javax.inject.Inject
+
 import audit.AuditService
 import audit.AuditType.DepartureCancellationRequestSubmitted
 import controllers.actions.AuthenticatedGetDepartureForReadActionProvider
 import controllers.actions.AuthenticatedGetDepartureForWriteActionProvider
-
-import javax.inject.Inject
-import models.MessageStatus.SubmissionFailed
 import models._
+import models.MessageStatus.SubmissionFailed
 import models.request.DepartureRequest
 import models.response.ResponseDepartureWithMessages
 import models.response.ResponseMessage
-import play.api.Logger
+import play.api.Logging
 import play.api.libs.json.Json
 import play.api.mvc.Action
 import play.api.mvc.AnyContent
@@ -48,7 +48,8 @@ class MessagesController @Inject()(
   auditService: AuditService,
   submitMessageService: SubmitMessageService
 )(implicit ec: ExecutionContext)
-    extends BackendController(cc) {
+    extends BackendController(cc)
+    with Logging {
 
   def post(departureId: DepartureId): Action[NodeSeq] = authenticateForWrite(departureId).async(parse.xml) {
     implicit request: DepartureRequest[NodeSeq] =>
@@ -58,7 +59,7 @@ class MessagesController @Inject()(
             .makeMessageWithStatus(request.departure.departureId, request.departure.nextMessageCorrelationId, MessageType.DeclarationCancellationRequest)(
               request.body) match {
             case Right(message) => {
-              request.departure.status.transition(MessageReceivedEvent.DeclarationCancellationRequest) match {
+              StatusTransition.transition(request.departure.status, MessageReceivedEvent.DeclarationCancellationRequest) match {
                 case Right(status) =>
                   submitMessageService
                     .submitMessage(departureId, request.departure.nextMessageId, message, status, request.channel)
@@ -79,7 +80,7 @@ class MessagesController @Inject()(
               }
             }
             case Left(error) =>
-              Logger.warn(error.message)
+              logger.warn(error.message)
               Future.successful(BadRequest(error.message))
           }
         case _ =>
