@@ -3,8 +3,8 @@ package repositories
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
-
 import cats.data.NonEmptyList
+import config.AppConfig
 import generators.ModelGenerators
 import models.ChannelType.{api, web}
 import models.DepartureStatus.{DepartureSubmitted, Initialized, MrnAllocated, PositiveAcknowledgement}
@@ -32,7 +32,6 @@ import utils.{Format, JsonHelper}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.reflect.ClassTag
 import scala.util.{Failure, Success}
-import play.api.Application
 
 class DepartureRepositorySpec
     extends AnyFreeSpec
@@ -48,6 +47,7 @@ class DepartureRepositorySpec
     with JsonHelper {
 
   private val service = app.injector.instanceOf[DepartureRepository]
+  private val appConfig = app.injector.instanceOf[AppConfig]
 
   def typeMatchOnTestValue[A, B](testValue: A)(test: B => Unit)(implicit bClassTag: ClassTag[B]) = testValue match {
     case result: B => test(result)
@@ -540,6 +540,34 @@ class DepartureRepositorySpec
           val result = respository.fetchAllDepartures(eoriNumber, api).futureValue
 
           result mustBe Seq.empty[DepartureWithoutMessages]
+        }
+      }
+
+      "Must return max 2 departures when the maxRowsReturned = 2" in {
+        database.flatMap(_.drop()).futureValue
+
+
+
+        val app = new GuiceApplicationBuilder().build()
+        val eoriNumber: String = arbitrary[String].sample.value
+
+        val departure1 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = api)
+        val departure2 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = api)
+        val departure3 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = api)
+
+        running(app) {
+          started(app).futureValue
+          val repository = app.injector.instanceOf[DepartureRepository]
+          val departures = Seq(departure1, departure2, departure3)
+          val jsonArr = departures.map(Json.toJsObject(_))
+          database.flatMap {
+            db =>
+              db.collection[JSONCollection](DepartureRepository.collectionName).insert(false).many(jsonArr)
+          }.futureValue
+
+          appConfig.maxRowsReturned mustBe 2
+
+          repository.fetchAllDepartures(eoriNumber, api).futureValue.size mustBe 2
         }
       }
     }

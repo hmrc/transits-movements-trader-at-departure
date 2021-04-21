@@ -45,4 +45,7 @@ class AppConfig @Inject()(config: Configuration, servicesConfig: ServicesConfig)
   val cacheTtl               = config.get[Int]("mongodb.timeToLiveInSeconds")
 
   val messageTranslationFile: String = config.get[String]("message-translation-file")
+
+  val maxRowsReturned = config.get[Int]("mongodb.maxRowsReturned")
+
 }
