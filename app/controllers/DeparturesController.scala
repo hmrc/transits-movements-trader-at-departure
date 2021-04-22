@@ -40,13 +40,14 @@ import scala.xml.NodeSeq
 class DeparturesController @Inject()(cc: ControllerComponents,
                                      departureRepository: DepartureRepository,
                                      authenticate: AuthenticateActionProvider,
+                                     authenticateClientId: AuthenticatedClientIdActionProvider,
                                      authenticatedDepartureForRead: AuthenticatedGetDepartureForReadActionProvider,
                                      departureService: DepartureService,
                                      auditService: AuditService,
                                      submitMessageService: SubmitMessageService)(implicit ec: ExecutionContext)
     extends BackendController(cc) {
 
-  def post: Action[NodeSeq] = authenticate().async(parse.xml) {
+  def post: Action[NodeSeq] = authenticateClientId().async(parse.xml) {
     implicit request =>
       departureService
         .createDeparture(request.eoriNumber, request.body, request.channel)

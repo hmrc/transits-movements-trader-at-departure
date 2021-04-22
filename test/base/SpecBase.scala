@@ -17,7 +17,9 @@
 package base
 
 import controllers.actions.AuthenticateActionProvider
+import controllers.actions.AuthenticatedClientIdActionProvider
 import controllers.actions.FakeAuthenticateActionProvider
+import controllers.actions.FakeAuthenticateClientIdActionProvider
 import models.Departure
 import models.MessageWithStatus
 import org.scalactic.Equality
@@ -48,7 +50,8 @@ trait SpecBase extends AnyFreeSpec with Matchers with MockitoSugar with ScalaFut
         "metrics.jvm" -> false
       )
       .overrides(
-        bind[AuthenticateActionProvider].to[FakeAuthenticateActionProvider]
+        bind[AuthenticateActionProvider].to[FakeAuthenticateActionProvider],
+        bind[AuthenticatedClientIdActionProvider].to[FakeAuthenticateClientIdActionProvider]
       )
 
   implicit val messageWithStatusEquality: Equality[MessageWithStatus] = (a: MessageWithStatus, b: Any) =>
