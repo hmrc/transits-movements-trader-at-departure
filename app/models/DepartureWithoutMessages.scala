@@ -59,18 +59,6 @@ object DepartureWithoutMessages {
         (__ \ "updated").read(MongoDateTimeFormats.localDateTimeRead)
     )(DepartureWithoutMessages.apply _)
 
-  implicit val writesDeparture: Writes[DepartureWithoutMessages] =
-    (
-      (__ \ "_id").write[DepartureId] and
-        (__ \ "channel").write[ChannelType] and
-        (__ \ "eoriNumber").write[String] and
-        (__ \ "movementReferenceNumber").write[Option[MovementReferenceNumber]] and
-        (__ \ "referenceNumber").write[String] and
-        (__ \ "status").write[DepartureStatus] and
-        (__ \ "created").write(MongoDateTimeFormats.localDateTimeWrite) and
-        (__ \ "updated").write(MongoDateTimeFormats.localDateTimeWrite)
-    )(unlift(DepartureWithoutMessages.unapply))
-
   val projection: JsObject = Json.obj(
     "_id"                     -> 1,
     "channel"                 -> 1,

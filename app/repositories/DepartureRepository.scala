@@ -251,7 +251,6 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfi
   }
 
   def fetchAllDepartures(eoriNumber: String, channelFilter: ChannelType): Future[Seq[DepartureWithoutMessages]] =
-//    import reactivemongo.play.json.JSONSerializationPack
     collection.flatMap {
       _.find(Json.obj("eoriNumber" -> eoriNumber, "channel" -> channelFilter), DepartureWithoutMessages.projection)
         .sort(Json.obj("lastUpdated" -> -1))
