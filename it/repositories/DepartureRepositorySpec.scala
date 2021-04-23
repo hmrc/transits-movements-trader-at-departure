@@ -558,16 +558,20 @@ class DepartureRepositorySpec
         running(app) {
           started(app).futureValue
           val repository = app.injector.instanceOf[DepartureRepository]
-          val departures = Seq(departure1, departure2, departure3)
-          val jsonArr = departures.map(Json.toJsObject(_))
-          database.flatMap {
-            db =>
-              db.collection[JSONCollection](DepartureRepository.collectionName).insert(false).many(jsonArr)
-          }.futureValue
+          service.insert(departure1).futureValue
+          service.insert(departure2).futureValue
+          service.insert(departure3).futureValue
 
           appConfig.maxRowsReturned mustBe 2
 
-          repository.fetchAllDepartures(eoriNumber, api).futureValue.size mustBe 2
+          val departures = repository.fetchAllDepartures(eoriNumber, api).futureValue
+          
+          departures.size mustBe 2
+
+          val ids = departures.map( d => d.departureId.index)
+
+          ids mustBe Seq(departure3.departureId.index,departure2.departureId.index)
+
         }
       }
     }

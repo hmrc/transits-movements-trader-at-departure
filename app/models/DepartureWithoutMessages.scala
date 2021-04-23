@@ -69,7 +69,7 @@ object DepartureWithoutMessages {
         (__ \ "status").write[DepartureStatus] and
         (__ \ "created").write(MongoDateTimeFormats.localDateTimeWrite) and
         (__ \ "updated").write(MongoDateTimeFormats.localDateTimeWrite)
-      )(unlift(DepartureWithoutMessages.unapply))
+    )(unlift(DepartureWithoutMessages.unapply))
 
   val projection: JsObject = Json.obj(
     "_id"                     -> 1,

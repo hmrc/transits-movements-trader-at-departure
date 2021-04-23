@@ -250,16 +250,14 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfi
     }
   }
 
-  def fetchAllDepartures(eoriNumber: String, channelFilter: ChannelType): Future[Seq[DepartureWithoutMessages]] = {
+  def fetchAllDepartures(eoriNumber: String, channelFilter: ChannelType): Future[Seq[DepartureWithoutMessages]] =
 //    import reactivemongo.play.json.JSONSerializationPack
-
     collection.flatMap {
       _.find(Json.obj("eoriNumber" -> eoriNumber, "channel" -> channelFilter), DepartureWithoutMessages.projection)
-//        .sort(Json.obj("lastUpdated" -> -1))
+        .sort(Json.obj("lastUpdated" -> -1))
         .cursor[DepartureWithoutMessages]()
         .collect[Seq](appConfig.maxRowsReturned, Cursor.FailOnError())
     }
-  }
 
   def updateDeparture[A](selector: DepartureSelector, modifier: A)(implicit ev: DepartureModifier[A]): Future[Try[Unit]] = {
 
