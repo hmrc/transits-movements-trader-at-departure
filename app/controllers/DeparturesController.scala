@@ -53,6 +53,9 @@ class DeparturesController @Inject()(
     with Logging
     with HasActionMetrics {
 
+  val departuresCount = histo("get-all-departures-count")
+  val messagesCount   = histo("get-departure-by-id-messages-count")
+
   def post: Action[NodeSeq] =
     withMetricsTimerAction("post-create-departure") {
       authenticate().async(parse.xml) {
@@ -95,6 +98,7 @@ class DeparturesController @Inject()(
     withMetricsTimerAction("get-departure-by-id") {
       authenticatedDepartureForRead(departureId) {
         implicit request =>
+          messagesCount.update(request.departure.messages.length)
           Ok(Json.toJsObject(ResponseDeparture.build(request.departure)))
       }
     }
@@ -107,6 +111,7 @@ class DeparturesController @Inject()(
             .fetchAllDepartures(request.eoriNumber, request.channel)
             .map {
               allDepartures =>
+                departuresCount.update(allDepartures.length)
                 Ok(Json.toJsObject(ResponseDepartures(allDepartures.map {
                   departure =>
                     ResponseDeparture.build(departure)

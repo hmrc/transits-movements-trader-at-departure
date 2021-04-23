@@ -55,6 +55,8 @@ class MessagesController @Inject()(
     with Logging
     with HasActionMetrics {
 
+  val messagesCount = histo("get-all-departure-messages-count")
+
   def post(departureId: DepartureId): Action[NodeSeq] =
     withMetricsTimerAction("post-submit-message") {
       authenticateForWrite(departureId).async(parse.xml) {
@@ -102,6 +104,7 @@ class MessagesController @Inject()(
     withMetricsTimerAction("get-all-departure-messages") {
       authenticateForRead(departureId) {
         implicit request =>
+          messagesCount.update(request.departure.messages.length)
           Ok(Json.toJsObject(ResponseDepartureWithMessages.build(request.departure)))
       }
     }
