@@ -68,7 +68,7 @@ class MessagesController @Inject()(
                   request.body
                 ) match {
                 case Right(message) =>
-                  request.departure.status.transition(MessageReceivedEvent.DeclarationCancellationRequest) match {
+                  StatusTransition.transition(request.departure.status, MessageReceivedEvent.DeclarationCancellationRequest) match {
                     case Right(status) =>
                       submitMessageService
                         .submitMessage(departureId, request.departure.nextMessageId, message, status, request.channel)

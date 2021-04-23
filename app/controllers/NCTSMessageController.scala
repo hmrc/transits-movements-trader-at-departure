@@ -22,13 +22,14 @@ import audit.AuditService
 import com.kenshoo.play.metrics.Metrics
 import controllers.actions.CheckMessageTypeActionProvider
 import controllers.actions.GetDepartureForWriteActionProvider
+import logging.Logging
 import metrics.HasActionMetrics
 import models.MessageSender
 import models.MessageType
+import models.StatusTransition
 import models.SubmissionProcessingResult.SubmissionFailureExternal
 import models.SubmissionProcessingResult.SubmissionFailureInternal
 import models.SubmissionProcessingResult.SubmissionSuccess
-import play.api.Logger
 import play.api.mvc.Action
 import play.api.mvc.ControllerComponents
 import services.SaveMessageService
@@ -38,7 +39,6 @@ import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.xml.NodeSeq
-import logging.Logging
 
 class NCTSMessageController @Inject()(
   cc: ControllerComponents,
@@ -59,7 +59,7 @@ class NCTSMessageController @Inject()(
           val xml: NodeSeq = request.request.body
           val response     = request.messageResponse
 
-          request.departure.status.transition(response.messageReceived) match {
+          StatusTransition.transition(request.departure.status, response.messageReceived) match {
             case Right(newState) =>
               response.messageType match {
                 case MessageType.MrnAllocated =>
