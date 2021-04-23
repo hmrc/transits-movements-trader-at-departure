@@ -55,7 +55,7 @@ class MessagesController @Inject()(
     with Logging
     with HasActionMetrics {
 
-  val messagesCount = histo("get-all-departure-messages-count")
+  lazy val messagesCount = histo("get-all-departure-messages-count")
 
   def post(departureId: DepartureId): Action[NodeSeq] =
     withMetricsTimerAction("post-submit-message") {

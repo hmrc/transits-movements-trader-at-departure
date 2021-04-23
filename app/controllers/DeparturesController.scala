@@ -53,8 +53,8 @@ class DeparturesController @Inject()(
     with Logging
     with HasActionMetrics {
 
-  val departuresCount = histo("get-all-departures-count")
-  val messagesCount   = histo("get-departure-by-id-messages-count")
+  lazy val departuresCount = histo("get-all-departures-count")
+  lazy val messagesCount   = histo("get-departure-by-id-messages-count")
 
   def post: Action[NodeSeq] =
     withMetricsTimerAction("post-create-departure") {
