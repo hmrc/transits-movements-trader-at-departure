@@ -27,6 +27,7 @@ class Module extends AbstractModule {
   override def configure(): Unit = {
     bind(classOf[AppConfig]).asEagerSingleton()
     bind(classOf[AuthenticateActionProvider]).to(classOf[AuthenticateActionProviderImpl]).asEagerSingleton()
+    bind(classOf[AuthenticatedClientIdActionProvider]).to(classOf[AuthenticateClientIdActionProviderImpl]).asEagerSingleton()
     bind(classOf[DepartureRepository]).asEagerSingleton()
     bind(classOf[DepartureIdRepository]).asEagerSingleton()
     bind(classOf[AuthenticatedGetDepartureForReadActionProvider]).to(classOf[AuthenticatedGetDepartureForReadActionProviderImpl])
