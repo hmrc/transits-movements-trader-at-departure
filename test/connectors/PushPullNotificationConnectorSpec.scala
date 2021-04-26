@@ -25,7 +25,7 @@ class PushPullNotificationConnectorSpec extends AnyFreeSpec with WiremockSuite w
       val testBoxName  = "BOX 2"
       val testClientId = "X5ZasuQLH0xqKooV_IEw6yjQNfEa"
 
-      "should return a Some(Box) when the pushPullNotification API returns 200 and valid JSON" in {
+      "should return a Right[Box] when the pushPullNotification API returns 200 and valid JSON" in {
         server.stubFor {
           get(urlPathEqualTo("/box")).willReturn(
             aResponse()
@@ -53,12 +53,12 @@ class PushPullNotificationConnectorSpec extends AnyFreeSpec with WiremockSuite w
           val connector = app.injector.instanceOf[PushPullNotificationConnector]
           val result    = connector.getBox(testBoxName, testClientId)
 
-          result.futureValue mustEqual Some(Box(BoxId(testBoxId), testBoxName))
+          result.futureValue.right.get mustEqual Box(BoxId(testBoxId), testBoxName)
         }
 
       }
 
-      "should return None when the pushPullNotification API returns 404" in {
+      "should return Left when the pushPullNotification API returns 404" in {
         server.stubFor {
           get(urlPathEqualTo("/box")).willReturn(
             aResponse()
@@ -70,9 +70,31 @@ class PushPullNotificationConnectorSpec extends AnyFreeSpec with WiremockSuite w
 
         running(app) {
           val connector = app.injector.instanceOf[PushPullNotificationConnector]
-          val result    = connector.getBox(testBoxName, testClientId)
+          val futureResult    = connector.getBox(testBoxName, testClientId)
+          val result = futureResult.futureValue
 
-          result.futureValue mustEqual None
+          assert(result.isLeft)
+          result.left.get.statusCode mustBe(NOT_FOUND)
+        }
+      }
+
+      "should return Left when the pushPullNotification API returns 500" in {
+        server.stubFor {
+          get(urlPathEqualTo("/box")).willReturn(
+            aResponse()
+              .withStatus(INTERNAL_SERVER_ERROR)
+          )
+        }
+
+        val app = appBuilder.build()
+
+        running(app) {
+          val connector = app.injector.instanceOf[PushPullNotificationConnector]
+          val futureResult    = connector.getBox(testBoxName, testClientId)
+          val result = futureResult.futureValue
+
+          assert(result.isLeft)
+          result.left.get.statusCode mustBe(INTERNAL_SERVER_ERROR)
         }
       }
     }
