@@ -187,7 +187,7 @@ class AuthenticateGetDepartureForReadActionProviderSpec
           .thenReturn(Future.successful(validEnrolments))
         when(mockDepartureRepository.get(any(), eqTo(api))).thenReturn(Future.successful(None))
 
-        val application = new GuiceApplicationBuilder()
+        val application = applicationBuilder
           .overrides(
             bind[DepartureRepository].toInstance(mockDepartureRepository),
             bind[AuthConnector].toInstance(mockAuthConnector)
@@ -219,7 +219,7 @@ class AuthenticateGetDepartureForReadActionProviderSpec
           .thenReturn(Future.successful(validEnrolments))
         when(mockDepartureRepository.get(any(), eqTo(api))).thenReturn(Future.successful(Some(departure)))
 
-        val application = new GuiceApplicationBuilder()
+        val application = applicationBuilder
           .overrides(
             bind[DepartureRepository].toInstance(mockDepartureRepository),
             bind[AuthConnector].toInstance(mockAuthConnector)
@@ -342,7 +342,7 @@ class AuthenticateGetDepartureForReadActionProviderSpec
         when(mockAuthConnector.authorise[Enrolments](any(), any())(any(), any()))
           .thenReturn(Future.successful(validEnrolments))
 
-        val application = new GuiceApplicationBuilder()
+        val application = applicationBuilder
           .overrides(
             bind[AuthConnector].toInstance(mockAuthConnector)
           )
@@ -398,7 +398,7 @@ class AuthenticateGetDepartureForReadActionProviderSpec
         when(mockAuthConnector.authorise[Enrolments](any(), any())(any(), any()))
           .thenReturn(Future.successful(validEnrolments))
 
-        val application = new GuiceApplicationBuilder()
+        val application = applicationBuilder
           .overrides(
             bind[AuthConnector].toInstance(mockAuthConnector)
           )
