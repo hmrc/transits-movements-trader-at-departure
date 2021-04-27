@@ -18,42 +18,61 @@ package connectors
 
 import java.time.OffsetDateTime
 import com.google.inject.Inject
+import com.kenshoo.play.metrics.Metrics
 import config.AppConfig
 import connectors.MessageConnector.EisSubmissionResult
 import connectors.MessageConnector.EisSubmissionResult._
 import models._
+import metrics.HasMetrics
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.HttpClient
+import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
 import uk.gov.hmrc.http.HttpResponse
 import utils.Format
-import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
-class MessageConnector @Inject()(config: AppConfig, http: HttpClient)(implicit ec: ExecutionContext) {
+class MessageConnector @Inject()(
+  config: AppConfig,
+  http: HttpClient,
+  val metrics: Metrics
+)(implicit ec: ExecutionContext)
+    extends HasMetrics {
 
   def post(departureId: DepartureId, message: MessageWithStatus, dateTime: OffsetDateTime, channelType: ChannelType)(
-    implicit headerCarrier: HeaderCarrier
-  ): Future[EisSubmissionResult] = {
+    implicit
+    headerCarrier: HeaderCarrier): Future[EisSubmissionResult] =
+    withMetricsTimerAsync("submit-eis-message") {
+      timer =>
+        val xmlMessage = TransitWrapper(message.message).toString
 
-    val xmlMessage = TransitWrapper(message.message).toString
+        val url = config.eisUrl
 
-    val url = config.eisUrl
+        lazy val messageSender = MessageSender(departureId, message.messageCorrelationId)
 
-    lazy val messageSender = MessageSender(departureId, message.messageCorrelationId)
+        val newHeaders = headerCarrier
+          .copy(authorization = None)
+          .withExtraHeaders(addHeaders(message.messageType, dateTime, messageSender, channelType): _*)
 
-    val newHeaders = headerCarrier
-      .copy(authorization = None)
-      .withExtraHeaders(addHeaders(message.messageType, dateTime, messageSender, channelType): _*)
-
-    http
-      .POSTString[HttpResponse](url, xmlMessage)(readRaw, hc = newHeaders, implicitly)
-      .map(response => responseToStatus(response))
-  }
+        http
+          .POSTString[HttpResponse](url, xmlMessage)(readRaw, hc = newHeaders, implicitly)
+          .map(
+            response =>
+              responseToStatus(response) match {
+                case status @ EisSubmissionSuccessful =>
+                  timer.completeWithSuccess()
+                  status
+                case status =>
+                  timer.completeWithFailure()
+                  status
+            }
+          )
+    }
 
   private def addHeaders(messageType: MessageType, dateTime: OffsetDateTime, messageSender: MessageSender, channelType: ChannelType)(
-    implicit headerCarrier: HeaderCarrier): Seq[(String, String)] =
+    implicit
+    headerCarrier: HeaderCarrier): Seq[(String, String)] =
     Seq(
       "Date"             -> Format.dateFormattedForHeader(dateTime),
       "Content-Type"     -> "application/xml",
@@ -88,6 +107,7 @@ object MessageConnector {
     sealed abstract class EisSubmissionFailureDownstream(statusCode: Int, responseBody: String) extends EisSubmissionFailure(statusCode, responseBody)
     object DownstreamInternalServerError                                                        extends EisSubmissionFailureDownstream(500, "Downstream internal server error")
     object DownstreamBadGateway                                                                 extends EisSubmissionFailureDownstream(502, "Downstream bad gateway ")
+
     case class UnexpectedHttpResponse(httpResponse: HttpResponse)
         extends EisSubmissionFailureDownstream(httpResponse.status, "Unexpected HTTP Response received")
   }
