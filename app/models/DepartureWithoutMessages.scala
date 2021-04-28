@@ -55,7 +55,7 @@ object DepartureWithoutMessages {
       (__ \ "_id").read[DepartureId] and
         (__ \ "channel").read[ChannelType] and
         (__ \ "eoriNumber").read[String] and
-        (__ \ "movementReferenceNumber").read[Option[MovementReferenceNumber]] and
+        (__ \ "movementReferenceNumber").readNullable[MovementReferenceNumber] and
         (__ \ "referenceNumber").read[String] and
         (__ \ "status").read[DepartureStatus] and
         (__ \ "created").read(MongoDateTimeFormats.localDateTimeRead) and

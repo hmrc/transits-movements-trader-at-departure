@@ -70,7 +70,7 @@ object Departure {
       (__ \ "_id").read[DepartureId] and
         (__ \ "channel").read[ChannelType] and
         (__ \ "eoriNumber").read[String] and
-        (__ \ "movementReferenceNumber").read[Option[MovementReferenceNumber]] and
+        (__ \ "movementReferenceNumber").readNullable[MovementReferenceNumber] and
         (__ \ "referenceNumber").read[String] and
         (__ \ "status").read[DepartureStatus] and
         (__ \ "created").read(MongoDateTimeFormats.localDateTimeRead) and
@@ -85,14 +85,14 @@ object Departure {
       (__ \ "_id").write[DepartureId] and
         (__ \ "channel").write[ChannelType] and
         (__ \ "eoriNumber").write[String] and
-        (__ \ "movementReferenceNumber").write[Option[MovementReferenceNumber]] and
+        (__ \ "movementReferenceNumber").writeNullable[MovementReferenceNumber] and
         (__ \ "referenceNumber").write[String] and
         (__ \ "status").write[DepartureStatus] and
         (__ \ "created").write(write) and
         (__ \ "updated").write(write) and
         (__ \ "nextMessageCorrelationId").write[Int] and
         (__ \ "messages").write[NonEmptyList[Message]] and
-        (__ \ "notificationBox").write[Option[Box]]
+        (__ \ "notificationBox").writeNullable[Box]
     )(unlift(Departure.unapply))
 
 }
