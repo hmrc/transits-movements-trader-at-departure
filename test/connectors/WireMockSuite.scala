@@ -22,9 +22,12 @@ import org.scalatest.BeforeAndAfterAll
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.Suite
 import play.api.Application
+import play.api.inject.bind
 import play.api.inject.Injector
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.inject.guice.GuiceableModule
+import com.kenshoo.play.metrics.Metrics
+import utils.TestMetrics
 
 trait WiremockSuite extends BeforeAndAfterAll with BeforeAndAfterEach {
   this: Suite =>
@@ -36,11 +39,14 @@ trait WiremockSuite extends BeforeAndAfterAll with BeforeAndAfterEach {
   protected lazy val appBuilder: GuiceApplicationBuilder =
     new GuiceApplicationBuilder()
       .configure(
-        portConfigKey -> server.port().toString
+        portConfigKey -> server.port().toString,
+        "metrics.jvm" -> false
       )
       .overrides(bindings: _*)
 
-  protected def bindings: Seq[GuiceableModule] = Seq.empty
+  protected def bindings: Seq[GuiceableModule] = Seq(
+    bind[Metrics].toInstance(new TestMetrics)
+  )
 
   override def beforeAll(): Unit = {
     server.start()

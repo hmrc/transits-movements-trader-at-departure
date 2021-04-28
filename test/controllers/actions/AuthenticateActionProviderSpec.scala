@@ -145,7 +145,7 @@ class AuthenticateActionProviderSpec extends AnyFreeSpec with Matchers with Mock
         when(mockAuthConnector.authorise[Enrolments](any(), any())(any(), any()))
           .thenReturn(Future.successful(validEnrolments))
 
-        val application = new GuiceApplicationBuilder()
+        val application = baseApplication
           .overrides(
             bind[AuthConnector].toInstance(mockAuthConnector)
           )
@@ -199,7 +199,7 @@ class AuthenticateActionProviderSpec extends AnyFreeSpec with Matchers with Mock
         when(mockAuthConnector.authorise[Enrolments](any(), any())(any(), any()))
           .thenReturn(Future.successful(validEnrolments))
 
-        val application = new GuiceApplicationBuilder()
+        val application = baseApplication
           .overrides(
             bind[AuthConnector].toInstance(mockAuthConnector)
           )

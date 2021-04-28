@@ -1,3 +1,19 @@
+/*
+ * Copyright 2021 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package repositories
 
 import java.time.LocalDate
@@ -129,7 +145,7 @@ class DepartureRepositorySpec
         }
       }
     }
-    
+
     "setMessageState" - {
       "must update the status of a specific message in an existing departure" in {
         database.flatMap(_.drop()).futureValue
@@ -494,7 +510,7 @@ class DepartureRepositorySpec
       "return DeparturesWithoutMessages that match an eoriNumber and channel type" in {
         database.flatMap(_.drop()).futureValue
 
-        val app = new GuiceApplicationBuilder().build()
+        val app = new GuiceApplicationBuilder().configure("metrics.jvm" -> false).build()
         val eoriNumber: String = arbitrary[String].sample.value
 
         val departure1 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = api)
@@ -521,7 +537,7 @@ class DepartureRepositorySpec
 
         val eoriNumber: String = arbitrary[String].sample.value
 
-        val app = new GuiceApplicationBuilder().build()
+        val app = new GuiceApplicationBuilder().configure("metrics.jvm" -> false).build()
         val departure1 = arbitrary[Departure].suchThat(_.eoriNumber != eoriNumber).sample.value.copy(channel = api)
         val departure2 = arbitrary[Departure].suchThat(_.eoriNumber != eoriNumber).sample.value.copy(channel = api)
 

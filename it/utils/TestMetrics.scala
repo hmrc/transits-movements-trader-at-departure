@@ -14,14 +14,12 @@
  * limitations under the License.
  */
 
-package api.helpers
+package utils
 
-import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
-import org.scalatest.freespec.AnyFreeSpec
-import org.scalatest.matchers.must.Matchers
-import org.scalatestplus.play.guice.GuiceOneServerPerSuite
-import repositories.MongoSuite
+import com.kenshoo.play.metrics.Metrics
+import com.codahale.metrics.MetricRegistry
 
-trait ApiSpecBase extends AnyFreeSpec with Matchers with ScalaFutures with GuiceOneServerPerSuite with IntegrationPatience with WiremockSuite with MongoSuite with StubHelper {
-
+class TestMetrics extends Metrics {
+  override def defaultRegistry: MetricRegistry = new MetricRegistry
+  override def toJson: String                  = ""
 }
