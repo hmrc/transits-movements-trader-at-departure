@@ -7,6 +7,7 @@ import play.api.test.Helpers._
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.concurrent.IntegrationPatience
 import org.scalatest.matchers.must.Matchers
+import config.Constants
 import models.Box
 import models.BoxId
 
@@ -22,7 +23,6 @@ class PushPullNotificationConnectorSpec extends AnyFreeSpec with WiremockSuite w
     "getBox" - {
 
       val testBoxId    = "1c5b9365-18a6-55a5-99c9-83a091ac7f26"
-      val testBoxName  = "BOX 2"
       val testClientId = "X5ZasuQLH0xqKooV_IEw6yjQNfEa"
 
       "should return a Right[Box] when the pushPullNotification API returns 200 and valid JSON" in {
@@ -33,7 +33,7 @@ class PushPullNotificationConnectorSpec extends AnyFreeSpec with WiremockSuite w
               .withBody(s"""
                 {
                   "boxId": "$testBoxId",
-                  "boxName":"$testBoxName",
+                  "boxName":"${Constants.BoxName}",
                   "boxCreator":{
                       "clientId": "$testClientId"
                   },
@@ -51,9 +51,9 @@ class PushPullNotificationConnectorSpec extends AnyFreeSpec with WiremockSuite w
 
         running(app) {
           val connector = app.injector.instanceOf[PushPullNotificationConnector]
-          val result    = connector.getBox(testBoxName, testClientId)
+          val result    = connector.getBox(testClientId)
 
-          result.futureValue.right.get mustEqual Box(BoxId(testBoxId), testBoxName)
+          result.futureValue.right.get mustEqual Box(BoxId(testBoxId), Constants.BoxName)
         }
 
       }
@@ -70,7 +70,7 @@ class PushPullNotificationConnectorSpec extends AnyFreeSpec with WiremockSuite w
 
         running(app) {
           val connector    = app.injector.instanceOf[PushPullNotificationConnector]
-          val futureResult = connector.getBox(testBoxName, testClientId)
+          val futureResult = connector.getBox(testClientId)
           val result       = futureResult.futureValue
 
           assert(result.isLeft)
@@ -90,7 +90,7 @@ class PushPullNotificationConnectorSpec extends AnyFreeSpec with WiremockSuite w
 
         running(app) {
           val connector    = app.injector.instanceOf[PushPullNotificationConnector]
-          val futureResult = connector.getBox(testBoxName, testClientId)
+          val futureResult = connector.getBox(testClientId)
           val result       = futureResult.futureValue
 
           assert(result.isLeft)

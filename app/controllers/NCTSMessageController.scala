@@ -38,11 +38,13 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.xml.NodeSeq
 
-class NCTSMessageController @Inject()(cc: ControllerComponents,
-                                      getDeparture: GetDepartureForWriteActionProvider,
-                                      checkMessageType: CheckMessageTypeActionProvider,
-                                      auditService: AuditService,
-                                      saveMessageService: SaveMessageService)(implicit ec: ExecutionContext)
+class NCTSMessageController @Inject() (
+  cc: ControllerComponents,
+  getDeparture: GetDepartureForWriteActionProvider,
+  checkMessageType: CheckMessageTypeActionProvider,
+  auditService: AuditService,
+  saveMessageService: SaveMessageService
+)(implicit ec: ExecutionContext)
     extends BackendController(cc)
     with Logging {
 
@@ -65,7 +67,8 @@ class NCTSMessageController @Inject()(cc: ControllerComponents,
                     case SubmissionSuccess =>
                       auditService.auditNCTSMessages(request.request.departure.channel, response, xml)
                       Ok.withHeaders(
-                        LOCATION -> routes.MessagesController.getMessage(request.request.departure.departureId, request.request.departure.nextMessageId).url)
+                        LOCATION -> routes.MessagesController.getMessage(request.request.departure.departureId, request.request.departure.nextMessageId).url
+                      )
                     case SubmissionFailureInternal =>
                       val message = "Internal Submission Failure " + processingResult
                       logger.warn(message)
@@ -82,7 +85,8 @@ class NCTSMessageController @Inject()(cc: ControllerComponents,
                 case SubmissionSuccess =>
                   auditService.auditNCTSMessages(request.request.departure.channel, response, xml)
                   Ok.withHeaders(
-                    LOCATION -> routes.MessagesController.getMessage(request.request.departure.departureId, request.request.departure.nextMessageId).url)
+                    LOCATION -> routes.MessagesController.getMessage(request.request.departure.departureId, request.request.departure.nextMessageId).url
+                  )
                 case SubmissionFailureInternal =>
                   val message = "Internal Submission Failure " + processingResult
                   logger.warn(message)

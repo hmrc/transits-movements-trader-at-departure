@@ -101,7 +101,7 @@ class DepartureServiceSpec extends SpecBase with JsonHelper with IntegrationPati
         notificationBox = None
       )
 
-      val result = service.createDeparture(eori, inputMovement, api).futureValue
+      val result = service.createDeparture(eori, inputMovement, api, None).futureValue
 
       result.right.get mustEqual expectedDeparture
     }
@@ -135,7 +135,7 @@ class DepartureServiceSpec extends SpecBase with JsonHelper with IntegrationPati
           </HEAHEA>
         </Foo>
 
-      service.createDeparture(eori, invalidPayload, api).futureValue.isLeft mustBe true
+      service.createDeparture(eori, invalidPayload, api, None).futureValue.isLeft mustBe true
     }
   }
 

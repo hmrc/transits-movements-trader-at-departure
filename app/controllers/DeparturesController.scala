@@ -45,43 +45,47 @@ class DeparturesController @Inject() (
   authenticatedDepartureForRead: AuthenticatedGetDepartureForReadActionProvider,
   departureService: DepartureService,
   auditService: AuditService,
-  submitMessageService: SubmitMessageService
+  submitMessageService: SubmitMessageService,
+  pushPullNotificationService: PushPullNotificationService
 )(implicit ec: ExecutionContext)
     extends BackendController(cc) {
 
   def post: Action[NodeSeq] = authenticateClientId().async(parse.xml) {
     implicit request =>
-      departureService
-        .createDeparture(request.eoriNumber, request.body, request.channel)
-        .flatMap {
-          case Left(error) =>
-            Logger.error(error.message)
-            Future.successful(BadRequest(error.message))
-          case Right(departure) =>
-            submitMessageService
-              .submitDeparture(departure)
-              .map {
-                case SubmissionProcessingResult.SubmissionFailureInternal =>
-                  InternalServerError
-                case SubmissionProcessingResult.SubmissionFailureExternal =>
-                  BadGateway
-                case submissionFailureRejected: SubmissionProcessingResult.SubmissionFailureRejected =>
-                  BadRequest(submissionFailureRejected.responseBody)
-                case SubmissionProcessingResult.SubmissionSuccess =>
-                  auditService.auditEvent(DepartureDeclarationSubmitted, departure.messages.head, request.channel)
-                  auditService.auditEvent(MesSenMES3Added, departure.messages.head, request.channel)
-                  Accepted
-                    .withHeaders("Location" -> routes.DeparturesController.get(departure.departureId).url)
-              }
-              .recover {
-                case _ =>
-                  InternalServerError
-              }
-        }
-        .recover {
-          case _ =>
-            InternalServerError
-        }
+      pushPullNotificationService.getBox(request.clientId).flatMap {
+        boxOpt => 
+        departureService
+          .createDeparture(request.eoriNumber, request.body, request.channel, boxOpt)
+          .flatMap {
+            case Left(error) =>
+              Logger.error(error.message)
+              Future.successful(BadRequest(error.message))
+            case Right(departure) =>
+              submitMessageService
+                .submitDeparture(departure)
+                .map {
+                  case SubmissionProcessingResult.SubmissionFailureInternal =>
+                    InternalServerError
+                  case SubmissionProcessingResult.SubmissionFailureExternal =>
+                    BadGateway
+                  case submissionFailureRejected: SubmissionProcessingResult.SubmissionFailureRejected =>
+                    BadRequest(submissionFailureRejected.responseBody)
+                  case SubmissionProcessingResult.SubmissionSuccess =>
+                    auditService.auditEvent(DepartureDeclarationSubmitted, departure.messages.head, request.channel)
+                    auditService.auditEvent(MesSenMES3Added, departure.messages.head, request.channel)
+                    Accepted
+                      .withHeaders("Location" -> routes.DeparturesController.get(departure.departureId).url)
+                }
+                .recover {
+                  case _ =>
+                    InternalServerError
+                }
+          }
+          .recover {
+            case _ =>
+              InternalServerError
+          }
+      }
   }
 
   def get(departureId: DepartureId): Action[AnyContent] = authenticatedDepartureForRead(departureId) {

@@ -2,6 +2,7 @@ package connectors
 
 import com.google.inject.Inject
 import config.AppConfig
+import config.Constants
 import models.Box
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.HttpClient
@@ -13,9 +14,9 @@ import scala.concurrent.Future
 
 class PushPullNotificationConnector @Inject() (config: AppConfig, http: HttpClient) {
 
-  def getBox(boxName: String, clientId: String)(implicit ec: ExecutionContext, hc: HeaderCarrier): Future[Either[UpstreamErrorResponse, Box]] = {
+  def getBox(clientId: String)(implicit ec: ExecutionContext, hc: HeaderCarrier): Future[Either[UpstreamErrorResponse, Box]] = {
     val queryParams = Seq(
-      "boxName"  -> boxName,
+      "boxName"  -> Constants.BoxName,
       "clientId" -> clientId
     )
     val url = s"${config.pushPullUrl}/box"
