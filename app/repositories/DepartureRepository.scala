@@ -255,7 +255,7 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfi
       _.find(Json.obj("eoriNumber" -> eoriNumber, "channel" -> channelFilter), DepartureWithoutMessages.projection)
         .sort(Json.obj("lastUpdated" -> -1))
         .cursor[DepartureWithoutMessages]()
-        .collect[Seq](appConfig.maxRowsReturned, Cursor.FailOnError())
+        .collect[Seq](appConfig.maxRowsReturned(channelFilter), Cursor.FailOnError())
     }
 
   def updateDeparture[A](selector: DepartureSelector, modifier: A)(implicit ev: DepartureModifier[A]): Future[Try[Unit]] = {

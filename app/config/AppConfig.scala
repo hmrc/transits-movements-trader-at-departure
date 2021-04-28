@@ -20,6 +20,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import play.api.Configuration
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
+import models.ChannelType
 
 @Singleton
 class AppConfig @Inject()(config: Configuration, servicesConfig: ServicesConfig) {
@@ -46,6 +47,5 @@ class AppConfig @Inject()(config: Configuration, servicesConfig: ServicesConfig)
 
   val messageTranslationFile: String = config.get[String]("message-translation-file")
 
-  val maxRowsReturned = config.get[Int]("mongodb.maxRowsReturned")
-
+  def maxRowsReturned(ct: ChannelType): Int = config.get[Int](s"mongodb.$ct.maxRowsReturned")
 }

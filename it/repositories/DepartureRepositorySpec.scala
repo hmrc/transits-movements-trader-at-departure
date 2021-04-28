@@ -543,10 +543,8 @@ class DepartureRepositorySpec
         }
       }
 
-      "Must return max 2 departures when the maxRowsReturned = 2" in {
+      "Must return max 2 departures when the API maxRowsReturned = 2" in {
         database.flatMap(_.drop()).futureValue
-
-
 
         val app = new GuiceApplicationBuilder().build()
         val eoriNumber: String = arbitrary[String].sample.value
@@ -562,15 +560,47 @@ class DepartureRepositorySpec
           service.insert(departure2).futureValue
           service.insert(departure3).futureValue
 
-          appConfig.maxRowsReturned mustBe 2
+          val maxRows = appConfig.maxRowsReturned(api)
+          maxRows mustBe 2
 
           val departures = repository.fetchAllDepartures(eoriNumber, api).futureValue
           
-          departures.size mustBe 2
+          departures.size mustBe maxRows
 
           val ids = departures.map( d => d.departureId.index)
 
           ids mustBe Seq(departure3.departureId.index,departure2.departureId.index)
+
+        }
+      }
+
+            "Must return max 2 departures when the WEB maxRowsReturned = 1" in {
+        database.flatMap(_.drop()).futureValue
+
+        val app = new GuiceApplicationBuilder().build()
+        val eoriNumber: String = arbitrary[String].sample.value
+
+        val departure1 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = web)
+        val departure2 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = web)
+        val departure3 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = web)
+
+        running(app) {
+          started(app).futureValue
+          val repository = app.injector.instanceOf[DepartureRepository]
+          service.insert(departure1).futureValue
+          service.insert(departure2).futureValue
+          service.insert(departure3).futureValue
+
+          val maxRows = appConfig.maxRowsReturned(web)
+          maxRows mustBe 1
+
+          val departures = repository.fetchAllDepartures(eoriNumber, web).futureValue
+          
+          departures.size mustBe maxRows
+
+          val ids = departures.map( d => d.departureId.index)
+
+          ids mustBe Seq(departure3.departureId.index)
 
         }
       }
