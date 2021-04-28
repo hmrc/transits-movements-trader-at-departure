@@ -19,6 +19,7 @@ package generators
 import java.time.LocalDate
 import java.time.LocalDateTime
 
+import config.Constants
 import models.MessageStatus.SubmissionPending
 import models._
 import models.SubmissionProcessingResult.SubmissionFailure
@@ -138,19 +139,32 @@ trait ModelGenerators extends BaseGenerators with JavaTimeGenerators with JsonHe
       Gen.oneOf(ChannelType.values)
     }
 
+  implicit lazy val arbitraryBoxId: Arbitrary[BoxId] =
+    Arbitrary {
+      Gen.uuid.map(_.toString).map(BoxId.apply)
+    }
+
+  implicit lazy val arbitraryBox: Arbitrary[Box] =
+    Arbitrary {
+      for {
+        boxId <- arbitrary[BoxId]
+      } yield Box(boxId, Constants.BoxName)
+    }
+
   implicit lazy val arbitraryDeparture: Arbitrary[Departure] =
     Arbitrary {
       for {
-        id       <- arbitrary[DepartureId]
-        channel  <- arbitrary[ChannelType]
-        eN       <- arbitrary[String]
-        mrn      <- arbitrary[MovementReferenceNumber]
-        rN       <- arbitrary[String]
-        status   <- arbitrary[DepartureStatus]
-        created  <- arbitrary[LocalDateTime]
-        updated  <- arbitrary[LocalDateTime]
-        messages <- nonEmptyListOfMaxLength[MessageWithStatus](2)
-      } yield models.Departure(id, channel, eN, Some(mrn), rN, status, created, updated, messages.length + 1, messages, None)
+        id              <- arbitrary[DepartureId]
+        channel         <- arbitrary[ChannelType]
+        eN              <- arbitrary[String]
+        mrn             <- arbitrary[MovementReferenceNumber]
+        rN              <- arbitrary[String]
+        status          <- arbitrary[DepartureStatus]
+        created         <- arbitrary[LocalDateTime]
+        updated         <- arbitrary[LocalDateTime]
+        messages        <- nonEmptyListOfMaxLength[MessageWithStatus](2)
+        notificationBox <- arbitrary[Option[Box]]
+      } yield models.Departure(id, channel, eN, Some(mrn), rN, status, created, updated, messages.length + 1, messages, notificationBox)
     }
 
   implicit lazy val arbitraryFailure: Arbitrary[SubmissionFailure] =
