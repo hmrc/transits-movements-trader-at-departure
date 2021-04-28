@@ -56,6 +56,7 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
   private val version       = 1
   private val messageSender = MessageSender(departureId, version)
   private val message       = Arbitrary.arbitrary[MessageWithStatus].sample.value
+
   private val departure = Departure(
     departureId,
     api,
@@ -66,7 +67,8 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
     LocalDateTime.of(dateOfPrep, timeOfPrep),
     LocalDateTime.of(dateOfPrep, timeOfPrep),
     1,
-    NonEmptyList.one(message)
+    NonEmptyList.one(message),
+    None
   )
 
   private val acknowledgedDeparture = Departure(
@@ -79,7 +81,8 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
     LocalDateTime.of(dateOfPrep, timeOfPrep),
     LocalDateTime.of(dateOfPrep, timeOfPrep),
     1,
-    NonEmptyList.one(message)
+    NonEmptyList.one(message),
+    None
   )
 
   private val requestMrnAllocatedBody =
@@ -117,7 +120,8 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
   val codeAndXmlBody = Gen.oneOf(
     Seq(
       (MessageType.DeclarationRejected.code, requestDepartureRejectionXmlBody)
-    ))
+    )
+  )
 
   override def beforeEach: Unit = {
     super.beforeEach()
@@ -178,7 +182,9 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
             .withHeaders("X-Message-Type" -> MessageType.CancellationDecision.code)
 
           val result = route(application, request).value
-          contentAsString(result) mustEqual "Can only accept this type of message [CancellationDecision] directly after [DeclarationCancellationRequest or ReleaseForTransit] messages. Current message state is [PositiveAcknowledgement]."
+          contentAsString(
+            result
+          ) mustEqual "Can only accept this type of message [CancellationDecision] directly after [DeclarationCancellationRequest or ReleaseForTransit] messages. Current message state is [PositiveAcknowledgement]."
           status(result) mustEqual BAD_REQUEST
         }
       }

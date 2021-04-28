@@ -97,12 +97,14 @@ class MessageConnectorSpec
             )
             val app       = appBuilder.build()
             val connector = app.injector.instanceOf[MessageConnector]
-            val postValue = MessageWithStatus(LocalDateTime.now(),
-                                              messageType,
-                                              <CC007A>test</CC007A>,
-                                              MessageStatus.SubmissionPending,
-                                              1,
-                                              convertXmlToJson(<CC007A>test</CC007A>.toString))
+            val postValue = MessageWithStatus(
+              LocalDateTime.now(),
+              messageType,
+              <CC007A>test</CC007A>,
+              MessageStatus.SubmissionPending,
+              1,
+              convertXmlToJson(<CC007A>test</CC007A>.toString)
+            )
             val departureId = DepartureId(123)
 
             running(app) {
@@ -132,12 +134,14 @@ class MessageConnectorSpec
                 )
             )
 
-            val postValue = MessageWithStatus(LocalDateTime.now(),
-                                              messageType,
-                                              <CC007A>test</CC007A>,
-                                              MessageStatus.SubmissionPending,
-                                              1,
-                                              convertXmlToJson(<CC007A>test</CC007A>.toString))
+            val postValue = MessageWithStatus(
+              LocalDateTime.now(),
+              messageType,
+              <CC007A>test</CC007A>,
+              MessageStatus.SubmissionPending,
+              1,
+              convertXmlToJson(<CC007A>test</CC007A>.toString)
+            )
             val departureId = DepartureId(123)
             val app         = appBuilder.build()
 
@@ -169,12 +173,14 @@ class MessageConnectorSpec
                 )
             )
 
-            val postValue = MessageWithStatus(LocalDateTime.now(),
-                                              messageType,
-                                              <CC007A>test</CC007A>,
-                                              MessageStatus.SubmissionPending,
-                                              1,
-                                              convertXmlToJson(<CC007A>test</CC007A>.toString()))
+            val postValue = MessageWithStatus(
+              LocalDateTime.now(),
+              messageType,
+              <CC007A>test</CC007A>,
+              MessageStatus.SubmissionPending,
+              1,
+              convertXmlToJson(<CC007A>test</CC007A>.toString())
+            )
             val departureId = DepartureId(123)
             val app         = appBuilder.build()
 
@@ -207,12 +213,14 @@ class MessageConnectorSpec
                 )
             )
 
-            val postValue = MessageWithStatus(LocalDateTime.now(),
-                                              messageType,
-                                              <CC007A>test</CC007A>,
-                                              MessageStatus.SubmissionPending,
-                                              1,
-                                              convertXmlToJson(<CC007A>test</CC007A>.toString()))
+            val postValue = MessageWithStatus(
+              LocalDateTime.now(),
+              messageType,
+              <CC007A>test</CC007A>,
+              MessageStatus.SubmissionPending,
+              1,
+              convertXmlToJson(<CC007A>test</CC007A>.toString())
+            )
             val departureId = DepartureId(123)
             val app         = appBuilder.build()
 

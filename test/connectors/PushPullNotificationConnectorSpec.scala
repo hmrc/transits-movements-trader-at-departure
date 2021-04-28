@@ -69,12 +69,12 @@ class PushPullNotificationConnectorSpec extends AnyFreeSpec with WiremockSuite w
         val app = appBuilder.build()
 
         running(app) {
-          val connector = app.injector.instanceOf[PushPullNotificationConnector]
-          val futureResult    = connector.getBox(testBoxName, testClientId)
-          val result = futureResult.futureValue
+          val connector    = app.injector.instanceOf[PushPullNotificationConnector]
+          val futureResult = connector.getBox(testBoxName, testClientId)
+          val result       = futureResult.futureValue
 
           assert(result.isLeft)
-          result.left.get.statusCode mustBe(NOT_FOUND)
+          result.left.get.statusCode mustBe NOT_FOUND
         }
       }
 
@@ -89,12 +89,12 @@ class PushPullNotificationConnectorSpec extends AnyFreeSpec with WiremockSuite w
         val app = appBuilder.build()
 
         running(app) {
-          val connector = app.injector.instanceOf[PushPullNotificationConnector]
-          val futureResult    = connector.getBox(testBoxName, testClientId)
-          val result = futureResult.futureValue
+          val connector    = app.injector.instanceOf[PushPullNotificationConnector]
+          val futureResult = connector.getBox(testBoxName, testClientId)
+          val result       = futureResult.futureValue
 
           assert(result.isLeft)
-          result.left.get.statusCode mustBe(INTERNAL_SERVER_ERROR)
+          result.left.get.statusCode mustBe INTERNAL_SERVER_ERROR
         }
       }
     }

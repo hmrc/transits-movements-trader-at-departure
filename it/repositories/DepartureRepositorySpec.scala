@@ -22,8 +22,12 @@ import java.time.LocalTime
 
 import cats.data.NonEmptyList
 import generators.ModelGenerators
-import models.ChannelType.{api, web}
-import models.DepartureStatus.{DepartureSubmitted, Initialized, MrnAllocated, PositiveAcknowledgement}
+import models.ChannelType.api
+import models.ChannelType.web
+import models.DepartureStatus.DepartureSubmitted
+import models.DepartureStatus.Initialized
+import models.DepartureStatus.MrnAllocated
+import models.DepartureStatus.PositiveAcknowledgement
 import models.MessageStatus.SubmissionPending
 import models.MessageStatus.SubmissionSucceeded
 import models._
@@ -43,12 +47,13 @@ import play.api.libs.json.Json
 import play.api.test.Helpers.running
 import reactivemongo.play.json.ImplicitBSONHandlers.JsObjectDocumentWriter
 import reactivemongo.play.json.collection.JSONCollection
-import utils.{Format, JsonHelper}
+import utils.Format
+import utils.JsonHelper
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.reflect.ClassTag
-import scala.util.{Failure, Success}
-import play.api.Application
+import scala.util.Failure
+import scala.util.Success
 
 class DepartureRepositorySpec
     extends AnyFreeSpec
@@ -68,9 +73,11 @@ class DepartureRepositorySpec
   def typeMatchOnTestValue[A, B](testValue: A)(test: B => Unit)(implicit bClassTag: ClassTag[B]) = testValue match {
     case result: B => test(result)
     case failedResult =>
-      throw new TestFailedException((_: StackDepthException) => Some(s"Test for ${bClassTag.runtimeClass}, but got a ${failedResult.getClass}"),
-                                    None,
-                                    implicitly[source.Position])
+      throw new TestFailedException(
+        (_: StackDepthException) => Some(s"Test for ${bClassTag.runtimeClass}, but got a ${failedResult.getClass}"),
+        None,
+        implicitly[source.Position]
+      )
   }
 
   val departureWithOneMessage: Gen[Departure] = for {
@@ -145,7 +152,7 @@ class DepartureRepositorySpec
         }
       }
     }
-    
+
     "setMessageState" - {
       "must update the status of a specific message in an existing departure" in {
         database.flatMap(_.drop()).futureValue
@@ -199,8 +206,7 @@ class DepartureRepositorySpec
         database.flatMap(_.drop()).futureValue
 
         val preGenDeparture = departureWithOneMessage.sample.value
-        val departure = preGenDeparture.copy(departureId = DepartureId(1),
-          messages = NonEmptyList.one(arbitrary[MessageWithoutStatus].sample.value))
+        val departure       = preGenDeparture.copy(departureId = DepartureId(1), messages = NonEmptyList.one(arbitrary[MessageWithoutStatus].sample.value))
 
         service.insert(departure).futureValue
         val result = service.setMessageState(DepartureId(1), 0, SubmissionSucceeded)
@@ -230,7 +236,13 @@ class DepartureRepositorySpec
           </CC015B>
 
         val departureDeclarationMessage =
-          MessageWithoutStatus(LocalDateTime.of(dateOfPrep, timeOfPrep), MessageType.DepartureDeclaration, messageBody, departure.nextMessageCorrelationId, convertXmlToJson(messageBody.toString))
+          MessageWithoutStatus(
+            LocalDateTime.of(dateOfPrep, timeOfPrep),
+            MessageType.DepartureDeclaration,
+            messageBody,
+            departure.nextMessageCorrelationId,
+            convertXmlToJson(messageBody.toString)
+          )
 
         service.insert(departure).futureValue
         service.addNewMessage(departure.departureId, departureDeclarationMessage).futureValue.success
@@ -257,7 +269,7 @@ class DepartureRepositorySpec
       "must fail if the departure cannot be found" in {
         database.flatMap(_.drop()).futureValue
 
-        val departure = arbitrary[Departure].sample.value copy(status = DepartureStatus.DepartureSubmitted, departureId = DepartureId(1))
+        val departure = arbitrary[Departure].sample.value copy (status = DepartureStatus.DepartureSubmitted, departureId = DepartureId(1))
 
         val dateOfPrep = LocalDate.now()
         val timeOfPrep = LocalTime.of(1, 1)
@@ -271,7 +283,13 @@ class DepartureRepositorySpec
           </CC015B>
 
         val departureDeclaration =
-          MessageWithoutStatus(LocalDateTime.of(dateOfPrep, timeOfPrep), MessageType.DepartureDeclaration, messageBody, messageCorrelationId = 1, convertXmlToJson(messageBody.toString))
+          MessageWithoutStatus(
+            LocalDateTime.of(dateOfPrep, timeOfPrep),
+            MessageType.DepartureDeclaration,
+            messageBody,
+            messageCorrelationId = 1,
+            convertXmlToJson(messageBody.toString)
+          )
 
         service.insert(departure).futureValue
         val result = service.addNewMessage(DepartureId(2), departureDeclaration)
@@ -350,7 +368,7 @@ class DepartureRepositorySpec
         service.insert(departure).futureValue
 
         val setResult = service.setDepartureStateAndMessageState(DepartureId(2), messageId, DepartureSubmitted, SubmissionSucceeded)
-        setResult.futureValue must not be (defined)
+        setResult.futureValue must not be defined
 
         val result = service.get(departure.departureId, departure.channel)
 
@@ -380,7 +398,13 @@ class DepartureRepositorySpec
           </CC016A>
 
         val declarationRejectedMessage =
-          MessageWithoutStatus(LocalDateTime.of(dateOfPrep, timeOfPrep), MessageType.DeclarationRejected, messageBody, departure.nextMessageCorrelationId, convertXmlToJson(messageBody.toString))
+          MessageWithoutStatus(
+            LocalDateTime.of(dateOfPrep, timeOfPrep),
+            MessageType.DeclarationRejected,
+            messageBody,
+            departure.nextMessageCorrelationId,
+            convertXmlToJson(messageBody.toString)
+          )
         val newState = DepartureStatus.DepartureRejected
 
         service.insert(departure).futureValue
@@ -405,7 +429,7 @@ class DepartureRepositorySpec
       "must fail if the departure cannot be found" in {
         database.flatMap(_.drop()).futureValue
 
-        val departure = arbitrary[Departure].sample.value copy(status = DepartureStatus.DepartureSubmitted, departureId = DepartureId(1))
+        val departure = arbitrary[Departure].sample.value copy (status = DepartureStatus.DepartureSubmitted, departureId = DepartureId(1))
 
         val dateOfPrep = LocalDate.now()
         val timeOfPrep = LocalTime.of(1, 1)
@@ -419,7 +443,13 @@ class DepartureRepositorySpec
           </CC025A>
 
         val declarationRejected =
-          MessageWithoutStatus(LocalDateTime.of(dateOfPrep, timeOfPrep), MessageType.DeclarationRejected, messageBody, messageCorrelationId = 1, convertXmlToJson(messageBody.toString))
+          MessageWithoutStatus(
+            LocalDateTime.of(dateOfPrep, timeOfPrep),
+            MessageType.DeclarationRejected,
+            messageBody,
+            messageCorrelationId = 1,
+            convertXmlToJson(messageBody.toString)
+          )
         val newState = DepartureStatus.DepartureRejected
 
         service.insert(departure).futureValue
@@ -448,7 +478,13 @@ class DepartureRepositorySpec
           </CC028A>
 
         val mrnAllocatedMessage =
-          MessageWithoutStatus(LocalDateTime.of(dateOfPrep, timeOfPrep), MessageType.MrnAllocated, messageBody, departure.nextMessageCorrelationId, convertXmlToJson(messageBody.toString))
+          MessageWithoutStatus(
+            LocalDateTime.of(dateOfPrep, timeOfPrep),
+            MessageType.MrnAllocated,
+            messageBody,
+            departure.nextMessageCorrelationId,
+            convertXmlToJson(messageBody.toString)
+          )
         val newState = DepartureStatus.MrnAllocated
 
         service.insert(departure).futureValue
@@ -476,7 +512,7 @@ class DepartureRepositorySpec
       "must fail if the departure cannot be found" in {
         database.flatMap(_.drop()).futureValue
 
-        val departure = arbitrary[Departure].sample.value copy(status = DepartureStatus.DepartureSubmitted, departureId = DepartureId(1))
+        val departure = arbitrary[Departure].sample.value copy (status = DepartureStatus.DepartureSubmitted, departureId = DepartureId(1))
 
         val mrn        = "mrn"
         val dateOfPrep = LocalDate.now()
@@ -491,7 +527,13 @@ class DepartureRepositorySpec
           </CC028A>
 
         val mrnAllocatedMessage =
-          MessageWithoutStatus(LocalDateTime.of(dateOfPrep, timeOfPrep), MessageType.MrnAllocated, messageBody, departure.nextMessageCorrelationId, convertXmlToJson(messageBody.toString))
+          MessageWithoutStatus(
+            LocalDateTime.of(dateOfPrep, timeOfPrep),
+            MessageType.MrnAllocated,
+            messageBody,
+            departure.nextMessageCorrelationId,
+            convertXmlToJson(messageBody.toString)
+          )
         val newState = DepartureStatus.DepartureRejected
 
         service.insert(departure).futureValue
@@ -504,13 +546,22 @@ class DepartureRepositorySpec
     "fetchAllDepartures" - {
 
       def convertToDepartureWithoutMessages(departure: Departure): DepartureWithoutMessages =
-        DepartureWithoutMessages(departure.departureId, departure.channel, departure.eoriNumber, departure.movementReferenceNumber, departure.referenceNumber, departure.status, departure.created, departure.updated)
-
+        DepartureWithoutMessages(
+          departure.departureId,
+          departure.channel,
+          departure.eoriNumber,
+          departure.movementReferenceNumber,
+          departure.referenceNumber,
+          departure.status,
+          departure.created,
+          departure.updated,
+          departure.notificationBox
+        )
 
       "return DeparturesWithoutMessages that match an eoriNumber and channel type" in {
         database.flatMap(_.drop()).futureValue
 
-        val app = new GuiceApplicationBuilder().build()
+        val app                = new GuiceApplicationBuilder().build()
         val eoriNumber: String = arbitrary[String].sample.value
 
         val departure1 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = api)
@@ -521,7 +572,7 @@ class DepartureRepositorySpec
           started(app).futureValue
           val repository = app.injector.instanceOf[DepartureRepository]
           val departures = Seq(departure1, departure2, departure3)
-          val jsonArr = departures.map(Json.toJsObject(_))
+          val jsonArr    = departures.map(Json.toJsObject(_))
           database.flatMap {
             db =>
               db.collection[JSONCollection](DepartureRepository.collectionName).insert(false).many(jsonArr)
@@ -537,16 +588,16 @@ class DepartureRepositorySpec
 
         val eoriNumber: String = arbitrary[String].sample.value
 
-        val app = new GuiceApplicationBuilder().build()
+        val app        = new GuiceApplicationBuilder().build()
         val departure1 = arbitrary[Departure].suchThat(_.eoriNumber != eoriNumber).sample.value.copy(channel = api)
         val departure2 = arbitrary[Departure].suchThat(_.eoriNumber != eoriNumber).sample.value.copy(channel = api)
 
         running(app) {
           started(app).futureValue
 
-          val respository = app.injector.instanceOf[DepartureRepository]
+          val respository   = app.injector.instanceOf[DepartureRepository]
           val allDepartures = Seq(departure1, departure2)
-          val jsonArr = allDepartures.map(Json.toJsObject(_))
+          val jsonArr       = allDepartures.map(Json.toJsObject(_))
 
           database.flatMap {
             db =>

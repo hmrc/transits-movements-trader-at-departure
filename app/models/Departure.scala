@@ -32,19 +32,22 @@ trait BaseDeparture {
   def status: DepartureStatus
   def created: LocalDateTime
   def updated: LocalDateTime
+  def notificationBox: Option[Box]
 }
 
-case class Departure(departureId: DepartureId,
-                     channel: ChannelType,
-                     eoriNumber: String,
-                     movementReferenceNumber: Option[MovementReferenceNumber],
-                     referenceNumber: String,
-                     status: DepartureStatus,
-                     created: LocalDateTime,
-                     updated: LocalDateTime,
-                     nextMessageCorrelationId: Int,
-                     messages: NonEmptyList[Message])
-    extends BaseDeparture {
+case class Departure(
+  departureId: DepartureId,
+  channel: ChannelType,
+  eoriNumber: String,
+  movementReferenceNumber: Option[MovementReferenceNumber],
+  referenceNumber: String,
+  status: DepartureStatus,
+  created: LocalDateTime,
+  updated: LocalDateTime,
+  nextMessageCorrelationId: Int,
+  messages: NonEmptyList[Message],
+  notificationBox: Option[Box]
+) extends BaseDeparture {
 
   def nextMessageId: MessageId = MessageId.fromIndex(messages.length)
 
@@ -73,7 +76,8 @@ object Departure {
         (__ \ "created").read(MongoDateTimeFormats.localDateTimeRead) and
         (__ \ "updated").read(MongoDateTimeFormats.localDateTimeRead) and
         (__ \ "nextMessageCorrelationId").read[Int] and
-        (__ \ "messages").read[NonEmptyList[Message]]
+        (__ \ "messages").read[NonEmptyList[Message]] and
+        (__ \ "notificationBox").readNullable[Box]
     )(Departure.apply _)
 
   implicit def writesDeparture(implicit write: Writes[LocalDateTime]): OWrites[Departure] =
@@ -87,7 +91,8 @@ object Departure {
         (__ \ "created").write(write) and
         (__ \ "updated").write(write) and
         (__ \ "nextMessageCorrelationId").write[Int] and
-        (__ \ "messages").write[NonEmptyList[Message]]
+        (__ \ "messages").write[NonEmptyList[Message]] and
+        (__ \ "notificationBox").write[Option[Box]]
     )(unlift(Departure.unapply))
 
 }

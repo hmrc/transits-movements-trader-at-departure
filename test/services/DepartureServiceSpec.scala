@@ -88,14 +88,17 @@ class DepartureServiceSpec extends SpecBase with JsonHelper with IntegrationPati
         created = dateTime,
         updated = dateTime,
         messages = NonEmptyList.one(
-          MessageWithStatus(dateTime,
-                            MessageType.DepartureDeclaration,
-                            savedMovement,
-                            MessageStatus.SubmissionPending,
-                            1,
-                            convertXmlToJson(savedMovement.toString))
+          MessageWithStatus(
+            dateTime,
+            MessageType.DepartureDeclaration,
+            savedMovement,
+            MessageStatus.SubmissionPending,
+            1,
+            convertXmlToJson(savedMovement.toString)
+          )
         ),
-        nextMessageCorrelationId = 2
+        nextMessageCorrelationId = 2,
+        notificationBox = None
       )
 
       val result = service.createDeparture(eori, inputMovement, api).futureValue

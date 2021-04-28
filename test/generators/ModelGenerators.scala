@@ -82,18 +82,21 @@ trait ModelGenerators extends BaseGenerators with JavaTimeGenerators with JsonHe
       Gen.oneOf(MessageStatus.values)
     }
 
-  implicit lazy val arbitraryDepartureId: Arbitrary[DepartureId] = {
+  implicit lazy val arbitraryDepartureId: Arbitrary[DepartureId] =
     Arbitrary {
       for {
         id <- intWithMaxLength(9)
       } yield DepartureId(id)
     }
-  }
 
   implicit lazy val arbitraryMovementReferenceNumber: Arbitrary[MovementReferenceNumber] =
     Arbitrary {
       for {
-        year    <- Gen.choose(0, 99).map(y => f"$y%02d")
+        year <- Gen
+          .choose(0, 99)
+          .map(
+            y => f"$y%02d"
+          )
         country <- Gen.pick(2, 'A' to 'Z')
         serial  <- Gen.pick(13, ('A' to 'Z') ++ ('0' to '9'))
       } yield MovementReferenceNumber(year ++ country.mkString ++ serial.mkString)
@@ -104,7 +107,7 @@ trait ModelGenerators extends BaseGenerators with JavaTimeGenerators with JsonHe
       intsAboveValue(0).map(MessageId.fromIndex)
     }
 
-  implicit lazy val arbitraryMessageWithStateXml: Arbitrary[MessageWithStatus] = {
+  implicit lazy val arbitraryMessageWithStateXml: Arbitrary[MessageWithStatus] =
     Arbitrary {
       for {
         date        <- datesBetween(pastDate, dateNow)
@@ -114,9 +117,8 @@ trait ModelGenerators extends BaseGenerators with JavaTimeGenerators with JsonHe
         status = SubmissionPending
       } yield MessageWithStatus(LocalDateTime.of(date, time), messageType, xml, status, 1, convertXmlToJson(xml.toString()))
     }
-  }
 
-  implicit lazy val arbitraryMessageWithoutStateXml: Arbitrary[MessageWithoutStatus] = {
+  implicit lazy val arbitraryMessageWithoutStateXml: Arbitrary[MessageWithoutStatus] =
     Arbitrary {
       for {
         date        <- datesBetween(pastDate, dateNow)
@@ -125,7 +127,6 @@ trait ModelGenerators extends BaseGenerators with JavaTimeGenerators with JsonHe
         messageType <- Gen.oneOf(MessageType.values)
       } yield MessageWithoutStatus(LocalDateTime.of(date, time), messageType, xml, 1, convertXmlToJson(xml.toString()))
     }
-  }
 
   implicit lazy val arbitraryState: Arbitrary[DepartureStatus] =
     Arbitrary {
@@ -149,7 +150,7 @@ trait ModelGenerators extends BaseGenerators with JavaTimeGenerators with JsonHe
         created  <- arbitrary[LocalDateTime]
         updated  <- arbitrary[LocalDateTime]
         messages <- nonEmptyListOfMaxLength[MessageWithStatus](2)
-      } yield models.Departure(id, channel, eN, Some(mrn), rN, status, created, updated, messages.length + 1, messages)
+      } yield models.Departure(id, channel, eN, Some(mrn), rN, status, created, updated, messages.length + 1, messages, None)
     }
 
   implicit lazy val arbitraryFailure: Arbitrary[SubmissionFailure] =

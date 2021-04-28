@@ -37,14 +37,16 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.xml.NodeSeq
 
-class DeparturesController @Inject()(cc: ControllerComponents,
-                                     departureRepository: DepartureRepository,
-                                     authenticate: AuthenticateActionProvider,
-                                     authenticateClientId: AuthenticatedClientIdActionProvider,
-                                     authenticatedDepartureForRead: AuthenticatedGetDepartureForReadActionProvider,
-                                     departureService: DepartureService,
-                                     auditService: AuditService,
-                                     submitMessageService: SubmitMessageService)(implicit ec: ExecutionContext)
+class DeparturesController @Inject() (
+  cc: ControllerComponents,
+  departureRepository: DepartureRepository,
+  authenticate: AuthenticateActionProvider,
+  authenticateClientId: AuthenticatedClientIdActionProvider,
+  authenticatedDepartureForRead: AuthenticatedGetDepartureForReadActionProvider,
+  departureService: DepartureService,
+  auditService: AuditService,
+  submitMessageService: SubmitMessageService
+)(implicit ec: ExecutionContext)
     extends BackendController(cc) {
 
   def post: Action[NodeSeq] = authenticateClientId().async(parse.xml) {
@@ -72,15 +74,13 @@ class DeparturesController @Inject()(cc: ControllerComponents,
                     .withHeaders("Location" -> routes.DeparturesController.get(departure.departureId).url)
               }
               .recover {
-                case _ => {
+                case _ =>
                   InternalServerError
-                }
               }
         }
         .recover {
-          case _ => {
+          case _ =>
             InternalServerError
-          }
         }
   }
 

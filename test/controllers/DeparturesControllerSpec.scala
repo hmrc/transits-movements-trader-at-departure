@@ -120,7 +120,8 @@ class DeparturesControllerSpec
     updated = localDateTime,
     nextMessageCorrelationId = movementMessage(1).messageCorrelationId + 1,
     messages = NonEmptyList.one(movementMessage(1)),
-    referenceNumber = "referenceNumber"
+    referenceNumber = "referenceNumber",
+    notificationBox = None
   )
 
   "/POST" - {
@@ -175,7 +176,7 @@ class DeparturesControllerSpec
 
         val application = baseApplicationBuilder
           .overrides(
-            bind[DepartureIdRepository].toInstance(mockDepartureIdRepository),
+            bind[DepartureIdRepository].toInstance(mockDepartureIdRepository)
           )
           .build()
 
@@ -204,7 +205,7 @@ class DeparturesControllerSpec
         val application = baseApplicationBuilder
           .overrides(
             bind[DepartureIdRepository].toInstance(mockDepartureIdRepository),
-            bind[SubmitMessageService].toInstance(mockSubmitMessageService),
+            bind[SubmitMessageService].toInstance(mockSubmitMessageService)
           )
           .build()
 
@@ -234,7 +235,7 @@ class DeparturesControllerSpec
         val application = baseApplicationBuilder
           .overrides(
             bind[DepartureIdRepository].toInstance(mockDepartureIdRepository),
-            bind[SubmitMessageService].toInstance(mockSubmitMessageService),
+            bind[SubmitMessageService].toInstance(mockSubmitMessageService)
           )
           .build()
 
@@ -262,7 +263,7 @@ class DeparturesControllerSpec
           baseApplicationBuilder
             .overrides(
               bind[DepartureIdRepository].toInstance(mockDepartureIdRepository),
-              bind[SubmitMessageService].toInstance(mockSubmitMessageService),
+              bind[SubmitMessageService].toInstance(mockSubmitMessageService)
             )
             .build()
 
@@ -278,7 +279,7 @@ class DeparturesControllerSpec
 
           contentAsString(result) mustEqual "The value of element 'DatOfPreMES9' is not valid with respect to pattern 'yyyyMMdd'"
           status(result) mustEqual BAD_REQUEST
-          header("Location", result) must not be (defined)
+          header("Location", result) must not be defined
         }
       }
 
@@ -294,7 +295,7 @@ class DeparturesControllerSpec
         val application = baseApplicationBuilder
           .overrides(
             bind[DepartureIdRepository].toInstance(mockDepartureIdRepository),
-            bind[SubmitMessageService].toInstance(mockSubmitMessageService),
+            bind[SubmitMessageService].toInstance(mockSubmitMessageService)
           )
           .build()
 
@@ -319,7 +320,7 @@ class DeparturesControllerSpec
         val application =
           baseApplicationBuilder
             .overrides(
-              bind[DepartureIdRepository].toInstance(mockDepartureIdRepository),
+              bind[DepartureIdRepository].toInstance(mockDepartureIdRepository)
             )
             .build()
 
@@ -334,7 +335,7 @@ class DeparturesControllerSpec
 
           contentAsString(result) mustEqual "The root element name does not match 'CC015B'"
           status(result) mustEqual BAD_REQUEST
-          header("Location", result) must not be (defined)
+          header("Location", result) must not be defined
         }
       }
 
@@ -350,7 +351,7 @@ class DeparturesControllerSpec
         val application = baseApplicationBuilder
           .overrides(
             bind[DepartureIdRepository].toInstance(mockDepartureIdRepository),
-            bind[SubmitMessageService].toInstance(mockSubmitMessageService),
+            bind[SubmitMessageService].toInstance(mockSubmitMessageService)
           )
           .build()
 
@@ -463,7 +464,8 @@ class DeparturesControllerSpec
         departure.referenceNumber,
         departure.status,
         departure.created,
-        departure.updated
+        departure.updated,
+        departure.notificationBox
       )
       val responseDeparture = ResponseDeparture.build(departure)
 

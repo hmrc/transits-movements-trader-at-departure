@@ -38,7 +38,7 @@ import scala.util.Success
 import scala.util.Failure
 import scala.util.Try
 
-class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfig)(implicit ec: ExecutionContext) extends MongoDateTimeFormats {
+class DepartureRepository @Inject() (mongo: ReactiveMongoApi, appConfig: AppConfig)(implicit ec: ExecutionContext) extends MongoDateTimeFormats {
 
   private val eoriNumberIndex: Aux[BSONSerializationPack.type] = IndexUtils.index(
     key = Seq("eoriNumber" -> IndexType.Ascending),
@@ -61,7 +61,7 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfi
     options = BSONDocument("expireAfterSeconds" -> appConfig.cacheTtl)
   )
 
-  val started: Future[Unit] = {
+  val started: Future[Unit] =
     collection
       .flatMap {
         jsonCollection =>
@@ -72,8 +72,9 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfi
             res <- jsonCollection.indexesManager.ensure(lastUpdatedIndex)
           } yield res
       }
-      .map(_ => ())
-  }
+      .map(
+        _ => ()
+      )
 
   private val collectionName = DepartureRepository.collectionName
 
@@ -84,7 +85,9 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfi
     collection.flatMap {
       _.insert(false)
         .one(Json.toJsObject(departure))
-        .map(_ => ())
+        .map(
+          _ => ()
+        )
     }
 
   def addNewMessage(departureId: DepartureId, message: Message): Future[Try[Unit]] = {
@@ -120,10 +123,12 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfi
   }
 
   @deprecated("Use updateDeparture since this will be removed in the next version", "next")
-  def setDepartureStateAndMessageState(departureId: DepartureId,
-                                       messageId: MessageId,
-                                       departureState: DepartureStatus,
-                                       messageState: MessageStatus): Future[Option[Unit]] = {
+  def setDepartureStateAndMessageState(
+    departureId: DepartureId,
+    messageId: MessageId,
+    departureState: DepartureStatus,
+    messageState: MessageStatus
+  ): Future[Option[Unit]] = {
 
     val selector = DepartureIdSelector(departureId)
 
@@ -270,7 +275,9 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfi
               Success(())
             else
               writeResult.errmsg
-                .map(x => Failure(new Exception(x)))
+                .map(
+                  x => Failure(new Exception(x))
+                )
                 .getOrElse(Failure(new Exception("Unable to update message status")))
         }
     }
