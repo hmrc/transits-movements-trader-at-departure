@@ -16,60 +16,77 @@
 
 package connectors
 
+import javax.inject.Inject
+
 import akka.util.ByteString
+import com.kenshoo.play.metrics.Metrics
 import config.AppConfig
+import logging.Logging
+import metrics.HasMetrics
 import play.api.libs.ws.WSClient
 import uk.gov.hmrc.http.HeaderCarrier
-import logging.Logging
 
-import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.xml.NodeSeq
 
 class ManageDocumentsConnector @Inject()(
   config: AppConfig,
-  ws: WSClient
+  ws: WSClient,
+  val metrics: Metrics
 )(implicit val ec: ExecutionContext)
-    extends Logging {
+    extends Logging
+    with HasMetrics {
 
-  def getTadPDF(ie29Message: NodeSeq)(implicit hc: HeaderCarrier): Future[Either[TADErrorResponse, ByteString]] = {
-    val serviceUrl = s"${config.manageDocumentsUrl}/transit-accompanying-document"
-    val headers = Seq(
-      "Content-Type" -> "application/xml",
-      "User-Agent"   -> config.appName
-    ) ++ hc.headers
+  def getTadPDF(ie29Message: NodeSeq)(implicit hc: HeaderCarrier): Future[Either[TADErrorResponse, ByteString]] =
+    withMetricsTimerAsync("get-tad-pdf") {
+      timer =>
+        val serviceUrl = s"${config.manageDocumentsUrl}/transit-accompanying-document"
+        val headers = Seq(
+          "Content-Type" -> "application/xml",
+          "User-Agent"   -> config.appName
+        ) ++ hc.headers
 
-    ws.url(serviceUrl)
-      .withHttpHeaders(headers: _*)
-      .post(ie29Message)
-      .map(response =>
-        if (response.status == 200) {
-          Right(response.bodyAsBytes)
-        } else {
-          logger.warn(s"[getTADPdf] returned an unexpected status (${response.status}) while trying to retrieve the TAD")
-          Left(UnexpectedResponse(response.status))
-      })
-  }
+        ws.url(serviceUrl)
+          .withHttpHeaders(headers: _*)
+          .post(ie29Message)
+          .map(
+            response =>
+              if (response.status == 200) {
+                timer.completeWithSuccess()
+                Right(response.bodyAsBytes)
+              } else {
+                logger.warn(s"[getTADPdf] returned an unexpected status (${response.status}) while trying to retrieve the TAD")
+                timer.completeWithFailure()
+                Left(UnexpectedResponse(response.status))
+            }
+          )
+    }
 
-  def getTsadPDF(ie29Message: NodeSeq)(implicit hc: HeaderCarrier): Future[Either[TADErrorResponse, ByteString]] = {
-    val serviceUrl = s"${config.manageDocumentsUrl}/transit-security-accompanying-document"
-    val headers = Seq(
-      "Content-Type" -> "application/xml",
-      "User-Agent"   -> config.appName
-    ) ++ hc.headers
+  def getTsadPDF(ie29Message: NodeSeq)(implicit hc: HeaderCarrier): Future[Either[TADErrorResponse, ByteString]] =
+    withMetricsTimerAsync("get-tsad-pdf") {
+      timer =>
+        val serviceUrl = s"${config.manageDocumentsUrl}/transit-security-accompanying-document"
+        val headers = Seq(
+          "Content-Type" -> "application/xml",
+          "User-Agent"   -> config.appName
+        ) ++ hc.headers
 
-    ws.url(serviceUrl)
-      .withHttpHeaders(headers: _*)
-      .post(ie29Message)
-      .map(response =>
-        if (response.status == 200) {
-          Right(response.bodyAsBytes)
-        } else {
-          logger.warn(s"[getTsadPDF] returned an unexpected status (${response.status}) while trying to retrieve the TAD")
-          Left(UnexpectedResponse(response.status))
-      })
-  }
+        ws.url(serviceUrl)
+          .withHttpHeaders(headers: _*)
+          .post(ie29Message)
+          .map(
+            response =>
+              if (response.status == 200) {
+                timer.completeWithSuccess()
+                Right(response.bodyAsBytes)
+              } else {
+                logger.warn(s"[getTsadPDF] returned an unexpected status (${response.status}) while trying to retrieve the TAD")
+                timer.completeWithFailure()
+                Left(UnexpectedResponse(response.status))
+            }
+          )
+    }
 
 }
 

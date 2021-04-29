@@ -51,6 +51,9 @@ class GetDepartureForWriteActionProviderSpec
     with ModelGenerators
     with OptionValues {
 
+  val applicationBuilder = new GuiceApplicationBuilder()
+    .configure("metrics.jvm" -> false)
+
   def fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("", "")
 
   class Harness(getAndLock: GetDepartureForWriteActionProvider) {
@@ -79,7 +82,7 @@ class GetDepartureForWriteActionProviderSpec
       when(mockLockRepository.lock(any())) thenReturn Future.successful(true)
       when(mockLockRepository.unlock(any())) thenReturn Future.successful(())
 
-      val application = new GuiceApplicationBuilder()
+      val application = applicationBuilder
         .overrides(
           bind[DepartureRepository].toInstance(mockDepartureRepository),
           bind[LockRepository].toInstance(mockLockRepository)
@@ -107,7 +110,7 @@ class GetDepartureForWriteActionProviderSpec
       when(mockLockRepository.lock(any())) thenReturn Future.successful(true)
       when(mockLockRepository.unlock(any())) thenReturn Future.successful(())
 
-      val application = new GuiceApplicationBuilder()
+      val application = applicationBuilder
         .overrides(
           bind[DepartureRepository].toInstance(mockDepartureRepository),
           bind[LockRepository].toInstance(mockLockRepository)
@@ -132,7 +135,7 @@ class GetDepartureForWriteActionProviderSpec
 
       when(mockLockRepository.lock(any())) thenReturn Future.successful(false)
 
-      val application = new GuiceApplicationBuilder()
+      val application = applicationBuilder
         .overrides(
           bind[DepartureRepository].toInstance(mockDepartureRepository),
           bind[LockRepository].toInstance(mockLockRepository)
@@ -159,7 +162,7 @@ class GetDepartureForWriteActionProviderSpec
       when(mockLockRepository.lock(any())) thenReturn Future.successful(true)
       when(mockLockRepository.unlock(any())) thenReturn Future.successful(())
 
-      val application = new GuiceApplicationBuilder()
+      val application = applicationBuilder
         .overrides(
           bind[DepartureRepository].toInstance(mockDepartureRepository),
           bind[LockRepository].toInstance(mockLockRepository)
