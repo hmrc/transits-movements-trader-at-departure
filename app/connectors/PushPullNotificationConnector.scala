@@ -15,11 +15,11 @@ import scala.concurrent.Future
 class PushPullNotificationConnector @Inject() (config: AppConfig, http: HttpClient) {
 
   def getBox(clientId: String)(implicit ec: ExecutionContext, hc: HeaderCarrier): Future[Either[UpstreamErrorResponse, Box]] = {
+    val url = s"${config.pushPullUrl}/box"
     val queryParams = Seq(
       "boxName"  -> Constants.BoxName,
       "clientId" -> clientId
     )
-    val url = s"${config.pushPullUrl}/box"
 
     http.GET[Either[UpstreamErrorResponse, Box]](url, queryParams)
   }
