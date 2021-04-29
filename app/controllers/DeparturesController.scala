@@ -17,16 +17,15 @@
 package controllers
 
 import javax.inject.Inject
-
 import audit.AuditService
 import audit.AuditType._
 import com.kenshoo.play.metrics.Metrics
 import controllers.actions._
-import logging.Logging
 import models._
 import models.response.ResponseDeparture
 import models.response.ResponseDepartures
 import metrics.HasActionMetrics
+import play.api.Logging
 import play.api.libs.json.Json
 import play.api.mvc.Action
 import play.api.mvc.AnyContent

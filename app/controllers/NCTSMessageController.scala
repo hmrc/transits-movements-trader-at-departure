@@ -16,13 +16,10 @@
 
 package controllers
 
-import javax.inject.Inject
-
 import audit.AuditService
 import com.kenshoo.play.metrics.Metrics
 import controllers.actions.CheckMessageTypeActionProvider
 import controllers.actions.GetDepartureForWriteActionProvider
-import logging.Logging
 import metrics.HasActionMetrics
 import javax.inject.Inject
 import models.MessageSender

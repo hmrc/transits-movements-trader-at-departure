@@ -16,11 +16,8 @@
 
 package controllers
 
-import javax.inject.Inject
-
 import com.kenshoo.play.metrics.Metrics
 import controllers.actions.AuthenticatedGetDepartureForReadActionProvider
-import logging.Logging
 import metrics.HasActionMetrics
 import models.DepartureId
 import play.api.mvc.Action
