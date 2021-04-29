@@ -68,7 +68,7 @@ class DeparturesController @Inject() (
                 .createDeparture(request.eoriNumber, request.body, request.channel, boxOpt)
                 .flatMap {
                   case Left(error) =>
-                    Logger.error(error.message)
+                    logger.error(error.message)
                     Future.successful(BadRequest(error.message))
                   case Right(departure) =>
                     submitMessageService
