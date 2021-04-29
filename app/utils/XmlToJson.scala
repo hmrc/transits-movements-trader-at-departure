@@ -16,8 +16,8 @@
 
 package utils
 
-import logging.Logging
 import org.json.XML
+import play.api.Logging
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
 

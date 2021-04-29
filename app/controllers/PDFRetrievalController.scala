@@ -30,6 +30,8 @@ import services.IncorrectStateError
 import services.PDFRetrievalService
 import services.UnexpectedError
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
+import javax.inject.Inject
+import play.api.Logging
 
 import scala.concurrent.ExecutionContext
 
