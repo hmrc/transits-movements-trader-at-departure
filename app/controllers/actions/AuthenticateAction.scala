@@ -19,7 +19,7 @@ package controllers.actions
 import config.AppConfig
 import javax.inject.Inject
 import models.request.AuthenticatedRequest
-import play.api.Logger
+import play.api.Logging
 import play.api.mvc.ActionRefiner
 import play.api.mvc.Request
 import play.api.mvc.Result
@@ -37,7 +37,8 @@ import scala.concurrent.Future
 private[actions] class AuthenticateAction @Inject()(override val authConnector: AuthConnector, config: AppConfig)(
   implicit val executionContext: ExecutionContext)
     extends ActionRefiner[Request, AuthenticatedRequest]
-    with AuthorisedFunctions {
+    with AuthorisedFunctions
+    with Logging {
 
   private val enrolmentIdentifierKey: String = "VATRegNoTURN"
 
@@ -58,10 +59,10 @@ private[actions] class AuthenticateAction @Inject()(override val authConnector: 
     }
   }.recover {
     case e: InsufficientEnrolments =>
-      Logger.warn(s"Failed to authorise with the following exception: $e")
+      logger.warn(s"Failed to authorise with the following exception: $e")
       Left(Forbidden)
     case e: AuthorisationException =>
-      Logger.warn(s"Failed to authorise with the following exception: $e")
+      logger.warn(s"Failed to authorise with the following exception: $e")
       Left(Unauthorized)
   }
 }

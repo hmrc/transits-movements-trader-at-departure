@@ -18,8 +18,6 @@ package models
 
 import java.time.LocalDateTime
 
-import logging.Logging
-import org.json.XML
 import play.api.libs.json._
 import utils.NodeSeqFormat
 import utils.XmlToJson

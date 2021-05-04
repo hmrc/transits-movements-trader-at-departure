@@ -18,9 +18,8 @@ package services
 
 import models.Departure
 import models.Message
-import logging.Logging
-
 import javax.inject.Inject
+import play.api.Logging
 
 class MessageRetrievalService @Inject()(messageSummaryService: MessageSummaryService) extends Logging {
 
