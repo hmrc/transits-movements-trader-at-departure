@@ -40,6 +40,19 @@ case class DepartureWithoutMessages(departureId: DepartureId,
     extends BaseDeparture {}
 
 object DepartureWithoutMessages {
+
+  def fromDeparture(departure: Departure) =
+    DepartureWithoutMessages(
+      departure.departureId,
+      departure.channel,
+      departure.eoriNumber,
+      departure.movementReferenceNumber,
+      departure.referenceNumber,
+      departure.status,
+      departure.created,
+      departure.updated
+    )
+
   implicit def formatsNonEmptyList[A](implicit listReads: Reads[List[A]], listWrites: Writes[List[A]]): Format[NonEmptyList[A]] =
     new Format[NonEmptyList[A]] {
       override def writes(o: NonEmptyList[A]): JsValue = Json.toJson(o.toList)

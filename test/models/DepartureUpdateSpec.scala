@@ -16,7 +16,9 @@
 
 package models
 
+import java.time.Clock
 import java.time.LocalDateTime
+import java.time.ZoneOffset
 
 import base.FreeSpecDiscipline
 import base.SpecBase
@@ -39,6 +41,8 @@ class DepartureUpdateSpec
     with MongoDateTimeFormats {
 
   implicit val eqDepartureStatusUpdate: Eq[DepartureUpdate] = _ == _
+  val currentDateTime                                       = LocalDateTime.now.withSecond(0).withNano(0).toInstant(ZoneOffset.UTC)
+  implicit val clock: Clock                                 = Clock.fixed(currentDateTime, ZoneOffset.UTC)
 
   "DepartureUpdate" - {
 
