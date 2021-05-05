@@ -83,8 +83,10 @@ class DeparturesController @Inject() (
                         case SubmissionProcessingResult.SubmissionSuccess =>
                           auditService.auditEvent(DepartureDeclarationSubmitted, departure.messages.head, request.channel)
                           auditService.auditEvent(MesSenMES3Added, departure.messages.head, request.channel)
-                          Accepted
-                            .withHeaders("Location" -> routes.DeparturesController.get(departure.departureId).url)
+                          Accepted(Json.toJson(boxOpt))
+                            .withHeaders(
+                              "Location" -> routes.DeparturesController.get(departure.departureId).url
+                            )
                       }
                       .recover {
                         case _ =>

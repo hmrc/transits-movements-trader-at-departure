@@ -16,12 +16,14 @@
 
 package models
 
-import play.api.libs.json.{Format, Json}
+import play.api.libs.json.Format
+import play.api.libs.json.Json
+import play.api.libs.json.OFormat
 
 case class Box(boxId: BoxId, boxName: String)
 
 object Box {
-  implicit val formatsBox: Format[Box] = Json.format[Box]
+  implicit val formatsBox: OFormat[Box] = Json.format[Box]
+
+  implicit val optionBoxFormats: Format[Option[Box]] = Format.optionWithNull[Box]
 }
-
-
