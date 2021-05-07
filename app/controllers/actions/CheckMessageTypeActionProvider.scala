@@ -30,7 +30,7 @@ import models.ReleaseForTransitResponse
 import models.WriteOffNotificationResponse
 import models.request.DepartureRequest
 import models.request.DepartureResponseRequest
-import play.api.Logger
+import play.api.Logging
 import play.api.mvc.ActionRefiner
 import play.api.mvc.Result
 import play.api.mvc.Results.BadRequest
@@ -44,16 +44,14 @@ class CheckMessageTypeActionProvider @Inject()()(implicit ec: ExecutionContext) 
     new CheckMessageTypeAction()
 }
 
-// case match with if
-
-class CheckMessageTypeAction()(implicit val executionContext: ExecutionContext) extends ActionRefiner[DepartureRequest, DepartureResponseRequest] {
+class CheckMessageTypeAction()(implicit val executionContext: ExecutionContext) extends ActionRefiner[DepartureRequest, DepartureResponseRequest] with Logging {
   override protected def refine[A](request: DepartureRequest[A]): Future[Either[Result, DepartureResponseRequest[A]]] = {
 
     def successMessage(response: MessageResponse): Future[Right[Result, DepartureResponseRequest[A]]] =
       Future.successful(Right(DepartureResponseRequest(request, response)))
 
     def badRequestError(message: String): Future[Left[Result, DepartureResponseRequest[A]]] = {
-      Logger.warn(message)
+      logger.warn(message)
       Future.successful(Left(BadRequest(message)))
     }
 

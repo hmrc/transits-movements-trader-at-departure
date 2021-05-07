@@ -23,7 +23,7 @@ import connectors.UnexpectedResponse
 import models.Departure
 import uk.gov.hmrc.http.HeaderCarrier
 import javax.inject.Inject
-import logging.Logging
+import play.api.Logging
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future

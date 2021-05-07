@@ -16,20 +16,19 @@
 
 package controllers
 
-import javax.inject.Inject
-
 import audit.AuditService
 import com.kenshoo.play.metrics.Metrics
 import controllers.actions.CheckMessageTypeActionProvider
 import controllers.actions.GetDepartureForWriteActionProvider
-import logging.Logging
 import metrics.HasActionMetrics
+import javax.inject.Inject
 import models.MessageSender
 import models.MessageType
 import models.StatusTransition
 import models.SubmissionProcessingResult.SubmissionFailureExternal
 import models.SubmissionProcessingResult.SubmissionFailureInternal
 import models.SubmissionProcessingResult.SubmissionSuccess
+import play.api.Logging
 import play.api.mvc.Action
 import play.api.mvc.ControllerComponents
 import services.SaveMessageService

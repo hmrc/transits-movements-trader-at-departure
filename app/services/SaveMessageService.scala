@@ -21,7 +21,7 @@ import models._
 import models.SubmissionProcessingResult.SubmissionFailureExternal
 import models.SubmissionProcessingResult.SubmissionFailureInternal
 import models.SubmissionProcessingResult.SubmissionSuccess
-import play.api.Logger
+import play.api.Logging
 import repositories.DepartureRepository
 
 import scala.concurrent.ExecutionContext
@@ -31,7 +31,8 @@ import scala.util.Success
 import scala.xml.NodeSeq
 
 class SaveMessageService @Inject()(departureRepository: DepartureRepository, departureService: DepartureService, xmlValidationService: XmlValidationService)(
-  implicit ec: ExecutionContext) {
+  implicit ec: ExecutionContext)
+    extends Logging {
 
   def validateXmlAndSaveMessage(messageXml: NodeSeq,
                                 messageSender: MessageSender,
@@ -50,7 +51,7 @@ class SaveMessageService @Inject()(departureRepository: DepartureRepository, dep
           case Left(_) => Future.successful(SubmissionFailureExternal)
         }
       case Failure(e) => {
-        Logger.warn(s"Failure to validate against XSD. Exception: ${e.getMessage}")
+        logger.warn(s"Failure to validate against XSD. Exception: ${e.getMessage}")
         Future.successful(SubmissionFailureExternal)
       }
     }
@@ -73,7 +74,7 @@ class SaveMessageService @Inject()(departureRepository: DepartureRepository, dep
           case Left(_) => Future.successful(SubmissionFailureExternal)
         }
       case Failure(e) => {
-        Logger.warn(s"Failure to validate against XSD. Exception: ${e.getMessage}")
+        logger.warn(s"Failure to validate against XSD. Exception: ${e.getMessage}")
         Future.successful(SubmissionFailureExternal)
       }
     }

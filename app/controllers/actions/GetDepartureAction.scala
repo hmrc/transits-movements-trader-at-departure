@@ -20,7 +20,7 @@ import javax.inject.Inject
 import models.DepartureId
 import models.request.AuthenticatedRequest
 import models.request.DepartureRequest
-import play.api.Logger
+import play.api.Logging
 import play.api.mvc.ActionRefiner
 import play.api.mvc.Request
 import play.api.mvc.Result
@@ -66,7 +66,8 @@ private[actions] class AuthenticatedGetDepartureAction(
   departureId: DepartureId,
   repository: DepartureRepository
 )(implicit val executionContext: ExecutionContext)
-    extends ActionRefiner[AuthenticatedRequest, DepartureRequest] {
+    extends ActionRefiner[AuthenticatedRequest, DepartureRequest]
+    with Logging {
 
   override protected def refine[A](request: AuthenticatedRequest[A]): Future[Either[Result, DepartureRequest[A]]] =
     repository
@@ -75,14 +76,14 @@ private[actions] class AuthenticatedGetDepartureAction(
         case Some(departure) if departure.eoriNumber == request.eoriNumber =>
           Right(DepartureRequest(request.request, departure, request.channel))
         case Some(_) =>
-          Logger.warn("Attempt to retrieve an departure for another EORI")
+          logger.warn("Attempt to retrieve an departure for another EORI")
           Left(NotFound)
         case None =>
           Left(NotFound)
       }
       .recover {
         case e =>
-          Logger.error(s"Failed with the following error: $e")
+          logger.error(s"Failed with the following error: $e")
           Left(InternalServerError)
       }
 }

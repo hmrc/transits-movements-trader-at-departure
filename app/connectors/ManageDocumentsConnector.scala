@@ -17,12 +17,11 @@
 package connectors
 
 import javax.inject.Inject
-
 import akka.util.ByteString
 import com.kenshoo.play.metrics.Metrics
 import config.AppConfig
-import logging.Logging
 import metrics.HasMetrics
+import play.api.Logging
 import play.api.libs.ws.WSClient
 import uk.gov.hmrc.http.HeaderCarrier
 
