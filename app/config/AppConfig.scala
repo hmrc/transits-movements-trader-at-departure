@@ -37,10 +37,10 @@ class AppConfig @Inject()(config: Configuration, servicesConfig: ServicesConfig)
   val manageDocumentsUrl: String             = manageDocumentsBaseUrl ++ config.get[String]("microservice.services.manage-documents.uri")
 
   private val eisBaseUrl: String = servicesConfig.baseUrl("eis")
-  val eisUrl: String = eisBaseUrl ++ config.get[String]("microservice.services.eis.uri")
+  val eisUrl: String             = eisBaseUrl ++ config.get[String]("microservice.services.eis.uri")
 
   private val pushPullBaseUrl: String = servicesConfig.baseUrl("push-pull-notifications-api")
-  val pushPullUrl: String = pushPullBaseUrl ++ servicesConfig.getConfString("push-pull-notifications-api.uri", "")
+  val pushPullUrl: String             = pushPullBaseUrl ++ servicesConfig.getConfString("push-pull-notifications-api.uri", "")
 
   val enrolmentKey: String   = config.get[String]("keys.enrolmentKey")
   val lockRepositoryTtl: Int = config.get[Int]("mongodb.lockRepository.timeToLiveInSeconds")

@@ -83,7 +83,7 @@ class MessageRetrievalServiceSpec extends SpecBase with JsonHelper {
                     MessageWithoutStatus(date, MessageType.ReleaseForTransit, <released></released>, 2, convertXmlToJson(<released></released>.toString)),
                     MessageId.fromIndex(2)
                   )
-                )
+              )
             )
           )
 
