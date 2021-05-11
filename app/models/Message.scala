@@ -24,6 +24,8 @@ import utils.XmlToJson
 
 import scala.xml.NodeSeq
 import play.api.libs.functional.syntax._
+import java.time.ZoneOffset
+import java.time.OffsetDateTime
 
 sealed trait Message {
   def dateTime: LocalDateTime
@@ -32,6 +34,9 @@ sealed trait Message {
   def messageJson: JsObject
 
   def optStatus: Option[MessageStatus]
+
+  def receivedBefore(requestedDate: OffsetDateTime): Boolean =
+    dateTime.atOffset(ZoneOffset.UTC).isBefore(requestedDate)
 }
 
 final case class MessageWithStatus(dateTime: LocalDateTime,
