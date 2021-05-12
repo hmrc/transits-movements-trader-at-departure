@@ -67,9 +67,6 @@ class MessageConnectorSpec
   private val env           = Environment.simple()
   private val configuration = Configuration.load(env)
 
-  private val serviceConfig = new ServicesConfig(configuration)
-  private val appConfig     = new AppConfig(configuration, serviceConfig)
-
   private val channelGen = Gen.oneOf(web, api)
 
   "MessageConnector" - {
@@ -95,8 +92,7 @@ class MessageConnectorSpec
                     .withStatus(202)
                 )
             )
-            val app       = appBuilder.build()
-            val connector = app.injector.instanceOf[MessageConnector]
+            val app = appBuilder.build()
             val postValue = MessageWithStatus(LocalDateTime.now(),
                                               messageType,
                                               <CC007A>test</CC007A>,

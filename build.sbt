@@ -30,7 +30,9 @@ lazy val microservice = Project(appName, file("."))
     ),
     javaOptions ++= Seq(
       "-Djdk.xml.maxOccurLimit=10000"
-    )
+    ),
+    // Import models for query string binding in routes file
+    RoutesKeys.routesImport ++= Seq("models._", "models.Binders._", "java.time.OffsetDateTime")
   )
 
 // Settings for the whole build

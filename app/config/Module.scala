@@ -16,6 +16,9 @@
 
 package config
 
+import java.time.Clock
+import java.time.ZoneOffset
+
 import com.google.inject.AbstractModule
 import controllers.actions._
 import repositories.DepartureIdRepository
@@ -31,6 +34,7 @@ class Module extends AbstractModule {
     bind(classOf[DepartureIdRepository]).asEagerSingleton()
     bind(classOf[AuthenticatedGetDepartureForReadActionProvider]).to(classOf[AuthenticatedGetDepartureForReadActionProviderImpl])
     bind(classOf[MessageTranslation]).asEagerSingleton()
+    bind(classOf[Clock]).toInstance(Clock.systemUTC())
   }
 
 }
