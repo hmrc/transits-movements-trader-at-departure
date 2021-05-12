@@ -36,7 +36,7 @@ case class DepartureWithoutMessages(departureId: DepartureId,
                                     referenceNumber: String,
                                     status: DepartureStatus,
                                     created: LocalDateTime,
-                                    updated: LocalDateTime)
+                                    lastUpdated: LocalDateTime)
     extends BaseDeparture {}
 
 object DepartureWithoutMessages {
@@ -50,7 +50,7 @@ object DepartureWithoutMessages {
       departure.referenceNumber,
       departure.status,
       departure.created,
-      departure.updated
+      departure.lastUpdated
     )
 
   implicit def formatsNonEmptyList[A](implicit listReads: Reads[List[A]], listWrites: Writes[List[A]]): Format[NonEmptyList[A]] =
@@ -69,7 +69,7 @@ object DepartureWithoutMessages {
         (__ \ "referenceNumber").read[String] and
         (__ \ "status").read[DepartureStatus] and
         (__ \ "created").read(MongoDateTimeFormats.localDateTimeRead) and
-        (__ \ "updated").read(MongoDateTimeFormats.localDateTimeRead)
+        (__ \ "lastUpdated").read(MongoDateTimeFormats.localDateTimeRead)
     )(DepartureWithoutMessages.apply _)
 
   val projection: JsObject = Json.obj(
@@ -80,6 +80,6 @@ object DepartureWithoutMessages {
     "referenceNumber"         -> 1,
     "status"                  -> 1,
     "created"                 -> 1,
-    "updated"                 -> 1
+    "lastUpdated"             -> 1
   )
 }

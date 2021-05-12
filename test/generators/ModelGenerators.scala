@@ -140,16 +140,16 @@ trait ModelGenerators extends BaseGenerators with JavaTimeGenerators with JsonHe
   implicit lazy val arbitraryDeparture: Arbitrary[Departure] =
     Arbitrary {
       for {
-        id       <- arbitrary[DepartureId]
-        channel  <- arbitrary[ChannelType]
-        eN       <- arbitrary[String]
-        mrn      <- arbitrary[MovementReferenceNumber]
-        rN       <- arbitrary[String]
-        status   <- arbitrary[DepartureStatus]
-        created  <- arbitrary[LocalDateTime]
-        updated  <- arbitrary[LocalDateTime]
-        messages <- nonEmptyListOfMaxLength[MessageWithStatus](2)
-      } yield models.Departure(id, channel, eN, Some(mrn), rN, status, created, updated, messages.length + 1, messages)
+        id          <- arbitrary[DepartureId]
+        channel     <- arbitrary[ChannelType]
+        eN          <- arbitrary[String]
+        mrn         <- arbitrary[MovementReferenceNumber]
+        rN          <- arbitrary[String]
+        status      <- arbitrary[DepartureStatus]
+        created     <- arbitrary[LocalDateTime]
+        lastUpdated <- arbitrary[LocalDateTime]
+        messages    <- nonEmptyListOfMaxLength[MessageWithStatus](2)
+      } yield models.Departure(id, channel, eN, Some(mrn), rN, status, created, lastUpdated, messages.length + 1, messages)
     }
 
   implicit lazy val arbitraryFailure: Arbitrary[SubmissionFailure] =

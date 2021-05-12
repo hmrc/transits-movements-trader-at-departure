@@ -34,7 +34,7 @@ case class ResponseDepartureWithMessages(departureId: DepartureId,
                                          referenceNumber: String,
                                          status: DepartureStatus,
                                          created: LocalDateTime,
-                                         updated: LocalDateTime,
+                                         lastUpdated: LocalDateTime,
                                          messages: Seq[ResponseMessage])
 
 object ResponseDepartureWithMessages {
@@ -48,7 +48,7 @@ object ResponseDepartureWithMessages {
       departure.referenceNumber,
       departure.status,
       departure.created,
-      departure.updated,
+      departure.lastUpdated,
       departure.messagesWithId
         .filterNot {
           case (message, _) => message.optStatus == Some(SubmissionFailed)

@@ -16,13 +16,6 @@
 
 package repositories
 
-import java.time.Clock
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.LocalTime
-import java.time.OffsetDateTime
-import java.time.ZoneOffset
-
 import cats.data.NonEmptyList
 import config.AppConfig
 import generators.ModelGenerators
@@ -35,7 +28,6 @@ import models.DepartureStatus.PositiveAcknowledgement
 import models.MessageStatus.SubmissionPending
 import models.MessageStatus.SubmissionSucceeded
 import models._
-import models.response.ResponseDeparture
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import org.scalactic.source
@@ -47,6 +39,7 @@ import org.scalatest.exceptions.TestFailedException
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import play.api.test.Helpers.running
@@ -54,15 +47,17 @@ import reactivemongo.play.json.ImplicitBSONHandlers.JsObjectDocumentWriter
 import reactivemongo.play.json.collection.JSONCollection
 import utils.Format
 import utils.JsonHelper
-import play.api.inject.bind
 
+import java.time.Clock
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.reflect.ClassTag
 import scala.util.Failure
 import scala.util.Success
-
-import java.time.Clock
-import java.time.ZoneOffset
 
 class DepartureRepositorySpec
     extends AnyFreeSpec
@@ -273,7 +268,7 @@ class DepartureRepositorySpec
             val updatedDeparture = r.value
 
             updatedDeparture.nextMessageCorrelationId - departure.nextMessageCorrelationId mustBe 1
-            updatedDeparture.updated mustEqual departureDeclarationMessage.dateTime
+            updatedDeparture.lastUpdated mustEqual departureDeclarationMessage.dateTime
             updatedDeparture.status mustEqual departure.status
             updatedDeparture.messages.size - departure.messages.size mustEqual 1
             updatedDeparture.messages.last mustEqual departureDeclarationMessage
@@ -435,7 +430,7 @@ class DepartureRepositorySpec
 
         addMessageResult mustBe a[Success[_]]
         updatedDeparture.nextMessageCorrelationId - departure.nextMessageCorrelationId mustBe 0
-        updatedDeparture.updated mustEqual declarationRejectedMessage.dateTime
+        updatedDeparture.lastUpdated mustEqual declarationRejectedMessage.dateTime
         updatedDeparture.status mustEqual newState
         updatedDeparture.messages.size - departure.messages.size mustEqual 1
         updatedDeparture.messages.last mustEqual declarationRejectedMessage
@@ -516,7 +511,7 @@ class DepartureRepositorySpec
 
         addMessageResult mustBe a[Success[_]]
         updatedDeparture.nextMessageCorrelationId - departure.nextMessageCorrelationId mustBe 0
-        updatedDeparture.updated mustEqual mrnAllocatedMessage.dateTime
+        updatedDeparture.lastUpdated mustEqual mrnAllocatedMessage.dateTime
         updatedDeparture.status mustEqual newState
         updatedDeparture.movementReferenceNumber mustEqual Some(MovementReferenceNumber(mrn))
         updatedDeparture.messages.size - departure.messages.size mustEqual 1
@@ -568,7 +563,7 @@ class DepartureRepositorySpec
           departure.referenceNumber,
           departure.status,
           departure.created,
-          departure.updated
+          departure.lastUpdated
         )
 
       "return DeparturesWithoutMessages that match an eoriNumber and channel type" in {
@@ -629,9 +624,10 @@ class DepartureRepositorySpec
         val app                = new GuiceApplicationBuilder().build()
         val eoriNumber: String = arbitrary[String].sample.value
 
-        val departure1 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = api)
-        val departure2 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = api)
-        val departure3 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = api)
+        val now = LocalDateTime.now(clock)
+        val departure1 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = api, lastUpdated = now.withSecond(1))
+        val departure2 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = api, lastUpdated = now.withSecond(2))
+        val departure3 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = api, lastUpdated = now.withSecond(3))
 
         running(app) {
           started(app).futureValue
@@ -662,9 +658,10 @@ class DepartureRepositorySpec
         val app                = new GuiceApplicationBuilder().build()
         val eoriNumber: String = arbitrary[String].sample.value
 
-        val departure1 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = web)
-        val departure2 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = web)
-        val departure3 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = web)
+        val now = LocalDateTime.now(clock)
+        val departure1 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = web, lastUpdated = now.withSecond(1))
+        val departure2 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = web, lastUpdated = now.withSecond(2))
+        val departure3 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = web, lastUpdated = now.withSecond(3))
 
         running(app) {
           started(app).futureValue
@@ -689,6 +686,7 @@ class DepartureRepositorySpec
       }
 
       "must filter results by lastUpdated when updatedSince parameter is provided" in {
+        database.flatMap(_.drop()).futureValue
 
         val eoriNumber: String = arbitrary[String].sample.value
 
@@ -697,10 +695,10 @@ class DepartureRepositorySpec
           .configure("metrics.jvm" -> false)
           .build()
 
-        val departure1 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = api, updated = LocalDateTime.of(2021, 4, 30, 9, 30, 31))
-        val departure2 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = api, updated = LocalDateTime.of(2021, 4, 30, 9, 35, 32))
-        val departure3 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = api, updated = LocalDateTime.of(2021, 4, 30, 9, 30, 21))
-        val departure4 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = api, updated = LocalDateTime.of(2021, 4, 30, 10, 15, 16))
+        val departure1 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = api, lastUpdated = LocalDateTime.of(2021, 4, 30, 9, 30, 31))
+        val departure2 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = api, lastUpdated = LocalDateTime.of(2021, 4, 30, 9, 35, 32))
+        val departure3 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = api, lastUpdated = LocalDateTime.of(2021, 4, 30, 9, 30, 21))
+        val departure4 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = api, lastUpdated = LocalDateTime.of(2021, 4, 30, 10, 15, 16))
 
         running(app) {
 

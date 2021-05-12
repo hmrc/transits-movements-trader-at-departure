@@ -98,7 +98,7 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfi
     val modifier =
       Json.obj(
         "$set" -> Json.obj(
-          "updated" -> message.dateTime
+          "lastUpdated" -> message.dateTime
         ),
         "$inc" -> Json.obj(
           "nextMessageCorrelationId" -> 1
@@ -200,8 +200,8 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfi
     val modifier =
       Json.obj(
         "$set" -> Json.obj(
-          "updated" -> message.dateTime,
-          "status"  -> status.toString
+          "lastUpdated" -> message.dateTime,
+          "status"      -> status.toString
         ),
         "$push" -> Json.obj(
           "messages" -> Json.toJson(message)
@@ -229,7 +229,7 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfi
     val modifier =
       Json.obj(
         "$set" -> Json.obj(
-          "updated"                 -> message.dateTime,
+          "lastUpdated"             -> message.dateTime,
           "movementReferenceNumber" -> mrn,
           "status"                  -> status.toString
         ),
@@ -252,7 +252,7 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfi
   }
 
   def fetchAllDepartures(eoriNumber: String, channelFilter: ChannelType, updatedSince: Option[OffsetDateTime]): Future[Seq[DepartureWithoutMessages]] = {
-    val dateFilter = updatedSince.map(dateTime => Json.obj("updated" -> Json.obj("$gte" -> dateTime))).getOrElse(Json.obj())
+    val dateFilter = updatedSince.map(dateTime => Json.obj("lastUpdated" -> Json.obj("$gte" -> dateTime))).getOrElse(Json.obj())
     val selector   = Json.obj("eoriNumber" -> eoriNumber, "channel" -> channelFilter) ++ dateFilter
 
     collection.flatMap {
