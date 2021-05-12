@@ -16,11 +16,8 @@
 
 package controllers
 
-import javax.inject.Inject
-
 import com.kenshoo.play.metrics.Metrics
 import controllers.actions.AuthenticatedGetDepartureForReadActionProvider
-import logging.Logging
 import metrics.HasActionMetrics
 import models.DepartureId
 import play.api.mvc.Action
@@ -30,6 +27,8 @@ import services.IncorrectStateError
 import services.PDFRetrievalService
 import services.UnexpectedError
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
+import javax.inject.Inject
+import play.api.Logging
 
 import scala.concurrent.ExecutionContext
 

@@ -14,10 +14,18 @@
  * limitations under the License.
  */
 
-package logging
+package models
 
-private[logging] trait LoggerName {
+import java.time.OffsetDateTime
+import java.time.format.DateTimeFormatter
+import play.api.mvc.QueryStringBindable
 
-  final val loggerName = s"application.${this.getClass.getCanonicalName}"
-
+object Binders {
+  implicit val offsetDateTimeQueryStringBindable: QueryStringBindable[OffsetDateTime] = {
+    new QueryStringBindable.Parsing[OffsetDateTime](
+      OffsetDateTime.parse(_),
+      dt => DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(dt),
+      (param, exc) => s"Cannot parse parameter $param as OffsetDateTime: ${exc.getMessage}"
+    )
+  }
 }

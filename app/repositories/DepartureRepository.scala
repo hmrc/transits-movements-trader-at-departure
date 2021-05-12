@@ -17,6 +17,7 @@
 package repositories
 
 import java.time.Clock
+import java.time.OffsetDateTime
 import config.AppConfig
 import javax.inject.Inject
 import models._
@@ -41,22 +42,22 @@ import scala.util.Try
 
 class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfig)(implicit ec: ExecutionContext, clock: Clock) extends MongoDateTimeFormats {
 
-  private val eoriNumberIndex: Aux[BSONSerializationPack.type] = IndexUtils.index(
+  private lazy val eoriNumberIndex: Aux[BSONSerializationPack.type] = IndexUtils.index(
     key = Seq("eoriNumber" -> IndexType.Ascending),
     name = Some("eori-number-index")
   )
 
-  private val channelIndex: Aux[BSONSerializationPack.type] = IndexUtils.index(
+  private lazy val channelIndex: Aux[BSONSerializationPack.type] = IndexUtils.index(
     key = Seq("channelType" -> IndexType.Ascending),
     name = Some("channel-type-index")
   )
 
-  private val referenceNumberIndex: Aux[BSONSerializationPack.type] = IndexUtils.index(
+  private lazy val referenceNumberIndex: Aux[BSONSerializationPack.type] = IndexUtils.index(
     key = Seq("referenceNumber" -> IndexType.Ascending),
     name = Some("reference-number-index")
   )
 
-  private val lastUpdatedIndex: Aux[BSONSerializationPack.type] = IndexUtils.index(
+  private lazy val lastUpdatedIndex: Aux[BSONSerializationPack.type] = IndexUtils.index(
     key = Seq("lastUpdated" -> IndexType.Ascending),
     name = Some("last-updated-index"),
     options = BSONDocument("expireAfterSeconds" -> appConfig.cacheTtl)
@@ -125,7 +126,6 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfi
                                        messageId: MessageId,
                                        departureState: DepartureStatus,
                                        messageState: MessageStatus): Future[Option[Unit]] = {
-
     val selector = DepartureIdSelector(departureId)
 
     val modifier = CompoundStatusUpdate(DepartureStatusUpdate(departureState), MessageStatusUpdate(messageId, messageState))
@@ -251,13 +251,17 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfi
     }
   }
 
-  def fetchAllDepartures(eoriNumber: String, channelFilter: ChannelType): Future[Seq[DepartureWithoutMessages]] =
+  def fetchAllDepartures(eoriNumber: String, channelFilter: ChannelType, updatedSince: Option[OffsetDateTime]): Future[Seq[DepartureWithoutMessages]] = {
+    val dateFilter = updatedSince.map(dateTime => Json.obj("updated" -> Json.obj("$gte" -> dateTime))).getOrElse(Json.obj())
+    val selector   = Json.obj("eoriNumber" -> eoriNumber, "channel" -> channelFilter) ++ dateFilter
+
     collection.flatMap {
-      _.find(Json.obj("eoriNumber" -> eoriNumber, "channel" -> channelFilter), DepartureWithoutMessages.projection)
+      _.find(selector, DepartureWithoutMessages.projection)
         .sort(Json.obj("lastUpdated" -> -1))
         .cursor[DepartureWithoutMessages]()
         .collect[Seq](appConfig.maxRowsReturned(channelFilter), Cursor.FailOnError())
     }
+  }
 
   def updateDeparture[A](selector: DepartureSelector, modifier: A)(implicit ev: DepartureModifier[A]): Future[Try[Unit]] = {
 

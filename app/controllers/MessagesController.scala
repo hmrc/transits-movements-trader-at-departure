@@ -17,19 +17,18 @@
 package controllers
 
 import javax.inject.Inject
-
 import audit.AuditService
 import audit.AuditType.DepartureCancellationRequestSubmitted
 import com.kenshoo.play.metrics.Metrics
 import controllers.actions.AuthenticatedGetDepartureForReadActionProvider
 import controllers.actions.AuthenticatedGetDepartureForWriteActionProvider
-import logging.Logging
 import metrics.HasActionMetrics
 import models.MessageStatus.SubmissionFailed
 import models._
 import models.request.DepartureRequest
 import models.response.ResponseDepartureWithMessages
 import models.response.ResponseMessage
+import play.api.Logging
 import play.api.libs.json.Json
 import play.api.mvc.Action
 import play.api.mvc.AnyContent

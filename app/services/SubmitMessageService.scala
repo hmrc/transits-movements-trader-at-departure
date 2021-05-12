@@ -16,6 +16,7 @@
 
 package services
 
+import java.time.Clock
 import java.time.OffsetDateTime
 import java.time.Clock
 
@@ -28,7 +29,7 @@ import connectors.MessageConnector.EisSubmissionResult.ErrorInPayload
 import connectors.MessageConnector.EisSubmissionResult.VirusFoundOrInvalidToken
 import javax.inject.Inject
 import models._
-import play.api.Logger
+import play.api.Logging
 import repositories.DepartureRepository
 import uk.gov.hmrc.http.HeaderCarrier
 
@@ -37,10 +38,8 @@ import scala.concurrent.Future
 import scala.util.Failure
 import scala.util.Success
 
-class SubmitMessageService @Inject()(departureRepository: DepartureRepository, messageConnector: MessageConnector)(implicit ec: ExecutionContext,
-                                                                                                                   clock: Clock) {
-
-  val logger = Logger(this.getClass)
+class SubmitMessageService @Inject()(departureRepository: DepartureRepository, messageConnector: MessageConnector)(implicit clock: Clock, ec: ExecutionContext)
+    extends Logging {
 
   def submitMessage(departureId: DepartureId, messageId: MessageId, message: MessageWithStatus, departureStatus: DepartureStatus, channelType: ChannelType)(
     implicit hc: HeaderCarrier): Future[SubmissionProcessingResult] =

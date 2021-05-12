@@ -16,6 +16,7 @@
 
 package models
 
+import java.time.Clock
 import java.time.LocalDateTime
 
 import cats._
