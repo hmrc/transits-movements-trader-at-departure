@@ -16,6 +16,7 @@
 
 package repositories
 
+import java.time.Clock
 import config.AppConfig
 import javax.inject.Inject
 import models._
@@ -38,7 +39,7 @@ import scala.util.Success
 import scala.util.Failure
 import scala.util.Try
 
-class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfig)(implicit ec: ExecutionContext) extends MongoDateTimeFormats {
+class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfig)(implicit ec: ExecutionContext, clock: Clock) extends MongoDateTimeFormats {
 
   private val eoriNumberIndex: Aux[BSONSerializationPack.type] = IndexUtils.index(
     key = Seq("eoriNumber" -> IndexType.Ascending),

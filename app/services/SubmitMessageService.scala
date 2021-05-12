@@ -17,6 +17,7 @@
 package services
 
 import java.time.OffsetDateTime
+import java.time.Clock
 
 import cats.implicits._
 import connectors.MessageConnector
@@ -36,7 +37,8 @@ import scala.concurrent.Future
 import scala.util.Failure
 import scala.util.Success
 
-class SubmitMessageService @Inject()(departureRepository: DepartureRepository, messageConnector: MessageConnector)(implicit ec: ExecutionContext) {
+class SubmitMessageService @Inject()(departureRepository: DepartureRepository, messageConnector: MessageConnector)(implicit ec: ExecutionContext,
+                                                                                                                   clock: Clock) {
 
   val logger = Logger(this.getClass)
 

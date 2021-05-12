@@ -21,6 +21,7 @@ import controllers.actions._
 import repositories.DepartureIdRepository
 import repositories.DepartureRepository
 import utils.MessageTranslation
+import java.time.Clock
 
 class Module extends AbstractModule {
 
@@ -31,6 +32,7 @@ class Module extends AbstractModule {
     bind(classOf[DepartureIdRepository]).asEagerSingleton()
     bind(classOf[AuthenticatedGetDepartureForReadActionProvider]).to(classOf[AuthenticatedGetDepartureForReadActionProviderImpl])
     bind(classOf[MessageTranslation]).asEagerSingleton()
+    bind(classOf[Clock]).toInstance(Clock.systemUTC)
   }
 
 }

@@ -49,6 +49,9 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.reflect.ClassTag
 import scala.util.{Failure, Success}
 
+import java.time.Clock
+import java.time.ZoneOffset
+
 class DepartureRepositorySpec
     extends AnyFreeSpec
     with TryValues
@@ -64,6 +67,10 @@ class DepartureRepositorySpec
 
   private val service = app.injector.instanceOf[DepartureRepository]
   private val appConfig = app.injector.instanceOf[AppConfig]
+  val localDate     = LocalDate.now()
+  val localTime     = LocalTime.of(1, 1)
+  val localDateTime = LocalDateTime.of(localDate, localTime)
+  implicit val clock     = Clock.fixed(localDateTime.toInstant(ZoneOffset.UTC), ZoneOffset.UTC)
 
   def typeMatchOnTestValue[A, B](testValue: A)(test: B => Unit)(implicit bClassTag: ClassTag[B]) = testValue match {
     case result: B => test(result)
