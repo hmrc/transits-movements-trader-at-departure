@@ -28,4 +28,5 @@ object XSDFile {
   object CancellationDecisionXSD        extends XSDFile("/xsd/CC009A.xsd")
   object WriteOffNotificationXSD        extends XSDFile("/xsd/CC045A.xsd")
   object GuaranteeNotValidXSD           extends XSDFile("/xsd/CC055A.xsd")
+  object InvalidXmlXSD                  extends XSDFile("/xsd/CC917A.xsd")
 }

@@ -60,6 +60,7 @@ class MessageSummaryServiceSpec extends SpecBase with ModelGenerators with Scala
   private val ie014Gen = messageGeneratorResponse(DeclarationCancellationRequest)
   private val ie051Gen = messageGeneratorResponse(NoReleaseForTransit)
   private val ie060Gen = messageGeneratorResponse(ControlDecisionNotification)
+  private val ie917Gen = messageGeneratorResponse(MessageType.XMLSubmissionNegativeAcknowledgement)
 
   private val service = new MessageSummaryService
 

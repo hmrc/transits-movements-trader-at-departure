@@ -17,7 +17,6 @@
 package audit
 
 import audit.AuditType._
-import javax.inject.Inject
 import models._
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
@@ -26,6 +25,7 @@ import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import utils.MessageTranslation
 import utils.XmlToJson
 
+import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 import scala.xml.NodeSeq
 
@@ -41,15 +41,16 @@ class AuditService @Inject()(auditConnector: AuditConnector, messageTranslator: 
 
   def auditNCTSMessages(channel: ChannelType, messageResponse: MessageResponse, xml: NodeSeq)(implicit hc: HeaderCarrier): Unit = {
     val auditType: AuditType = messageResponse match {
-      case PositiveAcknowledgementResponse     => PositiveAcknowledgementReceived
-      case MrnAllocatedResponse                => MrnAllocatedReceived
-      case DepartureRejectedResponse           => DeclarationRejectedReceived
-      case ControlDecisionNotificationResponse => ControlDecisionNotificationReceived
-      case NoReleaseForTransitResponse         => NoReleaseForTransitReceived
-      case ReleaseForTransitResponse           => ReleaseForTransitReceived
-      case CancellationDecisionResponse        => CancellationDecisionReceived
-      case WriteOffNotificationResponse        => WriteOffNotificationReceived
-      case GuaranteeNotValidResponse           => GuaranteeNotValidReceived
+      case PositiveAcknowledgementResponse              => PositiveAcknowledgementReceived
+      case MrnAllocatedResponse                         => MrnAllocatedReceived
+      case DepartureRejectedResponse                    => DeclarationRejectedReceived
+      case ControlDecisionNotificationResponse          => ControlDecisionNotificationReceived
+      case NoReleaseForTransitResponse                  => NoReleaseForTransitReceived
+      case ReleaseForTransitResponse                    => ReleaseForTransitReceived
+      case CancellationDecisionResponse                 => CancellationDecisionReceived
+      case WriteOffNotificationResponse                 => WriteOffNotificationReceived
+      case GuaranteeNotValidResponse                    => GuaranteeNotValidReceived
+      case XMLSubmissionNegativeAcknowledgementResponse => XMLSubmissionNegativeAcknowledgement
     }
     internal_auditEvent(auditType, xml, toJson(xml), channel)
   }

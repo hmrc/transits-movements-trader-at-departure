@@ -31,6 +31,7 @@ object StatusTransition {
     DepartureSubmitted -> PositiveAcknowledgement,
     DepartureSubmitted -> MrnAllocated,
     DepartureSubmitted -> DepartureRejected,
+    DepartureSubmitted -> DepartureSubmittedNegativeAcknowledgement,
     // PositiveAcknowledgement transitions
     PositiveAcknowledgement -> PositiveAcknowledgement,
     PositiveAcknowledgement -> MrnAllocated,
@@ -57,6 +58,7 @@ object StatusTransition {
     // DeclarationCancellationRequest transitions
     DeclarationCancellationRequest -> DeclarationCancellationRequest,
     DeclarationCancellationRequest -> CancellationDecision,
+    DeclarationCancellationRequest -> DeclarationCancellationRequestNegativeAcknowledgement,
     // CancellationDecision transitions
     CancellationDecision -> CancellationDecision,
     CancellationDecision -> WriteOffNotification,
@@ -66,17 +68,23 @@ object StatusTransition {
     GuaranteeNotValid -> GuaranteeNotValid,
     GuaranteeNotValid -> NoReleaseForTransit,
     GuaranteeNotValid -> ReleaseForTransit,
-    GuaranteeNotValid -> DeclarationCancellationRequest
+    GuaranteeNotValid -> DeclarationCancellationRequest,
+    // DepartureSubmittedNegativeAcknowledgement transitions
+    DepartureSubmittedNegativeAcknowledgement -> DepartureSubmittedNegativeAcknowledgement,
+    DepartureSubmittedNegativeAcknowledgement -> DepartureSubmitted,
+    // DeclarationCancellationRequestNegativeAcknowledgement transitions
+    DeclarationCancellationRequestNegativeAcknowledgement -> DeclarationCancellationRequestNegativeAcknowledgement,
+    DeclarationCancellationRequestNegativeAcknowledgement -> DeclarationCancellationRequest
   )
 
   /** Mapping of the statuses we can transition to from a given status
     */
   val allowedStatusForTransition = validTransitions
     .groupBy {
-      case (from, to) => from
+      case (from, _) => from
     }
     .mapValues(_.map {
-      case (from, to) => to
+      case (_, to) => to
     })
     .toMap
 
@@ -84,10 +92,10 @@ object StatusTransition {
     */
   val requiredStatusForTransition = validTransitions
     .groupBy {
-      case (from, to) => to
+      case (_, to) => to
     }
     .mapValues(_.map {
-      case (from, to) => from
+      case (from, _) => from
     })
     .toMap
 
@@ -113,7 +121,7 @@ object StatusTransition {
     )
   }
 
-  def targetStatus(messageReceived: MessageReceivedEvent) = messageReceived match {
+  def targetStatus(currentStatus: DepartureStatus, messageReceived: MessageReceivedEvent) = messageReceived match {
     case MessageReceivedEvent.CancellationDecision           => CancellationDecision
     case MessageReceivedEvent.ControlDecisionNotification    => ControlDecisionNotification
     case MessageReceivedEvent.DeclarationCancellationRequest => DeclarationCancellationRequest
@@ -125,10 +133,19 @@ object StatusTransition {
     case MessageReceivedEvent.PositiveAcknowledgement        => PositiveAcknowledgement
     case MessageReceivedEvent.ReleaseForTransit              => ReleaseForTransit
     case MessageReceivedEvent.WriteOffNotification           => WriteOffNotification
+    case MessageReceivedEvent.XMLSubmissionNegativeAcknowledgement =>
+      currentStatus match {
+        case DepartureSubmitted =>
+          DepartureSubmittedNegativeAcknowledgement
+        case DeclarationCancellationRequest =>
+          DeclarationCancellationRequestNegativeAcknowledgement
+        case _ =>
+          currentStatus
+      }
   }
 
   def transition(currentStatus: DepartureStatus, messageReceived: MessageReceivedEvent): Either[TransitionError, DepartureStatus] = {
-    val transitionToStatus      = targetStatus(messageReceived)
+    val transitionToStatus      = targetStatus(currentStatus, messageReceived)
     val allowedFromThisStatus   = allowedStatusForTransition.get(currentStatus).getOrElse(Set.empty)
     val requiredForTargetStatus = requiredStatusForTransition.get(transitionToStatus).getOrElse(Set.empty)
 
