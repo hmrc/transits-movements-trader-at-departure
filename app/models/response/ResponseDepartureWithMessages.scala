@@ -26,6 +26,7 @@ import models.DepartureStatus
 import models.MovementReferenceNumber
 import play.api.libs.json.Json
 import play.api.libs.json.OWrites
+import java.time.OffsetDateTime
 
 case class ResponseDepartureWithMessages(departureId: DepartureId,
                                          location: String,
@@ -39,7 +40,7 @@ case class ResponseDepartureWithMessages(departureId: DepartureId,
 
 object ResponseDepartureWithMessages {
 
-  def build(departure: Departure): ResponseDepartureWithMessages =
+  def build(departure: Departure, receivedSince: Option[OffsetDateTime]): ResponseDepartureWithMessages =
     ResponseDepartureWithMessages(
       departure.departureId,
       routes.DeparturesController.get(departure.departureId).url,
@@ -51,7 +52,10 @@ object ResponseDepartureWithMessages {
       departure.updated,
       departure.messagesWithId
         .filterNot {
-          case (message, _) => message.optStatus == Some(SubmissionFailed)
+          case (message, _) =>
+            val failedMessage            = message.optStatus == Some(SubmissionFailed)
+            lazy val beforeRequestedDate = receivedSince.fold(false)(message.receivedBefore)
+            failedMessage || beforeRequestedDate
         }
         .map {
           case (message, messageId) => ResponseMessage.build(departure.departureId, messageId, message)

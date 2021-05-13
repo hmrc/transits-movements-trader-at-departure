@@ -562,6 +562,7 @@ class DepartureRepositorySpec
       }
 
       "must filter results by lastUpdated when updatedSince parameter is provided" in {
+        database.flatMap(_.drop()).futureValue
 
         val eoriNumber: String = arbitrary[String].sample.value
 
@@ -576,6 +577,7 @@ class DepartureRepositorySpec
         val departure4 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = api, updated = LocalDateTime.of(2021, 4, 30, 10, 15, 16))
 
         running(app) {
+          started(app).futureValue
 
           val service: DepartureRepository = app.injector.instanceOf[DepartureRepository]
 
