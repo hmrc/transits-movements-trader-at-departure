@@ -22,7 +22,6 @@ import java.time.LocalTime
 
 import base.SpecBase
 import cats.data.NonEmptyList
-import javax.inject.Inject
 import models.ChannelType.api
 import models.MessageStatus.SubmissionPending
 import models._

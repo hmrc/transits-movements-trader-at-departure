@@ -16,6 +16,7 @@
 
 package services
 
+import java.time.Clock
 import java.time.OffsetDateTime
 
 import cats.implicits._
@@ -36,7 +37,7 @@ import scala.concurrent.Future
 import scala.util.Failure
 import scala.util.Success
 
-class SubmitMessageService @Inject()(departureRepository: DepartureRepository, messageConnector: MessageConnector)(implicit ec: ExecutionContext)
+class SubmitMessageService @Inject()(departureRepository: DepartureRepository, messageConnector: MessageConnector)(implicit clock: Clock, ec: ExecutionContext)
     extends Logging {
 
   def submitMessage(departureId: DepartureId, messageId: MessageId, message: MessageWithStatus, departureStatus: DepartureStatus, channelType: ChannelType)(

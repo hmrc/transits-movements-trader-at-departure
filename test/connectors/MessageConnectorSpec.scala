@@ -67,9 +67,6 @@ class MessageConnectorSpec
   private val env           = Environment.simple()
   private val configuration = Configuration.load(env)
 
-  private val serviceConfig = new ServicesConfig(configuration)
-  private val appConfig     = new AppConfig(configuration, serviceConfig)
-
   private val channelGen = Gen.oneOf(web, api)
 
   "MessageConnector" - {

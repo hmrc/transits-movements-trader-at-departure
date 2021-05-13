@@ -16,6 +16,8 @@
 
 package controllers
 
+import java.time.OffsetDateTime
+
 import javax.inject.Inject
 import audit.AuditService
 import audit.AuditType._
@@ -109,12 +111,12 @@ class DeparturesController @Inject()(
       }
     }
 
-  def getDepartures(): Action[AnyContent] =
+  def getDepartures(updatedSince: Option[OffsetDateTime]): Action[AnyContent] =
     withMetricsTimerAction("get-all-departures") {
       authenticate().async {
         implicit request =>
           departureRepository
-            .fetchAllDepartures(request.eoriNumber, request.channel)
+            .fetchAllDepartures(request.eoriNumber, request.channel, updatedSince)
             .map {
               allDepartures =>
                 departuresCount.update(allDepartures.length)

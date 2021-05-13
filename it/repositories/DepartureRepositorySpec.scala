@@ -16,9 +16,14 @@
 
 package repositories
 
+import java.time.Clock
+import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
+import java.time.OffsetDateTime
+import java.time.ZoneId
+import java.time.ZoneOffset
 
 import cats.data.NonEmptyList
 import generators.ModelGenerators
@@ -31,6 +36,7 @@ import models.DepartureStatus.PositiveAcknowledgement
 import models.MessageStatus.SubmissionPending
 import models.MessageStatus.SubmissionSucceeded
 import models._
+import models.response.ResponseDeparture
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import org.scalactic.source
@@ -49,6 +55,7 @@ import reactivemongo.play.json.ImplicitBSONHandlers.JsObjectDocumentWriter
 import reactivemongo.play.json.collection.JSONCollection
 import utils.Format
 import utils.JsonHelper
+import play.api.inject.bind
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.reflect.ClassTag
@@ -69,6 +76,9 @@ class DepartureRepositorySpec
     with JsonHelper {
 
   private val service = app.injector.instanceOf[DepartureRepository]
+
+  private val instant                   = Instant.now
+  implicit private val stubClock: Clock = Clock.fixed(instant, ZoneId.systemDefault)
 
   def typeMatchOnTestValue[A, B](testValue: A)(test: B => Unit)(implicit bClassTag: ClassTag[B]) = testValue match {
     case result: B => test(result)
@@ -578,8 +588,8 @@ class DepartureRepositorySpec
               db.collection[JSONCollection](DepartureRepository.collectionName).insert(false).many(jsonArr)
           }.futureValue
 
-          repository.fetchAllDepartures(eoriNumber, api).futureValue mustBe Seq(convertToDepartureWithoutMessages(departure1))
-          repository.fetchAllDepartures(eoriNumber, web).futureValue mustBe Seq(convertToDepartureWithoutMessages(departure3))
+          repository.fetchAllDepartures(eoriNumber, api, None).futureValue mustBe Seq(convertToDepartureWithoutMessages(departure1))
+          repository.fetchAllDepartures(eoriNumber, web, None).futureValue mustBe Seq(convertToDepartureWithoutMessages(departure3))
         }
       }
 
@@ -604,9 +614,44 @@ class DepartureRepositorySpec
               db.collection[JSONCollection](DepartureRepository.collectionName).insert(false).many(jsonArr)
           }.futureValue
 
-          val result = respository.fetchAllDepartures(eoriNumber, api).futureValue
+          val result = respository.fetchAllDepartures(eoriNumber, api, None).futureValue
 
           result mustBe Seq.empty[DepartureWithoutMessages]
+        }
+      }
+
+      "must filter results by lastUpdated when updatedSince parameter is provided" in {
+
+        val eoriNumber: String = arbitrary[String].sample.value
+
+        val app = new GuiceApplicationBuilder()
+          .overrides(bind[Clock].toInstance(stubClock))
+          .configure("metrics.jvm" -> false)
+          .build()
+
+        val departure1 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = api, updated = LocalDateTime.of(2021, 4, 30, 9, 30, 31))
+        val departure2 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = api, updated = LocalDateTime.of(2021, 4, 30, 9, 35, 32))
+        val departure3 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = api, updated = LocalDateTime.of(2021, 4, 30, 9, 30, 21))
+        val departure4 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = api, updated = LocalDateTime.of(2021, 4, 30, 10, 15, 16))
+
+        running(app) {
+
+          val service: DepartureRepository = app.injector.instanceOf[DepartureRepository]
+
+          val allMovements = Seq(departure1, departure2, departure3, departure4)
+
+          val jsonArr = allMovements.map(Json.toJsObject(_))
+
+          database.flatMap {
+            db =>
+              db.collection[JSONCollection](DepartureRepository.collectionName).insert(false).many(jsonArr)
+          }.futureValue
+
+          val dateTime = OffsetDateTime.of(LocalDateTime.of(2021, 4, 30, 10, 30, 32), ZoneOffset.ofHours(1))
+          val actual   = service.fetchAllDepartures(eoriNumber, api, Some(dateTime)).futureValue.toSet
+          val expected = Set(departure2, departure4).map(DepartureWithoutMessages.fromDeparture)
+
+          actual mustEqual expected
         }
       }
     }
