@@ -3,7 +3,7 @@ import sbt._
 
 object AppDependencies {
 
-  private val catsVersion = "2.4.2"
+  private val catsVersion = "2.5.0"
 
   val compile = Seq(
     "org.reactivemongo" %% "play2-reactivemongo"             % "0.20.13-play27",

@@ -7,7 +7,7 @@ GET        /movements/departures/:departureId                                   
 
 
 GET        /movements/departures/:departureId/messages/summary                  controllers.MessagesSummaryController.messagesSummary(departureId: DepartureId)
-GET        /movements/departures/:departureId/messages                          controllers.MessagesController.getMessages(departureId: DepartureId)
+GET        /movements/departures/:departureId/messages                          controllers.MessagesController.getMessages(departureId: DepartureId, receivedSince: Option[OffsetDateTime] ?= None)
 POST       /movements/departures/:departureId/messages                          controllers.MessagesController.post(departureId: DepartureId)
 
 GET        /movements/departures/:departureId/messages/:messageId               controllers.MessagesController.getMessage(departureId: DepartureId, messageId: MessageId)

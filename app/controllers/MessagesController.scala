@@ -40,6 +40,7 @@ import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.xml.NodeSeq
+import java.time.OffsetDateTime
 
 class MessagesController @Inject()(
   cc: ControllerComponents,
@@ -99,12 +100,13 @@ class MessagesController @Inject()(
 
     }
 
-  def getMessages(departureId: DepartureId): Action[AnyContent] =
+  def getMessages(departureId: DepartureId, receivedSince: Option[OffsetDateTime]): Action[AnyContent] =
     withMetricsTimerAction("get-all-departure-messages") {
       authenticateForRead(departureId) {
         implicit request =>
-          messagesCount.update(request.departure.messages.length)
-          Ok(Json.toJsObject(ResponseDepartureWithMessages.build(request.departure)))
+          val response = ResponseDepartureWithMessages.build(request.departure, receivedSince)
+          messagesCount.update(response.messages.length)
+          Ok(Json.toJsObject(response))
       }
     }
 
