@@ -17,6 +17,7 @@
 package repositories
 
 import java.time.Clock
+import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import config.AppConfig
 import javax.inject.Inject
@@ -98,7 +99,7 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfi
     val modifier =
       Json.obj(
         "$set" -> Json.obj(
-          "lastUpdated" -> message.dateTime
+          "lastUpdated" -> LocalDateTime.now(clock)
         ),
         "$inc" -> Json.obj(
           "nextMessageCorrelationId" -> 1
@@ -200,7 +201,7 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfi
     val modifier =
       Json.obj(
         "$set" -> Json.obj(
-          "lastUpdated" -> message.dateTime,
+          "lastUpdated" -> LocalDateTime.now(clock),
           "status"      -> status.toString
         ),
         "$push" -> Json.obj(
@@ -229,7 +230,7 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfi
     val modifier =
       Json.obj(
         "$set" -> Json.obj(
-          "lastUpdated"             -> message.dateTime,
+          "lastUpdated"             -> LocalDateTime.now(clock),
           "movementReferenceNumber" -> mrn,
           "status"                  -> status.toString
         ),

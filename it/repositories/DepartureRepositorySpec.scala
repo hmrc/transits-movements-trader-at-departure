@@ -235,6 +235,7 @@ class DepartureRepositorySpec
 
         val dateOfPrep = LocalDate.now(clock)
         val timeOfPrep = LocalTime.of(1, 1)
+        val dateTime = LocalDateTime.of(dateOfPrep, timeOfPrep)
         val messageBody =
           <CC015B>
             <DatOfPreMES9>{Format.dateFormatted(dateOfPrep)}</DatOfPreMES9>
@@ -246,7 +247,7 @@ class DepartureRepositorySpec
 
         val departureDeclarationMessage =
           MessageWithoutStatus(
-            LocalDateTime.of(dateOfPrep, timeOfPrep),
+            dateTime,
             MessageType.DepartureDeclaration,
             messageBody,
             departure.nextMessageCorrelationId,
@@ -268,7 +269,6 @@ class DepartureRepositorySpec
             val updatedDeparture = r.value
 
             updatedDeparture.nextMessageCorrelationId - departure.nextMessageCorrelationId mustBe 1
-            updatedDeparture.lastUpdated mustEqual departureDeclarationMessage.dateTime
             updatedDeparture.status mustEqual departure.status
             updatedDeparture.messages.size - departure.messages.size mustEqual 1
             updatedDeparture.messages.last mustEqual departureDeclarationMessage
@@ -400,6 +400,7 @@ class DepartureRepositorySpec
 
         val dateOfPrep = LocalDate.now(clock)
         val timeOfPrep = LocalTime.of(1, 1)
+        val dateTime = LocalDateTime.of(dateOfPrep, timeOfPrep)
         val messageBody =
           <CC016A>
             <DatOfPreMES9>{Format.dateFormatted(dateOfPrep)}</DatOfPreMES9>
@@ -408,7 +409,7 @@ class DepartureRepositorySpec
 
         val declarationRejectedMessage =
           MessageWithoutStatus(
-            LocalDateTime.of(dateOfPrep, timeOfPrep),
+            dateTime,
             MessageType.DeclarationRejected,
             messageBody,
             departure.nextMessageCorrelationId,
@@ -430,7 +431,6 @@ class DepartureRepositorySpec
 
         addMessageResult mustBe a[Success[_]]
         updatedDeparture.nextMessageCorrelationId - departure.nextMessageCorrelationId mustBe 0
-        updatedDeparture.lastUpdated mustEqual declarationRejectedMessage.dateTime
         updatedDeparture.status mustEqual newState
         updatedDeparture.messages.size - departure.messages.size mustEqual 1
         updatedDeparture.messages.last mustEqual declarationRejectedMessage
@@ -477,6 +477,7 @@ class DepartureRepositorySpec
         val mrn        = "mrn"
         val dateOfPrep = LocalDate.now(clock)
         val timeOfPrep = LocalTime.of(1, 1)
+        val dateTime = LocalDateTime.of(dateOfPrep, timeOfPrep)
         val messageBody =
           <CC028A>
             <DatOfPreMES9>{Format.dateFormatted(dateOfPrep)}</DatOfPreMES9>
@@ -488,7 +489,7 @@ class DepartureRepositorySpec
 
         val mrnAllocatedMessage =
           MessageWithoutStatus(
-            LocalDateTime.of(dateOfPrep, timeOfPrep),
+            dateTime,
             MessageType.MrnAllocated,
             messageBody,
             departure.nextMessageCorrelationId,
@@ -511,7 +512,6 @@ class DepartureRepositorySpec
 
         addMessageResult mustBe a[Success[_]]
         updatedDeparture.nextMessageCorrelationId - departure.nextMessageCorrelationId mustBe 0
-        updatedDeparture.lastUpdated mustEqual mrnAllocatedMessage.dateTime
         updatedDeparture.status mustEqual newState
         updatedDeparture.movementReferenceNumber mustEqual Some(MovementReferenceNumber(mrn))
         updatedDeparture.messages.size - departure.messages.size mustEqual 1
