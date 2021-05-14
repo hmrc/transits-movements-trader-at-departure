@@ -34,7 +34,7 @@ case class ResponseDeparture(departureId: DepartureId,
                              referenceNumber: String,
                              status: DepartureStatus,
                              created: LocalDateTime,
-                             lastUpdated: LocalDateTime)
+                             updated: LocalDateTime)
 
 object ResponseDeparture {
 

@@ -34,7 +34,7 @@ case class ResponseDepartureWithMessages(departureId: DepartureId,
                                          referenceNumber: String,
                                          status: DepartureStatus,
                                          created: LocalDateTime,
-                                         lastUpdated: LocalDateTime,
+                                         updated: LocalDateTime,
                                          messages: Seq[ResponseMessage])
 
 object ResponseDepartureWithMessages {

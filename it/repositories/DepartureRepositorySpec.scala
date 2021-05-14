@@ -233,7 +233,7 @@ class DepartureRepositorySpec
 
         val departure = arbitrary[Departure].sample.value.copy(status = DepartureStatus.DepartureSubmitted)
 
-        val dateOfPrep = LocalDate.now()
+        val dateOfPrep = LocalDate.now(clock)
         val timeOfPrep = LocalTime.of(1, 1)
         val messageBody =
           <CC015B>
@@ -280,7 +280,7 @@ class DepartureRepositorySpec
 
         val departure = arbitrary[Departure].sample.value copy (status = DepartureStatus.DepartureSubmitted, departureId = DepartureId(1))
 
-        val dateOfPrep = LocalDate.now()
+        val dateOfPrep = LocalDate.now(clock)
         val timeOfPrep = LocalTime.of(1, 1)
         val messageBody =
           <CC015B>
@@ -398,7 +398,7 @@ class DepartureRepositorySpec
 
         val departure = arbitrary[Departure].sample.value
 
-        val dateOfPrep = LocalDate.now()
+        val dateOfPrep = LocalDate.now(clock)
         val timeOfPrep = LocalTime.of(1, 1)
         val messageBody =
           <CC016A>
@@ -440,7 +440,7 @@ class DepartureRepositorySpec
 
         val departure = arbitrary[Departure].sample.value copy (status = DepartureStatus.DepartureSubmitted, departureId = DepartureId(1))
 
-        val dateOfPrep = LocalDate.now()
+        val dateOfPrep = LocalDate.now(clock)
         val timeOfPrep = LocalTime.of(1, 1)
         val messageBody =
           <CC025A>
@@ -475,7 +475,7 @@ class DepartureRepositorySpec
         val departure = arbitrary[Departure].sample.value
 
         val mrn        = "mrn"
-        val dateOfPrep = LocalDate.now()
+        val dateOfPrep = LocalDate.now(clock)
         val timeOfPrep = LocalTime.of(1, 1)
         val messageBody =
           <CC028A>
@@ -524,7 +524,7 @@ class DepartureRepositorySpec
         val departure = arbitrary[Departure].sample.value copy (status = DepartureStatus.DepartureSubmitted, departureId = DepartureId(1))
 
         val mrn        = "mrn"
-        val dateOfPrep = LocalDate.now()
+        val dateOfPrep = LocalDate.now(clock)
         val timeOfPrep = LocalTime.of(1, 1)
         val messageBody =
           <CC028A>
