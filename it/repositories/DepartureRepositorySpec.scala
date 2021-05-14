@@ -701,6 +701,7 @@ class DepartureRepositorySpec
         val departure4 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = api, lastUpdated = LocalDateTime.of(2021, 4, 30, 10, 15, 16))
 
         running(app) {
+          started(app).futureValue
 
           val service: DepartureRepository = app.injector.instanceOf[DepartureRepository]
 
