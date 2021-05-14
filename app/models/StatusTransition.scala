@@ -146,7 +146,7 @@ object StatusTransition {
         case DeclarationCancellationRequestNegativeAcknowledgement =>
           Right(DeclarationCancellationRequestNegativeAcknowledgement)
         case _ =>
-          transitionError(currentStatus, Set(DepartureSubmitted, DeclarationCancellationRequest), None, messageReceived)
+          transitionError(currentStatus, Set(Initialized, DepartureSubmitted, DeclarationCancellationRequest), None, messageReceived)
       }
   }
 
