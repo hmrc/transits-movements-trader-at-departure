@@ -16,17 +16,9 @@
 
 package repositories
 
-import java.time.Clock
-import java.time.Instant
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.LocalTime
-import java.time.OffsetDateTime
-import java.time.ZoneId
-import java.time.ZoneOffset
-
 import cats.data.NonEmptyList
 import generators.ModelGenerators
+import config.AppConfig
 import models.ChannelType.api
 import models.ChannelType.web
 import models.DepartureStatus.DepartureSubmitted
@@ -36,7 +28,6 @@ import models.DepartureStatus.PositiveAcknowledgement
 import models.MessageStatus.SubmissionPending
 import models.MessageStatus.SubmissionSucceeded
 import models._
-import models.response.ResponseDeparture
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import org.scalactic.source
@@ -48,19 +39,26 @@ import org.scalatest.exceptions.TestFailedException
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import play.api.test.Helpers.running
-import reactivemongo.play.json.ImplicitBSONHandlers.JsObjectDocumentWriter
 import reactivemongo.play.json.collection.JSONCollection
+import scala.util.Success
 import utils.Format
 import utils.JsonHelper
-import play.api.inject.bind
+import reactivemongo.play.json.ImplicitBSONHandlers.JsObjectDocumentWriter
 
-import scala.concurrent.ExecutionContext.Implicits.global
+import java.time.Clock
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
 import scala.reflect.ClassTag
 import scala.util.Failure
-import scala.util.Success
+
+import scala.concurrent.ExecutionContext.Implicits.global
 
 class DepartureRepositorySpec
     extends AnyFreeSpec
@@ -75,10 +73,12 @@ class DepartureRepositorySpec
     with MongoDateTimeFormats
     with JsonHelper {
 
-  private val service = app.injector.instanceOf[DepartureRepository]
-
-  private val instant                   = Instant.now
-  implicit private val stubClock: Clock = Clock.fixed(instant, ZoneId.systemDefault)
+  private val service   = app.injector.instanceOf[DepartureRepository]
+  private val appConfig = app.injector.instanceOf[AppConfig]
+  val localDate         = LocalDate.now()
+  val localTime         = LocalTime.of(1, 1)
+  val localDateTime     = LocalDateTime.of(localDate, localTime)
+  implicit val clock    = Clock.fixed(localDateTime.toInstant(ZoneOffset.UTC), ZoneOffset.UTC)
 
   def typeMatchOnTestValue[A, B](testValue: A)(test: B => Unit)(implicit bClassTag: ClassTag[B]) = testValue match {
     case result: B => test(result)
@@ -234,8 +234,9 @@ class DepartureRepositorySpec
 
         val departure = arbitrary[Departure].sample.value.copy(status = DepartureStatus.DepartureSubmitted)
 
-        val dateOfPrep = LocalDate.now()
+        val dateOfPrep = LocalDate.now(clock)
         val timeOfPrep = LocalTime.of(1, 1)
+        val dateTime   = LocalDateTime.of(dateOfPrep, timeOfPrep)
         val messageBody =
           <CC015B>
             <DatOfPreMES9>{Format.dateFormatted(dateOfPrep)}</DatOfPreMES9>
@@ -247,7 +248,7 @@ class DepartureRepositorySpec
 
         val departureDeclarationMessage =
           MessageWithoutStatus(
-            LocalDateTime.of(dateOfPrep, timeOfPrep),
+            dateTime,
             MessageType.DepartureDeclaration,
             messageBody,
             departure.nextMessageCorrelationId,
@@ -269,7 +270,6 @@ class DepartureRepositorySpec
             val updatedDeparture = r.value
 
             updatedDeparture.nextMessageCorrelationId - departure.nextMessageCorrelationId mustBe 1
-            updatedDeparture.updated mustEqual departureDeclarationMessage.dateTime
             updatedDeparture.status mustEqual departure.status
             updatedDeparture.messages.size - departure.messages.size mustEqual 1
             updatedDeparture.messages.last mustEqual departureDeclarationMessage
@@ -281,7 +281,7 @@ class DepartureRepositorySpec
 
         val departure = arbitrary[Departure].sample.value copy (status = DepartureStatus.DepartureSubmitted, departureId = DepartureId(1))
 
-        val dateOfPrep = LocalDate.now()
+        val dateOfPrep = LocalDate.now(clock)
         val timeOfPrep = LocalTime.of(1, 1)
         val messageBody =
           <CC015B>
@@ -399,8 +399,9 @@ class DepartureRepositorySpec
 
         val departure = arbitrary[Departure].sample.value
 
-        val dateOfPrep = LocalDate.now()
+        val dateOfPrep = LocalDate.now(clock)
         val timeOfPrep = LocalTime.of(1, 1)
+        val dateTime   = LocalDateTime.of(dateOfPrep, timeOfPrep)
         val messageBody =
           <CC016A>
             <DatOfPreMES9>{Format.dateFormatted(dateOfPrep)}</DatOfPreMES9>
@@ -409,7 +410,7 @@ class DepartureRepositorySpec
 
         val declarationRejectedMessage =
           MessageWithoutStatus(
-            LocalDateTime.of(dateOfPrep, timeOfPrep),
+            dateTime,
             MessageType.DeclarationRejected,
             messageBody,
             departure.nextMessageCorrelationId,
@@ -431,7 +432,6 @@ class DepartureRepositorySpec
 
         addMessageResult mustBe a[Success[_]]
         updatedDeparture.nextMessageCorrelationId - departure.nextMessageCorrelationId mustBe 0
-        updatedDeparture.updated mustEqual declarationRejectedMessage.dateTime
         updatedDeparture.status mustEqual newState
         updatedDeparture.messages.size - departure.messages.size mustEqual 1
         updatedDeparture.messages.last mustEqual declarationRejectedMessage
@@ -441,7 +441,7 @@ class DepartureRepositorySpec
 
         val departure = arbitrary[Departure].sample.value copy (status = DepartureStatus.DepartureSubmitted, departureId = DepartureId(1))
 
-        val dateOfPrep = LocalDate.now()
+        val dateOfPrep = LocalDate.now(clock)
         val timeOfPrep = LocalTime.of(1, 1)
         val messageBody =
           <CC025A>
@@ -476,8 +476,9 @@ class DepartureRepositorySpec
         val departure = arbitrary[Departure].sample.value
 
         val mrn        = "mrn"
-        val dateOfPrep = LocalDate.now()
+        val dateOfPrep = LocalDate.now(clock)
         val timeOfPrep = LocalTime.of(1, 1)
+        val dateTime   = LocalDateTime.of(dateOfPrep, timeOfPrep)
         val messageBody =
           <CC028A>
             <DatOfPreMES9>{Format.dateFormatted(dateOfPrep)}</DatOfPreMES9>
@@ -489,7 +490,7 @@ class DepartureRepositorySpec
 
         val mrnAllocatedMessage =
           MessageWithoutStatus(
-            LocalDateTime.of(dateOfPrep, timeOfPrep),
+            dateTime,
             MessageType.MrnAllocated,
             messageBody,
             departure.nextMessageCorrelationId,
@@ -512,7 +513,6 @@ class DepartureRepositorySpec
 
         addMessageResult mustBe a[Success[_]]
         updatedDeparture.nextMessageCorrelationId - departure.nextMessageCorrelationId mustBe 0
-        updatedDeparture.updated mustEqual mrnAllocatedMessage.dateTime
         updatedDeparture.status mustEqual newState
         updatedDeparture.movementReferenceNumber mustEqual Some(MovementReferenceNumber(mrn))
         updatedDeparture.messages.size - departure.messages.size mustEqual 1
@@ -525,7 +525,7 @@ class DepartureRepositorySpec
         val departure = arbitrary[Departure].sample.value copy (status = DepartureStatus.DepartureSubmitted, departureId = DepartureId(1))
 
         val mrn        = "mrn"
-        val dateOfPrep = LocalDate.now()
+        val dateOfPrep = LocalDate.now(clock)
         val timeOfPrep = LocalTime.of(1, 1)
         val messageBody =
           <CC028A>
@@ -564,7 +564,7 @@ class DepartureRepositorySpec
           departure.referenceNumber,
           departure.status,
           departure.created,
-          departure.updated,
+          departure.lastUpdated,
           departure.notificationBox
         )
 
@@ -620,21 +620,90 @@ class DepartureRepositorySpec
         }
       }
 
+      "Must return max 2 departures when the API maxRowsReturned = 2" in {
+        database.flatMap(_.drop()).futureValue
+
+        val app                = new GuiceApplicationBuilder().build()
+        val eoriNumber: String = arbitrary[String].sample.value
+
+        val now        = LocalDateTime.now(clock)
+        val departure1 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = api, lastUpdated = now.withSecond(1))
+        val departure2 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = api, lastUpdated = now.withSecond(2))
+        val departure3 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = api, lastUpdated = now.withSecond(3))
+
+        running(app) {
+          started(app).futureValue
+          val repository = app.injector.instanceOf[DepartureRepository]
+          service.insert(departure1).futureValue
+          service.insert(departure2).futureValue
+          service.insert(departure3).futureValue
+
+          val maxRows = appConfig.maxRowsReturned(api)
+          maxRows mustBe 2
+
+          val departures = repository.fetchAllDepartures(eoriNumber, api, updatedSince = None).futureValue
+
+          departures.size mustBe maxRows
+
+          val ids = departures.map(
+            d => d.departureId.index
+          )
+
+          ids mustBe Seq(departure3.departureId.index, departure2.departureId.index)
+
+        }
+      }
+
+      "Must return max 2 departures when the WEB maxRowsReturned = 1" in {
+        database.flatMap(_.drop()).futureValue
+
+        val app                = new GuiceApplicationBuilder().build()
+        val eoriNumber: String = arbitrary[String].sample.value
+
+        val now        = LocalDateTime.now(clock)
+        val departure1 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = web, lastUpdated = now.withSecond(1))
+        val departure2 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = web, lastUpdated = now.withSecond(2))
+        val departure3 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = web, lastUpdated = now.withSecond(3))
+
+        running(app) {
+          started(app).futureValue
+          val repository = app.injector.instanceOf[DepartureRepository]
+          service.insert(departure1).futureValue
+          service.insert(departure2).futureValue
+          service.insert(departure3).futureValue
+
+          val maxRows = appConfig.maxRowsReturned(web)
+          maxRows mustBe 1
+
+          val departures = repository.fetchAllDepartures(eoriNumber, web, updatedSince = None).futureValue
+
+          departures.size mustBe maxRows
+
+          val ids = departures.map(
+            d => d.departureId.index
+          )
+
+          ids mustBe Seq(departure3.departureId.index)
+        }
+      }
+
       "must filter results by lastUpdated when updatedSince parameter is provided" in {
+        database.flatMap(_.drop()).futureValue
 
         val eoriNumber: String = arbitrary[String].sample.value
 
         val app = new GuiceApplicationBuilder()
-          .overrides(bind[Clock].toInstance(stubClock))
+          .overrides(bind[Clock].toInstance(clock))
           .configure("metrics.jvm" -> false)
           .build()
 
-        val departure1 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = api, updated = LocalDateTime.of(2021, 4, 30, 9, 30, 31))
-        val departure2 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = api, updated = LocalDateTime.of(2021, 4, 30, 9, 35, 32))
-        val departure3 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = api, updated = LocalDateTime.of(2021, 4, 30, 9, 30, 21))
-        val departure4 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = api, updated = LocalDateTime.of(2021, 4, 30, 10, 15, 16))
+        val departure1 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = api, lastUpdated = LocalDateTime.of(2021, 4, 30, 9, 30, 31))
+        val departure2 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = api, lastUpdated = LocalDateTime.of(2021, 4, 30, 9, 35, 32))
+        val departure3 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = api, lastUpdated = LocalDateTime.of(2021, 4, 30, 9, 30, 21))
+        val departure4 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = api, lastUpdated = LocalDateTime.of(2021, 4, 30, 10, 15, 16))
 
         running(app) {
+          started(app).futureValue
 
           val service: DepartureRepository = app.injector.instanceOf[DepartureRepository]
 

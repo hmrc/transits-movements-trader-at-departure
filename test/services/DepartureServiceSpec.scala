@@ -34,14 +34,17 @@ import utils.Format
 import utils.JsonHelper
 
 import scala.concurrent.Future
+import java.time.Clock
+import java.time.ZoneOffset
 
 class DepartureServiceSpec extends SpecBase with JsonHelper with IntegrationPatience with StreamlinedXmlEquality {
 
   "createDeparture" - {
     "creates a departure declaration with an internal ref number and a mrn, date and time of creation from the message submitted with a message id of 1 and next correlation id of 2" in {
-      val dateOfPrep = LocalDate.now()
-      val timeOfPrep = LocalTime.of(1, 1)
-      val dateTime   = LocalDateTime.of(dateOfPrep, timeOfPrep)
+      val dateOfPrep     = LocalDate.now()
+      val timeOfPrep     = LocalTime.of(1, 1)
+      val dateTime       = LocalDateTime.of(dateOfPrep, timeOfPrep)
+      implicit val clock = Clock.fixed(dateTime.toInstant(ZoneOffset.UTC), ZoneOffset.UTC)
 
       val id   = DepartureId(1)
       val ref  = "ref"
@@ -51,7 +54,8 @@ class DepartureServiceSpec extends SpecBase with JsonHelper with IntegrationPati
       when(mockDepartureIdRepository.nextId).thenReturn(Future.successful(id))
       val application = baseApplicationBuilder
         .overrides(
-          bind[DepartureIdRepository].toInstance(mockDepartureIdRepository)
+          bind[DepartureIdRepository].toInstance(mockDepartureIdRepository),
+          bind[Clock].toInstance(clock)
         )
         .build()
 
@@ -85,7 +89,7 @@ class DepartureServiceSpec extends SpecBase with JsonHelper with IntegrationPati
         eoriNumber = eori,
         status = DepartureStatus.Initialized,
         created = dateTime,
-        updated = dateTime,
+        lastUpdated = dateTime,
         messages = NonEmptyList.one(
           MessageWithStatus(
             dateTime,

@@ -31,6 +31,10 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
+import java.time.LocalDate
+import java.time.ZoneOffset
+import java.time.Clock
+import java.time.LocalTime
 
 class DepartureUpdateSpec
     extends SpecBase
@@ -41,8 +45,10 @@ class DepartureUpdateSpec
     with MongoDateTimeFormats {
 
   implicit val eqDepartureStatusUpdate: Eq[DepartureUpdate] = _ == _
-  val currentDateTime                                       = LocalDateTime.now.withSecond(0).withNano(0).toInstant(ZoneOffset.UTC)
-  implicit val clock: Clock                                 = Clock.fixed(currentDateTime, ZoneOffset.UTC)
+  val localDate                                             = LocalDate.now()
+  val localTime                                             = LocalTime.of(1, 1)
+  val localDateTime                                         = LocalDateTime.of(localDate, localTime)
+  implicit val clock                                        = Clock.fixed(localDateTime.toInstant(ZoneOffset.UTC), ZoneOffset.UTC)
 
   "DepartureUpdate" - {
 
@@ -119,7 +125,7 @@ class DepartureUpdateSpec
           val expectedUpdateJson = Json.obj(
             "$set" -> Json.obj(
               s"messages.${messageStatusUpdate.messageId.index}.status" -> messageStatusUpdate.messageStatus,
-              "lastUpdated"                                             -> LocalDateTime.now.withSecond(0).withNano(0)
+              "lastUpdated"                                             -> LocalDateTime.now(clock)
             )
           )
 
@@ -135,7 +141,7 @@ class DepartureUpdateSpec
           val expectedUpdateJson = Json.obj(
             "$set" -> Json.obj(
               "status"      -> departureStatusUpdate.departureStatus,
-              "lastUpdated" -> LocalDateTime.now.withSecond(0).withNano(0)
+              "lastUpdated" -> LocalDateTime.now(clock)
             )
           )
 
@@ -152,7 +158,7 @@ class DepartureUpdateSpec
             "$set" -> Json.obj(
               "status"                                                                       -> compoundStatusUpdate.departureStatusUpdate.departureStatus,
               s"messages.${compoundStatusUpdate.messageStatusUpdate.messageId.index}.status" -> compoundStatusUpdate.messageStatusUpdate.messageStatus,
-              "lastUpdated"                                                                  -> LocalDateTime.now.withSecond(0).withNano(0)
+              "lastUpdated"                                                                  -> LocalDateTime.now(clock)
             )
           )
 

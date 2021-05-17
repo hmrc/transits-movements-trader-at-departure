@@ -31,7 +31,7 @@ trait BaseDeparture {
   def referenceNumber: String
   def status: DepartureStatus
   def created: LocalDateTime
-  def updated: LocalDateTime
+  def lastUpdated: LocalDateTime
   def notificationBox: Option[Box]
 }
 
@@ -43,7 +43,7 @@ case class Departure(
   referenceNumber: String,
   status: DepartureStatus,
   created: LocalDateTime,
-  updated: LocalDateTime,
+  lastUpdated: LocalDateTime,
   nextMessageCorrelationId: Int,
   messages: NonEmptyList[Message],
   notificationBox: Option[Box]
@@ -74,7 +74,7 @@ object Departure {
         (__ \ "referenceNumber").read[String] and
         (__ \ "status").read[DepartureStatus] and
         (__ \ "created").read(MongoDateTimeFormats.localDateTimeRead) and
-        (__ \ "updated").read(MongoDateTimeFormats.localDateTimeRead) and
+        (__ \ "lastUpdated").read(MongoDateTimeFormats.localDateTimeRead) and
         (__ \ "nextMessageCorrelationId").read[Int] and
         (__ \ "messages").read[NonEmptyList[Message]] and
         (__ \ "notificationBox").readNullable[Box]
@@ -89,7 +89,7 @@ object Departure {
         (__ \ "referenceNumber").write[String] and
         (__ \ "status").write[DepartureStatus] and
         (__ \ "created").write(write) and
-        (__ \ "updated").write(write) and
+        (__ \ "lastUpdated").write(write) and
         (__ \ "nextMessageCorrelationId").write[Int] and
         (__ \ "messages").write[NonEmptyList[Message]] and
         (__ \ "notificationBox").writeNullable[Box]

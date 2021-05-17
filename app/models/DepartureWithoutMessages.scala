@@ -37,7 +37,7 @@ case class DepartureWithoutMessages(
   referenceNumber: String,
   status: DepartureStatus,
   created: LocalDateTime,
-  updated: LocalDateTime,
+  lastUpdated: LocalDateTime,
   notificationBox: Option[Box]
 ) extends BaseDeparture {}
 
@@ -52,7 +52,7 @@ object DepartureWithoutMessages {
       departure.referenceNumber,
       departure.status,
       departure.created,
-      departure.updated,
+      departure.lastUpdated,
       departure.notificationBox
     )
 
@@ -72,7 +72,7 @@ object DepartureWithoutMessages {
         (__ \ "referenceNumber").read[String] and
         (__ \ "status").read[DepartureStatus] and
         (__ \ "created").read(MongoDateTimeFormats.localDateTimeRead) and
-        (__ \ "updated").read(MongoDateTimeFormats.localDateTimeRead) and
+        (__ \ "lastUpdated").read(MongoDateTimeFormats.localDateTimeRead) and
         (__ \ "notificationBox").readNullable[Box]
     )(DepartureWithoutMessages.apply _)
 
@@ -84,7 +84,7 @@ object DepartureWithoutMessages {
     "referenceNumber"         -> 1,
     "status"                  -> 1,
     "created"                 -> 1,
-    "updated"                 -> 1,
+    "lastUpdated"             -> 1,
     "notificationBox"         -> 1
   )
 }
