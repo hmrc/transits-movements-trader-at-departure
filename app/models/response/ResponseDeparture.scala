@@ -47,7 +47,7 @@ object ResponseDeparture {
       departure.referenceNumber,
       departure.status,
       departure.created,
-      departure.updated
+      departure.lastUpdated
     )
 
   def build(departureWithoutMessages: DepartureWithoutMessages): ResponseDeparture =
@@ -59,7 +59,7 @@ object ResponseDeparture {
       departureWithoutMessages.referenceNumber,
       departureWithoutMessages.status,
       departureWithoutMessages.created,
-      departureWithoutMessages.updated
+      departureWithoutMessages.lastUpdated
     )
 
   implicit val writes: OWrites[ResponseDeparture] = Json.writes[ResponseDeparture]

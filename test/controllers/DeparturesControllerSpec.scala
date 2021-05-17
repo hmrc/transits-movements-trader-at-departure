@@ -117,7 +117,7 @@ class DeparturesControllerSpec
     movementReferenceNumber = None,
     status = DepartureStatus.Initialized,
     created = localDateTime,
-    updated = localDateTime,
+    lastUpdated = localDateTime,
     nextMessageCorrelationId = movementMessage(1).messageCorrelationId + 1,
     messages = NonEmptyList.one(movementMessage(1)),
     referenceNumber = "referenceNumber"
@@ -463,7 +463,7 @@ class DeparturesControllerSpec
         departure.referenceNumber,
         departure.status,
         departure.created,
-        departure.updated
+        departure.lastUpdated
       )
       val responseDeparture = ResponseDeparture.build(departure)
 

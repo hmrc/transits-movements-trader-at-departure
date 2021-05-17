@@ -49,7 +49,7 @@ object ResponseDepartureWithMessages {
       departure.referenceNumber,
       departure.status,
       departure.created,
-      departure.updated,
+      departure.lastUpdated,
       departure.messagesWithId
         .filterNot {
           case (message, _) =>

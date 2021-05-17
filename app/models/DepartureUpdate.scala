@@ -22,6 +22,7 @@ import java.time.LocalDateTime
 import cats._
 import play.api.libs.json.Json
 import play.api.libs.json.Writes
+import java.time.Clock
 
 sealed trait DepartureUpdate
 
@@ -51,6 +52,7 @@ object DepartureUpdate {
 final case class MessageStatusUpdate(messageId: MessageId, messageStatus: MessageStatus) extends DepartureUpdate
 
 object MessageStatusUpdate extends MongoDateTimeFormats {
+
   implicit def departureStateUpdate(implicit clock: Clock, writes: Writes[MessageStatus]): DepartureModifier[MessageStatusUpdate] =
     DepartureModifier(
       value =>
@@ -58,7 +60,7 @@ object MessageStatusUpdate extends MongoDateTimeFormats {
           "$set" ->
             Json.obj(
               s"messages.${value.messageId.index}.status" -> value.messageStatus,
-              "lastUpdated"                               -> LocalDateTime.now(clock)
+              "lastUpdated"                               -> Json.toJson(LocalDateTime.now(clock))
             )
       )
     )
@@ -67,18 +69,21 @@ object MessageStatusUpdate extends MongoDateTimeFormats {
 final case class DepartureStatusUpdate(departureStatus: DepartureStatus) extends DepartureUpdate
 
 object DepartureStatusUpdate extends MongoDateTimeFormats {
+
   implicit def departureStatusUpdate(implicit clock: Clock, writes: Writes[DepartureStatus]): DepartureModifier[DepartureStatusUpdate] =
     value =>
       Json.obj(
         "$set" -> Json.obj(
           "status"      -> value.departureStatus,
-          "lastUpdated" -> LocalDateTime.now(clock)
-        ))
+          "lastUpdated" -> Json.toJson(LocalDateTime.now(clock))
+        )
+    )
 }
 
 final case class CompoundStatusUpdate(departureStatusUpdate: DepartureStatusUpdate, messageStatusUpdate: MessageStatusUpdate) extends DepartureUpdate
 
 object CompoundStatusUpdate {
+
   implicit def departureUpdate(implicit clock: Clock): DepartureModifier[CompoundStatusUpdate] =
     csu => DepartureModifier.toJson(csu.departureStatusUpdate) deepMerge DepartureModifier.toJson(csu.messageStatusUpdate)
 }

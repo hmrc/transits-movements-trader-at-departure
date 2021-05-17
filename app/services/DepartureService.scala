@@ -30,7 +30,10 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.xml.NodeSeq
 
-class DepartureService @Inject()(departureIdRepository: DepartureIdRepository)(implicit ec: ExecutionContext) {
+import java.time.LocalDateTime
+import java.time.Clock
+
+class DepartureService @Inject()(departureIdRepository: DepartureIdRepository)(implicit clock: Clock, ec: ExecutionContext) {
   import XMLTransformer._
   import XmlMessageParser._
 
@@ -60,7 +63,7 @@ class DepartureService @Inject()(departureIdRepository: DepartureIdRepository)(i
               reference,
               Initialized,
               dateTime,
-              dateTime,
+              LocalDateTime.now(clock),
               2,
               NonEmptyList.one(message)
             )
