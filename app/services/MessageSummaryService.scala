@@ -15,6 +15,7 @@
  */
 
 package services
+
 import cats.data.NonEmptyList
 import cats.data.Reader
 import models.MessageType.CancellationDecision
@@ -36,18 +37,18 @@ class MessageSummaryService {
 
   def messagesSummary(departure: Departure): MessagesSummary =
     (for {
-      declaration                    <- declarationMessage
-      declarationRejection           <- declarationRejectionMessage
-      mrnAllocated                   <- mrnAllocatedMessage
-      guaranteeNotValid              <- guaranteeNotValidRejectionMessage
-      cancellationDecision           <- cancellationDecisionMessage
-      declarationCancellationRequest <- declarationCancellationRequestMessage
-      noReleaseForTransit            <- noReleaseForTransitMessage
-      controlDecision                <- controlDecisionMessage
-      releaseForTransit              <- releaseForTransitMessage
-
+      declaration                          <- declarationMessage
+      declarationRejection                 <- declarationRejectionMessage
+      mrnAllocated                         <- mrnAllocatedMessage
+      guaranteeNotValid                    <- guaranteeNotValidRejectionMessage
+      cancellationDecision                 <- cancellationDecisionMessage
+      declarationCancellationRequest       <- declarationCancellationRequestMessage
+      noReleaseForTransit                  <- noReleaseForTransitMessage
+      controlDecision                      <- controlDecisionMessage
+      releaseForTransit                    <- releaseForTransitMessage
+      xmlSubmissionNegativeAcknowledgement <- xmlSubmissionNegativeAcknowledgementMessage
       //TODO: Other messages need adding
-    } yield {
+    } yield
       MessagesSummary(
         departure = departure,
         declaration = declaration._2,
@@ -57,9 +58,10 @@ class MessageSummaryService {
         cancellationDecision = cancellationDecision.map(_._2),
         declarationCancellationRequest = declarationCancellationRequest.map(_._2),
         noReleaseForTransit = noReleaseForTransit.map(_._2),
-        releaseForTransit = releaseForTransit.map(_._2)
-      )
-    }).run(departure)
+        controlDecision = controlDecision.map(_._2),
+        releaseForTransit = releaseForTransit.map(_._2),
+        xmlSubmissionNegativeAcknowledgement = xmlSubmissionNegativeAcknowledgement.map(_._2)
+      )).run(departure)
 
   private[services] val declarationMessage: Reader[Departure, (Message, MessageId)] =
     Reader[Departure, (Message, MessageId)](_.messagesWithId match {
@@ -193,7 +195,7 @@ class MessageSummaryService {
           None
     }
 
-  private[services] val xmlSubmissionNegativeAcknowledgementR: Reader[Departure, Option[(Message, MessageId)]] =
+  private[services] val xmlSubmissionNegativeAcknowledgementMessage: Reader[Departure, Option[(Message, MessageId)]] =
     Reader[Departure, Option[(Message, MessageId)]] {
       departure =>
         val negativeAcknowledgements = getLatestMessageWithoutStatus(departure.messagesWithId)(XMLSubmissionNegativeAcknowledgement)
@@ -206,6 +208,7 @@ class MessageSummaryService {
 }
 
 object MessageSummaryService {
+
   private val departureDeclarationCount: NonEmptyList[Message] => Int = {
     movementMessages =>
       movementMessages.toList.count {

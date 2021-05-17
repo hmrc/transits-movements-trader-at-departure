@@ -454,7 +454,7 @@ class MessageSummaryServiceSpec extends SpecBase with ModelGenerators with Scala
           ie015 =>
             forAll(createMovement(NonEmptyList.one(ie015))) {
               departure =>
-                service.xmlSubmissionNegativeAcknowledgementR(departure) must not be defined
+                service.xmlSubmissionNegativeAcknowledgementMessage(departure) must not be defined
             }
         }
       }
@@ -466,7 +466,7 @@ class MessageSummaryServiceSpec extends SpecBase with ModelGenerators with Scala
 
             forAll(createMovement(messages)) {
               departure =>
-                val (message, messageId) = service.xmlSubmissionNegativeAcknowledgementR(departure).value
+                val (message, messageId) = service.xmlSubmissionNegativeAcknowledgementMessage(departure).value
 
                 message mustEqual ie917
                 messageId mustEqual MessageId.fromMessageIdValue(2).value
@@ -479,7 +479,7 @@ class MessageSummaryServiceSpec extends SpecBase with ModelGenerators with Scala
           (ie015, ie014Old, ie917Old, ie014, ie917) =>
             forAll(createMovement(NonEmptyList.of(ie015, ie014Old, ie917Old, ie014, ie917))) {
               departure =>
-                val (message, messageId) = service.xmlSubmissionNegativeAcknowledgementR(departure).value
+                val (message, messageId) = service.xmlSubmissionNegativeAcknowledgementMessage(departure).value
                 message mustEqual ie917
                 messageId mustEqual MessageId.fromMessageIdValue(5).value
             }
