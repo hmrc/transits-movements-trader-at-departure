@@ -26,6 +26,7 @@ import models.MessageType.GuaranteeNotValid
 import models.MessageType.MrnAllocated
 import models.MessageType.NoReleaseForTransit
 import models.MessageType.ReleaseForTransit
+import models.MessageType.XMLSubmissionNegativeAcknowledgement
 import models.MessagesSummary
 import models._
 
@@ -44,6 +45,7 @@ class MessageSummaryService {
       noReleaseForTransit            <- noReleaseForTransitMessage
       controlDecision                <- controlDecisionMessage
       releaseForTransit              <- releaseForTransitMessage
+
       //TODO: Other messages need adding
     } yield {
       MessagesSummary(
@@ -187,6 +189,17 @@ class MessageSummaryService {
 
         if (releaseForTransitNotification.nonEmpty && departureDeclarationCount(departure.messages) > 0)
           Some(releaseForTransitNotification.maxBy(_._1.messageCorrelationId))
+        else
+          None
+    }
+
+  private[services] val xmlSubmissionNegativeAcknowledgementR: Reader[Departure, Option[(Message, MessageId)]] =
+    Reader[Departure, Option[(Message, MessageId)]] {
+      departure =>
+        val negativeAcknowledgements = getLatestMessageWithoutStatus(departure.messagesWithId)(XMLSubmissionNegativeAcknowledgement)
+
+        if (negativeAcknowledgements.nonEmpty && departureDeclarationCount(departure.messages) > 0)
+          Some(negativeAcknowledgements.maxBy(_._1.messageCorrelationId))
         else
           None
     }

@@ -446,6 +446,48 @@ class MessageSummaryServiceSpec extends SpecBase with ModelGenerators with Scala
     }
   }
 
+  "xmlSubmissionNegativeAcknowledgement" - {
+
+    "must return" - {
+      "None when there are none in the movement" in {
+        forAll(ie015Gen) {
+          ie015 =>
+            forAll(createMovement(NonEmptyList.one(ie015))) {
+              departure =>
+                service.xmlSubmissionNegativeAcknowledgementR(departure) must not be defined
+            }
+        }
+      }
+
+      "latest IE917 when there is only an IE015 and a IE917" in {
+        forAll(ie015Gen, ie917Gen) {
+          (ie015, ie917) =>
+            val messages = NonEmptyList.of(ie015, ie917)
+
+            forAll(createMovement(messages)) {
+              departure =>
+                val (message, messageId) = service.xmlSubmissionNegativeAcknowledgementR(departure).value
+
+                message mustEqual ie917
+                messageId mustEqual MessageId.fromMessageIdValue(2).value
+            }
+        }
+      }
+
+      "latest IE917 when there are multiple rejected IE014" in {
+        forAll(ie015Gen, ie014Gen.msgCorrId(1), ie917Gen.msgCorrId(1), ie014Gen.msgCorrId(2), ie917Gen.msgCorrId(2)) {
+          (ie015, ie014Old, ie917Old, ie014, ie917) =>
+            forAll(createMovement(NonEmptyList.of(ie015, ie014Old, ie917Old, ie014, ie917))) {
+              departure =>
+                val (message, messageId) = service.xmlSubmissionNegativeAcknowledgementR(departure).value
+                message mustEqual ie917
+                messageId mustEqual MessageId.fromMessageIdValue(5).value
+            }
+        }
+      }
+    }
+  }
+
   "messagesSummary" - {
 
     "must return" - {

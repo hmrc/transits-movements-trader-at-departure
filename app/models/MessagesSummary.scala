@@ -18,31 +18,37 @@ package models
 
 import play.api.libs.json._
 
-case class MessagesSummary(departure: Departure,
-                           declaration: MessageId,
-                           declarationRejection: Option[MessageId] = None,
-                           mrnAllocated: Option[MessageId] = None,
-                           guaranteeNotValid: Option[MessageId] = None,
-                           cancellationDecision: Option[MessageId] = None,
-                           declarationCancellationRequest: Option[MessageId] = None,
-                           noReleaseForTransit: Option[MessageId] = None,
-                           controlDecision: Option[MessageId] = None,
-                           releaseForTransit: Option[MessageId] = None)
+case class MessagesSummary(
+  departure: Departure,
+  declaration: MessageId,
+  declarationRejection: Option[MessageId] = None,
+  mrnAllocated: Option[MessageId] = None,
+  guaranteeNotValid: Option[MessageId] = None,
+  cancellationDecision: Option[MessageId] = None,
+  declarationCancellationRequest: Option[MessageId] = None,
+  noReleaseForTransit: Option[MessageId] = None,
+  controlDecision: Option[MessageId] = None,
+  releaseForTransit: Option[MessageId] = None,
+  xmlSubmissionNegativeAcknowledgement: Option[MessageId] = None
+)
 
 object MessagesSummary {
 
   implicit val writes: OWrites[MessagesSummary] =
     OWrites[MessagesSummary] {
-      case MessagesSummary(departure,
-                           declaration,
-                           declarationRejection,
-                           mrnAllocated,
-                           guaranteeNotValidId,
-                           cancellationDecision,
-                           declarationCancellationRequest,
-                           noReleaseForTransit,
-                           controlDecision,
-                           _) =>
+      case MessagesSummary(
+          departure,
+          declaration,
+          declarationRejection,
+          mrnAllocated,
+          guaranteeNotValidId,
+          cancellationDecision,
+          declarationCancellationRequest,
+          noReleaseForTransit,
+          controlDecision,
+          _,
+          xmlSubmissionNegativeAcknowledgement
+          ) =>
         Json
           .obj(
             "departureId" -> departure.departureId,
@@ -53,10 +59,15 @@ object MessagesSummary {
               MessageType.GuaranteeNotValid.code    -> guaranteeNotValidId.map(controllers.routes.MessagesController.getMessage(departure.departureId, _).url),
               MessageType.CancellationDecision.code -> cancellationDecision.map(controllers.routes.MessagesController.getMessage(departure.departureId, _).url),
               MessageType.DeclarationCancellationRequest.code -> declarationCancellationRequest.map(
-                controllers.routes.MessagesController.getMessage(departure.departureId, _).url),
+                controllers.routes.MessagesController.getMessage(departure.departureId, _).url
+              ),
               MessageType.NoReleaseForTransit.code -> noReleaseForTransit.map(controllers.routes.MessagesController.getMessage(departure.departureId, _).url),
               MessageType.ControlDecisionNotification.code -> controlDecision.map(
-                controllers.routes.MessagesController.getMessage(departure.departureId, _).url)
+                controllers.routes.MessagesController.getMessage(departure.departureId, _).url
+              ),
+              MessageType.XMLSubmissionNegativeAcknowledgement.code -> xmlSubmissionNegativeAcknowledgement.map(
+                controllers.routes.MessagesController.getMessage(departure.departureId, _).url
+              )
             )
           )
           .filterNulls
