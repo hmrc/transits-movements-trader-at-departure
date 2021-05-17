@@ -21,35 +21,48 @@ import com.kenshoo.play.metrics.Metrics
 import controllers.actions.CheckMessageTypeActionProvider
 import controllers.actions.GetDepartureForWriteActionProvider
 import metrics.HasActionMetrics
-import javax.inject.Inject
 import models.MessageSender
 import models.MessageType
 import models.StatusTransition
 import models.SubmissionProcessingResult.SubmissionFailureExternal
 import models.SubmissionProcessingResult.SubmissionFailureInternal
 import models.SubmissionProcessingResult.SubmissionSuccess
+import models.request.DepartureResponseRequest
 import play.api.Logging
 import play.api.mvc.Action
 import play.api.mvc.ControllerComponents
+import services.PushPullNotificationService
 import services.SaveMessageService
 import services.XmlMessageParser
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
+import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
+import scala.util.control.NonFatal
 import scala.xml.NodeSeq
 
-class NCTSMessageController @Inject()(
+class NCTSMessageController @Inject() (
   cc: ControllerComponents,
   getDeparture: GetDepartureForWriteActionProvider,
   checkMessageType: CheckMessageTypeActionProvider,
   auditService: AuditService,
   saveMessageService: SaveMessageService,
+  pushPullNotificationService: PushPullNotificationService,
   val metrics: Metrics
 )(implicit ec: ExecutionContext)
     extends BackendController(cc)
     with Logging
     with HasActionMetrics {
+
+  private def sendPushNotification(request: DepartureResponseRequest[NodeSeq])(implicit hc: HeaderCarrier): Future[Unit] =
+    request.departure.notificationBox
+      .map {
+        box => pushPullNotificationService.sendPushNotification(box.boxId, request.body)
+      }
+      .getOrElse(Future.unit)
+      
 
   def post(messageSender: MessageSender): Action[NodeSeq] =
     withMetricsTimerAction("post-receive-ncts-message") {
@@ -71,6 +84,7 @@ class NCTSMessageController @Inject()(
                       processingResult map {
                         case SubmissionSuccess =>
                           auditService.auditNCTSMessages(request.request.departure.channel, response, xml)
+                          sendPushNotification(request)
                           Ok.withHeaders(
                             LOCATION -> routes.MessagesController.getMessage(request.request.departure.departureId, request.request.departure.nextMessageId).url
                           )
@@ -89,6 +103,7 @@ class NCTSMessageController @Inject()(
                   processingResult map {
                     case SubmissionSuccess =>
                       auditService.auditNCTSMessages(request.request.departure.channel, response, xml)
+                      sendPushNotification(request)
                       Ok.withHeaders(
                         LOCATION -> routes.MessagesController.getMessage(request.request.departure.departureId, request.request.departure.nextMessageId).url
                       )
