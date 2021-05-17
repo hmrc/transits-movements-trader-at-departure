@@ -42,7 +42,7 @@ class FakeAuthenticateClientIdActionProvider @Inject()(defaultActionBuilder: Def
 
 class FakeAuthenticateClientIdAction extends ActionRefiner[AuthenticatedRequest, AuthenticatedClientRequest] {
   override protected def refine[A](request: AuthenticatedRequest[A]): Future[Either[Result, AuthenticatedClientRequest[A]]] =
-    Future.successful(Right(AuthenticatedClientRequest(request, web, "eori", "clientId")))
+    Future.successful(Right(AuthenticatedClientRequest(request, web, "eori", Some("clientId"))))
 
   override protected def executionContext: ExecutionContext = implicitly[ExecutionContext]
 }

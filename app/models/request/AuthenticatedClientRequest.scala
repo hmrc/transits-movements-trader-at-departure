@@ -20,4 +20,5 @@ import models.ChannelType
 import play.api.mvc.Request
 import play.api.mvc.WrappedRequest
 
-case class AuthenticatedClientRequest[A](request: Request[A], channel: ChannelType, eoriNumber: String, clientId: String) extends WrappedRequest[A](request)
+case class AuthenticatedClientRequest[A](request: Request[A], channel: ChannelType, eoriNumber: String, clientIdOpt: Option[String])
+    extends WrappedRequest[A](request)

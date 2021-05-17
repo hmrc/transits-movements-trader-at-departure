@@ -34,6 +34,7 @@ import play.api.mvc.AnyContent
 import play.api.mvc.ControllerComponents
 import repositories.DepartureRepository
 import services._
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import scala.concurrent.ExecutionContext
@@ -59,11 +60,19 @@ class DeparturesController @Inject()(
   lazy val departuresCount = histo("get-all-departures-count")
   lazy val messagesCount   = histo("get-departure-by-id-messages-count")
 
+  private def getBox(clientIdOpt: Option[String])(implicit hc: HeaderCarrier): Future[Option[Box]] =
+    clientIdOpt
+      .map {
+        clientId =>
+          pushPullNotificationService.getBox(clientId)
+      }
+      .getOrElse(Future.successful(None))
+
   def post: Action[NodeSeq] =
     withMetricsTimerAction("post-create-departure") {
       authenticateClientId().async(parse.xml) {
         implicit request =>
-          pushPullNotificationService.getBox(request.clientId).flatMap {
+          getBox(request.clientIdOpt).flatMap {
             boxOpt =>
               departureService
                 .createDeparture(request.eoriNumber, request.body, request.channel, boxOpt)
