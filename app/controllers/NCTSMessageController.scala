@@ -40,7 +40,6 @@ import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
-import scala.util.control.NonFatal
 import scala.xml.NodeSeq
 
 class NCTSMessageController @Inject() (
@@ -59,10 +58,10 @@ class NCTSMessageController @Inject() (
   private def sendPushNotification(request: DepartureResponseRequest[NodeSeq])(implicit hc: HeaderCarrier): Future[Unit] =
     request.departure.notificationBox
       .map {
-        box => pushPullNotificationService.sendPushNotification(box.boxId, request.body)
+        box =>
+          pushPullNotificationService.sendPushNotification(box.boxId, request.body)
       }
       .getOrElse(Future.unit)
-      
 
   def post(messageSender: MessageSender): Action[NodeSeq] =
     withMetricsTimerAction("post-receive-ncts-message") {

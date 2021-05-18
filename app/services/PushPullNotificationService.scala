@@ -16,7 +16,6 @@
 
 package services
 
-import cats.syntax.all._
 import connectors.PushPullNotificationConnector
 import models.Box
 import models.BoxId
@@ -31,7 +30,7 @@ import scala.concurrent.Future
 import scala.xml.NodeSeq
 import scala.util.control.NonFatal
 
-class PushPullNotificationService @Inject() (connector: PushPullNotificationConnector) extends Logging {
+class PushPullNotificationService @Inject()(connector: PushPullNotificationConnector) extends Logging {
 
   def getBox(clientId: String)(implicit ec: ExecutionContext, hc: HeaderCarrier): Future[Option[Box]] =
     connector

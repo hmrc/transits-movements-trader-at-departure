@@ -30,7 +30,7 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.xml.NodeSeq
 
-class PushPullNotificationConnector @Inject() (config: AppConfig, http: HttpClient) {
+class PushPullNotificationConnector @Inject()(config: AppConfig, http: HttpClient) {
 
   def getBox(clientId: String)(implicit ec: ExecutionContext, hc: HeaderCarrier): Future[Either[UpstreamErrorResponse, Box]] = {
     val url = s"${config.pushPullUrl}/box"
@@ -43,7 +43,7 @@ class PushPullNotificationConnector @Inject() (config: AppConfig, http: HttpClie
   }
 
   def postNotification(boxId: BoxId, body: NodeSeq)(implicit ec: ExecutionContext, hc: HeaderCarrier): Future[Either[UpstreamErrorResponse, Unit]] = {
-    val url = s"${config.pushPullUrl}/box/$boxId/notifications"
+    val url = s"${config.pushPullUrl}/box/${boxId.value}/notifications"
     val headers = Seq(
       "Content-Type" -> "application/xml"
     )
