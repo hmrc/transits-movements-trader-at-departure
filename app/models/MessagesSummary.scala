@@ -46,7 +46,7 @@ object MessagesSummary {
           declarationCancellationRequest,
           noReleaseForTransit,
           controlDecision,
-          _,
+          releaseForTransit,
           xmlSubmissionNegativeAcknowledgement
           ) =>
         Json
@@ -63,6 +63,9 @@ object MessagesSummary {
               ),
               MessageType.NoReleaseForTransit.code -> noReleaseForTransit.map(controllers.routes.MessagesController.getMessage(departure.departureId, _).url),
               MessageType.ControlDecisionNotification.code -> controlDecision.map(
+                controllers.routes.MessagesController.getMessage(departure.departureId, _).url
+              ),
+              MessageType.ReleaseForTransit.code -> releaseForTransit.map(
                 controllers.routes.MessagesController.getMessage(departure.departureId, _).url
               ),
               MessageType.XMLSubmissionNegativeAcknowledgement.code -> xmlSubmissionNegativeAcknowledgement.map(
