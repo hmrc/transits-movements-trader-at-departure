@@ -30,15 +30,16 @@ object AuditType extends Enumerable.Implicits {
   case object MesSenMES3Added extends AuditType
 
   // NCTS
-  case object PositiveAcknowledgementReceived     extends AuditType
-  case object MrnAllocatedReceived                extends AuditType
-  case object DeclarationRejectedReceived         extends AuditType
-  case object ControlDecisionNotificationReceived extends AuditType
-  case object NoReleaseForTransitReceived         extends AuditType
-  case object ReleaseForTransitReceived           extends AuditType
-  case object CancellationDecisionReceived        extends AuditType
-  case object WriteOffNotificationReceived        extends AuditType
-  case object GuaranteeNotValidReceived           extends AuditType
+  case object PositiveAcknowledgementReceived      extends AuditType
+  case object MrnAllocatedReceived                 extends AuditType
+  case object DeclarationRejectedReceived          extends AuditType
+  case object ControlDecisionNotificationReceived  extends AuditType
+  case object NoReleaseForTransitReceived          extends AuditType
+  case object ReleaseForTransitReceived            extends AuditType
+  case object CancellationDecisionReceived         extends AuditType
+  case object WriteOffNotificationReceived         extends AuditType
+  case object GuaranteeNotValidReceived            extends AuditType
+  case object XMLSubmissionNegativeAcknowledgement extends AuditType
 
   val values: Seq[AuditType] =
     Seq(
@@ -53,6 +54,7 @@ object AuditType extends Enumerable.Implicits {
       CancellationDecisionReceived,
       WriteOffNotificationReceived,
       GuaranteeNotValidReceived,
-      MesSenMES3Added
+      MesSenMES3Added,
+      XMLSubmissionNegativeAcknowledgement
     )
 }

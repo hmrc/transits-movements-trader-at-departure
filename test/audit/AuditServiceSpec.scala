@@ -16,11 +16,11 @@
 
 package audit
 
-import org.scalacheck.Arbitrary.arbitrary
 import audit.AuditType._
 import base.SpecBase
 import generators.ModelGenerators
 import models.CancellationDecisionResponse
+import models.ChannelType.api
 import models.ControlDecisionNotificationResponse
 import models.Departure
 import models.DepartureRejectedResponse
@@ -31,13 +31,14 @@ import models.NoReleaseForTransitResponse
 import models.PositiveAcknowledgementResponse
 import models.ReleaseForTransitResponse
 import models.WriteOffNotificationResponse
-import models.ChannelType.api
+import models.XMLSubmissionNegativeAcknowledgementResponse
 import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.{eq => eqTo}
 import org.mockito.Mockito.reset
 import org.mockito.Mockito.times
 import org.mockito.Mockito.verify
 import org.scalacheck.Arbitrary
+import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
@@ -64,9 +65,7 @@ class AuditServiceSpec extends SpecBase with ScalaCheckPropertyChecks with Befor
       def gen(xml: NodeSeq, jsObj: JsObject): Gen[MessageWithStatus] =
         for {
           message <- arbitrary[MessageWithStatus]
-        } yield {
-          message.copy(message = xml, messageJson = jsObj)
-        }
+        } yield message.copy(message = xml, messageJson = jsObj)
 
       val requestXml         = <xml>test</xml>
       val requestedXmlToJson = Json.obj("channel" -> "api", "xml" -> "test")
@@ -74,16 +73,14 @@ class AuditServiceSpec extends SpecBase with ScalaCheckPropertyChecks with Befor
 
       forAll(Gen.oneOf(AuditType.values)) {
         auditType =>
-          {
-            val application = baseApplicationBuilder
-              .overrides(bind[AuditConnector].toInstance(mockAuditConnector))
-              .build()
-            running(application) {
-              val auditService = application.injector.instanceOf[AuditService]
-              auditService.auditEvent(auditType, message, api)
-              verify(mockAuditConnector, times(1)).sendExplicitAudit[AuditDetails](eqTo(auditType.toString()), any())(any(), any(), any())
-              reset(mockAuditConnector)
-            }
+          val application = baseApplicationBuilder
+            .overrides(bind[AuditConnector].toInstance(mockAuditConnector))
+            .build()
+          running(application) {
+            val auditService = application.injector.instanceOf[AuditService]
+            auditService.auditEvent(auditType, message, api)
+            verify(mockAuditConnector, times(1)).sendExplicitAudit[AuditDetails](eqTo(auditType.toString()), any())(any(), any(), any())
+            reset(mockAuditConnector)
           }
       }
     }
@@ -92,32 +89,31 @@ class AuditServiceSpec extends SpecBase with ScalaCheckPropertyChecks with Befor
       val requestXml = <xml>test</xml>
 
       val nctsAuditResponse = Map(
-        PositiveAcknowledgementResponse     -> PositiveAcknowledgementReceived,
-        MrnAllocatedResponse                -> MrnAllocatedReceived,
-        DepartureRejectedResponse           -> DeclarationRejectedReceived,
-        ControlDecisionNotificationResponse -> ControlDecisionNotificationReceived,
-        NoReleaseForTransitResponse         -> NoReleaseForTransitReceived,
-        ReleaseForTransitResponse           -> ReleaseForTransitReceived,
-        CancellationDecisionResponse        -> CancellationDecisionReceived,
-        WriteOffNotificationResponse        -> WriteOffNotificationReceived,
-        GuaranteeNotValidResponse           -> GuaranteeNotValidReceived
+        PositiveAcknowledgementResponse              -> PositiveAcknowledgementReceived,
+        MrnAllocatedResponse                         -> MrnAllocatedReceived,
+        DepartureRejectedResponse                    -> DeclarationRejectedReceived,
+        ControlDecisionNotificationResponse          -> ControlDecisionNotificationReceived,
+        NoReleaseForTransitResponse                  -> NoReleaseForTransitReceived,
+        ReleaseForTransitResponse                    -> ReleaseForTransitReceived,
+        CancellationDecisionResponse                 -> CancellationDecisionReceived,
+        WriteOffNotificationResponse                 -> WriteOffNotificationReceived,
+        GuaranteeNotValidResponse                    -> GuaranteeNotValidReceived,
+        XMLSubmissionNegativeAcknowledgementResponse -> XMLSubmissionNegativeAcknowledgement
       )
 
       forAll(Gen.oneOf(nctsAuditResponse.keys)) {
         response =>
-          {
-            val application = baseApplicationBuilder
-              .overrides(bind[AuditConnector].toInstance(mockAuditConnector))
-              .build()
+          val application = baseApplicationBuilder
+            .overrides(bind[AuditConnector].toInstance(mockAuditConnector))
+            .build()
 
-            running(application) {
-              val auditService = application.injector.instanceOf[AuditService]
+          running(application) {
+            val auditService = application.injector.instanceOf[AuditService]
 
-              auditService.auditNCTSMessages(Arbitrary.arbitrary[Departure].sample.value.channel, response, requestXml)
+            auditService.auditNCTSMessages(Arbitrary.arbitrary[Departure].sample.value.channel, response, requestXml)
 
-              verify(mockAuditConnector, times(1)).sendExplicitAudit(eqTo(nctsAuditResponse(response).toString()), any[AuditDetails]())(any(), any(), any())
-              reset(mockAuditConnector)
-            }
+            verify(mockAuditConnector, times(1)).sendExplicitAudit(eqTo(nctsAuditResponse(response).toString()), any[AuditDetails]())(any(), any(), any())
+            reset(mockAuditConnector)
           }
       }
     }

@@ -26,11 +26,13 @@ object StatusTransition {
     Initialized -> MrnAllocated,
     Initialized -> DepartureRejected,
     Initialized -> PositiveAcknowledgement,
+    Initialized -> DepartureSubmittedNegativeAcknowledgement,
     // DepartureSubmitted transitions
     DepartureSubmitted -> DepartureSubmitted,
     DepartureSubmitted -> PositiveAcknowledgement,
     DepartureSubmitted -> MrnAllocated,
     DepartureSubmitted -> DepartureRejected,
+    DepartureSubmitted -> DepartureSubmittedNegativeAcknowledgement,
     // PositiveAcknowledgement transitions
     PositiveAcknowledgement -> PositiveAcknowledgement,
     PositiveAcknowledgement -> MrnAllocated,
@@ -57,6 +59,7 @@ object StatusTransition {
     // DeclarationCancellationRequest transitions
     DeclarationCancellationRequest -> DeclarationCancellationRequest,
     DeclarationCancellationRequest -> CancellationDecision,
+    DeclarationCancellationRequest -> DeclarationCancellationRequestNegativeAcknowledgement,
     // CancellationDecision transitions
     CancellationDecision -> CancellationDecision,
     CancellationDecision -> WriteOffNotification,
@@ -66,17 +69,22 @@ object StatusTransition {
     GuaranteeNotValid -> GuaranteeNotValid,
     GuaranteeNotValid -> NoReleaseForTransit,
     GuaranteeNotValid -> ReleaseForTransit,
-    GuaranteeNotValid -> DeclarationCancellationRequest
+    GuaranteeNotValid -> DeclarationCancellationRequest,
+    // DepartureSubmittedNegativeAcknowledgement transitions
+    DepartureSubmittedNegativeAcknowledgement -> DepartureSubmittedNegativeAcknowledgement,
+    // DeclarationCancellationRequestNegativeAcknowledgement transitions
+    DeclarationCancellationRequestNegativeAcknowledgement -> DeclarationCancellationRequestNegativeAcknowledgement,
+    DeclarationCancellationRequestNegativeAcknowledgement -> DeclarationCancellationRequest
   )
 
   /** Mapping of the statuses we can transition to from a given status
     */
   val allowedStatusForTransition = validTransitions
     .groupBy {
-      case (from, to) => from
+      case (from, _) => from
     }
     .mapValues(_.map {
-      case (from, to) => to
+      case (_, to) => to
     })
     .toMap
 
@@ -84,23 +92,23 @@ object StatusTransition {
     */
   val requiredStatusForTransition = validTransitions
     .groupBy {
-      case (from, to) => to
+      case (_, to) => to
     }
     .mapValues(_.map {
-      case (from, to) => from
+      case (from, _) => from
     })
     .toMap
 
   def transitionError(
     currentStatus: DepartureStatus,
     requiredStatuses: Set[DepartureStatus],
-    targetStatus: DepartureStatus,
+    targetStatus: Option[DepartureStatus],
     messageReceived: MessageReceivedEvent
   ): Either[TransitionError, DepartureStatus] = {
     val messageType = messageReceived.toString
 
     val requiredStatusesString = requiredStatuses
-      .filterNot(_ == targetStatus)
+      .filterNot(targetStatus.contains)
       .map(_.toString)
       .toList
       .sorted
@@ -113,28 +121,43 @@ object StatusTransition {
     )
   }
 
-  def targetStatus(messageReceived: MessageReceivedEvent) = messageReceived match {
-    case MessageReceivedEvent.CancellationDecision           => CancellationDecision
-    case MessageReceivedEvent.ControlDecisionNotification    => ControlDecisionNotification
-    case MessageReceivedEvent.DeclarationCancellationRequest => DeclarationCancellationRequest
-    case MessageReceivedEvent.DepartureRejected              => DepartureRejected
-    case MessageReceivedEvent.DepartureSubmitted             => DepartureSubmitted
-    case MessageReceivedEvent.GuaranteeNotValid              => GuaranteeNotValid
-    case MessageReceivedEvent.MrnAllocated                   => MrnAllocated
-    case MessageReceivedEvent.NoReleaseForTransit            => NoReleaseForTransit
-    case MessageReceivedEvent.PositiveAcknowledgement        => PositiveAcknowledgement
-    case MessageReceivedEvent.ReleaseForTransit              => ReleaseForTransit
-    case MessageReceivedEvent.WriteOffNotification           => WriteOffNotification
+  def targetStatus(currentStatus: DepartureStatus, messageReceived: MessageReceivedEvent): Either[TransitionError, DepartureStatus] = messageReceived match {
+    case MessageReceivedEvent.CancellationDecision           => Right(CancellationDecision)
+    case MessageReceivedEvent.ControlDecisionNotification    => Right(ControlDecisionNotification)
+    case MessageReceivedEvent.DeclarationCancellationRequest => Right(DeclarationCancellationRequest)
+    case MessageReceivedEvent.DepartureRejected              => Right(DepartureRejected)
+    case MessageReceivedEvent.DepartureSubmitted             => Right(DepartureSubmitted)
+    case MessageReceivedEvent.GuaranteeNotValid              => Right(GuaranteeNotValid)
+    case MessageReceivedEvent.MrnAllocated                   => Right(MrnAllocated)
+    case MessageReceivedEvent.NoReleaseForTransit            => Right(NoReleaseForTransit)
+    case MessageReceivedEvent.PositiveAcknowledgement        => Right(PositiveAcknowledgement)
+    case MessageReceivedEvent.ReleaseForTransit              => Right(ReleaseForTransit)
+    case MessageReceivedEvent.WriteOffNotification           => Right(WriteOffNotification)
+    case MessageReceivedEvent.XMLSubmissionNegativeAcknowledgement =>
+      currentStatus match {
+        case Initialized =>
+          Right(DepartureSubmittedNegativeAcknowledgement)
+        case DepartureSubmitted =>
+          Right(DepartureSubmittedNegativeAcknowledgement)
+        case DeclarationCancellationRequest =>
+          Right(DeclarationCancellationRequestNegativeAcknowledgement)
+        case DepartureSubmittedNegativeAcknowledgement =>
+          Right(DepartureSubmittedNegativeAcknowledgement)
+        case DeclarationCancellationRequestNegativeAcknowledgement =>
+          Right(DeclarationCancellationRequestNegativeAcknowledgement)
+        case _ =>
+          transitionError(currentStatus, Set(Initialized, DepartureSubmitted, DeclarationCancellationRequest), None, messageReceived)
+      }
   }
 
-  def transition(currentStatus: DepartureStatus, messageReceived: MessageReceivedEvent): Either[TransitionError, DepartureStatus] = {
-    val transitionToStatus      = targetStatus(messageReceived)
-    val allowedFromThisStatus   = allowedStatusForTransition.get(currentStatus).getOrElse(Set.empty)
-    val requiredForTargetStatus = requiredStatusForTransition.get(transitionToStatus).getOrElse(Set.empty)
-
-    if (allowedFromThisStatus.contains(transitionToStatus))
-      Right(transitionToStatus)
-    else
-      transitionError(currentStatus, requiredForTargetStatus, transitionToStatus, messageReceived)
-  }
+  def transition(currentStatus: DepartureStatus, messageReceived: MessageReceivedEvent): Either[TransitionError, DepartureStatus] =
+    targetStatus(currentStatus, messageReceived).flatMap {
+      transitionToStatus =>
+        val allowedFromThisStatus   = allowedStatusForTransition.get(currentStatus).getOrElse(Set.empty)
+        val requiredForTargetStatus = requiredStatusForTransition.get(transitionToStatus).getOrElse(Set.empty)
+        if (allowedFromThisStatus.contains(transitionToStatus))
+          Right(transitionToStatus)
+        else
+          transitionError(currentStatus, requiredForTargetStatus, Some(transitionToStatus), messageReceived)
+    }
 }
