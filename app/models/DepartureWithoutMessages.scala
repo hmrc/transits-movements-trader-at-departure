@@ -36,10 +36,23 @@ case class DepartureWithoutMessages(departureId: DepartureId,
                                     referenceNumber: String,
                                     status: DepartureStatus,
                                     created: LocalDateTime,
-                                    updated: LocalDateTime)
+                                    lastUpdated: LocalDateTime)
     extends BaseDeparture {}
 
 object DepartureWithoutMessages {
+
+  def fromDeparture(departure: Departure) =
+    DepartureWithoutMessages(
+      departure.departureId,
+      departure.channel,
+      departure.eoriNumber,
+      departure.movementReferenceNumber,
+      departure.referenceNumber,
+      departure.status,
+      departure.created,
+      departure.lastUpdated
+    )
+
   implicit def formatsNonEmptyList[A](implicit listReads: Reads[List[A]], listWrites: Writes[List[A]]): Format[NonEmptyList[A]] =
     new Format[NonEmptyList[A]] {
       override def writes(o: NonEmptyList[A]): JsValue = Json.toJson(o.toList)
@@ -56,7 +69,9 @@ object DepartureWithoutMessages {
         (__ \ "referenceNumber").read[String] and
         (__ \ "status").read[DepartureStatus] and
         (__ \ "created").read(MongoDateTimeFormats.localDateTimeRead) and
-        (__ \ "updated").read(MongoDateTimeFormats.localDateTimeRead)
+        (__ \ "lastUpdated")
+          .read(MongoDateTimeFormats.localDateTimeRead)
+          .orElse((__ \ "updated").read(MongoDateTimeFormats.localDateTimeRead))
     )(DepartureWithoutMessages.apply _)
 
   val projection: JsObject = Json.obj(
@@ -67,6 +82,7 @@ object DepartureWithoutMessages {
     "referenceNumber"         -> 1,
     "status"                  -> 1,
     "created"                 -> 1,
-    "updated"                 -> 1
+    "updated"                 -> 1,
+    "lastUpdated"             -> 1
   )
 }

@@ -16,14 +16,15 @@
 
 package repositories
 
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.LocalTime
-
 import cats.data.NonEmptyList
+import config.AppConfig
 import generators.ModelGenerators
-import models.ChannelType.{api, web}
-import models.DepartureStatus.{DepartureSubmitted, Initialized, MrnAllocated, PositiveAcknowledgement}
+import models.ChannelType.api
+import models.ChannelType.web
+import models.DepartureStatus.DepartureSubmitted
+import models.DepartureStatus.Initialized
+import models.DepartureStatus.MrnAllocated
+import models.DepartureStatus.PositiveAcknowledgement
 import models.MessageStatus.SubmissionPending
 import models.MessageStatus.SubmissionSucceeded
 import models._
@@ -38,17 +39,25 @@ import org.scalatest.exceptions.TestFailedException
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import play.api.test.Helpers.running
 import reactivemongo.play.json.ImplicitBSONHandlers.JsObjectDocumentWriter
 import reactivemongo.play.json.collection.JSONCollection
-import utils.{Format, JsonHelper}
+import utils.Format
+import utils.JsonHelper
 
+import java.time.Clock
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.reflect.ClassTag
-import scala.util.{Failure, Success}
-import play.api.Application
+import scala.util.Failure
+import scala.util.Success
 
 class DepartureRepositorySpec
     extends AnyFreeSpec
@@ -63,14 +72,21 @@ class DepartureRepositorySpec
     with MongoDateTimeFormats
     with JsonHelper {
 
-  private val service = app.injector.instanceOf[DepartureRepository]
+  private val service   = app.injector.instanceOf[DepartureRepository]
+  private val appConfig = app.injector.instanceOf[AppConfig]
+  val localDate         = LocalDate.now()
+  val localTime         = LocalTime.of(1, 1)
+  val localDateTime     = LocalDateTime.of(localDate, localTime)
+  implicit val clock    = Clock.fixed(localDateTime.toInstant(ZoneOffset.UTC), ZoneOffset.UTC)
 
   def typeMatchOnTestValue[A, B](testValue: A)(test: B => Unit)(implicit bClassTag: ClassTag[B]) = testValue match {
     case result: B => test(result)
     case failedResult =>
-      throw new TestFailedException((_: StackDepthException) => Some(s"Test for ${bClassTag.runtimeClass}, but got a ${failedResult.getClass}"),
-                                    None,
-                                    implicitly[source.Position])
+      throw new TestFailedException(
+        (_: StackDepthException) => Some(s"Test for ${bClassTag.runtimeClass}, but got a ${failedResult.getClass}"),
+        None,
+        implicitly[source.Position]
+      )
   }
 
   val departureWithOneMessage: Gen[Departure] = for {
@@ -199,8 +215,7 @@ class DepartureRepositorySpec
         database.flatMap(_.drop()).futureValue
 
         val preGenDeparture = departureWithOneMessage.sample.value
-        val departure = preGenDeparture.copy(departureId = DepartureId(1),
-          messages = NonEmptyList.one(arbitrary[MessageWithoutStatus].sample.value))
+        val departure       = preGenDeparture.copy(departureId = DepartureId(1), messages = NonEmptyList.one(arbitrary[MessageWithoutStatus].sample.value))
 
         service.insert(departure).futureValue
         val result = service.setMessageState(DepartureId(1), 0, SubmissionSucceeded)
@@ -218,8 +233,9 @@ class DepartureRepositorySpec
 
         val departure = arbitrary[Departure].sample.value.copy(status = DepartureStatus.DepartureSubmitted)
 
-        val dateOfPrep = LocalDate.now()
+        val dateOfPrep = LocalDate.now(clock)
         val timeOfPrep = LocalTime.of(1, 1)
+        val dateTime = LocalDateTime.of(dateOfPrep, timeOfPrep)
         val messageBody =
           <CC015B>
             <DatOfPreMES9>{Format.dateFormatted(dateOfPrep)}</DatOfPreMES9>
@@ -230,7 +246,13 @@ class DepartureRepositorySpec
           </CC015B>
 
         val departureDeclarationMessage =
-          MessageWithoutStatus(LocalDateTime.of(dateOfPrep, timeOfPrep), MessageType.DepartureDeclaration, messageBody, departure.nextMessageCorrelationId, convertXmlToJson(messageBody.toString))
+          MessageWithoutStatus(
+            dateTime,
+            MessageType.DepartureDeclaration,
+            messageBody,
+            departure.nextMessageCorrelationId,
+            convertXmlToJson(messageBody.toString)
+          )
 
         service.insert(departure).futureValue
         service.addNewMessage(departure.departureId, departureDeclarationMessage).futureValue.success
@@ -247,7 +269,6 @@ class DepartureRepositorySpec
             val updatedDeparture = r.value
 
             updatedDeparture.nextMessageCorrelationId - departure.nextMessageCorrelationId mustBe 1
-            updatedDeparture.updated mustEqual departureDeclarationMessage.dateTime
             updatedDeparture.status mustEqual departure.status
             updatedDeparture.messages.size - departure.messages.size mustEqual 1
             updatedDeparture.messages.last mustEqual departureDeclarationMessage
@@ -257,9 +278,9 @@ class DepartureRepositorySpec
       "must fail if the departure cannot be found" in {
         database.flatMap(_.drop()).futureValue
 
-        val departure = arbitrary[Departure].sample.value copy(status = DepartureStatus.DepartureSubmitted, departureId = DepartureId(1))
+        val departure = arbitrary[Departure].sample.value copy (status = DepartureStatus.DepartureSubmitted, departureId = DepartureId(1))
 
-        val dateOfPrep = LocalDate.now()
+        val dateOfPrep = LocalDate.now(clock)
         val timeOfPrep = LocalTime.of(1, 1)
         val messageBody =
           <CC015B>
@@ -271,7 +292,13 @@ class DepartureRepositorySpec
           </CC015B>
 
         val departureDeclaration =
-          MessageWithoutStatus(LocalDateTime.of(dateOfPrep, timeOfPrep), MessageType.DepartureDeclaration, messageBody, messageCorrelationId = 1, convertXmlToJson(messageBody.toString))
+          MessageWithoutStatus(
+            LocalDateTime.of(dateOfPrep, timeOfPrep),
+            MessageType.DepartureDeclaration,
+            messageBody,
+            messageCorrelationId = 1,
+            convertXmlToJson(messageBody.toString)
+          )
 
         service.insert(departure).futureValue
         val result = service.addNewMessage(DepartureId(2), departureDeclaration)
@@ -350,7 +377,7 @@ class DepartureRepositorySpec
         service.insert(departure).futureValue
 
         val setResult = service.setDepartureStateAndMessageState(DepartureId(2), messageId, DepartureSubmitted, SubmissionSucceeded)
-        setResult.futureValue must not be (defined)
+        setResult.futureValue must not be defined
 
         val result = service.get(departure.departureId, departure.channel)
 
@@ -371,8 +398,9 @@ class DepartureRepositorySpec
 
         val departure = arbitrary[Departure].sample.value
 
-        val dateOfPrep = LocalDate.now()
+        val dateOfPrep = LocalDate.now(clock)
         val timeOfPrep = LocalTime.of(1, 1)
+        val dateTime = LocalDateTime.of(dateOfPrep, timeOfPrep)
         val messageBody =
           <CC016A>
             <DatOfPreMES9>{Format.dateFormatted(dateOfPrep)}</DatOfPreMES9>
@@ -380,7 +408,13 @@ class DepartureRepositorySpec
           </CC016A>
 
         val declarationRejectedMessage =
-          MessageWithoutStatus(LocalDateTime.of(dateOfPrep, timeOfPrep), MessageType.DeclarationRejected, messageBody, departure.nextMessageCorrelationId, convertXmlToJson(messageBody.toString))
+          MessageWithoutStatus(
+            dateTime,
+            MessageType.DeclarationRejected,
+            messageBody,
+            departure.nextMessageCorrelationId,
+            convertXmlToJson(messageBody.toString)
+          )
         val newState = DepartureStatus.DepartureRejected
 
         service.insert(departure).futureValue
@@ -397,7 +431,6 @@ class DepartureRepositorySpec
 
         addMessageResult mustBe a[Success[_]]
         updatedDeparture.nextMessageCorrelationId - departure.nextMessageCorrelationId mustBe 0
-        updatedDeparture.updated mustEqual declarationRejectedMessage.dateTime
         updatedDeparture.status mustEqual newState
         updatedDeparture.messages.size - departure.messages.size mustEqual 1
         updatedDeparture.messages.last mustEqual declarationRejectedMessage
@@ -405,9 +438,9 @@ class DepartureRepositorySpec
       "must fail if the departure cannot be found" in {
         database.flatMap(_.drop()).futureValue
 
-        val departure = arbitrary[Departure].sample.value copy(status = DepartureStatus.DepartureSubmitted, departureId = DepartureId(1))
+        val departure = arbitrary[Departure].sample.value copy (status = DepartureStatus.DepartureSubmitted, departureId = DepartureId(1))
 
-        val dateOfPrep = LocalDate.now()
+        val dateOfPrep = LocalDate.now(clock)
         val timeOfPrep = LocalTime.of(1, 1)
         val messageBody =
           <CC025A>
@@ -419,7 +452,13 @@ class DepartureRepositorySpec
           </CC025A>
 
         val declarationRejected =
-          MessageWithoutStatus(LocalDateTime.of(dateOfPrep, timeOfPrep), MessageType.DeclarationRejected, messageBody, messageCorrelationId = 1, convertXmlToJson(messageBody.toString))
+          MessageWithoutStatus(
+            LocalDateTime.of(dateOfPrep, timeOfPrep),
+            MessageType.DeclarationRejected,
+            messageBody,
+            messageCorrelationId = 1,
+            convertXmlToJson(messageBody.toString)
+          )
         val newState = DepartureStatus.DepartureRejected
 
         service.insert(departure).futureValue
@@ -436,8 +475,9 @@ class DepartureRepositorySpec
         val departure = arbitrary[Departure].sample.value
 
         val mrn        = "mrn"
-        val dateOfPrep = LocalDate.now()
+        val dateOfPrep = LocalDate.now(clock)
         val timeOfPrep = LocalTime.of(1, 1)
+        val dateTime = LocalDateTime.of(dateOfPrep, timeOfPrep)
         val messageBody =
           <CC028A>
             <DatOfPreMES9>{Format.dateFormatted(dateOfPrep)}</DatOfPreMES9>
@@ -448,7 +488,13 @@ class DepartureRepositorySpec
           </CC028A>
 
         val mrnAllocatedMessage =
-          MessageWithoutStatus(LocalDateTime.of(dateOfPrep, timeOfPrep), MessageType.MrnAllocated, messageBody, departure.nextMessageCorrelationId, convertXmlToJson(messageBody.toString))
+          MessageWithoutStatus(
+            dateTime,
+            MessageType.MrnAllocated,
+            messageBody,
+            departure.nextMessageCorrelationId,
+            convertXmlToJson(messageBody.toString)
+          )
         val newState = DepartureStatus.MrnAllocated
 
         service.insert(departure).futureValue
@@ -466,7 +512,6 @@ class DepartureRepositorySpec
 
         addMessageResult mustBe a[Success[_]]
         updatedDeparture.nextMessageCorrelationId - departure.nextMessageCorrelationId mustBe 0
-        updatedDeparture.updated mustEqual mrnAllocatedMessage.dateTime
         updatedDeparture.status mustEqual newState
         updatedDeparture.movementReferenceNumber mustEqual Some(MovementReferenceNumber(mrn))
         updatedDeparture.messages.size - departure.messages.size mustEqual 1
@@ -476,10 +521,10 @@ class DepartureRepositorySpec
       "must fail if the departure cannot be found" in {
         database.flatMap(_.drop()).futureValue
 
-        val departure = arbitrary[Departure].sample.value copy(status = DepartureStatus.DepartureSubmitted, departureId = DepartureId(1))
+        val departure = arbitrary[Departure].sample.value copy (status = DepartureStatus.DepartureSubmitted, departureId = DepartureId(1))
 
         val mrn        = "mrn"
-        val dateOfPrep = LocalDate.now()
+        val dateOfPrep = LocalDate.now(clock)
         val timeOfPrep = LocalTime.of(1, 1)
         val messageBody =
           <CC028A>
@@ -491,7 +536,13 @@ class DepartureRepositorySpec
           </CC028A>
 
         val mrnAllocatedMessage =
-          MessageWithoutStatus(LocalDateTime.of(dateOfPrep, timeOfPrep), MessageType.MrnAllocated, messageBody, departure.nextMessageCorrelationId, convertXmlToJson(messageBody.toString))
+          MessageWithoutStatus(
+            LocalDateTime.of(dateOfPrep, timeOfPrep),
+            MessageType.MrnAllocated,
+            messageBody,
+            departure.nextMessageCorrelationId,
+            convertXmlToJson(messageBody.toString)
+          )
         val newState = DepartureStatus.DepartureRejected
 
         service.insert(departure).futureValue
@@ -504,13 +555,21 @@ class DepartureRepositorySpec
     "fetchAllDepartures" - {
 
       def convertToDepartureWithoutMessages(departure: Departure): DepartureWithoutMessages =
-        DepartureWithoutMessages(departure.departureId, departure.channel, departure.eoriNumber, departure.movementReferenceNumber, departure.referenceNumber, departure.status, departure.created, departure.updated)
-
+        DepartureWithoutMessages(
+          departure.departureId,
+          departure.channel,
+          departure.eoriNumber,
+          departure.movementReferenceNumber,
+          departure.referenceNumber,
+          departure.status,
+          departure.created,
+          departure.lastUpdated
+        )
 
       "return DeparturesWithoutMessages that match an eoriNumber and channel type" in {
         database.flatMap(_.drop()).futureValue
 
-        val app = new GuiceApplicationBuilder().configure("metrics.jvm" -> false).build()
+        val app                = new GuiceApplicationBuilder().configure("metrics.jvm" -> false).build()
         val eoriNumber: String = arbitrary[String].sample.value
 
         val departure1 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = api)
@@ -521,14 +580,14 @@ class DepartureRepositorySpec
           started(app).futureValue
           val repository = app.injector.instanceOf[DepartureRepository]
           val departures = Seq(departure1, departure2, departure3)
-          val jsonArr = departures.map(Json.toJsObject(_))
+          val jsonArr    = departures.map(Json.toJsObject(_))
           database.flatMap {
             db =>
               db.collection[JSONCollection](DepartureRepository.collectionName).insert(false).many(jsonArr)
           }.futureValue
 
-          repository.fetchAllDepartures(eoriNumber, api).futureValue mustBe Seq(convertToDepartureWithoutMessages(departure1))
-          repository.fetchAllDepartures(eoriNumber, web).futureValue mustBe Seq(convertToDepartureWithoutMessages(departure3))
+          repository.fetchAllDepartures(eoriNumber, api, None).futureValue mustBe Seq(convertToDepartureWithoutMessages(departure1))
+          repository.fetchAllDepartures(eoriNumber, web, None).futureValue mustBe Seq(convertToDepartureWithoutMessages(departure3))
         }
       }
 
@@ -537,25 +596,129 @@ class DepartureRepositorySpec
 
         val eoriNumber: String = arbitrary[String].sample.value
 
-        val app = new GuiceApplicationBuilder().configure("metrics.jvm" -> false).build()
+        val app        = new GuiceApplicationBuilder().configure("metrics.jvm" -> false).build()
         val departure1 = arbitrary[Departure].suchThat(_.eoriNumber != eoriNumber).sample.value.copy(channel = api)
         val departure2 = arbitrary[Departure].suchThat(_.eoriNumber != eoriNumber).sample.value.copy(channel = api)
 
         running(app) {
           started(app).futureValue
 
-          val respository = app.injector.instanceOf[DepartureRepository]
+          val respository   = app.injector.instanceOf[DepartureRepository]
           val allDepartures = Seq(departure1, departure2)
-          val jsonArr = allDepartures.map(Json.toJsObject(_))
+          val jsonArr       = allDepartures.map(Json.toJsObject(_))
 
           database.flatMap {
             db =>
               db.collection[JSONCollection](DepartureRepository.collectionName).insert(false).many(jsonArr)
           }.futureValue
 
-          val result = respository.fetchAllDepartures(eoriNumber, api).futureValue
+          val result = respository.fetchAllDepartures(eoriNumber, api, None).futureValue
 
           result mustBe Seq.empty[DepartureWithoutMessages]
+        }
+      }
+
+      "Must return max 2 departures when the API maxRowsReturned = 2" in {
+        database.flatMap(_.drop()).futureValue
+
+        val app                = new GuiceApplicationBuilder().build()
+        val eoriNumber: String = arbitrary[String].sample.value
+
+        val now = LocalDateTime.now(clock)
+        val departure1 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = api, lastUpdated = now.withSecond(1))
+        val departure2 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = api, lastUpdated = now.withSecond(2))
+        val departure3 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = api, lastUpdated = now.withSecond(3))
+
+        running(app) {
+          started(app).futureValue
+          val repository = app.injector.instanceOf[DepartureRepository]
+          service.insert(departure1).futureValue
+          service.insert(departure2).futureValue
+          service.insert(departure3).futureValue
+
+          val maxRows = appConfig.maxRowsReturned(api)
+          maxRows mustBe 2
+
+          val departures = repository.fetchAllDepartures(eoriNumber, api, updatedSince = None).futureValue
+
+          departures.size mustBe maxRows
+
+          val ids = departures.map(
+            d => d.departureId.index
+          )
+
+          ids mustBe Seq(departure3.departureId.index, departure2.departureId.index)
+
+        }
+      }
+
+      "Must return max 2 departures when the WEB maxRowsReturned = 1" in {
+        database.flatMap(_.drop()).futureValue
+
+        val app                = new GuiceApplicationBuilder().build()
+        val eoriNumber: String = arbitrary[String].sample.value
+
+        val now = LocalDateTime.now(clock)
+        val departure1 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = web, lastUpdated = now.withSecond(1))
+        val departure2 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = web, lastUpdated = now.withSecond(2))
+        val departure3 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = web, lastUpdated = now.withSecond(3))
+
+        running(app) {
+          started(app).futureValue
+          val repository = app.injector.instanceOf[DepartureRepository]
+          service.insert(departure1).futureValue
+          service.insert(departure2).futureValue
+          service.insert(departure3).futureValue
+
+          val maxRows = appConfig.maxRowsReturned(web)
+          maxRows mustBe 1
+
+          val departures = repository.fetchAllDepartures(eoriNumber, web, updatedSince = None).futureValue
+
+          departures.size mustBe maxRows
+
+          val ids = departures.map(
+            d => d.departureId.index
+          )
+
+          ids mustBe Seq(departure3.departureId.index)
+        }
+      }
+
+      "must filter results by lastUpdated when updatedSince parameter is provided" in {
+        database.flatMap(_.drop()).futureValue
+
+        val eoriNumber: String = arbitrary[String].sample.value
+
+        val app = new GuiceApplicationBuilder()
+          .overrides(bind[Clock].toInstance(clock))
+          .configure("metrics.jvm" -> false)
+          .build()
+
+        val departure1 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = api, lastUpdated = LocalDateTime.of(2021, 4, 30, 9, 30, 31))
+        val departure2 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = api, lastUpdated = LocalDateTime.of(2021, 4, 30, 9, 35, 32))
+        val departure3 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = api, lastUpdated = LocalDateTime.of(2021, 4, 30, 9, 30, 21))
+        val departure4 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = api, lastUpdated = LocalDateTime.of(2021, 4, 30, 10, 15, 16))
+
+        running(app) {
+          started(app).futureValue
+
+          val service: DepartureRepository = app.injector.instanceOf[DepartureRepository]
+
+          val allMovements = Seq(departure1, departure2, departure3, departure4)
+
+          val jsonArr = allMovements.map(Json.toJsObject(_))
+
+          database.flatMap {
+            db =>
+              db.collection[JSONCollection](DepartureRepository.collectionName).insert(false).many(jsonArr)
+          }.futureValue
+
+          val dateTime = OffsetDateTime.of(LocalDateTime.of(2021, 4, 30, 10, 30, 32), ZoneOffset.ofHours(1))
+          val actual   = service.fetchAllDepartures(eoriNumber, api, Some(dateTime)).futureValue.toSet
+          val expected = Set(departure2, departure4).map(DepartureWithoutMessages.fromDeparture)
+
+          actual mustEqual expected
         }
       }
     }

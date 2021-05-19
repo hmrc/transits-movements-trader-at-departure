@@ -117,7 +117,7 @@ class DeparturesControllerSpec
     movementReferenceNumber = None,
     status = DepartureStatus.Initialized,
     created = localDateTime,
-    updated = localDateTime,
+    lastUpdated = localDateTime,
     nextMessageCorrelationId = movementMessage(1).messageCorrelationId + 1,
     messages = NonEmptyList.one(movementMessage(1)),
     referenceNumber = "referenceNumber"
@@ -463,11 +463,11 @@ class DeparturesControllerSpec
         departure.referenceNumber,
         departure.status,
         departure.created,
-        departure.updated
+        departure.lastUpdated
       )
       val responseDeparture = ResponseDeparture.build(departure)
 
-      when(mockDepartureRepository.fetchAllDepartures(any(), any())).thenReturn(Future.successful(Seq(departureWithoutMessages)))
+      when(mockDepartureRepository.fetchAllDepartures(any(), any(), any())).thenReturn(Future.successful(Seq(departureWithoutMessages)))
 
       val application = baseApplicationBuilder
         .overrides(bind[DepartureRepository].toInstance(mockDepartureRepository))
@@ -486,7 +486,7 @@ class DeparturesControllerSpec
     "must return empty sequence when there are no departures in database" in {
       val mockDepartureRepository = mock[DepartureRepository]
 
-      when(mockDepartureRepository.fetchAllDepartures(any(), any())).thenReturn(Future.successful(Seq.empty))
+      when(mockDepartureRepository.fetchAllDepartures(any(), any(), any())).thenReturn(Future.successful(Seq.empty))
 
       val application = baseApplicationBuilder
         .overrides(bind[DepartureRepository].toInstance(mockDepartureRepository))
@@ -504,7 +504,7 @@ class DeparturesControllerSpec
     "must return INTERNAL_SERVER_ERROR when we cannot retrieve departures" in {
       val mockDepartureRepository = mock[DepartureRepository]
 
-      when(mockDepartureRepository.fetchAllDepartures(any(), any())).thenReturn(Future.failed(new Exception))
+      when(mockDepartureRepository.fetchAllDepartures(any(), any(), any())).thenReturn(Future.failed(new Exception))
 
       val application = baseApplicationBuilder
         .overrides(bind[DepartureRepository].toInstance(mockDepartureRepository))

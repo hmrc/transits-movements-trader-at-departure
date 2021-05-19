@@ -20,16 +20,18 @@ lazy val microservice = Project(appName, file("."))
   .settings(scalacSettings)
   .settings(
     majorVersion := 0,
-    scalaVersion := "2.12.11",
+    scalaVersion := "2.12.13",
     resolvers += Resolver.jcenterRepo,
     PlayKeys.playDefaultPort := 9490,
     libraryDependencies ++= AppDependencies.compile ++ AppDependencies.test,
-    // Import models by default in route files
-    RoutesKeys.routesImport ++= Seq(
-      "models._"
-    ),
     javaOptions ++= Seq(
       "-Djdk.xml.maxOccurLimit=10000"
+    ),
+    // Import models for query string binding in routes file
+    RoutesKeys.routesImport ++= Seq(
+      "models._",
+      "models.Binders._",
+      "java.time.OffsetDateTime"
     )
   )
 
@@ -50,10 +52,9 @@ lazy val scalacSettings = Def.settings(
   Test / scalacOptions ~= {
     opts =>
       opts.filterNot(Set("-Ywarn-dead-code"))
-  }
-  // Cannot be enabled yet - requires Scala 2.12.13 which suffers from https://github.com/scoverage/scalac-scoverage-plugin/issues/305
+  },
   // Disable warnings arising from generated routing code
-  // scalacOptions += "-Wconf:src=routes/.*:silent",
+  scalacOptions += "-Wconf:src=routes/.*:silent"
 )
 
 // Scoverage exclusions and minimums
@@ -81,23 +82,7 @@ lazy val itSettings = Def.settings(
   javaOptions ++= Seq(
     "-Dconfig.resource=it.application.conf",
     "-Dlogger.resource=it.logback.xml"
-  ),
-  // sbt-settings does not cause javaOptions to be passed to test groups by default
-  // needed unless / until this PR is merged and released: https://github.com/hmrc/sbt-settings/pull/19/files
-  testGrouping := {
-    val tests          = (IntegrationTest / definedTests).value
-    val forkJvmOptions = (IntegrationTest / javaOptions).value
-    tests.map {
-      test =>
-        Group(
-          test.name,
-          Seq(test),
-          SubProcess(
-            ForkOptions().withRunJVMOptions(forkJvmOptions.toVector :+ ("-Dtest.name=" + test.name))
-          )
-        )
-    }
-  }
+  )
 )
 
 lazy val testSettings = Def.settings(

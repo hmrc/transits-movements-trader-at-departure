@@ -1,13 +1,13 @@
 # microservice specific routes
 
 POST       /movements/departures                                                controllers.DeparturesController.post
-GET        /movements/departures                                                controllers.DeparturesController.getDepartures()
+GET        /movements/departures                                                controllers.DeparturesController.getDepartures(updatedSince: Option[OffsetDateTime] ?= None)
 
 GET        /movements/departures/:departureId                                   controllers.DeparturesController.get(departureId: DepartureId)
 
 
 GET        /movements/departures/:departureId/messages/summary                  controllers.MessagesSummaryController.messagesSummary(departureId: DepartureId)
-GET        /movements/departures/:departureId/messages                          controllers.MessagesController.getMessages(departureId: DepartureId)
+GET        /movements/departures/:departureId/messages                          controllers.MessagesController.getMessages(departureId: DepartureId, receivedSince: Option[OffsetDateTime] ?= None)
 POST       /movements/departures/:departureId/messages                          controllers.MessagesController.post(departureId: DepartureId)
 
 GET        /movements/departures/:departureId/messages/:messageId               controllers.MessagesController.getMessage(departureId: DepartureId, messageId: MessageId)
