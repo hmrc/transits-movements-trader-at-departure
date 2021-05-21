@@ -16,6 +16,7 @@
 
 package repositories
 
+import cats.syntax.all._
 import java.time.Clock
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
@@ -40,6 +41,8 @@ import scala.concurrent.Future
 import scala.util.Success
 import scala.util.Failure
 import scala.util.Try
+import models.response.ResponseDepartures
+import models.response.ResponseDeparture
 
 class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfig)(implicit ec: ExecutionContext, clock: Clock) extends MongoDateTimeFormats {
 
@@ -64,7 +67,7 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfi
     options = BSONDocument("expireAfterSeconds" -> appConfig.cacheTtl)
   )
 
-  val started: Future[Unit] = {
+  val started: Future[Unit] =
     collection
       .flatMap {
         jsonCollection =>
@@ -75,8 +78,9 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfi
             res <- jsonCollection.indexesManager.ensure(lastUpdatedIndex)
           } yield res
       }
-      .map(_ => ())
-  }
+      .map(
+        _ => ()
+      )
 
   private val collectionName = DepartureRepository.collectionName
 
@@ -87,7 +91,9 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfi
     collection.flatMap {
       _.insert(false)
         .one(Json.toJsObject(departure))
-        .map(_ => ())
+        .map(
+          _ => ()
+        )
     }
 
   def addNewMessage(departureId: DepartureId, message: Message): Future[Try[Unit]] = {
@@ -123,10 +129,12 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfi
   }
 
   @deprecated("Use updateDeparture since this will be removed in the next version", "next")
-  def setDepartureStateAndMessageState(departureId: DepartureId,
-                                       messageId: MessageId,
-                                       departureState: DepartureStatus,
-                                       messageState: MessageStatus): Future[Option[Unit]] = {
+  def setDepartureStateAndMessageState(
+    departureId: DepartureId,
+    messageId: MessageId,
+    departureState: DepartureStatus,
+    messageState: MessageStatus
+  ): Future[Option[Unit]] = {
     val selector = DepartureIdSelector(departureId)
 
     val modifier = CompoundStatusUpdate(DepartureStatusUpdate(departureState), MessageStatusUpdate(messageId, messageState))
@@ -252,15 +260,33 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfi
     }
   }
 
-  def fetchAllDepartures(eoriNumber: String, channelFilter: ChannelType, updatedSince: Option[OffsetDateTime]): Future[Seq[DepartureWithoutMessages]] = {
-    val dateFilter = updatedSince.map(dateTime => Json.obj("lastUpdated" -> Json.obj("$gte" -> dateTime))).getOrElse(Json.obj())
-    val selector   = Json.obj("eoriNumber" -> eoriNumber, "channel" -> channelFilter) ++ dateFilter
+  def fetchAllDepartures(eoriNumber: String, channelFilter: ChannelType, updatedSince: Option[OffsetDateTime]): Future[ResponseDepartures] = {
+    val dateFilter = updatedSince
+      .map(
+        dateTime => Json.obj("lastUpdated" -> Json.obj("$gte" -> dateTime))
+      )
+      .getOrElse(Json.obj())
+
+    val selector = Json.obj("eoriNumber" -> eoriNumber, "channel" -> channelFilter) ++ dateFilter
 
     collection.flatMap {
-      _.find(selector, DepartureWithoutMessages.projection)
-        .sort(Json.obj("lastUpdated" -> -1))
-        .cursor[DepartureWithoutMessages]()
-        .collect[Seq](appConfig.maxRowsReturned(channelFilter), Cursor.FailOnError())
+      coll =>
+        val fetchCount = coll.count(Some(selector))
+
+        val fetchResults = coll
+          .find(selector, DepartureWithoutMessages.projection)
+          .sort(Json.obj("lastUpdated" -> -1))
+          .cursor[DepartureWithoutMessages]()
+          .collect[Seq](appConfig.maxRowsReturned(channelFilter), Cursor.FailOnError())
+
+        (fetchCount, fetchResults).mapN {
+          case (count, results) =>
+            ResponseDepartures(
+              departures = results.map(ResponseDeparture.build),
+              retrievedDepartures = results.length,
+              totalDepartures = count
+            )
+        }
     }
   }
 
@@ -277,7 +303,9 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfi
               Success(())
             else
               writeResult.errmsg
-                .map(x => Failure(new Exception(x)))
+                .map(
+                  x => Failure(new Exception(x))
+                )
                 .getOrElse(Failure(new Exception("Unable to update message status")))
         }
     }

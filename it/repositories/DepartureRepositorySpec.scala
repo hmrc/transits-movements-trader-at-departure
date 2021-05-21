@@ -28,6 +28,8 @@ import models.DepartureStatus.PositiveAcknowledgement
 import models.MessageStatus.SubmissionPending
 import models.MessageStatus.SubmissionSucceeded
 import models._
+import models.response.ResponseDeparture
+import models.response.ResponseDepartures
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import org.scalactic.source
@@ -586,8 +588,9 @@ class DepartureRepositorySpec
               db.collection[JSONCollection](DepartureRepository.collectionName).insert(false).many(jsonArr)
           }.futureValue
 
-          repository.fetchAllDepartures(eoriNumber, api, None).futureValue mustBe Seq(convertToDepartureWithoutMessages(departure1))
-          repository.fetchAllDepartures(eoriNumber, web, None).futureValue mustBe Seq(convertToDepartureWithoutMessages(departure3))
+
+          repository.fetchAllDepartures(eoriNumber, api, None).futureValue mustBe ResponseDepartures(Seq(ResponseDeparture.build(departure1)), 1, 1)
+          repository.fetchAllDepartures(eoriNumber, web, None).futureValue mustBe ResponseDepartures(Seq(ResponseDeparture.build(departure3)), 1, 1)
         }
       }
 
@@ -614,7 +617,7 @@ class DepartureRepositorySpec
 
           val result = respository.fetchAllDepartures(eoriNumber, api, None).futureValue
 
-          result mustBe Seq.empty[DepartureWithoutMessages]
+          result mustBe ResponseDepartures(Seq.empty, 0, 0)
         }
       }
 
@@ -641,14 +644,9 @@ class DepartureRepositorySpec
 
           val departures = repository.fetchAllDepartures(eoriNumber, api, updatedSince = None).futureValue
 
-          departures.size mustBe maxRows
+          departures.retrievedDepartures mustBe maxRows
 
-          val ids = departures.map(
-            d => d.departureId.index
-          )
-
-          ids mustBe Seq(departure3.departureId.index, departure2.departureId.index)
-
+          departures mustBe ResponseDepartures(Seq(departure3, departure2).map(ResponseDeparture.build), 2, 3)
         }
       }
 
@@ -675,13 +673,9 @@ class DepartureRepositorySpec
 
           val departures = repository.fetchAllDepartures(eoriNumber, web, updatedSince = None).futureValue
 
-          departures.size mustBe maxRows
+          departures.retrievedDepartures mustBe maxRows
 
-          val ids = departures.map(
-            d => d.departureId.index
-          )
-
-          ids mustBe Seq(departure3.departureId.index)
+          departures mustBe ResponseDepartures(Seq(departure3).map(ResponseDeparture.build), 1, 3)
         }
       }
 
@@ -715,10 +709,9 @@ class DepartureRepositorySpec
           }.futureValue
 
           val dateTime = OffsetDateTime.of(LocalDateTime.of(2021, 4, 30, 10, 30, 32), ZoneOffset.ofHours(1))
-          val actual   = service.fetchAllDepartures(eoriNumber, api, Some(dateTime)).futureValue.toSet
-          val expected = Set(departure2, departure4).map(DepartureWithoutMessages.fromDeparture)
+          val departures = service.fetchAllDepartures(eoriNumber, api, Some(dateTime)).futureValue
 
-          actual mustEqual expected
+          departures mustBe ResponseDepartures(Seq(departure4, departure2).map(ResponseDeparture.build), 2, 2)
         }
       }
     }

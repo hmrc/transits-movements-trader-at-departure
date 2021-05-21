@@ -465,9 +465,10 @@ class DeparturesControllerSpec
         departure.created,
         departure.lastUpdated
       )
-      val responseDeparture = ResponseDeparture.build(departure)
+      val responseDeparture  = ResponseDeparture.build(departure)
+      val responseDepartures = ResponseDepartures(Seq(responseDeparture), 1, 1)
 
-      when(mockDepartureRepository.fetchAllDepartures(any(), any(), any())).thenReturn(Future.successful(Seq(departureWithoutMessages)))
+      when(mockDepartureRepository.fetchAllDepartures(any(), any(), any())).thenReturn(Future.successful(responseDepartures))
 
       val application = baseApplicationBuilder
         .overrides(bind[DepartureRepository].toInstance(mockDepartureRepository))
@@ -479,14 +480,15 @@ class DeparturesControllerSpec
         val result = route(application, request).value
 
         status(result) mustEqual OK
-        contentAsJson(result) mustEqual Json.toJson(ResponseDepartures(Seq(responseDeparture)))
+        contentAsJson(result) mustEqual Json.toJson(responseDepartures)
       }
     }
 
     "must return empty sequence when there are no departures in database" in {
+      val emptyResponse           = ResponseDepartures(Seq.empty, 0, 0)
       val mockDepartureRepository = mock[DepartureRepository]
 
-      when(mockDepartureRepository.fetchAllDepartures(any(), any(), any())).thenReturn(Future.successful(Seq.empty))
+      when(mockDepartureRepository.fetchAllDepartures(any(), any(), any())).thenReturn(Future.successful(emptyResponse))
 
       val application = baseApplicationBuilder
         .overrides(bind[DepartureRepository].toInstance(mockDepartureRepository))
@@ -498,7 +500,7 @@ class DeparturesControllerSpec
         val result = route(application, request).value
 
         status(result) mustEqual OK
-        contentAsJson(result) mustEqual Json.toJson(ResponseDepartures(Seq.empty))
+        contentAsJson(result) mustEqual Json.toJson(emptyResponse)
       }
     }
     "must return INTERNAL_SERVER_ERROR when we cannot retrieve departures" in {
