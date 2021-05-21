@@ -77,3 +77,9 @@ case object GuaranteeNotValidResponse extends MessageResponse {
   override val messageType: MessageType              = MessageType.GuaranteeNotValid
   override val xsdFile: XSDFile                      = GuaranteeNotValidXSD
 }
+
+case object XMLSubmissionNegativeAcknowledgementResponse extends MessageResponse {
+  override val messageReceived          = MessageReceivedEvent.XMLSubmissionNegativeAcknowledgement
+  override val messageType: MessageType = MessageType.XMLSubmissionNegativeAcknowledgement
+  override val xsdFile: XSDFile         = InvalidXmlXSD
+}

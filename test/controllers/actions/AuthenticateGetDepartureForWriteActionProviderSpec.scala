@@ -46,6 +46,7 @@ import uk.gov.hmrc.auth.core.EnrolmentIdentifier
 import uk.gov.hmrc.auth.core.Enrolments
 
 import scala.concurrent.Future
+import play.api.test.Helpers
 
 class AuthenticatedGetDepartureForWriteActionProviderSpec
     extends AnyFreeSpec
@@ -124,16 +125,19 @@ class AuthenticatedGetDepartureForWriteActionProviderSpec
             bind[AuthConnector].toInstance(mockAuthConnector),
             bind[LockRepository].toInstance(mockLockRepository)
           )
+          .build()
 
-        val actionProvider = application.injector().instanceOf[AuthenticatedGetDepartureForWriteActionProvider]
+        running(application) {
+          val actionProvider = application.injector.instanceOf[AuthenticatedGetDepartureForWriteActionProvider]
 
-        val controller = new Harness(actionProvider)
-        val result     = controller.get(departure.departureId)(fakeRequest.withHeaders("channel" -> departure.channel.toString))
+          val controller = new Harness(actionProvider)
+          val result     = controller.get(departure.departureId)(fakeRequest.withHeaders("channel" -> departure.channel.toString))
 
-        status(result) mustBe OK
-        contentAsString(result) mustBe departure.departureId.toString
-        verify(mockLockRepository, times(1)).lock(eqTo(departure.departureId))
-        verify(mockLockRepository, times(1)).unlock(eqTo(departure.departureId))
+          status(result) mustBe OK
+          contentAsString(result) mustBe departure.departureId.toString
+          verify(mockLockRepository, times(1)).lock(eqTo(departure.departureId))
+          verify(mockLockRepository, times(1)).unlock(eqTo(departure.departureId))
+        }
       }
 
       "must lock and unlock a departure and return Not Found when its EORI does not match the user's" in {
@@ -156,15 +160,18 @@ class AuthenticatedGetDepartureForWriteActionProviderSpec
             bind[AuthConnector].toInstance(mockAuthConnector),
             bind[LockRepository].toInstance(mockLockRepository)
           )
+          .build()
 
-        val actionProvider = application.injector().instanceOf[AuthenticatedGetDepartureForWriteActionProvider]
+        running(application) {
+          val actionProvider = application.injector.instanceOf[AuthenticatedGetDepartureForWriteActionProvider]
 
-        val controller = new Harness(actionProvider)
-        val result     = controller.get(departure.departureId)(fakeRequest.withHeaders("channel" -> departure.channel.toString))
+          val controller = new Harness(actionProvider)
+          val result     = controller.get(departure.departureId)(fakeRequest.withHeaders("channel" -> departure.channel.toString))
 
-        status(result) mustBe NOT_FOUND
-        verify(mockLockRepository, times(1)).lock(eqTo(departure.departureId))
-        verify(mockLockRepository, times(1)).unlock(eqTo(departure.departureId))
+          status(result) mustBe NOT_FOUND
+          verify(mockLockRepository, times(1)).lock(eqTo(departure.departureId))
+          verify(mockLockRepository, times(1)).unlock(eqTo(departure.departureId))
+        }
       }
 
       "must lock, unlock and return Not Found when the departure does not exist" in {
@@ -187,15 +194,18 @@ class AuthenticatedGetDepartureForWriteActionProviderSpec
             bind[AuthConnector].toInstance(mockAuthConnector),
             bind[LockRepository].toInstance(mockLockRepository)
           )
+          .build()
 
-        val actionProvider = application.injector().instanceOf[AuthenticatedGetDepartureForWriteActionProvider]
+        running(application) {
+          val actionProvider = application.injector.instanceOf[AuthenticatedGetDepartureForWriteActionProvider]
 
-        val controller = new Harness(actionProvider)
-        val result     = controller.get(departureId)(fakeRequest.withHeaders("channel" -> web.toString))
+          val controller = new Harness(actionProvider)
+          val result     = controller.get(departureId)(fakeRequest.withHeaders("channel" -> web.toString))
 
-        status(result) mustBe NOT_FOUND
-        verify(mockLockRepository, times(1)).lock(eqTo(departureId))
-        verify(mockLockRepository, times(1)).unlock(eqTo(departureId))
+          status(result) mustBe NOT_FOUND
+          verify(mockLockRepository, times(1)).lock(eqTo(departureId))
+          verify(mockLockRepository, times(1)).unlock(eqTo(departureId))
+        }
       }
 
       "must return Not Found when the departure exists but does not share the channel" in {
@@ -274,14 +284,17 @@ class AuthenticatedGetDepartureForWriteActionProviderSpec
             bind[AuthConnector].toInstance(mockAuthConnector),
             bind[LockRepository].toInstance(mockLockRepository)
           )
+          .build()
 
-        val actionProvider = application.injector().instanceOf[AuthenticatedGetDepartureForWriteActionProvider]
+        running(application) {
+          val actionProvider = application.injector.instanceOf[AuthenticatedGetDepartureForWriteActionProvider]
 
-        val controller = new Harness(actionProvider)
-        val result     = controller.failingAction(departure.departureId)(fakeRequest.withHeaders("channel" -> departure.channel.toString))
+          val controller = new Harness(actionProvider)
+          val result     = controller.failingAction(departure.departureId)(fakeRequest.withHeaders("channel" -> departure.channel.toString))
 
-        status(result) mustBe INTERNAL_SERVER_ERROR
-        verify(mockLockRepository, times(1)).unlock(eqTo(departure.departureId))
+          status(result) mustBe INTERNAL_SERVER_ERROR
+          verify(mockLockRepository, times(1)).unlock(eqTo(departure.departureId))
+        }
       }
     }
 
@@ -319,15 +332,18 @@ class AuthenticatedGetDepartureForWriteActionProviderSpec
             bind[AuthConnector].toInstance(mockAuthConnector),
             bind[LockRepository].toInstance(mockLockRepository)
           )
+          .build()
 
-        val actionProvider = application.injector().instanceOf[AuthenticatedGetDepartureForWriteActionProvider]
+        running(application) {
+          val actionProvider = application.injector.instanceOf[AuthenticatedGetDepartureForWriteActionProvider]
 
-        val controller = new Harness(actionProvider)
-        val result     = controller.get(departureId)(fakeRequest.withHeaders("channel" -> web.toString))
+          val controller = new Harness(actionProvider)
+          val result     = controller.get(departureId)(fakeRequest.withHeaders("channel" -> web.toString))
 
-        status(result) mustBe FORBIDDEN
-        verify(mockLockRepository, times(1)).lock(eqTo(departureId))
-        verify(mockLockRepository, times(1)).unlock(eqTo(departureId))
+          status(result) mustBe FORBIDDEN
+          verify(mockLockRepository, times(1)).lock(eqTo(departureId))
+          verify(mockLockRepository, times(1)).unlock(eqTo(departureId))
+        }
       }
     }
 
@@ -345,13 +361,16 @@ class AuthenticatedGetDepartureForWriteActionProviderSpec
           .overrides(
             bind[LockRepository].toInstance(mockLockRepository)
           )
+          .build()
 
-        val actionProvider = application.injector().instanceOf[AuthenticatedGetDepartureForWriteActionProvider]
+        running(application) {
+          val actionProvider = application.injector.instanceOf[AuthenticatedGetDepartureForWriteActionProvider]
 
-        val controller = new Harness(actionProvider)
-        val result     = controller.get(departureId)(fakeRequest)
+          val controller = new Harness(actionProvider)
+          val result     = controller.get(departureId)(fakeRequest)
 
-        status(result) mustBe LOCKED
+          status(result) mustBe LOCKED
+        }
       }
     }
 

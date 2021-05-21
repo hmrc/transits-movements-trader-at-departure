@@ -39,7 +39,14 @@ class StatusTransitionSpec extends SpecBase with ScalaCheckDrivenPropertyChecks 
 
     "transition to PositiveAcknowledgement when receiving a PositiveAcknowledgement event" in {
       StatusTransition.transition(DepartureStatus.Initialized, MessageReceivedEvent.PositiveAcknowledgement) mustEqual Right(
-        DepartureStatus.PositiveAcknowledgement)
+        DepartureStatus.PositiveAcknowledgement
+      )
+    }
+
+    "transition to DepartureSubmittedNegativeAcknowledgement when receiving an XMLSubmissionNegativeAcknowledgement event" in {
+      StatusTransition.transition(DepartureStatus.Initialized, MessageReceivedEvent.XMLSubmissionNegativeAcknowledgement) mustEqual Right(
+        DepartureStatus.DepartureSubmittedNegativeAcknowledgement
+      )
     }
 
     "return an error message when receiving any other event" in {
@@ -47,12 +54,15 @@ class StatusTransitionSpec extends SpecBase with ScalaCheckDrivenPropertyChecks 
         MessageReceivedEvent.DepartureSubmitted,
         MessageReceivedEvent.MrnAllocated,
         MessageReceivedEvent.DepartureRejected,
-        MessageReceivedEvent.PositiveAcknowledgement
+        MessageReceivedEvent.PositiveAcknowledgement,
+        MessageReceivedEvent.XMLSubmissionNegativeAcknowledgement
       )
       val invalidMessages = MessageReceivedEvent.values.diff(validMessages)
       invalidMessages.foreach {
         m =>
-          StatusTransition.transition(DepartureStatus.Initialized, m).isLeft mustBe true
+          withClue(s"Received event $m at status ${DepartureStatus.Initialized}:") {
+            StatusTransition.transition(DepartureStatus.Initialized, m) mustBe a[Left[_, _]]
+          }
       }
     }
   }
@@ -60,12 +70,14 @@ class StatusTransitionSpec extends SpecBase with ScalaCheckDrivenPropertyChecks 
   "DepartureSubmitted must" - {
     "transition to DepartureSubmitted when receiving a DepartureSubmitted event" in {
       StatusTransition.transition(DepartureStatus.DepartureSubmitted, MessageReceivedEvent.DepartureSubmitted) mustEqual Right(
-        DepartureStatus.DepartureSubmitted)
+        DepartureStatus.DepartureSubmitted
+      )
     }
 
     "transition to PositiveAcknowledgement when receiving a PositiveAcknowledgement event" in {
       StatusTransition.transition(DepartureStatus.DepartureSubmitted, MessageReceivedEvent.PositiveAcknowledgement) mustEqual Right(
-        DepartureStatus.PositiveAcknowledgement)
+        DepartureStatus.PositiveAcknowledgement
+      )
     }
 
     "transition to MrnAllocated when receiving a MrnAllocated event" in {
@@ -76,17 +88,26 @@ class StatusTransitionSpec extends SpecBase with ScalaCheckDrivenPropertyChecks 
       StatusTransition.transition(DepartureStatus.DepartureSubmitted, MessageReceivedEvent.DepartureRejected) mustEqual Right(DepartureStatus.DepartureRejected)
     }
 
+    "transition to DepartureSubmittedNegativeAcknowledgement when receiving an XMLSubmissionNegativeAcknowledgement event" in {
+      StatusTransition.transition(DepartureStatus.DepartureSubmitted, MessageReceivedEvent.XMLSubmissionNegativeAcknowledgement) mustEqual Right(
+        DepartureStatus.DepartureSubmittedNegativeAcknowledgement
+      )
+    }
+
     "return an error message when receiving any other event" in {
       val validMessages = Seq(
         MessageReceivedEvent.DepartureSubmitted,
         MessageReceivedEvent.PositiveAcknowledgement,
         MessageReceivedEvent.MrnAllocated,
-        MessageReceivedEvent.DepartureRejected
+        MessageReceivedEvent.DepartureRejected,
+        MessageReceivedEvent.XMLSubmissionNegativeAcknowledgement
       )
       val invalidMessages = MessageReceivedEvent.values.diff(validMessages)
       invalidMessages.foreach {
         m =>
-          StatusTransition.transition(DepartureStatus.DepartureSubmitted, m).isLeft mustBe true
+          withClue(s"Received event $m at status ${DepartureStatus.DepartureSubmitted}:") {
+            StatusTransition.transition(DepartureStatus.DepartureSubmitted, m) mustBe a[Left[_, _]]
+          }
       }
     }
   }
@@ -98,7 +119,8 @@ class StatusTransitionSpec extends SpecBase with ScalaCheckDrivenPropertyChecks 
 
     "transition to PositiveAcknowledgement when receiving a PositiveAcknowledgement event" in {
       StatusTransition.transition(DepartureStatus.PositiveAcknowledgement, MessageReceivedEvent.PositiveAcknowledgement) mustEqual Right(
-        DepartureStatus.PositiveAcknowledgement)
+        DepartureStatus.PositiveAcknowledgement
+      )
     }
 
     "return an error message when receiving any other event" in {
@@ -106,7 +128,9 @@ class StatusTransitionSpec extends SpecBase with ScalaCheckDrivenPropertyChecks 
       val invalidMessages = MessageReceivedEvent.values.diff(validMessages)
       invalidMessages.foreach {
         m =>
-          StatusTransition.transition(DepartureStatus.PositiveAcknowledgement, m).isLeft mustBe true
+          withClue(s"Received event $m at status ${DepartureStatus.PositiveAcknowledgement}:") {
+            StatusTransition.transition(DepartureStatus.PositiveAcknowledgement, m) mustBe a[Left[_, _]]
+          }
       }
     }
   }
@@ -118,7 +142,8 @@ class StatusTransitionSpec extends SpecBase with ScalaCheckDrivenPropertyChecks 
 
     "transition to ControlDecisionNotification when receiving a ControlDecisionNotification event" in {
       StatusTransition.transition(DepartureStatus.MrnAllocated, MessageReceivedEvent.ControlDecisionNotification) mustEqual Right(
-        DepartureStatus.ControlDecisionNotification)
+        DepartureStatus.ControlDecisionNotification
+      )
     }
 
     "transition to NoReleaseForTransit when receiving a NoReleaseForTransit event" in {
@@ -131,7 +156,8 @@ class StatusTransitionSpec extends SpecBase with ScalaCheckDrivenPropertyChecks 
 
     "transition to DeclarationCancellationRequest when receiving a DeclarationCancellationRequest event" in {
       StatusTransition.transition(DepartureStatus.MrnAllocated, MessageReceivedEvent.DeclarationCancellationRequest) mustEqual Right(
-        DepartureStatus.DeclarationCancellationRequest)
+        DepartureStatus.DeclarationCancellationRequest
+      )
     }
 
     "transition to GuaranteeNotValid when receiving a GuaranteeNotValid event" in {
@@ -150,7 +176,9 @@ class StatusTransitionSpec extends SpecBase with ScalaCheckDrivenPropertyChecks 
       val invalidMessages = MessageReceivedEvent.values.diff(validMessages)
       invalidMessages.foreach {
         m =>
-          StatusTransition.transition(DepartureStatus.MrnAllocated, m).isLeft mustBe true
+          withClue(s"Received event $m at status ${DepartureStatus.MrnAllocated}:") {
+            StatusTransition.transition(DepartureStatus.MrnAllocated, m) mustBe a[Left[_, _]]
+          }
       }
     }
   }
@@ -165,7 +193,9 @@ class StatusTransitionSpec extends SpecBase with ScalaCheckDrivenPropertyChecks 
       val invalidMessages = MessageReceivedEvent.values.diff(validMessages)
       invalidMessages.foreach {
         m =>
-          StatusTransition.transition(DepartureStatus.DepartureRejected, m).isLeft mustBe true
+          withClue(s"Received event $m at status ${DepartureStatus.DepartureRejected}:") {
+            StatusTransition.transition(DepartureStatus.DepartureRejected, m) mustBe a[Left[_, _]]
+          }
       }
     }
   }
@@ -173,17 +203,20 @@ class StatusTransitionSpec extends SpecBase with ScalaCheckDrivenPropertyChecks 
   "ControlDecisionNotification must " - {
     "transition to ControlDecisionNotification when receiving a ControlDecisionNotification event" in {
       StatusTransition.transition(DepartureStatus.ControlDecisionNotification, MessageReceivedEvent.ControlDecisionNotification) mustEqual Right(
-        DepartureStatus.ControlDecisionNotification)
+        DepartureStatus.ControlDecisionNotification
+      )
     }
 
     "transition to NoReleaseForTransit when receiving a NoReleaseForTransit event" in {
       StatusTransition.transition(DepartureStatus.ControlDecisionNotification, MessageReceivedEvent.NoReleaseForTransit) mustEqual Right(
-        DepartureStatus.NoReleaseForTransit)
+        DepartureStatus.NoReleaseForTransit
+      )
     }
 
     "transition to ReleaseForTransit when receiving a ReleaseForTransit event" in {
       StatusTransition.transition(DepartureStatus.ControlDecisionNotification, MessageReceivedEvent.ReleaseForTransit) mustEqual Right(
-        DepartureStatus.ReleaseForTransit)
+        DepartureStatus.ReleaseForTransit
+      )
     }
 
     "return an error message when receiving any other event" in {
@@ -192,7 +225,9 @@ class StatusTransitionSpec extends SpecBase with ScalaCheckDrivenPropertyChecks 
       val invalidMessages = MessageReceivedEvent.values.diff(validMessages)
       invalidMessages.foreach {
         m =>
-          StatusTransition.transition(DepartureStatus.ControlDecisionNotification, m).isLeft mustBe true
+          withClue(s"Received event $m at status ${DepartureStatus.ControlDecisionNotification}:") {
+            StatusTransition.transition(DepartureStatus.ControlDecisionNotification, m) mustBe a[Left[_, _]]
+          }
       }
     }
   }
@@ -204,17 +239,20 @@ class StatusTransitionSpec extends SpecBase with ScalaCheckDrivenPropertyChecks 
 
     "transition to DeclarationCancellationRequest when receiving a DeclarationCancellationRequest event" in {
       StatusTransition.transition(DepartureStatus.ReleaseForTransit, MessageReceivedEvent.DeclarationCancellationRequest) mustEqual Right(
-        DepartureStatus.DeclarationCancellationRequest)
+        DepartureStatus.DeclarationCancellationRequest
+      )
     }
 
     "transition to CancellationDecision when receiving a CancellationDecision event" in {
       StatusTransition.transition(DepartureStatus.ReleaseForTransit, MessageReceivedEvent.CancellationDecision) mustEqual Right(
-        DepartureStatus.CancellationDecision)
+        DepartureStatus.CancellationDecision
+      )
     }
 
     "transition to WriteOffNotification when receiving a WriteOffNotification event" in {
       StatusTransition.transition(DepartureStatus.ReleaseForTransit, MessageReceivedEvent.WriteOffNotification) mustEqual Right(
-        DepartureStatus.WriteOffNotification)
+        DepartureStatus.WriteOffNotification
+      )
     }
 
     "return an error message when receiving any other event" in {
@@ -228,7 +266,9 @@ class StatusTransitionSpec extends SpecBase with ScalaCheckDrivenPropertyChecks 
       val invalidMessages = MessageReceivedEvent.values.diff(validMessages)
       invalidMessages.foreach {
         m =>
-          StatusTransition.transition(DepartureStatus.ReleaseForTransit, m).isLeft mustBe true
+          withClue(s"Received event $m at status ${DepartureStatus.ReleaseForTransit}:") {
+            StatusTransition.transition(DepartureStatus.ReleaseForTransit, m) mustBe a[Left[_, _]]
+          }
       }
     }
   }
@@ -236,7 +276,8 @@ class StatusTransitionSpec extends SpecBase with ScalaCheckDrivenPropertyChecks 
   "NoReleaseForTransit must " - {
     "transition to NoReleaseForTransit when receiving a NoReleaseForTransit event" in {
       StatusTransition.transition(DepartureStatus.NoReleaseForTransit, MessageReceivedEvent.NoReleaseForTransit) mustEqual Right(
-        DepartureStatus.NoReleaseForTransit)
+        DepartureStatus.NoReleaseForTransit
+      )
     }
 
     "return an error message when receiving any other event" in {
@@ -244,7 +285,9 @@ class StatusTransitionSpec extends SpecBase with ScalaCheckDrivenPropertyChecks 
       val invalidMessages = MessageReceivedEvent.values.diff(validMessages)
       invalidMessages.foreach {
         m =>
-          StatusTransition.transition(DepartureStatus.NoReleaseForTransit, m).isLeft mustBe true
+          withClue(s"Received event $m at status ${DepartureStatus.NoReleaseForTransit}:") {
+            StatusTransition.transition(DepartureStatus.NoReleaseForTransit, m) mustBe a[Left[_, _]]
+          }
       }
     }
   }
@@ -252,20 +295,34 @@ class StatusTransitionSpec extends SpecBase with ScalaCheckDrivenPropertyChecks 
   "DeclarationCancellationRequest must " - {
     "transition to DeclarationCancellationRequest when receiving a DeclarationCancellationRequest event" in {
       StatusTransition.transition(DepartureStatus.DeclarationCancellationRequest, MessageReceivedEvent.DeclarationCancellationRequest) mustEqual Right(
-        DepartureStatus.DeclarationCancellationRequest)
+        DepartureStatus.DeclarationCancellationRequest
+      )
     }
 
     "transition to CancellationDecision when receiving a CancellationDecision event" in {
       StatusTransition.transition(DepartureStatus.DeclarationCancellationRequest, MessageReceivedEvent.CancellationDecision) mustEqual Right(
-        DepartureStatus.CancellationDecision)
+        DepartureStatus.CancellationDecision
+      )
+    }
+
+    "transition to DeclarationCancellationRequestNegativeAcknowledgement when receiving an XMLSubmissionNegativeAcknowledgement event" in {
+      StatusTransition.transition(DepartureStatus.DeclarationCancellationRequest, MessageReceivedEvent.XMLSubmissionNegativeAcknowledgement) mustEqual Right(
+        DepartureStatus.DeclarationCancellationRequestNegativeAcknowledgement
+      )
     }
 
     "return an error message when receiving any other event" in {
-      val validMessages   = Seq(MessageReceivedEvent.DeclarationCancellationRequest, MessageReceivedEvent.CancellationDecision)
+      val validMessages = Seq(
+        MessageReceivedEvent.DeclarationCancellationRequest,
+        MessageReceivedEvent.CancellationDecision,
+        MessageReceivedEvent.XMLSubmissionNegativeAcknowledgement
+      )
       val invalidMessages = MessageReceivedEvent.values.diff(validMessages)
       invalidMessages.foreach {
         m =>
-          StatusTransition.transition(DepartureStatus.DeclarationCancellationRequest, m).isLeft mustBe true
+          withClue(s"Received event $m at status ${DepartureStatus.DeclarationCancellationRequest}:") {
+            StatusTransition.transition(DepartureStatus.DeclarationCancellationRequest, m) mustBe a[Left[_, _]]
+          }
       }
     }
   }
@@ -273,12 +330,14 @@ class StatusTransitionSpec extends SpecBase with ScalaCheckDrivenPropertyChecks 
   "CancellationDecision must " - {
     "transition to CancellationDecision when receiving a CancellationDecision event" in {
       StatusTransition.transition(DepartureStatus.CancellationDecision, MessageReceivedEvent.CancellationDecision) mustEqual Right(
-        DepartureStatus.CancellationDecision)
+        DepartureStatus.CancellationDecision
+      )
     }
 
     "transition to WriteOffNotification when receiving a WriteOffNotification event" in {
       StatusTransition.transition(DepartureStatus.CancellationDecision, MessageReceivedEvent.WriteOffNotification) mustEqual Right(
-        DepartureStatus.WriteOffNotification)
+        DepartureStatus.WriteOffNotification
+      )
     }
 
     "return an error message when receiving any other event" in {
@@ -286,7 +345,9 @@ class StatusTransitionSpec extends SpecBase with ScalaCheckDrivenPropertyChecks 
       val invalidMessages = MessageReceivedEvent.values.diff(validMessages)
       invalidMessages.foreach {
         m =>
-          StatusTransition.transition(DepartureStatus.CancellationDecision, m).isLeft mustBe true
+          withClue(s"Received event $m at status ${DepartureStatus.CancellationDecision}:") {
+            StatusTransition.transition(DepartureStatus.CancellationDecision, m) mustBe a[Left[_, _]]
+          }
       }
     }
   }
@@ -294,7 +355,8 @@ class StatusTransitionSpec extends SpecBase with ScalaCheckDrivenPropertyChecks 
   "WriteOffNotification must " - {
     "transition to WriteOffNotification when receiving a WriteOffNotification event" in {
       StatusTransition.transition(DepartureStatus.WriteOffNotification, MessageReceivedEvent.WriteOffNotification) mustEqual Right(
-        DepartureStatus.WriteOffNotification)
+        DepartureStatus.WriteOffNotification
+      )
     }
 
     "return an error message when receiving any other event" in {
@@ -302,7 +364,9 @@ class StatusTransitionSpec extends SpecBase with ScalaCheckDrivenPropertyChecks 
       val invalidMessages = MessageReceivedEvent.values.diff(validMessages)
       invalidMessages.foreach {
         m =>
-          StatusTransition.transition(DepartureStatus.WriteOffNotification, m).isLeft mustBe true
+          withClue(s"Received event $m at status ${DepartureStatus.WriteOffNotification}:") {
+            StatusTransition.transition(DepartureStatus.WriteOffNotification, m) mustBe a[Left[_, _]]
+          }
       }
     }
   }
@@ -314,7 +378,8 @@ class StatusTransitionSpec extends SpecBase with ScalaCheckDrivenPropertyChecks 
 
     "transition to NoReleaseForTransit when recieving a NoReleaseForTransit event" in {
       StatusTransition.transition(DepartureStatus.GuaranteeNotValid, MessageReceivedEvent.NoReleaseForTransit) mustEqual Right(
-        DepartureStatus.NoReleaseForTransit)
+        DepartureStatus.NoReleaseForTransit
+      )
     }
 
     "transition to ReleaseForTransit when recieving a ReleaseForTransit event" in {
@@ -323,7 +388,8 @@ class StatusTransitionSpec extends SpecBase with ScalaCheckDrivenPropertyChecks 
 
     "transition to DeclarationCancellationRequest when recieving a DeclarationCancellationRequest event" in {
       StatusTransition.transition(DepartureStatus.GuaranteeNotValid, MessageReceivedEvent.DeclarationCancellationRequest) mustEqual Right(
-        DepartureStatus.DeclarationCancellationRequest)
+        DepartureStatus.DeclarationCancellationRequest
+      )
     }
 
     "return an error message when receiving any other event" in {
@@ -336,7 +402,62 @@ class StatusTransitionSpec extends SpecBase with ScalaCheckDrivenPropertyChecks 
       val invalidMessages = MessageReceivedEvent.values.diff(validMessages)
       invalidMessages.foreach {
         m =>
-          StatusTransition.transition(DepartureStatus.GuaranteeNotValid, m).isLeft mustBe true
+          withClue(s"Received event $m at status ${DepartureStatus.GuaranteeNotValid}:") {
+            StatusTransition.transition(DepartureStatus.GuaranteeNotValid, m) mustBe a[Left[_, _]]
+          }
+      }
+    }
+  }
+
+  "DepartureSubmittedNegativeAcknowledgement must " - {
+    "transition to DepartureSubmittedNegativeAcknowledgement when receiving an XMLSubmissionNegativeAcknowledgement event" in {
+      StatusTransition.transition(
+        DepartureStatus.DepartureSubmittedNegativeAcknowledgement,
+        MessageReceivedEvent.XMLSubmissionNegativeAcknowledgement
+      ) mustEqual Right(
+        DepartureStatus.DepartureSubmittedNegativeAcknowledgement
+      )
+    }
+
+    "return an error message when receiving any other event" in {
+      val validMessages   = Seq(MessageReceivedEvent.XMLSubmissionNegativeAcknowledgement)
+      val invalidMessages = MessageReceivedEvent.values.diff(validMessages)
+      invalidMessages.foreach {
+        m =>
+          withClue(s"Received event $m at status ${DepartureStatus.DepartureSubmittedNegativeAcknowledgement}:") {
+            StatusTransition.transition(DepartureStatus.DepartureSubmittedNegativeAcknowledgement, m) mustBe a[Left[_, _]]
+          }
+      }
+    }
+  }
+
+  "DeclarationCancellationRequestNegativeAcknowledgement must" - {
+    "transition to DeclarationCancellationRequestNegativeAcknowledgement when receiving an XMLSubmissionNegativeAcknowledgement event" in {
+      StatusTransition.transition(
+        DepartureStatus.DeclarationCancellationRequestNegativeAcknowledgement,
+        MessageReceivedEvent.XMLSubmissionNegativeAcknowledgement
+      ) mustEqual Right(
+        DepartureStatus.DeclarationCancellationRequestNegativeAcknowledgement
+      )
+    }
+
+    "transition to DeclarationCancellationRequest when receiving a DeclarationCancellationRequest event" in {
+      StatusTransition.transition(
+        DepartureStatus.DeclarationCancellationRequestNegativeAcknowledgement,
+        MessageReceivedEvent.DeclarationCancellationRequest
+      ) mustEqual Right(
+        DepartureStatus.DeclarationCancellationRequest
+      )
+    }
+
+    "return an error message when receiving any other event" in {
+      val validMessages   = Seq(MessageReceivedEvent.XMLSubmissionNegativeAcknowledgement, MessageReceivedEvent.DeclarationCancellationRequest)
+      val invalidMessages = MessageReceivedEvent.values.diff(validMessages)
+      invalidMessages.foreach {
+        m =>
+          withClue(s"Received event $m at status ${DepartureStatus.DeclarationCancellationRequestNegativeAcknowledgement}:") {
+            StatusTransition.transition(DepartureStatus.DeclarationCancellationRequestNegativeAcknowledgement, m) mustBe a[Left[_, _]]
+          }
       }
     }
   }

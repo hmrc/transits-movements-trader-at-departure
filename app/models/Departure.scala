@@ -74,7 +74,9 @@ object Departure {
         (__ \ "referenceNumber").read[String] and
         (__ \ "status").read[DepartureStatus] and
         (__ \ "created").read(MongoDateTimeFormats.localDateTimeRead) and
-        (__ \ "lastUpdated").read(MongoDateTimeFormats.localDateTimeRead) and
+        (__ \ "lastUpdated")
+          .read(MongoDateTimeFormats.localDateTimeRead)
+          .orElse((__ \ "updated").read(MongoDateTimeFormats.localDateTimeRead)) and
         (__ \ "nextMessageCorrelationId").read[Int] and
         (__ \ "messages").read[NonEmptyList[Message]] and
         (__ \ "notificationBox").readNullable[Box]

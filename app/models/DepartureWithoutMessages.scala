@@ -72,7 +72,9 @@ object DepartureWithoutMessages {
         (__ \ "referenceNumber").read[String] and
         (__ \ "status").read[DepartureStatus] and
         (__ \ "created").read(MongoDateTimeFormats.localDateTimeRead) and
-        (__ \ "lastUpdated").read(MongoDateTimeFormats.localDateTimeRead) and
+        (__ \ "lastUpdated")
+          .read(MongoDateTimeFormats.localDateTimeRead)
+          .orElse((__ \ "updated").read(MongoDateTimeFormats.localDateTimeRead)) and
         (__ \ "notificationBox").readNullable[Box]
     )(DepartureWithoutMessages.apply _)
 
@@ -84,6 +86,7 @@ object DepartureWithoutMessages {
     "referenceNumber"         -> 1,
     "status"                  -> 1,
     "created"                 -> 1,
+    "updated"                 -> 1,
     "lastUpdated"             -> 1,
     "notificationBox"         -> 1
   )

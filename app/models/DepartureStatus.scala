@@ -46,6 +46,10 @@ object DepartureStatus extends Enumerable.Implicits with MongoDateTimeFormats {
 
   case object GuaranteeNotValid extends DepartureStatus
 
+  case object DepartureSubmittedNegativeAcknowledgement extends DepartureStatus
+
+  case object DeclarationCancellationRequestNegativeAcknowledgement extends DepartureStatus
+
   val values = Seq(
     Initialized,
     DepartureSubmitted,
@@ -58,7 +62,9 @@ object DepartureStatus extends Enumerable.Implicits with MongoDateTimeFormats {
     DeclarationCancellationRequest,
     CancellationDecision,
     WriteOffNotification,
-    GuaranteeNotValid
+    GuaranteeNotValid,
+    DepartureSubmittedNegativeAcknowledgement,
+    DeclarationCancellationRequestNegativeAcknowledgement
   )
 
   implicit val enumerable: Enumerable[DepartureStatus] =
