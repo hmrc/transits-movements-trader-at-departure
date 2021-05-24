@@ -36,6 +36,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.xml.NodeSeq
 
 class PushPullNotificationServiceSpec extends SpecBase with BeforeAndAfterEach with ScalaCheckPropertyChecks {
   val mockConnector = mock[PushPullNotificationConnector]
@@ -43,12 +44,13 @@ class PushPullNotificationServiceSpec extends SpecBase with BeforeAndAfterEach w
 
   override protected def beforeEach(): Unit = reset(mockConnector)
 
+  val testBoxId    = "1c5b9365-18a6-55a5-99c9-83a091ac7f26"
+  val testClientId = "X5ZasuQLH0xqKooV_IEw6yjQNfEa"
+  val testBox      = Box(BoxId(testBoxId), Constants.BoxName)
+
   "PushPullNotificationService" - {
 
     "getBox" - {
-      val testBoxId    = "1c5b9365-18a6-55a5-99c9-83a091ac7f26"
-      val testClientId = "X5ZasuQLH0xqKooV_IEw6yjQNfEa"
-      val testBox      = Box(BoxId(testBoxId), Constants.BoxName)
 
       "return a Some(box) when connector call returns 200" in {
         val mockedGetBox     = mockConnector.getBox(anyString())(any[ExecutionContext], any[HeaderCarrier])
@@ -83,6 +85,33 @@ class PushPullNotificationServiceSpec extends SpecBase with BeforeAndAfterEach w
 
             Await.result(service.getBox(testClientId), 30.seconds).mustEqual(None)
         }
+      }
+    }
+
+    "sendPushNotification" - {
+      "should return a unit value when connector call succeeds" in {
+        val testBody: NodeSeq = <test>test content</test>
+        val boxIdMatcher      = refEq(testBoxId).asInstanceOf[BoxId]
+
+        val mockedPostNotification = mockConnector.postNotification(boxIdMatcher, any[NodeSeq])(any[ExecutionContext], any[HeaderCarrier])
+        val successfulResult       = Future.successful(Right(()))
+
+        given(mockedPostNotification).willReturn(successfulResult)
+
+        Await.result(service.sendPushNotification(testBox.boxId, testBody), 30.seconds).mustEqual(())
+      }
+
+      "should not return anything when call fails" in {
+
+        val testBody: NodeSeq = <test>test content</test>
+        val boxIdMatcher      = refEq(testBoxId).asInstanceOf[BoxId]
+
+        val mockedPostNotification = mockConnector.postNotification(boxIdMatcher, any[NodeSeq])(any[ExecutionContext], any[HeaderCarrier])
+
+        given(mockedPostNotification).willReturn(Future.failed(new RuntimeException))
+
+        Await.result(service.sendPushNotification(testBox.boxId, testBody), 30.seconds).mustEqual(())
+
       }
     }
   }

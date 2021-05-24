@@ -16,18 +16,21 @@
 
 package connectors
 
-import org.scalatest.freespec.AnyFreeSpec
-import uk.gov.hmrc.http.HeaderCarrier
 import com.github.tomakehurst.wiremock.client.WireMock._
-import play.api.test.Helpers._
-import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.concurrent.IntegrationPatience
-import org.scalatest.matchers.must.Matchers
 import config.Constants
 import models.Box
 import models.BoxId
+import org.scalacheck.Gen
+import org.scalatest.concurrent.IntegrationPatience
+import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.freespec.AnyFreeSpec
+import org.scalatest.matchers.must.Matchers
+import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks._
+import play.api.test.Helpers._
+import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.xml.NodeSeq
 
 class PushPullNotificationConnectorSpec extends AnyFreeSpec with WiremockSuite with ScalaFutures with Matchers with IntegrationPatience {
   override protected def portConfigKey: String = "microservice.services.push-pull-notifications-api.port"
@@ -113,6 +116,62 @@ class PushPullNotificationConnectorSpec extends AnyFreeSpec with WiremockSuite w
           result.left.get.statusCode mustBe INTERNAL_SERVER_ERROR
         }
       }
+    }
+
+    "postNotification" - {
+
+      val testBody: NodeSeq = <test>some text</test>
+      val testBoxId         = "1c5b9365-18a6-55a5-99c9-83a091ac7f26"
+      val testUrlPath       = s"/box/$testBoxId/notifications"
+
+      "should return a Right[Unit] when the notification is successfully POSTed" in {
+
+        server.stubFor {
+          post(urlPathEqualTo(testUrlPath)).willReturn(aResponse().withStatus(CREATED))
+        }
+
+        val app = appBuilder.build()
+
+        running(app) {
+          val connector = app.injector.instanceOf[PushPullNotificationConnector]
+          val result    = connector.postNotification(BoxId(testBoxId), testBody)
+
+          result.futureValue.right.get.mustEqual(())
+        }
+      }
+
+      "should return a Left[UpstreamErrorResponse] when any 4xx or 5xx error is returned" in {
+        val errorGenerator: Gen[Int] = Gen.oneOf(
+          Seq(
+            INTERNAL_SERVER_ERROR,
+            BAD_REQUEST,
+            FORBIDDEN,
+            GATEWAY_TIMEOUT,
+            NOT_FOUND,
+            NOT_IMPLEMENTED,
+            SERVICE_UNAVAILABLE,
+            UNAUTHORIZED
+          )
+        )
+
+        val app = appBuilder.build()
+
+        running(app) {
+          forAll(errorGenerator) {
+            code =>
+              server.stubFor {
+                post(urlPathEqualTo(testUrlPath)).willReturn(aResponse().withStatus(code))
+              }
+
+              val connector = app.injector.instanceOf[PushPullNotificationConnector]
+              val result    = connector.postNotification(BoxId(testBoxId), testBody)
+
+              result.futureValue.left.get.statusCode mustBe code
+
+          }
+        }
+      }
+
     }
   }
 

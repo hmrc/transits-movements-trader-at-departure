@@ -20,6 +20,7 @@ import com.google.inject.Inject
 import config.AppConfig
 import config.Constants
 import models.Box
+import models.BoxId
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.HttpClient
 import uk.gov.hmrc.http.UpstreamErrorResponse
@@ -27,6 +28,7 @@ import uk.gov.hmrc.http.HttpReads.Implicits._
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
+import scala.xml.NodeSeq
 
 class PushPullNotificationConnector @Inject()(config: AppConfig, http: HttpClient) {
 
@@ -38,5 +40,14 @@ class PushPullNotificationConnector @Inject()(config: AppConfig, http: HttpClien
     )
 
     http.GET[Either[UpstreamErrorResponse, Box]](url, queryParams)
+  }
+
+  def postNotification(boxId: BoxId, body: NodeSeq)(implicit ec: ExecutionContext, hc: HeaderCarrier): Future[Either[UpstreamErrorResponse, Unit]] = {
+    val url = s"${config.pushPullUrl}/box/${boxId.value}/notifications"
+    val headers = Seq(
+      "Content-Type" -> "application/xml"
+    )
+
+    http.POSTString[Either[UpstreamErrorResponse, Unit]](url, body.toString, headers)
   }
 }
