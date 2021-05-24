@@ -29,15 +29,17 @@ import play.api.libs.json.Writes
 import play.api.libs.json.__
 import play.api.libs.functional.syntax._
 
-case class DepartureWithoutMessages(departureId: DepartureId,
-                                    channel: ChannelType,
-                                    eoriNumber: String,
-                                    movementReferenceNumber: Option[MovementReferenceNumber],
-                                    referenceNumber: String,
-                                    status: DepartureStatus,
-                                    created: LocalDateTime,
-                                    lastUpdated: LocalDateTime)
-    extends BaseDeparture {}
+case class DepartureWithoutMessages(
+  departureId: DepartureId,
+  channel: ChannelType,
+  eoriNumber: String,
+  movementReferenceNumber: Option[MovementReferenceNumber],
+  referenceNumber: String,
+  status: DepartureStatus,
+  created: LocalDateTime,
+  lastUpdated: LocalDateTime,
+  notificationBox: Option[Box]
+) extends BaseDeparture {}
 
 object DepartureWithoutMessages {
 
@@ -50,7 +52,8 @@ object DepartureWithoutMessages {
       departure.referenceNumber,
       departure.status,
       departure.created,
-      departure.lastUpdated
+      departure.lastUpdated,
+      departure.notificationBox
     )
 
   implicit def formatsNonEmptyList[A](implicit listReads: Reads[List[A]], listWrites: Writes[List[A]]): Format[NonEmptyList[A]] =
@@ -65,13 +68,14 @@ object DepartureWithoutMessages {
       (__ \ "_id").read[DepartureId] and
         (__ \ "channel").read[ChannelType] and
         (__ \ "eoriNumber").read[String] and
-        (__ \ "movementReferenceNumber").read[Option[MovementReferenceNumber]] and
+        (__ \ "movementReferenceNumber").readNullable[MovementReferenceNumber] and
         (__ \ "referenceNumber").read[String] and
         (__ \ "status").read[DepartureStatus] and
         (__ \ "created").read(MongoDateTimeFormats.localDateTimeRead) and
         (__ \ "lastUpdated")
           .read(MongoDateTimeFormats.localDateTimeRead)
-          .orElse((__ \ "updated").read(MongoDateTimeFormats.localDateTimeRead))
+          .orElse((__ \ "updated").read(MongoDateTimeFormats.localDateTimeRead)) and
+        (__ \ "notificationBox").readNullable[Box]
     )(DepartureWithoutMessages.apply _)
 
   val projection: JsObject = Json.obj(
@@ -83,6 +87,7 @@ object DepartureWithoutMessages {
     "status"                  -> 1,
     "created"                 -> 1,
     "updated"                 -> 1,
-    "lastUpdated"             -> 1
+    "lastUpdated"             -> 1,
+    "notificationBox"         -> 1
   )
 }

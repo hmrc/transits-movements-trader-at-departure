@@ -17,8 +17,8 @@
 package repositories
 
 import cats.data.NonEmptyList
-import config.AppConfig
 import generators.ModelGenerators
+import config.AppConfig
 import models.ChannelType.api
 import models.ChannelType.web
 import models.DepartureStatus.DepartureSubmitted
@@ -43,10 +43,11 @@ import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import play.api.test.Helpers.running
-import reactivemongo.play.json.ImplicitBSONHandlers.JsObjectDocumentWriter
 import reactivemongo.play.json.collection.JSONCollection
+import scala.util.Success
 import utils.Format
 import utils.JsonHelper
+import reactivemongo.play.json.ImplicitBSONHandlers.JsObjectDocumentWriter
 
 import java.time.Clock
 import java.time.LocalDate
@@ -54,10 +55,10 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.reflect.ClassTag
 import scala.util.Failure
-import scala.util.Success
+
+import scala.concurrent.ExecutionContext.Implicits.global
 
 class DepartureRepositorySpec
     extends AnyFreeSpec
@@ -235,7 +236,7 @@ class DepartureRepositorySpec
 
         val dateOfPrep = LocalDate.now(clock)
         val timeOfPrep = LocalTime.of(1, 1)
-        val dateTime = LocalDateTime.of(dateOfPrep, timeOfPrep)
+        val dateTime   = LocalDateTime.of(dateOfPrep, timeOfPrep)
         val messageBody =
           <CC015B>
             <DatOfPreMES9>{Format.dateFormatted(dateOfPrep)}</DatOfPreMES9>
@@ -400,7 +401,7 @@ class DepartureRepositorySpec
 
         val dateOfPrep = LocalDate.now(clock)
         val timeOfPrep = LocalTime.of(1, 1)
-        val dateTime = LocalDateTime.of(dateOfPrep, timeOfPrep)
+        val dateTime   = LocalDateTime.of(dateOfPrep, timeOfPrep)
         val messageBody =
           <CC016A>
             <DatOfPreMES9>{Format.dateFormatted(dateOfPrep)}</DatOfPreMES9>
@@ -477,7 +478,7 @@ class DepartureRepositorySpec
         val mrn        = "mrn"
         val dateOfPrep = LocalDate.now(clock)
         val timeOfPrep = LocalTime.of(1, 1)
-        val dateTime = LocalDateTime.of(dateOfPrep, timeOfPrep)
+        val dateTime   = LocalDateTime.of(dateOfPrep, timeOfPrep)
         val messageBody =
           <CC028A>
             <DatOfPreMES9>{Format.dateFormatted(dateOfPrep)}</DatOfPreMES9>
@@ -563,7 +564,8 @@ class DepartureRepositorySpec
           departure.referenceNumber,
           departure.status,
           departure.created,
-          departure.lastUpdated
+          departure.lastUpdated,
+          departure.notificationBox
         )
 
       "return DeparturesWithoutMessages that match an eoriNumber and channel type" in {
@@ -624,7 +626,7 @@ class DepartureRepositorySpec
         val app                = new GuiceApplicationBuilder().build()
         val eoriNumber: String = arbitrary[String].sample.value
 
-        val now = LocalDateTime.now(clock)
+        val now        = LocalDateTime.now(clock)
         val departure1 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = api, lastUpdated = now.withSecond(1))
         val departure2 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = api, lastUpdated = now.withSecond(2))
         val departure3 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = api, lastUpdated = now.withSecond(3))
@@ -658,7 +660,7 @@ class DepartureRepositorySpec
         val app                = new GuiceApplicationBuilder().build()
         val eoriNumber: String = arbitrary[String].sample.value
 
-        val now = LocalDateTime.now(clock)
+        val now        = LocalDateTime.now(clock)
         val departure1 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = web, lastUpdated = now.withSecond(1))
         val departure2 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = web, lastUpdated = now.withSecond(2))
         val departure3 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = web, lastUpdated = now.withSecond(3))

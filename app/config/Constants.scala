@@ -14,18 +14,8 @@
  * limitations under the License.
  */
 
-package models
+package config
 
-import play.api.libs.json._
-
-final case class MovementReferenceNumber(value: String)
-
-object MovementReferenceNumber {
-
-  implicit lazy val reads: Reads[MovementReferenceNumber] = __.read[String].map(MovementReferenceNumber.apply)
-
-  implicit lazy val writes: Writes[MovementReferenceNumber] = Writes {
-    mrn =>
-      JsString(mrn.value)
-  }
+object Constants {
+  val BoxName = s"customs/transits##1.0##notificationUrl"
 }

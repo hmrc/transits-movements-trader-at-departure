@@ -34,6 +34,7 @@ import play.api.mvc.AnyContent
 import play.api.mvc.ControllerComponents
 import repositories.DepartureRepository
 import services._
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import scala.concurrent.ExecutionContext
@@ -44,10 +45,12 @@ class DeparturesController @Inject()(
   cc: ControllerComponents,
   departureRepository: DepartureRepository,
   authenticate: AuthenticateActionProvider,
+  authenticateClientId: AuthenticatedClientIdActionProvider,
   authenticatedDepartureForRead: AuthenticatedGetDepartureForReadActionProvider,
   departureService: DepartureService,
   auditService: AuditService,
   submitMessageService: SubmitMessageService,
+  pushPullNotificationService: PushPullNotificationService,
   val metrics: Metrics
 )(implicit ec: ExecutionContext)
     extends BackendController(cc)
@@ -57,41 +60,54 @@ class DeparturesController @Inject()(
   lazy val departuresCount = histo("get-all-departures-count")
   lazy val messagesCount   = histo("get-departure-by-id-messages-count")
 
+  private def getBox(clientIdOpt: Option[String])(implicit hc: HeaderCarrier): Future[Option[Box]] =
+    clientIdOpt
+      .map {
+        clientId =>
+          pushPullNotificationService.getBox(clientId)
+      }
+      .getOrElse(Future.successful(None))
+
   def post: Action[NodeSeq] =
     withMetricsTimerAction("post-create-departure") {
-      authenticate().async(parse.xml) {
+      authenticateClientId().async(parse.xml) {
         implicit request =>
-          departureService
-            .createDeparture(request.eoriNumber, request.body, request.channel)
-            .flatMap {
-              case Left(error) =>
-                logger.error(error.message)
-                Future.successful(BadRequest(error.message))
-              case Right(departure) =>
-                submitMessageService
-                  .submitDeparture(departure)
-                  .map {
-                    case SubmissionProcessingResult.SubmissionFailureInternal =>
-                      InternalServerError
-                    case SubmissionProcessingResult.SubmissionFailureExternal =>
-                      BadGateway
-                    case submissionFailureRejected: SubmissionProcessingResult.SubmissionFailureRejected =>
-                      BadRequest(submissionFailureRejected.responseBody)
-                    case SubmissionProcessingResult.SubmissionSuccess =>
-                      auditService.auditEvent(DepartureDeclarationSubmitted, departure.messages.head, request.channel)
-                      auditService.auditEvent(MesSenMES3Added, departure.messages.head, request.channel)
-                      Accepted
-                        .withHeaders("Location" -> routes.DeparturesController.get(departure.departureId).url)
-                  }
-                  .recover {
-                    case _ =>
-                      InternalServerError
-                  }
-            }
-            .recover {
-              case _ =>
-                InternalServerError
-            }
+          getBox(request.clientIdOpt).flatMap {
+            boxOpt =>
+              departureService
+                .createDeparture(request.eoriNumber, request.body, request.channel, boxOpt)
+                .flatMap {
+                  case Left(error) =>
+                    logger.error(error.message)
+                    Future.successful(BadRequest(error.message))
+                  case Right(departure) =>
+                    submitMessageService
+                      .submitDeparture(departure)
+                      .map {
+                        case SubmissionProcessingResult.SubmissionFailureInternal =>
+                          InternalServerError
+                        case SubmissionProcessingResult.SubmissionFailureExternal =>
+                          BadGateway
+                        case submissionFailureRejected: SubmissionProcessingResult.SubmissionFailureRejected =>
+                          BadRequest(submissionFailureRejected.responseBody)
+                        case SubmissionProcessingResult.SubmissionSuccess =>
+                          auditService.auditEvent(DepartureDeclarationSubmitted, departure.messages.head, request.channel)
+                          auditService.auditEvent(MesSenMES3Added, departure.messages.head, request.channel)
+                          Accepted(Json.toJson(boxOpt))
+                            .withHeaders(
+                              "Location" -> routes.DeparturesController.get(departure.departureId).url
+                            )
+                      }
+                      .recover {
+                        case _ =>
+                          InternalServerError
+                      }
+                }
+                .recover {
+                  case _ =>
+                    InternalServerError
+                }
+          }
       }
     }
 

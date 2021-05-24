@@ -16,16 +16,14 @@
 
 package models
 
-import play.api.libs.json._
+import play.api.libs.json.Format
+import play.api.libs.json.Json
+import play.api.libs.json.OFormat
 
-final case class MovementReferenceNumber(value: String)
+case class Box(boxId: BoxId, boxName: String)
 
-object MovementReferenceNumber {
+object Box {
+  implicit val formatsBox: OFormat[Box] = Json.format[Box]
 
-  implicit lazy val reads: Reads[MovementReferenceNumber] = __.read[String].map(MovementReferenceNumber.apply)
-
-  implicit lazy val writes: Writes[MovementReferenceNumber] = Writes {
-    mrn =>
-      JsString(mrn.value)
-  }
+  implicit val optionBoxFormats: Format[Option[Box]] = Format.optionWithNull[Box]
 }

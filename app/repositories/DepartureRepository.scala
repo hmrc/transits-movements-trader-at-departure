@@ -64,7 +64,7 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfi
     options = BSONDocument("expireAfterSeconds" -> appConfig.cacheTtl)
   )
 
-  val started: Future[Unit] = {
+  val started: Future[Unit] =
     collection
       .flatMap {
         jsonCollection =>
@@ -75,10 +75,11 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfi
             res <- jsonCollection.indexesManager.ensure(lastUpdatedIndex)
           } yield res
       }
-      .map(_ => ())
-  }
+      .map(
+        _ => ()
+      )
 
-  private val collectionName = DepartureRepository.collectionName
+  private lazy val collectionName = DepartureRepository.collectionName
 
   private def collection: Future[JSONCollection] =
     mongo.database.map(_.collection[JSONCollection](collectionName))
@@ -87,7 +88,9 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfi
     collection.flatMap {
       _.insert(false)
         .one(Json.toJsObject(departure))
-        .map(_ => ())
+        .map(
+          _ => ()
+        )
     }
 
   def addNewMessage(departureId: DepartureId, message: Message): Future[Try[Unit]] = {
@@ -123,10 +126,13 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfi
   }
 
   @deprecated("Use updateDeparture since this will be removed in the next version", "next")
-  def setDepartureStateAndMessageState(departureId: DepartureId,
-                                       messageId: MessageId,
-                                       departureState: DepartureStatus,
-                                       messageState: MessageStatus): Future[Option[Unit]] = {
+  def setDepartureStateAndMessageState(
+    departureId: DepartureId,
+    messageId: MessageId,
+    departureState: DepartureStatus,
+    messageState: MessageStatus
+  ): Future[Option[Unit]] = {
+
     val selector = DepartureIdSelector(departureId)
 
     val modifier = CompoundStatusUpdate(DepartureStatusUpdate(departureState), MessageStatusUpdate(messageId, messageState))
@@ -253,8 +259,12 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfi
   }
 
   def fetchAllDepartures(eoriNumber: String, channelFilter: ChannelType, updatedSince: Option[OffsetDateTime]): Future[Seq[DepartureWithoutMessages]] = {
-    val dateFilter = updatedSince.map(dateTime => Json.obj("lastUpdated" -> Json.obj("$gte" -> dateTime))).getOrElse(Json.obj())
-    val selector   = Json.obj("eoriNumber" -> eoriNumber, "channel" -> channelFilter) ++ dateFilter
+    val dateFilter = updatedSince
+      .map(
+        dateTime => Json.obj("lastUpdated" -> Json.obj("$gte" -> dateTime))
+      )
+      .getOrElse(Json.obj())
+    val selector = Json.obj("eoriNumber" -> eoriNumber, "channel" -> channelFilter) ++ dateFilter
 
     collection.flatMap {
       _.find(selector, DepartureWithoutMessages.projection)
@@ -277,7 +287,9 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfi
               Success(())
             else
               writeResult.errmsg
-                .map(x => Failure(new Exception(x)))
+                .map(
+                  x => Failure(new Exception(x))
+                )
                 .getOrElse(Failure(new Exception("Unable to update message status")))
         }
     }
