@@ -32,19 +32,22 @@ trait BaseDeparture {
   def status: DepartureStatus
   def created: LocalDateTime
   def lastUpdated: LocalDateTime
+  def notificationBox: Option[Box]
 }
 
-case class Departure(departureId: DepartureId,
-                     channel: ChannelType,
-                     eoriNumber: String,
-                     movementReferenceNumber: Option[MovementReferenceNumber],
-                     referenceNumber: String,
-                     status: DepartureStatus,
-                     created: LocalDateTime,
-                     lastUpdated: LocalDateTime,
-                     nextMessageCorrelationId: Int,
-                     messages: NonEmptyList[Message])
-    extends BaseDeparture {
+case class Departure(
+  departureId: DepartureId,
+  channel: ChannelType,
+  eoriNumber: String,
+  movementReferenceNumber: Option[MovementReferenceNumber],
+  referenceNumber: String,
+  status: DepartureStatus,
+  created: LocalDateTime,
+  lastUpdated: LocalDateTime,
+  nextMessageCorrelationId: Int,
+  messages: NonEmptyList[Message],
+  notificationBox: Option[Box]
+) extends BaseDeparture {
 
   def nextMessageId: MessageId = MessageId.fromIndex(messages.length)
 
@@ -67,7 +70,7 @@ object Departure {
       (__ \ "_id").read[DepartureId] and
         (__ \ "channel").read[ChannelType] and
         (__ \ "eoriNumber").read[String] and
-        (__ \ "movementReferenceNumber").read[Option[MovementReferenceNumber]] and
+        (__ \ "movementReferenceNumber").readNullable[MovementReferenceNumber] and
         (__ \ "referenceNumber").read[String] and
         (__ \ "status").read[DepartureStatus] and
         (__ \ "created").read(MongoDateTimeFormats.localDateTimeRead) and
@@ -75,7 +78,8 @@ object Departure {
           .read(MongoDateTimeFormats.localDateTimeRead)
           .orElse((__ \ "updated").read(MongoDateTimeFormats.localDateTimeRead)) and
         (__ \ "nextMessageCorrelationId").read[Int] and
-        (__ \ "messages").read[NonEmptyList[Message]]
+        (__ \ "messages").read[NonEmptyList[Message]] and
+        (__ \ "notificationBox").readNullable[Box]
     )(Departure.apply _)
 
   implicit def writesDeparture(implicit write: Writes[LocalDateTime]): OWrites[Departure] =
@@ -83,13 +87,14 @@ object Departure {
       (__ \ "_id").write[DepartureId] and
         (__ \ "channel").write[ChannelType] and
         (__ \ "eoriNumber").write[String] and
-        (__ \ "movementReferenceNumber").write[Option[MovementReferenceNumber]] and
+        (__ \ "movementReferenceNumber").writeNullable[MovementReferenceNumber] and
         (__ \ "referenceNumber").write[String] and
         (__ \ "status").write[DepartureStatus] and
         (__ \ "created").write(write) and
         (__ \ "lastUpdated").write(write) and
         (__ \ "nextMessageCorrelationId").write[Int] and
-        (__ \ "messages").write[NonEmptyList[Message]]
+        (__ \ "messages").write[NonEmptyList[Message]] and
+        (__ \ "notificationBox").writeNullable[Box]
     )(unlift(Departure.unapply))
 
 }

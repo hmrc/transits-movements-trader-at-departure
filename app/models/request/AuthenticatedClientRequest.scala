@@ -14,18 +14,11 @@
  * limitations under the License.
  */
 
-package models
+package models.request
 
-import play.api.libs.json._
+import models.ChannelType
+import play.api.mvc.Request
+import play.api.mvc.WrappedRequest
 
-final case class MovementReferenceNumber(value: String)
-
-object MovementReferenceNumber {
-
-  implicit lazy val reads: Reads[MovementReferenceNumber] = __.read[String].map(MovementReferenceNumber.apply)
-
-  implicit lazy val writes: Writes[MovementReferenceNumber] = Writes {
-    mrn =>
-      JsString(mrn.value)
-  }
-}
+case class AuthenticatedClientRequest[A](request: Request[A], channel: ChannelType, eoriNumber: String, clientIdOpt: Option[String])
+    extends WrappedRequest[A](request)

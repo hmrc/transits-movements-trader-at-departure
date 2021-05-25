@@ -20,7 +20,6 @@ import java.time.LocalDateTime
 import java.time.OffsetDateTime
 
 import com.github.tomakehurst.wiremock.client.WireMock._
-import config.AppConfig
 import connectors.MessageConnector.EisSubmissionResult.DownstreamBadGateway
 import connectors.MessageConnector.EisSubmissionResult.DownstreamInternalServerError
 import connectors.MessageConnector.EisSubmissionResult.EisSubmissionSuccessful
@@ -43,7 +42,6 @@ import play.api.Configuration
 import play.api.Environment
 import play.api.test.Helpers.running
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 class MessageConnectorSpec
     extends AnyFreeSpec
@@ -93,12 +91,14 @@ class MessageConnectorSpec
                 )
             )
             val app = appBuilder.build()
-            val postValue = MessageWithStatus(LocalDateTime.now(),
-                                              messageType,
-                                              <CC007A>test</CC007A>,
-                                              MessageStatus.SubmissionPending,
-                                              1,
-                                              convertXmlToJson(<CC007A>test</CC007A>.toString))
+            val postValue = MessageWithStatus(
+              LocalDateTime.now(),
+              messageType,
+              <CC007A>test</CC007A>,
+              MessageStatus.SubmissionPending,
+              1,
+              convertXmlToJson(<CC007A>test</CC007A>.toString)
+            )
             val departureId = DepartureId(123)
 
             running(app) {
@@ -128,12 +128,14 @@ class MessageConnectorSpec
                 )
             )
 
-            val postValue = MessageWithStatus(LocalDateTime.now(),
-                                              messageType,
-                                              <CC007A>test</CC007A>,
-                                              MessageStatus.SubmissionPending,
-                                              1,
-                                              convertXmlToJson(<CC007A>test</CC007A>.toString))
+            val postValue = MessageWithStatus(
+              LocalDateTime.now(),
+              messageType,
+              <CC007A>test</CC007A>,
+              MessageStatus.SubmissionPending,
+              1,
+              convertXmlToJson(<CC007A>test</CC007A>.toString)
+            )
             val departureId = DepartureId(123)
             val app         = appBuilder.build()
 
@@ -165,12 +167,14 @@ class MessageConnectorSpec
                 )
             )
 
-            val postValue = MessageWithStatus(LocalDateTime.now(),
-                                              messageType,
-                                              <CC007A>test</CC007A>,
-                                              MessageStatus.SubmissionPending,
-                                              1,
-                                              convertXmlToJson(<CC007A>test</CC007A>.toString()))
+            val postValue = MessageWithStatus(
+              LocalDateTime.now(),
+              messageType,
+              <CC007A>test</CC007A>,
+              MessageStatus.SubmissionPending,
+              1,
+              convertXmlToJson(<CC007A>test</CC007A>.toString())
+            )
             val departureId = DepartureId(123)
             val app         = appBuilder.build()
 
@@ -203,12 +207,14 @@ class MessageConnectorSpec
                 )
             )
 
-            val postValue = MessageWithStatus(LocalDateTime.now(),
-                                              messageType,
-                                              <CC007A>test</CC007A>,
-                                              MessageStatus.SubmissionPending,
-                                              1,
-                                              convertXmlToJson(<CC007A>test</CC007A>.toString()))
+            val postValue = MessageWithStatus(
+              LocalDateTime.now(),
+              messageType,
+              <CC007A>test</CC007A>,
+              MessageStatus.SubmissionPending,
+              1,
+              convertXmlToJson(<CC007A>test</CC007A>.toString())
+            )
             val departureId = DepartureId(123)
             val app         = appBuilder.build()
 

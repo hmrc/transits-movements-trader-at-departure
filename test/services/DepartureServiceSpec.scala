@@ -91,17 +91,20 @@ class DepartureServiceSpec extends SpecBase with JsonHelper with IntegrationPati
         created = dateTime,
         lastUpdated = dateTime,
         messages = NonEmptyList.one(
-          MessageWithStatus(dateTime,
-                            MessageType.DepartureDeclaration,
-                            savedMovement,
-                            MessageStatus.SubmissionPending,
-                            1,
-                            convertXmlToJson(savedMovement.toString))
+          MessageWithStatus(
+            dateTime,
+            MessageType.DepartureDeclaration,
+            savedMovement,
+            MessageStatus.SubmissionPending,
+            1,
+            convertXmlToJson(savedMovement.toString)
+          )
         ),
-        nextMessageCorrelationId = 2
+        nextMessageCorrelationId = 2,
+        notificationBox = None
       )
 
-      val result = service.createDeparture(eori, inputMovement, api).futureValue
+      val result = service.createDeparture(eori, inputMovement, api, None).futureValue
 
       result.right.get mustEqual expectedDeparture
     }
@@ -135,7 +138,7 @@ class DepartureServiceSpec extends SpecBase with JsonHelper with IntegrationPati
           </HEAHEA>
         </Foo>
 
-      service.createDeparture(eori, invalidPayload, api).futureValue.isLeft mustBe true
+      service.createDeparture(eori, invalidPayload, api, None).futureValue.isLeft mustBe true
     }
   }
 

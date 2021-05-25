@@ -19,6 +19,7 @@ package generators
 import java.time.LocalDate
 import java.time.LocalDateTime
 
+import config.Constants
 import models.MessageStatus.SubmissionPending
 import models._
 import models.SubmissionProcessingResult.SubmissionFailure
@@ -82,18 +83,21 @@ trait ModelGenerators extends BaseGenerators with JavaTimeGenerators with JsonHe
       Gen.oneOf(MessageStatus.values)
     }
 
-  implicit lazy val arbitraryDepartureId: Arbitrary[DepartureId] = {
+  implicit lazy val arbitraryDepartureId: Arbitrary[DepartureId] =
     Arbitrary {
       for {
         id <- intWithMaxLength(9)
       } yield DepartureId(id)
     }
-  }
 
   implicit lazy val arbitraryMovementReferenceNumber: Arbitrary[MovementReferenceNumber] =
     Arbitrary {
       for {
-        year    <- Gen.choose(0, 99).map(y => f"$y%02d")
+        year <- Gen
+          .choose(0, 99)
+          .map(
+            y => f"$y%02d"
+          )
         country <- Gen.pick(2, 'A' to 'Z')
         serial  <- Gen.pick(13, ('A' to 'Z') ++ ('0' to '9'))
       } yield MovementReferenceNumber(year ++ country.mkString ++ serial.mkString)
@@ -104,7 +108,7 @@ trait ModelGenerators extends BaseGenerators with JavaTimeGenerators with JsonHe
       intsAboveValue(0).map(MessageId.fromIndex)
     }
 
-  implicit lazy val arbitraryMessageWithStateXml: Arbitrary[MessageWithStatus] = {
+  implicit lazy val arbitraryMessageWithStateXml: Arbitrary[MessageWithStatus] =
     Arbitrary {
       for {
         date        <- datesBetween(pastDate, dateNow)
@@ -114,9 +118,8 @@ trait ModelGenerators extends BaseGenerators with JavaTimeGenerators with JsonHe
         status = SubmissionPending
       } yield MessageWithStatus(LocalDateTime.of(date, time), messageType, xml, status, 1, convertXmlToJson(xml.toString()))
     }
-  }
 
-  implicit lazy val arbitraryMessageWithoutStateXml: Arbitrary[MessageWithoutStatus] = {
+  implicit lazy val arbitraryMessageWithoutStateXml: Arbitrary[MessageWithoutStatus] =
     Arbitrary {
       for {
         date        <- datesBetween(pastDate, dateNow)
@@ -125,7 +128,6 @@ trait ModelGenerators extends BaseGenerators with JavaTimeGenerators with JsonHe
         messageType <- Gen.oneOf(MessageType.values)
       } yield MessageWithoutStatus(LocalDateTime.of(date, time), messageType, xml, 1, convertXmlToJson(xml.toString()))
     }
-  }
 
   implicit lazy val arbitraryState: Arbitrary[DepartureStatus] =
     Arbitrary {
@@ -137,19 +139,32 @@ trait ModelGenerators extends BaseGenerators with JavaTimeGenerators with JsonHe
       Gen.oneOf(ChannelType.values)
     }
 
+  implicit lazy val arbitraryBoxId: Arbitrary[BoxId] =
+    Arbitrary {
+      Gen.uuid.map(_.toString).map(BoxId.apply)
+    }
+
+  implicit lazy val arbitraryBox: Arbitrary[Box] =
+    Arbitrary {
+      for {
+        boxId <- arbitrary[BoxId]
+      } yield Box(boxId, Constants.BoxName)
+    }
+
   implicit lazy val arbitraryDeparture: Arbitrary[Departure] =
     Arbitrary {
       for {
-        id          <- arbitrary[DepartureId]
-        channel     <- arbitrary[ChannelType]
-        eN          <- arbitrary[String]
-        mrn         <- arbitrary[MovementReferenceNumber]
-        rN          <- arbitrary[String]
-        status      <- arbitrary[DepartureStatus]
-        created     <- arbitrary[LocalDateTime]
-        lastUpdated <- arbitrary[LocalDateTime]
-        messages    <- nonEmptyListOfMaxLength[MessageWithStatus](2)
-      } yield models.Departure(id, channel, eN, Some(mrn), rN, status, created, lastUpdated, messages.length + 1, messages)
+        id              <- arbitrary[DepartureId]
+        channel         <- arbitrary[ChannelType]
+        eN              <- arbitrary[String]
+        mrn             <- arbitrary[MovementReferenceNumber]
+        rN              <- arbitrary[String]
+        status          <- arbitrary[DepartureStatus]
+        created         <- arbitrary[LocalDateTime]
+        lastUpdated     <- arbitrary[LocalDateTime]
+        messages        <- nonEmptyListOfMaxLength[MessageWithStatus](2)
+        notificationBox <- arbitrary[Option[Box]]
+      } yield models.Departure(id, channel, eN, Some(mrn), rN, status, created, lastUpdated, messages.length + 1, messages, notificationBox)
     }
 
   implicit lazy val arbitraryFailure: Arbitrary[SubmissionFailure] =

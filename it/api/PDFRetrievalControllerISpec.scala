@@ -18,12 +18,22 @@ package api
 
 import api.helpers.ApiSpecBase
 import cats.data.NonEmptyList
-import models.{ChannelType, Departure, DepartureId, DepartureStatus, MessageStatus, MessageType, MessageWithStatus, MessageWithoutStatus}
+import models.ChannelType
+import models.Departure
+import models.DepartureId
+import models.DepartureStatus
+import models.MessageStatus
+import models.MessageType
+import models.MessageWithStatus
+import models.MessageWithoutStatus
 import play.api.Application
 import play.api.libs.ws.WSClient
-import play.api.test.Helpers.{BAD_GATEWAY, OK}
+import play.api.test.Helpers.BAD_GATEWAY
+import play.api.test.Helpers.OK
 import repositories.DepartureRepository
-import java.nio.file.{Files, Path, Paths}
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -34,11 +44,11 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 class PDFRetrievalControllerISpec extends ApiSpecBase with JsonHelper {
 
-  override implicit lazy val app: Application = appBuilder.build()
+  implicit override lazy val app: Application = appBuilder.build()
 
-  lazy val path: Path = Paths.get(getClass.getResource("/test-files/testPDF.pdf").toURI)
-  lazy val pdfFile: Array[Byte] = Files.readAllBytes(path)
-  val wsClient: WSClient = app.injector.instanceOf[WSClient]
+  lazy val path: Path                    = Paths.get(getClass.getResource("/test-files/testPDF.pdf").toURI)
+  lazy val pdfFile: Array[Byte]          = Files.readAllBytes(path)
+  val wsClient: WSClient                 = app.injector.instanceOf[WSClient]
   val departureRepo: DepartureRepository = app.injector.instanceOf[DepartureRepository]
 
   override protected def portConfigKeys: Seq[String] = Seq(
@@ -62,9 +72,19 @@ class PDFRetrievalControllerISpec extends ApiSpecBase with JsonHelper {
         LocalDateTime.now(),
         3,
         NonEmptyList(
-          MessageWithStatus(LocalDateTime.now(), MessageType.DepartureDeclaration, <departure></departure>, MessageStatus.SubmissionSucceeded, 1, convertXmlToJson(<departure></departure>.toString)),
-          List(MessageWithoutStatus(LocalDateTime.now(), MessageType.ReleaseForTransit, <released></released>, 2, convertXmlToJson(<released></released>.toString)))
-        )
+          MessageWithStatus(
+            LocalDateTime.now(),
+            MessageType.DepartureDeclaration,
+            <departure></departure>,
+            MessageStatus.SubmissionSucceeded,
+            1,
+            convertXmlToJson(<departure></departure>.toString)
+          ),
+          List(
+            MessageWithoutStatus(LocalDateTime.now(), MessageType.ReleaseForTransit, <released></released>, 2, convertXmlToJson(<released></released>.toString))
+          )
+        ),
+        None
       )
 
       stubForPostWithResponseBody(
@@ -96,7 +116,8 @@ class PDFRetrievalControllerISpec extends ApiSpecBase with JsonHelper {
       val response = wsClient
         .url(s"http://localhost:$port/transits-movements-trader-at-departure/movements/departures/12/accompanying-document")
         .withHttpHeaders("channel" -> "web", "X-Request-ID" -> requestId)
-        .get().futureValue
+        .get()
+        .futureValue
 
       response.status mustBe OK
       response.bodyAsBytes mustBe pdfFile
@@ -119,7 +140,8 @@ class PDFRetrievalControllerISpec extends ApiSpecBase with JsonHelper {
         NonEmptyList(
           MessageWithStatus(LocalDateTime.now(), MessageType.DepartureDeclaration, <departure></departure>, MessageStatus.SubmissionSucceeded, 1, Json.obj()),
           List(MessageWithoutStatus(LocalDateTime.now(), MessageType.ReleaseForTransit, <released></released>, 2, Json.obj()))
-        )
+        ),
+        None
       )
 
       stubForPostWithResponseBody(
@@ -152,7 +174,8 @@ class PDFRetrievalControllerISpec extends ApiSpecBase with JsonHelper {
       val response = wsClient
         .url(s"http://localhost:$port/transits-movements-trader-at-departure/movements/departures/12/accompanying-document")
         .withHttpHeaders("channel" -> "web", "X-Request-ID" -> requestId)
-        .get().futureValue
+        .get()
+        .futureValue
 
       response.status mustBe BAD_GATEWAY
       response.bodyAsBytes mustBe Array.empty[Byte]

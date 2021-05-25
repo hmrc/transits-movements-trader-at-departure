@@ -52,27 +52,39 @@ class MessageRetrievalServiceSpec extends SpecBase with JsonHelper {
           LocalDateTime.now(),
           3,
           NonEmptyList(
-            MessageWithoutStatus(LocalDateTime.now(),
-                                 MessageType.DepartureDeclaration,
-                                 <departure></departure>,
-                                 1,
-                                 convertXmlToJson(<departure></departure>.toString)),
+            MessageWithoutStatus(
+              LocalDateTime.now(),
+              MessageType.DepartureDeclaration,
+              <departure></departure>,
+              1,
+              convertXmlToJson(<departure></departure>.toString)
+            ),
             List(
-              MessageWithoutStatus(LocalDateTime.now(),
-                                   MessageType.ReleaseForTransit,
-                                   <released></released>,
-                                   2,
-                                   convertXmlToJson(<released></released>.toString)))
-          )
+              MessageWithoutStatus(
+                LocalDateTime.now(),
+                MessageType.ReleaseForTransit,
+                <released></released>,
+                2,
+                convertXmlToJson(<released></released>.toString)
+              )
+            )
+          ),
+          None
         )
 
         val date = LocalDateTime.now()
 
         when(mockMessageSummaryService.releaseForTransitMessage)
           .thenReturn(
-            Reader[Departure, Option[(Message, MessageId)]](_ =>
-              Some((MessageWithoutStatus(date, MessageType.ReleaseForTransit, <released></released>, 2, convertXmlToJson(<released></released>.toString)),
-                    MessageId.fromIndex(2))))
+            Reader[Departure, Option[(Message, MessageId)]](
+              _ =>
+                Some(
+                  (
+                    MessageWithoutStatus(date, MessageType.ReleaseForTransit, <released></released>, 2, convertXmlToJson(<released></released>.toString)),
+                    MessageId.fromIndex(2)
+                  )
+              )
+            )
           )
 
         service
@@ -91,18 +103,23 @@ class MessageRetrievalServiceSpec extends SpecBase with JsonHelper {
           LocalDateTime.now(),
           3,
           NonEmptyList(
-            MessageWithoutStatus(LocalDateTime.now(),
-                                 MessageType.DepartureDeclaration,
-                                 <departure></departure>,
-                                 1,
-                                 convertXmlToJson(<departure></departure>.toString)),
+            MessageWithoutStatus(
+              LocalDateTime.now(),
+              MessageType.DepartureDeclaration,
+              <departure></departure>,
+              1,
+              convertXmlToJson(<departure></departure>.toString)
+            ),
             Nil
-          )
+          ),
+          None
         )
 
         when(mockMessageSummaryService.releaseForTransitMessage)
           .thenReturn(
-            Reader[Departure, Option[(Message, MessageId)]](_ => None)
+            Reader[Departure, Option[(Message, MessageId)]](
+              _ => None
+            )
           )
 
         service.getReleaseForTransitMessage(departure) mustBe None

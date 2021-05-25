@@ -16,16 +16,18 @@
 
 package controllers
 
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.LocalTime
 import audit.AuditService
 import base.SpecBase
 import cats.data.NonEmptyList
+import config.Constants
 import generators.ModelGenerators
-import models.ChannelType.api
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
 import models._
+import models.ChannelType.api
 import org.mockito.ArgumentMatchers._
+import org.mockito.ArgumentMatchers.{eq => eqTo}
 import org.mockito.Mockito._
 import org.scalacheck.Arbitrary
 import org.scalacheck.Gen
@@ -34,20 +36,20 @@ import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.inject.bind
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import org.mockito.ArgumentMatchers.{eq => eqTo}
 import repositories.DepartureRepository
 import repositories.LockRepository
+import scala.concurrent.Future
+import services.PushPullNotificationService
 import services.SaveMessageService
 import utils.Format
 
-import scala.concurrent.Future
-
 class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks with ModelGenerators with BeforeAndAfterEach {
 
-  private val mockDepartureRepository: DepartureRepository = mock[DepartureRepository]
-  private val mockLockRepository: LockRepository           = mock[LockRepository]
-  private val mockSaveMessageService: SaveMessageService   = mock[SaveMessageService]
-  private val mockAuditService: AuditService               = mock[AuditService]
+  private val mockDepartureRepository: DepartureRepository                 = mock[DepartureRepository]
+  private val mockLockRepository: LockRepository                           = mock[LockRepository]
+  private val mockSaveMessageService: SaveMessageService                   = mock[SaveMessageService]
+  private val mockAuditService: AuditService                               = mock[AuditService]
+  private val mockPushPullNotificationService: PushPullNotificationService = mock[PushPullNotificationService]
 
   private val dateOfPrep = LocalDate.now()
   private val timeOfPrep = LocalTime.of(1, 1)
@@ -56,6 +58,7 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
   private val version       = 1
   private val messageSender = MessageSender(departureId, version)
   private val message       = Arbitrary.arbitrary[MessageWithStatus].sample.value
+
   private val departure = Departure(
     departureId,
     api,
@@ -66,7 +69,8 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
     LocalDateTime.of(dateOfPrep, timeOfPrep),
     LocalDateTime.of(dateOfPrep, timeOfPrep),
     1,
-    NonEmptyList.one(message)
+    NonEmptyList.one(message),
+    None
   )
 
   private val acknowledgedDeparture = Departure(
@@ -79,8 +83,15 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
     LocalDateTime.of(dateOfPrep, timeOfPrep),
     LocalDateTime.of(dateOfPrep, timeOfPrep),
     1,
-    NonEmptyList.one(message)
+    NonEmptyList.one(message),
+    None
   )
+
+  private val testBoxId    = "1c5b9365-18a6-55a5-99c9-83a091ac7f26"
+  private val testClientId = "X5ZasuQLH0xqKooV_IEw6yjQNfEa"
+  private val testBox      = Box(BoxId(testBoxId), Constants.BoxName)
+
+  private val acknowledgedDepartureWithNotificationBox = acknowledgedDeparture.copy(notificationBox = Some(testBox))
 
   private val requestMrnAllocatedBody =
     <CC028A>
@@ -117,7 +128,8 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
   val codeAndXmlBody = Gen.oneOf(
     Seq(
       (MessageType.DeclarationRejected.code, requestDepartureRejectionXmlBody)
-    ))
+    )
+  )
 
   override def beforeEach: Unit = {
     super.beforeEach()
@@ -125,6 +137,7 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
     reset(mockLockRepository)
     reset(mockSaveMessageService)
     reset(mockAuditService)
+    reset(mockPushPullNotificationService)
   }
 
   //TODO: Add tests for the happy path
@@ -163,6 +176,67 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
         }
       }
 
+      "must not send push notification when there is no notificationBox present" in {
+        when(mockDepartureRepository.get(any())).thenReturn(Future.successful(Some(acknowledgedDeparture)))
+        when(mockSaveMessageService.validateXmlSaveMessageUpdateMrn(any(), any(), any(), any(), any()))
+          .thenReturn(Future.successful(SubmissionProcessingResult.SubmissionSuccess))
+        when(mockLockRepository.lock(any())).thenReturn(Future.successful(true))
+        when(mockLockRepository.unlock(any())).thenReturn(Future.successful(()))
+
+        val application = baseApplicationBuilder
+          .overrides(
+            bind[DepartureRepository].toInstance(mockDepartureRepository),
+            bind[LockRepository].toInstance(mockLockRepository),
+            bind[SaveMessageService].toInstance(mockSaveMessageService),
+            bind[AuditService].toInstance(mockAuditService),
+            bind[PushPullNotificationService].toInstance(mockPushPullNotificationService)
+          )
+          .build()
+
+        running(application) {
+          val request = FakeRequest(POST, routes.NCTSMessageController.post(messageSender).url)
+            .withXmlBody(requestMrnAllocatedBody)
+            .withHeaders("X-Message-Type" -> MessageType.MrnAllocated.code)
+
+          val result = route(application, request).value
+
+          status(result) mustEqual OK
+          verifyNoInteractions(mockPushPullNotificationService)
+        }
+      }
+
+      "must send push notification when there is a notificationBox present" in {
+        def boxIdMatcher = refEq(testBoxId).asInstanceOf[BoxId]
+
+        when(mockDepartureRepository.get(any())).thenReturn(Future.successful(Some(acknowledgedDepartureWithNotificationBox)))
+        when(mockSaveMessageService.validateXmlSaveMessageUpdateMrn(any(), any(), any(), any(), any()))
+          .thenReturn(Future.successful(SubmissionProcessingResult.SubmissionSuccess))
+        when(mockLockRepository.lock(any())).thenReturn(Future.successful(true))
+        when(mockLockRepository.unlock(any())).thenReturn(Future.successful(()))
+        when(mockPushPullNotificationService.sendPushNotification(boxIdMatcher, any())(any(), any())).thenReturn(Future.unit)
+
+        val application = baseApplicationBuilder
+          .overrides(
+            bind[DepartureRepository].toInstance(mockDepartureRepository),
+            bind[LockRepository].toInstance(mockLockRepository),
+            bind[SaveMessageService].toInstance(mockSaveMessageService),
+            bind[AuditService].toInstance(mockAuditService),
+            bind[PushPullNotificationService].toInstance(mockPushPullNotificationService)
+          )
+          .build()
+
+        running(application) {
+          val request = FakeRequest(POST, routes.NCTSMessageController.post(messageSender).url)
+            .withXmlBody(requestMrnAllocatedBody)
+            .withHeaders("X-Message-Type" -> MessageType.MrnAllocated.code)
+
+          val result = route(application, request).value
+
+          status(result) mustEqual OK
+          verify(mockPushPullNotificationService, times(1)).sendPushNotification(boxIdMatcher, any())(any(), any())
+        }
+      }
+
       "must return BadRequest, when the valid message is out of sequence" in {
         when(mockDepartureRepository.get(any())).thenReturn(Future.successful(Some(acknowledgedDeparture)))
         when(mockLockRepository.lock(any())).thenReturn(Future.successful(true))
@@ -178,7 +252,9 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
             .withHeaders("X-Message-Type" -> MessageType.CancellationDecision.code)
 
           val result = route(application, request).value
-          contentAsString(result) mustEqual "Can only accept this type of message [CancellationDecision] directly after [DeclarationCancellationRequest or ReleaseForTransit] messages. Current message state is [PositiveAcknowledgement]."
+          contentAsString(
+            result
+          ) mustEqual "Can only accept this type of message [CancellationDecision] directly after [DeclarationCancellationRequest or ReleaseForTransit] messages. Current message state is [PositiveAcknowledgement]."
           status(result) mustEqual BAD_REQUEST
         }
       }

@@ -44,7 +44,7 @@ class DepartureService @Inject()(departureIdRepository: DepartureIdRepository)(i
       xmlMessage <- updateMesSenMES3(departureId, messageCorrelationId)
     } yield MessageWithStatus(dateTime, messageType, xmlMessage, SubmissionPending, messageCorrelationId)
 
-  def createDeparture(eori: String, nodeSeq: NodeSeq, channelType: ChannelType): Future[ParseHandler[Departure]] =
+  def createDeparture(eori: String, nodeSeq: NodeSeq, channelType: ChannelType, boxOpt: Option[Box]): Future[ParseHandler[Departure]] =
     departureIdRepository
       .nextId()
       .map {
@@ -54,7 +54,7 @@ class DepartureService @Inject()(departureIdRepository: DepartureIdRepository)(i
             dateTime  <- dateTimeOfPrepR
             reference <- referenceR
             message   <- makeMessageWithStatus(departureId, 1, MessageType.DepartureDeclaration)
-          } yield {
+          } yield
             Departure(
               departureId,
               channelType,
@@ -65,9 +65,9 @@ class DepartureService @Inject()(departureIdRepository: DepartureIdRepository)(i
               dateTime,
               LocalDateTime.now(clock),
               2,
-              NonEmptyList.one(message)
-            )
-          }).apply(nodeSeq)
+              NonEmptyList.one(message),
+              boxOpt
+            )).apply(nodeSeq)
       }
 
   def makeMessage(messageCorrelationId: Int, messageType: MessageType): ReaderT[ParseHandler, NodeSeq, MessageWithoutStatus] =

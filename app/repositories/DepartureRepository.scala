@@ -82,7 +82,7 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfi
         _ => ()
       )
 
-  private val collectionName = DepartureRepository.collectionName
+  private lazy val collectionName = DepartureRepository.collectionName
 
   private def collection: Future[JSONCollection] =
     mongo.database.map(_.collection[JSONCollection](collectionName))
