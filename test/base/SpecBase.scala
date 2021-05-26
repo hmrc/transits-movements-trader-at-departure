@@ -17,9 +17,7 @@
 package base
 
 import controllers.actions.AuthenticateActionProvider
-import controllers.actions.AuthenticatedClientIdActionProvider
 import controllers.actions.FakeAuthenticateActionProvider
-import controllers.actions.FakeAuthenticateClientIdActionProvider
 import models.Departure
 import models.MessageWithStatus
 import org.scalactic.Equality
@@ -53,7 +51,6 @@ trait SpecBase extends AnyFreeSpec with Matchers with MockitoSugar with ScalaFut
       )
       .overrides(
         bind[AuthenticateActionProvider].to[FakeAuthenticateActionProvider],
-        bind[AuthenticatedClientIdActionProvider].to[FakeAuthenticateClientIdActionProvider],
         bind[Metrics].toInstance(new TestMetrics)
       )
 

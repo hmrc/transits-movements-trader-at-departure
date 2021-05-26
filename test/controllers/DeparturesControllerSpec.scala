@@ -140,6 +140,7 @@ class DeparturesControllerSpec
         val expectedMessage: MessageWithStatus = movementMessage(1).copy(messageCorrelationId = 1)
         val newDeparture                       = initializedDeparture.copy(messages = NonEmptyList.of[MessageWithStatus](expectedMessage), channel = web)
         val captor: ArgumentCaptor[Departure]  = ArgumentCaptor.forClass(classOf[Departure])
+        val testClientId                       = "X5ZasuQLH0xqKooV_IEw6yjQNfEa"
 
         when(mockDepartureIdRepository.nextId()).thenReturn(Future.successful(newDeparture.departureId))
         when(mockSubmitMessageService.submitDeparture(any())(any())).thenReturn(Future.successful(SubmissionProcessingResult.SubmissionSuccess))
@@ -158,7 +159,7 @@ class DeparturesControllerSpec
 
           val request =
             FakeRequest(POST, routes.DeparturesController.post().url)
-              .withHeaders("channel" -> newDeparture.channel.toString)
+              .withHeaders("channel" -> newDeparture.channel.toString, Constants.XClientIdHeader -> testClientId)
               .withXmlBody(requestXmlBody.map(trim))
 
           val result = route(application, request).value
@@ -187,6 +188,7 @@ class DeparturesControllerSpec
         val expectedMessage: MessageWithStatus = movementMessage(1).copy(messageCorrelationId = 1)
         val newDeparture                       = initializedDeparture.copy(messages = NonEmptyList.of[MessageWithStatus](expectedMessage), channel = web)
         val captor: ArgumentCaptor[Departure]  = ArgumentCaptor.forClass(classOf[Departure])
+        val testClientId                       = "X5ZasuQLH0xqKooV_IEw6yjQNfEa"
         val testBoxId                          = "1c5b9365-18a6-55a5-99c9-83a091ac7f26"
         val testBox                            = Box(BoxId(testBoxId), Constants.BoxName)
 
@@ -207,7 +209,7 @@ class DeparturesControllerSpec
 
           val request =
             FakeRequest(POST, routes.DeparturesController.post().url)
-              .withHeaders("channel" -> newDeparture.channel.toString)
+              .withHeaders("channel" -> newDeparture.channel.toString, Constants.XClientIdHeader -> testClientId)
               .withXmlBody(requestXmlBody.map(trim))
 
           val result = route(application, request).value

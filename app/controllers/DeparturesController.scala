@@ -16,16 +16,14 @@
 
 package controllers
 
-import java.time.OffsetDateTime
-
-import javax.inject.Inject
 import audit.AuditService
 import audit.AuditType._
 import com.kenshoo.play.metrics.Metrics
+import config.Constants
 import controllers.actions._
+import metrics.HasActionMetrics
 import models._
 import models.response.ResponseDeparture
-import metrics.HasActionMetrics
 import play.api.Logging
 import play.api.libs.json.Json
 import play.api.mvc.Action
@@ -36,6 +34,8 @@ import services._
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
+import java.time.OffsetDateTime
+import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.xml.NodeSeq
@@ -44,7 +44,6 @@ class DeparturesController @Inject()(
   cc: ControllerComponents,
   departureRepository: DepartureRepository,
   authenticate: AuthenticateActionProvider,
-  authenticateClientId: AuthenticatedClientIdActionProvider,
   authenticatedDepartureForRead: AuthenticatedGetDepartureForReadActionProvider,
   departureService: DepartureService,
   auditService: AuditService,
@@ -69,9 +68,9 @@ class DeparturesController @Inject()(
 
   def post: Action[NodeSeq] =
     withMetricsTimerAction("post-create-departure") {
-      authenticateClientId().async(parse.xml) {
+      authenticate().async(parse.xml) {
         implicit request =>
-          getBox(request.clientIdOpt).flatMap {
+          getBox(request.headers.get(Constants.XClientIdHeader)).flatMap {
             boxOpt =>
               departureService
                 .createDeparture(request.eoriNumber, request.body, request.channel, boxOpt)
