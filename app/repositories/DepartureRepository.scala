@@ -16,6 +16,7 @@
 
 package repositories
 
+import cats.syntax.all._
 import java.time.Clock
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
@@ -40,6 +41,8 @@ import scala.concurrent.Future
 import scala.util.Success
 import scala.util.Failure
 import scala.util.Try
+import models.response.ResponseDepartures
+import models.response.ResponseDeparture
 
 class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfig)(implicit ec: ExecutionContext, clock: Clock) extends MongoDateTimeFormats {
 
@@ -132,7 +135,6 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfi
     departureState: DepartureStatus,
     messageState: MessageStatus
   ): Future[Option[Unit]] = {
-
     val selector = DepartureIdSelector(departureId)
 
     val modifier = CompoundStatusUpdate(DepartureStatusUpdate(departureState), MessageStatusUpdate(messageId, messageState))
@@ -258,19 +260,34 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfi
     }
   }
 
-  def fetchAllDepartures(eoriNumber: String, channelFilter: ChannelType, updatedSince: Option[OffsetDateTime]): Future[Seq[DepartureWithoutMessages]] = {
+  def fetchAllDepartures(eoriNumber: String, channelFilter: ChannelType, updatedSince: Option[OffsetDateTime]): Future[ResponseDepartures] = {
     val dateFilter = updatedSince
       .map(
         dateTime => Json.obj("lastUpdated" -> Json.obj("$gte" -> dateTime))
       )
       .getOrElse(Json.obj())
-    val selector = Json.obj("eoriNumber" -> eoriNumber, "channel" -> channelFilter) ++ dateFilter
+
+    val countSelector = Json.obj("eoriNumber" -> eoriNumber, "channel" -> channelFilter)
+    val selector      = countSelector ++ dateFilter
 
     collection.flatMap {
-      _.find(selector, DepartureWithoutMessages.projection)
-        .sort(Json.obj("lastUpdated" -> -1))
-        .cursor[DepartureWithoutMessages]()
-        .collect[Seq](appConfig.maxRowsReturned(channelFilter), Cursor.FailOnError())
+      coll =>
+        val fetchCount = coll.count(Some(countSelector))
+
+        val fetchResults = coll
+          .find(selector, DepartureWithoutMessages.projection)
+          .sort(Json.obj("lastUpdated" -> -1))
+          .cursor[DepartureWithoutMessages]()
+          .collect[Seq](appConfig.maxRowsReturned(channelFilter), Cursor.FailOnError())
+
+        (fetchCount, fetchResults).mapN {
+          case (count, results) =>
+            ResponseDepartures(
+              departures = results.map(ResponseDeparture.build),
+              retrievedDepartures = results.length,
+              totalDepartures = count
+            )
+        }
     }
   }
 

@@ -25,7 +25,6 @@ import com.kenshoo.play.metrics.Metrics
 import controllers.actions._
 import models._
 import models.response.ResponseDeparture
-import models.response.ResponseDepartures
 import metrics.HasActionMetrics
 import play.api.Logging
 import play.api.libs.json.Json
@@ -127,12 +126,9 @@ class DeparturesController @Inject()(
           departureRepository
             .fetchAllDepartures(request.eoriNumber, request.channel, updatedSince)
             .map {
-              allDepartures =>
-                departuresCount.update(allDepartures.length)
-                Ok(Json.toJsObject(ResponseDepartures(allDepartures.map {
-                  departure =>
-                    ResponseDeparture.build(departure)
-                })))
+              responseDepartures =>
+                departuresCount.update(responseDepartures.retrievedDepartures)
+                Ok(Json.toJsObject(responseDepartures))
             }
             .recover {
               case e =>
