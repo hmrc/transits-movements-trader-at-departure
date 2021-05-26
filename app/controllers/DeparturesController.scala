@@ -25,7 +25,6 @@ import com.kenshoo.play.metrics.Metrics
 import controllers.actions._
 import models._
 import models.response.ResponseDeparture
-import models.response.ResponseDepartures
 import metrics.HasActionMetrics
 import play.api.Logging
 import play.api.libs.json.Json

@@ -713,7 +713,7 @@ class DepartureRepositorySpec
           val dateTime = OffsetDateTime.of(LocalDateTime.of(2021, 4, 30, 10, 30, 32), ZoneOffset.ofHours(1))
           val departures = service.fetchAllDepartures(eoriNumber, api, Some(dateTime)).futureValue
 
-          departures mustBe ResponseDepartures(Seq(departure4, departure2).map(ResponseDeparture.build), 2, 2)
+          departures mustBe ResponseDepartures(Seq(departure4, departure2).map(ResponseDeparture.build), 2, 4)
         }
       }
     }

@@ -267,11 +267,12 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfi
       )
       .getOrElse(Json.obj())
 
-    val selector = Json.obj("eoriNumber" -> eoriNumber, "channel" -> channelFilter) ++ dateFilter
+    val countSelector = Json.obj("eoriNumber" -> eoriNumber, "channel" -> channelFilter)
+    val selector      = countSelector ++ dateFilter
 
     collection.flatMap {
       coll =>
-        val fetchCount = coll.count(Some(selector))
+        val fetchCount = coll.count(Some(countSelector))
 
         val fetchResults = coll
           .find(selector, DepartureWithoutMessages.projection)
