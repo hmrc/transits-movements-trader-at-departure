@@ -80,7 +80,7 @@ class PDFRetrievalServiceSpec extends SpecBase with JsonHelper with IntegrationP
             )
 
           when(mockManageDocumentsConnector.getTadPDF(eqTo(<blank2></blank2>))(any()))
-            .thenReturn(Future.successful(Right(ByteString("Hello".getBytes()))))
+            .thenReturn(Future.successful(Right((ByteString("Hello".getBytes()), Map("key" -> Seq("value"))))))
 
           service.getAccompanyingDocumentPDF(departure).futureValue mustBe Right(ByteString("Hello".getBytes()))
 
@@ -95,7 +95,7 @@ class PDFRetrievalServiceSpec extends SpecBase with JsonHelper with IntegrationP
             )
 
           when(mockManageDocumentsConnector.getTadPDF(eqTo(safetyXML(0)))(any()))
-            .thenReturn(Future.successful(Right(ByteString("Hello".getBytes()))))
+            .thenReturn(Future.successful(Right((ByteString("Hello".getBytes()), Map("key" -> Seq("value"))))))
 
           service.getAccompanyingDocumentPDF(departure).futureValue mustBe Right(ByteString("Hello".getBytes()))
 
@@ -151,7 +151,7 @@ class PDFRetrievalServiceSpec extends SpecBase with JsonHelper with IntegrationP
             .thenReturn(Some(MessageWithoutStatus(LocalDateTime.now, MessageType.ReleaseForTransit, xml, 2, convertXmlToJson(xml.toString()))))
 
           when(mockManageDocumentsConnector.getTsadPDF(eqTo(xml))(any()))
-            .thenReturn(Future.successful(Right(ByteString("Hello".getBytes()))))
+            .thenReturn(Future.successful(Right((ByteString("Hello".getBytes()), Map("key" -> Seq("value"))))))
 
           service.getAccompanyingDocumentPDF(departure).futureValue mustBe Right(ByteString("Hello".getBytes()))
 

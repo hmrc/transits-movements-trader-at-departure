@@ -81,7 +81,7 @@ class ManageDocumentsConnectorSpec
         running(app) {
           val connector = app.injector.instanceOf[ManageDocumentsConnector]
 
-          val result: Future[Either[TADErrorResponse, ByteString]] = connector.getTadPDF(releasedForTransitXml)
+          val result: Future[Either[TADErrorResponse, (ByteString, Map[String, Seq[String]])]] = connector.getTadPDF(releasedForTransitXml)
           result.futureValue mustBe Right(ByteString("Hello".getBytes()))
         }
       }
@@ -106,7 +106,7 @@ class ManageDocumentsConnectorSpec
         running(app) {
           val connector = app.injector.instanceOf[ManageDocumentsConnector]
 
-          val result: Future[Either[TADErrorResponse, ByteString]] = connector.getTadPDF(releasedForTransitXml)
+          val result: Future[Either[TADErrorResponse, (ByteString, Map[String, Seq[String]])]] = connector.getTadPDF(releasedForTransitXml)
           result.futureValue mustBe Left(UnexpectedResponse(genErrorResponse))
         }
       }
@@ -132,7 +132,7 @@ class ManageDocumentsConnectorSpec
         running(app) {
           val connector = app.injector.instanceOf[ManageDocumentsConnector]
 
-          val result: Future[Either[TADErrorResponse, ByteString]] = connector.getTsadPDF(releasedForTransitXml)
+          val result: Future[Either[TADErrorResponse, (ByteString, Map[String, Seq[String]])]] = connector.getTsadPDF(releasedForTransitXml)
           result.futureValue mustBe Right(ByteString("Hello".getBytes()))
         }
       }
@@ -157,7 +157,7 @@ class ManageDocumentsConnectorSpec
         running(app) {
           val connector = app.injector.instanceOf[ManageDocumentsConnector]
 
-          val result: Future[Either[TADErrorResponse, ByteString]] = connector.getTsadPDF(releasedForTransitXml)
+          val result: Future[Either[TADErrorResponse, (ByteString, Map[String, Seq[String]])]] = connector.getTsadPDF(releasedForTransitXml)
           result.futureValue mustBe Left(UnexpectedResponse(genErrorResponse))
         }
       }

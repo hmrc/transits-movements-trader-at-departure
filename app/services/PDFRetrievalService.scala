@@ -35,11 +35,18 @@ class PDFRetrievalService @Inject()(
 )(implicit val ec: ExecutionContext)
     extends Logging {
 
-  private def responseHandler(functionName: String)(
-    f: => Future[Either[TADErrorResponse, ByteString]]
-  ): Future[Either[PDFGenerationResponse, ByteString]] =
+  private def responseHandler(functionName: String)(f: => Future[Either[TADErrorResponse, (ByteString, Map[String, Seq[String]])]])
+    : Future[Either[PDFGenerationResponse, (ByteString, Seq[(String, String)])]] =
     f.map {
-        case Right(pdf)                  => Right(pdf)
+        case Right(response) => {
+          val responseWithFormattedHeaders = response.copy(
+            _2 = response._2 map {
+              h =>
+                (h._1, h._2.head)
+            } toSeq
+          )
+          Right(responseWithFormattedHeaders)
+        }
         case Left(UnexpectedResponse(_)) => Left(UnexpectedError)
       }
       .recover {
@@ -50,7 +57,7 @@ class PDFRetrievalService @Inject()(
 
   private def messageIsSafety(message: NodeSeq): Boolean = (message \ "HEAHEA" \ "SecHEA358").headOption.exists(_.text == "1")
 
-  def getAccompanyingDocumentPDF(departure: Departure)(implicit hc: HeaderCarrier): Future[Either[PDFGenerationResponse, ByteString]] =
+  def getAccompanyingDocumentPDF(departure: Departure)(implicit hc: HeaderCarrier): Future[Either[PDFGenerationResponse, (ByteString, Seq[(String, String)])]] =
     messageRetrievalService.getReleaseForTransitMessage(departure) match {
       case Some(ie29Message) if messageIsSafety(ie29Message.message) =>
         responseHandler("TSAD")(manageDocumentsConnector.getTsadPDF(ie29Message.message))

@@ -77,7 +77,7 @@ class PDFRetrievalControllerSpec extends SpecBase with ScalaCheckPropertyChecks 
 
       "should return a 200 if there is data found" in new Setup(DepartureId(23)) {
         when(mockPDFGenerationService.getAccompanyingDocumentPDF(eqTo(testDeparture))(any()))
-          .thenReturn(Future.successful(Right(ByteString("Hello".getBytes()))))
+          .thenReturn(Future.successful(Right((ByteString("Hello".getBytes()), Seq(("key", "value"))))))
 
         val result: Future[Result] = controller.getAccompanyingDocument(DepartureId(23)).apply(fakeRequest)
 

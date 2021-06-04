@@ -37,7 +37,7 @@ class ManageDocumentsConnector @Inject()(
     extends Logging
     with HasMetrics {
 
-  def getTadPDF(ie29Message: NodeSeq)(implicit hc: HeaderCarrier): Future[Either[TADErrorResponse, ByteString]] =
+  def getTadPDF(ie29Message: NodeSeq)(implicit hc: HeaderCarrier): Future[Either[TADErrorResponse, (ByteString, Map[String, Seq[String]])]] =
     withMetricsTimerAsync("get-tad-pdf") {
       timer =>
         val serviceUrl = s"${config.manageDocumentsUrl}/transit-accompanying-document"
@@ -53,7 +53,7 @@ class ManageDocumentsConnector @Inject()(
             response =>
               if (response.status == 200) {
                 timer.completeWithSuccess()
-                Right(response.bodyAsBytes)
+                Right((response.bodyAsBytes, response.headers))
               } else {
                 logger.warn(s"[getTADPdf] returned an unexpected status (${response.status}) while trying to retrieve the TAD")
                 timer.completeWithFailure()
@@ -62,7 +62,7 @@ class ManageDocumentsConnector @Inject()(
           )
     }
 
-  def getTsadPDF(ie29Message: NodeSeq)(implicit hc: HeaderCarrier): Future[Either[TADErrorResponse, ByteString]] =
+  def getTsadPDF(ie29Message: NodeSeq)(implicit hc: HeaderCarrier): Future[Either[TADErrorResponse, (ByteString, Map[String, Seq[String]])]] =
     withMetricsTimerAsync("get-tsad-pdf") {
       timer =>
         val serviceUrl = s"${config.manageDocumentsUrl}/transit-security-accompanying-document"
@@ -78,7 +78,7 @@ class ManageDocumentsConnector @Inject()(
             response =>
               if (response.status == 200) {
                 timer.completeWithSuccess()
-                Right(response.bodyAsBytes)
+                Right((response.bodyAsBytes, response.headers))
               } else {
                 logger.warn(s"[getTsadPDF] returned an unexpected status (${response.status}) while trying to retrieve the TAD")
                 timer.completeWithFailure()
