@@ -20,6 +20,8 @@ import akka.util.ByteString
 import connectors.ManageDocumentsConnector
 import connectors.TADErrorResponse
 import connectors.UnexpectedResponse
+import controllers.Assets.CONTENT_DISPOSITION
+import controllers.Assets.CONTENT_TYPE
 import models.Departure
 import uk.gov.hmrc.http.HeaderCarrier
 import javax.inject.Inject
@@ -39,13 +41,11 @@ class PDFRetrievalService @Inject()(
     : Future[Either[PDFGenerationResponse, (ByteString, Seq[(String, String)])]] =
     f.map {
         case Right(response) => {
-          val responseWithFormattedHeaders = response.copy(
-            _2 = response._2 map {
-              h =>
-                (h._1, h._2.head)
-            } toSeq
-          )
-          Right(responseWithFormattedHeaders)
+
+          val contentDisposition = response._2.get(CONTENT_DISPOSITION).map(value => Seq((CONTENT_DISPOSITION, value.head))).getOrElse(Seq.empty)
+          val contentType        = response._2.get(CONTENT_TYPE).map(value => Seq((CONTENT_TYPE, value.head))).getOrElse(Seq.empty)
+
+          Right((response._1, contentDisposition ++ contentType))
         }
         case Left(UnexpectedResponse(_)) => Left(UnexpectedError)
       }
