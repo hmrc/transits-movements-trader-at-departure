@@ -82,7 +82,7 @@ class PDFRetrievalServiceSpec extends SpecBase with JsonHelper with IntegrationP
           when(mockManageDocumentsConnector.getTadPDF(eqTo(<blank2></blank2>))(any()))
             .thenReturn(Future.successful(Right((ByteString("Hello".getBytes()), Map("key" -> Seq("value"))))))
 
-          service.getAccompanyingDocumentPDF(departure).futureValue mustBe Right(ByteString("Hello".getBytes()))
+          service.getAccompanyingDocumentPDF(departure).futureValue mustBe Right((ByteString("Hello".getBytes()), Seq(("key", "value"))))
 
           verify(mockManageDocumentsConnector, times(0)).getTsadPDF(any())(any())
           verify(mockManageDocumentsConnector, times(1)).getTadPDF(eqTo(<blank2></blank2>))(any())
@@ -97,7 +97,7 @@ class PDFRetrievalServiceSpec extends SpecBase with JsonHelper with IntegrationP
           when(mockManageDocumentsConnector.getTadPDF(eqTo(safetyXML(0)))(any()))
             .thenReturn(Future.successful(Right((ByteString("Hello".getBytes()), Map("key" -> Seq("value"))))))
 
-          service.getAccompanyingDocumentPDF(departure).futureValue mustBe Right(ByteString("Hello".getBytes()))
+          service.getAccompanyingDocumentPDF(departure).futureValue mustBe Right((ByteString("Hello".getBytes()), Seq(("key", "value"))))
 
           verify(mockManageDocumentsConnector, times(0)).getTsadPDF(any())(any())
           verify(mockManageDocumentsConnector, times(1)).getTadPDF(eqTo(safetyXML(0)))(any())
@@ -153,7 +153,7 @@ class PDFRetrievalServiceSpec extends SpecBase with JsonHelper with IntegrationP
           when(mockManageDocumentsConnector.getTsadPDF(eqTo(xml))(any()))
             .thenReturn(Future.successful(Right((ByteString("Hello".getBytes()), Map("key" -> Seq("value"))))))
 
-          service.getAccompanyingDocumentPDF(departure).futureValue mustBe Right(ByteString("Hello".getBytes()))
+          service.getAccompanyingDocumentPDF(departure).futureValue mustBe Right((ByteString("Hello".getBytes()), Seq(("key", "value"))))
 
           verify(mockManageDocumentsConnector, times(1))
             .getTsadPDF(eqTo(xml))(any())
