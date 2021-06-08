@@ -81,8 +81,8 @@ class ManageDocumentsConnectorSpec
         running(app) {
           val connector = app.injector.instanceOf[ManageDocumentsConnector]
 
-          val result: Future[Either[TADErrorResponse, ByteString]] = connector.getTadPDF(releasedForTransitXml)
-          result.futureValue mustBe Right(ByteString("Hello".getBytes()))
+          val result: Future[Either[TADErrorResponse, (ByteString, Map[String, Seq[String]])]] = connector.getTadPDF(releasedForTransitXml)
+          result.futureValue.isRight mustBe true
         }
       }
 
@@ -106,11 +106,12 @@ class ManageDocumentsConnectorSpec
         running(app) {
           val connector = app.injector.instanceOf[ManageDocumentsConnector]
 
-          val result: Future[Either[TADErrorResponse, ByteString]] = connector.getTadPDF(releasedForTransitXml)
+          val result: Future[Either[TADErrorResponse, (ByteString, Map[String, Seq[String]])]] = connector.getTadPDF(releasedForTransitXml)
           result.futureValue mustBe Left(UnexpectedResponse(genErrorResponse))
         }
       }
     }
+
     "getTsadPDF" - {
 
       "must return status Ok and PDF" in {
@@ -132,8 +133,8 @@ class ManageDocumentsConnectorSpec
         running(app) {
           val connector = app.injector.instanceOf[ManageDocumentsConnector]
 
-          val result: Future[Either[TADErrorResponse, ByteString]] = connector.getTsadPDF(releasedForTransitXml)
-          result.futureValue mustBe Right(ByteString("Hello".getBytes()))
+          val result: Future[Either[TADErrorResponse, (ByteString, Map[String, Seq[String]])]] = connector.getTsadPDF(releasedForTransitXml)
+          result.futureValue.isRight mustBe true
         }
       }
 
@@ -157,7 +158,7 @@ class ManageDocumentsConnectorSpec
         running(app) {
           val connector = app.injector.instanceOf[ManageDocumentsConnector]
 
-          val result: Future[Either[TADErrorResponse, ByteString]] = connector.getTsadPDF(releasedForTransitXml)
+          val result: Future[Either[TADErrorResponse, (ByteString, Map[String, Seq[String]])]] = connector.getTsadPDF(releasedForTransitXml)
           result.futureValue mustBe Left(UnexpectedResponse(genErrorResponse))
         }
       }

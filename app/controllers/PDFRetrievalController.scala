@@ -47,7 +47,7 @@ class PDFRetrievalController @Inject()(
       authenticateForRead(departureId).async {
         implicit request =>
           pdfGenerationService.getAccompanyingDocumentPDF(request.departure).map {
-            case Right(response) => Ok(response)
+            case Right((pdf, headers)) => Ok(pdf).withHeaders(headers: _*)
             case Left(UnexpectedError) =>
               logger.warn(s"[getAccompanyingDocument] returning $BAD_GATEWAY due to an unexpected error in getting the PDF")
               BadGateway

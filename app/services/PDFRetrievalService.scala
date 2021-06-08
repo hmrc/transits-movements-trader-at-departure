@@ -20,6 +20,8 @@ import akka.util.ByteString
 import connectors.ManageDocumentsConnector
 import connectors.TADErrorResponse
 import connectors.UnexpectedResponse
+import controllers.Assets.CONTENT_DISPOSITION
+import controllers.Assets.CONTENT_TYPE
 import models.Departure
 import uk.gov.hmrc.http.HeaderCarrier
 import javax.inject.Inject
@@ -35,11 +37,16 @@ class PDFRetrievalService @Inject()(
 )(implicit val ec: ExecutionContext)
     extends Logging {
 
-  private def responseHandler(functionName: String)(
-    f: => Future[Either[TADErrorResponse, ByteString]]
-  ): Future[Either[PDFGenerationResponse, ByteString]] =
+  private def responseHandler(functionName: String)(f: => Future[Either[TADErrorResponse, (ByteString, Map[String, Seq[String]])]])
+    : Future[Either[PDFGenerationResponse, (ByteString, Seq[(String, String)])]] =
     f.map {
-        case Right(pdf)                  => Right(pdf)
+        case Right(response) => {
+
+          val contentDisposition = response._2.get(CONTENT_DISPOSITION).map(value => Seq((CONTENT_DISPOSITION, value.head))).getOrElse(Seq.empty)
+          val contentType        = response._2.get(CONTENT_TYPE).map(value => Seq((CONTENT_TYPE, value.head))).getOrElse(Seq.empty)
+
+          Right((response._1, contentDisposition ++ contentType))
+        }
         case Left(UnexpectedResponse(_)) => Left(UnexpectedError)
       }
       .recover {
@@ -50,7 +57,7 @@ class PDFRetrievalService @Inject()(
 
   private def messageIsSafety(message: NodeSeq): Boolean = (message \ "HEAHEA" \ "SecHEA358").headOption.exists(_.text == "1")
 
-  def getAccompanyingDocumentPDF(departure: Departure)(implicit hc: HeaderCarrier): Future[Either[PDFGenerationResponse, ByteString]] =
+  def getAccompanyingDocumentPDF(departure: Departure)(implicit hc: HeaderCarrier): Future[Either[PDFGenerationResponse, (ByteString, Seq[(String, String)])]] =
     messageRetrievalService.getReleaseForTransitMessage(departure) match {
       case Some(ie29Message) if messageIsSafety(ie29Message.message) =>
         responseHandler("TSAD")(manageDocumentsConnector.getTsadPDF(ie29Message.message))
