@@ -30,7 +30,7 @@ import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 
-class TestOnlyController @Inject() (override val messagesApi: MessagesApi, mongo: ReactiveMongoApi, cc: ControllerComponents)(implicit ec: ExecutionContext)
+class TestOnlyController @Inject()(override val messagesApi: MessagesApi, mongo: ReactiveMongoApi, cc: ControllerComponents)(implicit ec: ExecutionContext)
     extends BackendController(cc) {
 
   def dropDepartureCollection: Action[AnyContent] = Action.async {
