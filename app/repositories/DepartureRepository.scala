@@ -52,8 +52,8 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfi
   )
 
   private lazy val channelIndex: Aux[BSONSerializationPack.type] = IndexUtils.index(
-    key = Seq("channelType" -> IndexType.Ascending),
-    name = Some("channel-type-index")
+    key = Seq("channel" -> IndexType.Ascending),
+    name = Some("channel-index")
   )
 
   private lazy val referenceNumberIndex: Aux[BSONSerializationPack.type] = IndexUtils.index(
@@ -67,6 +67,16 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfi
     options = BSONDocument("expireAfterSeconds" -> appConfig.cacheTtl)
   )
 
+  private lazy val fetchAllIndex: Aux[BSONSerializationPack.type] = IndexUtils.index(
+    key = Seq("channel" -> IndexType.Ascending, "eoriNumber" -> IndexType.Ascending),
+    name = Some("fetch-all-index")
+  )
+
+  private lazy val fetchAllWithDateFilterIndex: Aux[BSONSerializationPack.type] = IndexUtils.index(
+    key = Seq("channel" -> IndexType.Ascending, "eoriNumber" -> IndexType.Ascending, "lastUpdated" -> IndexType.Descending),
+    name = Some("fetch-all-with-date-filter-index")
+  )
+
   val started: Future[Unit] =
     collection
       .flatMap {
@@ -75,6 +85,8 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfi
             _   <- jsonCollection.indexesManager.ensure(channelIndex)
             _   <- jsonCollection.indexesManager.ensure(eoriNumberIndex)
             _   <- jsonCollection.indexesManager.ensure(referenceNumberIndex)
+            _   <- jsonCollection.indexesManager.ensure(fetchAllIndex)
+            _   <- jsonCollection.indexesManager.ensure(fetchAllWithDateFilterIndex)
             res <- jsonCollection.indexesManager.ensure(lastUpdatedIndex)
           } yield res
       }
