@@ -41,13 +41,15 @@ import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId
 import scala.concurrent.Future
+import repositories.DepartureIdRepository
 
 class TestOnlySeedDataControllerSpec extends SpecBase with ScalaCheckPropertyChecks with ModelGenerators with GuiceOneAppPerSuite with BeforeAndAfterEach {
 
-  val mockRepository = mock[DepartureRepository]
+  val mockRepository   = mock[DepartureRepository]
+  val mockIdRepository = mock[DepartureIdRepository]
 
   override def beforeEach: Unit =
-    Mockito.reset(mockRepository)
+    Mockito.reset(mockRepository, mockIdRepository)
 
   override def fakeApplication(): Application =
     new GuiceApplicationBuilder()
@@ -55,6 +57,7 @@ class TestOnlySeedDataControllerSpec extends SpecBase with ScalaCheckPropertyChe
       .overrides(
         bind[Clock].toInstance(Clock.fixed(Instant.now(), ZoneId.systemDefault)),
         bind[DepartureRepository].toInstance(mockRepository),
+        bind[DepartureIdRepository].toInstance(mockIdRepository)
       )
       .build()
 
@@ -63,7 +66,8 @@ class TestOnlySeedDataControllerSpec extends SpecBase with ScalaCheckPropertyChe
     "must return OK with details of the seeded data" - {
 
       "when there no first Eori value specified" in {
-        when(mockRepository.insert(any())).thenReturn(Future.successful(()))
+        when(mockRepository.bulkInsert(any())).thenReturn(Future.successful(()))
+        when(mockIdRepository.setNextId(any())).thenReturn(Future.successful(()))
 
         val request: FakeRequest[AnyContentAsJson] = FakeRequest(POST, testOnly.controllers.routes.TestOnlySeedDataController.seedData().url)
           .withHeaders("channel" -> ChannelType.web.toString)
@@ -87,11 +91,13 @@ class TestOnlySeedDataControllerSpec extends SpecBase with ScalaCheckPropertyChe
           "departureIdRangeEnd"    -> 1009
         )
 
-        verify(mockRepository, times(1000)).insert(any())
+        verify(mockRepository, times(20)).bulkInsert(any())
+        verify(mockIdRepository, times(20)).setNextId(any())
       }
 
       "when there is a first Eori value specified" in {
-        when(mockRepository.insert(any())).thenReturn(Future.successful(()))
+        when(mockRepository.bulkInsert(any())).thenReturn(Future.successful(()))
+        when(mockIdRepository.setNextId(any())).thenReturn(Future.successful(()))
 
         val request: FakeRequest[AnyContentAsJson] = FakeRequest(POST, testOnly.controllers.routes.TestOnlySeedDataController.seedData().url)
           .withHeaders("channel" -> ChannelType.web.toString)
@@ -116,7 +122,8 @@ class TestOnlySeedDataControllerSpec extends SpecBase with ScalaCheckPropertyChe
           "departureIdRangeEnd"    -> 1009
         )
 
-        verify(mockRepository, times(1000)).insert(any())
+        verify(mockRepository, times(20)).bulkInsert(any())
+        verify(mockIdRepository, times(20)).setNextId(any())
       }
 
     }
