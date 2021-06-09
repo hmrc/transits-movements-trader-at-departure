@@ -49,7 +49,7 @@ class TestOnlySeedDataController @Inject()(
     *   sbt run -Dplay.http.router=testOnlyDoNotUseInAppConf.Routes -Dfeature-flags.testOnly.enabled=true
     * Example request
     * {{{
-    *   curl --location --request POST 'http://localhost:9480/test-only/transit-movements-trader-at-destination/seedData' \
+    *   curl --location --request POST 'http://localhost:9480/test-only/transits-movements-trader-at-departure/seedData' \
     *   --header 'Content-Type: application/json' \
     *   --data-raw '{ "startEori": "ZZ000000000021", "numberOfUsers": 10, "startDepartureId": 10, "movementsPerUser": 10, "channel": "api" }'
     * }}}
