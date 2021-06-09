@@ -12,7 +12,7 @@
 + nocsrf
 DELETE  /test-only/transits-movements-trader-at-departure/dropDepartureCollection testOnly.controllers.TestOnlyController.dropDepartureCollection
 
-POST    /test-only/transit-movements-trader-at-destination/seedData testOnly.controllers.TestOnlySeedDataController.seedData
+POST    /test-only/transits-movements-trader-at-departure/seedData                testOnly.controllers.TestOnlySeedDataController.seedData
 
 # Add all the application routes to the prod.routes file
 ->         /                          prod.Routes

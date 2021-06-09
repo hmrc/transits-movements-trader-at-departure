@@ -32,9 +32,10 @@ import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
-class TestOnlyController @Inject() (override val messagesApi: MessagesApi, mongo: ReactiveMongoApi, cc: ControllerComponents, config: Configuration)(implicit
-  ec: ExecutionContext
-) extends BackendController(cc) {
+class TestOnlyController @Inject()(override val messagesApi: MessagesApi, mongo: ReactiveMongoApi, cc: ControllerComponents, config: Configuration)(
+  implicit
+  ec: ExecutionContext)
+    extends BackendController(cc) {
 
   private val featureFlag: Boolean = config.get[Boolean]("feature-flags.testOnly.enabled")
 
