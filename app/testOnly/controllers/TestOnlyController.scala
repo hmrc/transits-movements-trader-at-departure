@@ -33,19 +33,25 @@ import scala.concurrent.ExecutionContext
 class TestOnlyController @Inject()(override val messagesApi: MessagesApi, mongo: ReactiveMongoApi, cc: ControllerComponents)(implicit ec: ExecutionContext)
     extends BackendController(cc) {
 
+  private val featureFlag: Boolean = config.get[Boolean]("feature-flags.testOnly.enabled")
+
   def dropDepartureCollection: Action[AnyContent] = Action.async {
     implicit request =>
-      mongo.database
-        .map(_.collection[JSONCollection](DepartureRepository.collectionName))
-        .flatMap(
-          _.findAndRemove(Json.obj()).map {
-            result =>
-              result.lastError match {
-                case None        => Ok(s"Cleared '${DepartureRepository.collectionName}' Mongo collection")
-                case Some(error) => Ok(s"collection does not exist or something gone wrong: ${error.err.getOrElse("Unknown error")}")
-              }
-          }
-        )
+      if (featureFlag) {
+        mongo.database
+          .map(_.collection[JSONCollection](DepartureRepository.collectionName))
+          .flatMap(
+            _.findAndRemove(Json.obj()).map {
+              result =>
+                result.lastError match {
+                  case None        => Ok(s"Cleared '${DepartureRepository.collectionName}' Mongo collection")
+                  case Some(error) => Ok(s"collection does not exist or something gone wrong: ${error.err.getOrElse("Unknown error")}")
+                }
+            }
+          )
+      } else {
+        Future.successful(NotImplemented(s"Feature disabled, cannot drop ${DepartureRepository.collectionName}"))
+      }
   }
 
 }
