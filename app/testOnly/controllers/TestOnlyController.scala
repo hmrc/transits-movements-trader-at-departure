@@ -16,6 +16,7 @@
 
 package testOnly.controllers
 
+import play.api.Configuration
 import play.api.i18n.MessagesApi
 import play.api.libs.json.Json
 import play.api.mvc.Action
@@ -29,9 +30,11 @@ import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 
-class TestOnlyController @Inject()(override val messagesApi: MessagesApi, mongo: ReactiveMongoApi, cc: ControllerComponents)(implicit ec: ExecutionContext)
-    extends BackendController(cc) {
+class TestOnlyController @Inject() (override val messagesApi: MessagesApi, mongo: ReactiveMongoApi, cc: ControllerComponents, config: Configuration)(implicit
+  ec: ExecutionContext
+) extends BackendController(cc) {
 
   private val featureFlag: Boolean = config.get[Boolean]("feature-flags.testOnly.enabled")
 
