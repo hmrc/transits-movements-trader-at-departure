@@ -26,8 +26,11 @@ import reactivemongo.play.json.collection.JSONCollection
 
 import scala.concurrent.ExecutionContext.Implicits._
 import scala.concurrent.Future
+import scala.util.Failure
+import scala.util.Success
+import play.api.Configuration
 
-class DepartureIdRepository @Inject()(mongo: ReactiveMongoApi) {
+class DepartureIdRepository @Inject()(mongo: ReactiveMongoApi, config: Configuration) {
 
   private val lastIndexKey = "last-index"
   private val primaryValue = "record_id"
@@ -39,8 +42,37 @@ class DepartureIdRepository @Inject()(mongo: ReactiveMongoApi) {
     (__ \ lastIndexKey).read[DepartureId]
   }
 
+  private val featureFlag: Boolean = config.get[Boolean]("feature-flags.testOnly.enabled")
+
   private def collection: Future[JSONCollection] =
     mongo.database.map(_.collection[JSONCollection](collectionName))
+
+  def setNextId(nextId: Int): Future[Unit] =
+    if (featureFlag) {
+      val update = Json.obj(
+        "$set" -> Json.obj(lastIndexKey -> nextId)
+      )
+
+      val selector = Json.obj("_id" -> primaryValue)
+
+      collection.flatMap(
+        _.update(ordered = false)
+          .one(selector, update, upsert = true)
+          .flatMap {
+            result =>
+              if (result.ok)
+                Future.unit
+              else
+                result.errmsg
+                  .map(
+                    x => Future.failed(new Exception(x))
+                  )
+                  .getOrElse(Future.failed(new Exception("Unable to update next DepartureId")))
+          }
+      )
+    } else {
+      Future.failed(new Exception("Feature disabled, cannot set next DepartureId"))
+    }
 
   def nextId(): Future[DepartureId] = {
 
@@ -55,7 +87,8 @@ class DepartureIdRepository @Inject()(mongo: ReactiveMongoApi) {
         .map(
           x =>
             x.result(indexKeyReads)
-              .getOrElse(throw new Exception(s"Unable to generate DepartureId")))
+              .getOrElse(throw new Exception(s"Unable to generate DepartureId"))
+        )
     )
   }
 }

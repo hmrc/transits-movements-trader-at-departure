@@ -22,6 +22,7 @@ import play.api.i18n.MessagesApi
 import play.api.libs.json.Json
 import play.api.mvc.Action
 import play.api.mvc.ControllerComponents
+import repositories.DepartureIdRepository
 import repositories.DepartureRepository
 import testOnly.models.SeedDataParameters
 import testOnly.models.SeedDataResponse
@@ -36,6 +37,7 @@ class TestOnlySeedDataController @Inject()(
   override val messagesApi: MessagesApi,
   cc: ControllerComponents,
   repository: DepartureRepository,
+  idRepository: DepartureIdRepository,
   config: Configuration,
   seedingService: TestOnlySeedDataService
 )(implicit ec: ExecutionContext)
@@ -44,8 +46,7 @@ class TestOnlySeedDataController @Inject()(
 
   private val featureFlag: Boolean = config.get[Boolean]("feature-flags.testOnly.enabled")
 
-  /**
-    *   To start the micro-service locally using the test routes run the following command:
+  /**   To start the micro-service locally using the test routes run the following command:
     *   sbt run -Dplay.http.router=testOnlyDoNotUseInAppConf.Routes -Dfeature-flags.testOnly.enabled=true
     * Example request
     * {{{
@@ -53,7 +54,6 @@ class TestOnlySeedDataController @Inject()(
     *   --header 'Content-Type: application/json' \
     *   --data-raw '{ "startEori": "ZZ000000000021", "numberOfUsers": 10, "startDepartureId": 10, "movementsPerUser": 10, "channel": "api" }'
     * }}}
-    *
     */
   def seedData: Action[SeedDataParameters] = Action.async(parse.json[SeedDataParameters]) {
     implicit request =>
@@ -74,8 +74,17 @@ class TestOnlySeedDataController @Inject()(
       .sequence {
         seedingService
           .seedDepartures(seedDataParameters)
-          .map(repository.insert)
+          .grouped(50)
+          .map {
+            departures =>
+              for {
+                _ <- repository.bulkInsert(departures)
+                maxId = departures.maxBy(_.departureId.index).departureId
+                _ <- idRepository.setNextId(maxId.index + 1)
+              } yield ()
+          }
       }
-      .map(_ => ())
-
+      .map(
+        _ => ()
+      )
 }
