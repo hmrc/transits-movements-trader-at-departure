@@ -99,6 +99,15 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfi
   private def collection: Future[JSONCollection] =
     mongo.database.map(_.collection[JSONCollection](collectionName))
 
+  def bulkInsert(departures: Seq[Departure]): Future[Unit] =
+    collection.flatMap {
+      _.insert(ordered = false)
+        .many(departures.map(Json.toJsObject[Departure]))
+        .map(
+          _ => ()
+        )
+    }
+
   def insert(departure: Departure): Future[Unit] =
     collection.flatMap {
       _.insert(false)
