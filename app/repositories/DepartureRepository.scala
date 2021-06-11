@@ -17,10 +17,12 @@
 package repositories
 
 import cats.syntax.all._
+
 import java.time.Clock
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import config.AppConfig
+
 import javax.inject.Inject
 import models._
 import play.api.libs.json.JsObject
@@ -43,8 +45,10 @@ import scala.util.Failure
 import scala.util.Try
 import models.response.ResponseDepartures
 import models.response.ResponseDeparture
+import play.api.Configuration
 
-class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfig)(implicit ec: ExecutionContext, clock: Clock) extends MongoDateTimeFormats {
+class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfig, config: Configuration)(implicit ec: ExecutionContext, clock: Clock)
+    extends MongoDateTimeFormats {
 
   private lazy val eoriNumberIndex: Aux[BSONSerializationPack.type] = IndexUtils.index(
     key = Seq("eoriNumber" -> IndexType.Ascending),
@@ -116,6 +120,18 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfi
           _ => ()
         )
     }
+
+  private lazy val featureFlag: Boolean = config.get[Boolean]("feature-flags.testOnly.enabled")
+
+  def getMaxDepartureId: Future[Option[DepartureId]] =
+    if (featureFlag) {
+      collection.flatMap(
+        _.find(Json.obj(), None)
+          .sort(Json.obj("_id" -> -1))
+          .one[Departure]
+          .map(_.map(_.departureId))
+      )
+    } else Future.successful(None)
 
   def addNewMessage(departureId: DepartureId, message: Message): Future[Try[Unit]] = {
 
