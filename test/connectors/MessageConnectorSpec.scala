@@ -226,9 +226,12 @@ class MessageConnectorSpec
         }
       }
 
+      "EisSubmissionResult toString must equal expected result" in {
+        val status = MessageConnector.EisSubmissionResult.EisSubmissionSuccessful
+        status.toString mustBe "EisSubmissionResult(code = 202 and details = EIS Successful Submission)"
+      }
     }
   }
-
 }
 
 object MessageConnectorSpec {
