@@ -46,8 +46,8 @@ class TestOnlySeedDataController @Inject()(
 
   private val featureFlag: Boolean = config.get[Boolean]("feature-flags.testOnly.enabled")
 
-  /**   To start the micro-service locally using the test routes run the following command:
-    *   sbt run -Dplay.http.router=testOnlyDoNotUseInAppConf.Routes -Dfeature-flags.testOnly.enabled=true
+  /** To start the micro-service locally using the test routes run the following command:
+    * sbt run -Dplay.http.router=testOnlyDoNotUseInAppConf.Routes -Dfeature-flags.testOnly.enabled=true
     * Example request
     * {{{
     *   curl --location --request POST 'http://localhost:9480/test-only/transits-movements-trader-at-departure/seedData' \
@@ -62,11 +62,15 @@ class TestOnlySeedDataController @Inject()(
           _ =>
             val response = SeedDataResponse(request.body)
             Ok(Json.toJson(response))
-
         }
       } else {
         Future.successful(NotImplemented("Feature disabled, could not seed data"))
       }
+  }
+
+  private def updateNextId(): Future[Unit] = repository.getMaxDepartureId.flatMap {
+    case Some(value) => idRepository.setNextId(value.index + 1)
+    case None        => Future.failed(new IllegalStateException("No Departure found when retrieving max departure id"))
   }
 
   private def dataInsert(seedDataParameters: SeedDataParameters): Future[Unit] =
@@ -75,16 +79,11 @@ class TestOnlySeedDataController @Inject()(
         seedingService
           .seedDepartures(seedDataParameters)
           .grouped(50)
-          .map {
-            departures =>
-              for {
-                _ <- repository.bulkInsert(departures)
-                maxId = departures.maxBy(_.departureId.index).departureId
-                _ <- idRepository.setNextId(maxId.index + 1)
-              } yield ()
-          }
+          .map(repository.bulkInsert)
       }
-      .map(
-        _ => ()
-      )
+      .flatMap(_ => updateNextId())
+      .recoverWith {
+        case e => updateNextId().flatMap(_ => Future.failed(e))
+      }
+
 }
