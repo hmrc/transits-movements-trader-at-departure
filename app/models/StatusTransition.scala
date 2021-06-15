@@ -49,11 +49,11 @@ object StatusTransition {
     ControlDecisionNotification -> ControlDecisionNotification,
     ControlDecisionNotification -> NoReleaseForTransit,
     ControlDecisionNotification -> ReleaseForTransit,
+    ControlDecisionNotification -> DeclarationCancellationRequest,
     // NoReleaseForTransit transitions
     NoReleaseForTransit -> NoReleaseForTransit,
     // ReleaseForTransit transitions
     ReleaseForTransit -> ReleaseForTransit,
-    ReleaseForTransit -> DeclarationCancellationRequest,
     ReleaseForTransit -> CancellationDecision,
     ReleaseForTransit -> WriteOffNotification,
     // DeclarationCancellationRequest transitions

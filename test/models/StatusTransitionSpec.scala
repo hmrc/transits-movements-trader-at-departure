@@ -219,9 +219,20 @@ class StatusTransitionSpec extends SpecBase with ScalaCheckDrivenPropertyChecks 
       )
     }
 
+    "transition to DeclarationCancellationRequest when receiving a DeclarationCancellationRequest event" in {
+      StatusTransition.transition(DepartureStatus.ControlDecisionNotification, MessageReceivedEvent.DeclarationCancellationRequest) mustEqual Right(
+        DepartureStatus.DeclarationCancellationRequest
+      )
+    }
+
     "return an error message when receiving any other event" in {
       val validMessages =
-        Seq(MessageReceivedEvent.ControlDecisionNotification, MessageReceivedEvent.NoReleaseForTransit, MessageReceivedEvent.ReleaseForTransit)
+        Seq(
+          MessageReceivedEvent.ControlDecisionNotification,
+          MessageReceivedEvent.NoReleaseForTransit,
+          MessageReceivedEvent.ReleaseForTransit,
+          MessageReceivedEvent.DeclarationCancellationRequest
+        )
       val invalidMessages = MessageReceivedEvent.values.diff(validMessages)
       invalidMessages.foreach {
         m =>
@@ -235,12 +246,6 @@ class StatusTransitionSpec extends SpecBase with ScalaCheckDrivenPropertyChecks 
   "ReleaseForTransit must " - {
     "transition to ReleaseForTransit when receiving a ReleaseForTransit event" in {
       StatusTransition.transition(DepartureStatus.ReleaseForTransit, MessageReceivedEvent.ReleaseForTransit) mustEqual Right(DepartureStatus.ReleaseForTransit)
-    }
-
-    "transition to DeclarationCancellationRequest when receiving a DeclarationCancellationRequest event" in {
-      StatusTransition.transition(DepartureStatus.ReleaseForTransit, MessageReceivedEvent.DeclarationCancellationRequest) mustEqual Right(
-        DepartureStatus.DeclarationCancellationRequest
-      )
     }
 
     "transition to CancellationDecision when receiving a CancellationDecision event" in {
@@ -259,7 +264,6 @@ class StatusTransitionSpec extends SpecBase with ScalaCheckDrivenPropertyChecks 
       val validMessages =
         Seq(
           MessageReceivedEvent.ReleaseForTransit,
-          MessageReceivedEvent.DeclarationCancellationRequest,
           MessageReceivedEvent.CancellationDecision,
           MessageReceivedEvent.WriteOffNotification
         )
