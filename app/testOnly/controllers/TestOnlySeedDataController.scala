@@ -78,8 +78,8 @@ class TestOnlySeedDataController @Inject()(
       }
   }
 
-  private def updateNextId(): Future[Unit] = repository.getMaxDepartureId.flatMap {
-    case Some(value) => idRepository.setNextId(value.index + 1)
+  private def updateLatestId(): Future[Unit] = repository.getMaxDepartureId.flatMap {
+    case Some(value) => idRepository.setLatestId(value.index)
     case None        => Future.failed(new IllegalStateException("No Departure found when retrieving max departure id"))
   }
 
@@ -91,9 +91,9 @@ class TestOnlySeedDataController @Inject()(
           .grouped(50)
           .map(repository.bulkInsert)
       }
-      .flatMap(_ => updateNextId())
+      .flatMap(_ => updateLatestId())
       .recoverWith {
-        case e => updateNextId().flatMap(_ => Future.failed(e))
+        case e => updateLatestId().flatMap(_ => Future.failed(e))
       }
 
 }
