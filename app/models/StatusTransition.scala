@@ -61,6 +61,7 @@ object StatusTransition {
     DeclarationCancellationRequest -> DeclarationCancellationRequest,
     DeclarationCancellationRequest -> CancellationDecision,
     DeclarationCancellationRequest -> DeclarationCancellationRequestNegativeAcknowledgement,
+    DeclarationCancellationRequest -> ReleaseForTransit,
     // CancellationDecision transitions
     CancellationDecision -> CancellationDecision,
     CancellationDecision -> WriteOffNotification,

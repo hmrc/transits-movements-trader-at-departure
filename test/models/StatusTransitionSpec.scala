@@ -317,11 +317,18 @@ class StatusTransitionSpec extends SpecBase with ScalaCheckDrivenPropertyChecks 
       )
     }
 
+    "transition to ReleaseForTransit when receiving an ReleaseForTransit event" in {
+      StatusTransition.transition(DepartureStatus.DeclarationCancellationRequest, MessageReceivedEvent.ReleaseForTransit) mustEqual Right(
+        DepartureStatus.ReleaseForTransit
+      )
+    }
+
     "return an error message when receiving any other event" in {
       val validMessages = Seq(
         MessageReceivedEvent.DeclarationCancellationRequest,
         MessageReceivedEvent.CancellationDecision,
-        MessageReceivedEvent.XMLSubmissionNegativeAcknowledgement
+        MessageReceivedEvent.XMLSubmissionNegativeAcknowledgement,
+        MessageReceivedEvent.ReleaseForTransit
       )
       val invalidMessages = MessageReceivedEvent.values.diff(validMessages)
       invalidMessages.foreach {
