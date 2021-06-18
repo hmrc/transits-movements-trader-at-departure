@@ -36,6 +36,7 @@ object StatusTransition {
     // PositiveAcknowledgement transitions
     PositiveAcknowledgement -> PositiveAcknowledgement,
     PositiveAcknowledgement -> MrnAllocated,
+    PositiveAcknowledgement -> DepartureRejected,
     // MrnAllocated transitions
     MrnAllocated -> MrnAllocated,
     MrnAllocated -> ControlDecisionNotification,
