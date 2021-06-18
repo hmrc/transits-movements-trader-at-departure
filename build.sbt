@@ -70,6 +70,7 @@ lazy val scoverageSettings = Def.settings(
     """.*\.RoutesPrefix""",
     """.*\.Reverse[^.]*""",
     "testonly",
+    "testOnly.*",
     "config.*"
   ).mkString(";")
 )
