@@ -47,7 +47,7 @@ class DepartureIdRepository @Inject()(mongo: ReactiveMongoApi, config: Configura
   private def collection: Future[JSONCollection] =
     mongo.database.map(_.collection[JSONCollection](collectionName))
 
-  def setNextId(nextId: Int): Future[Unit] =
+  def setLatestId(nextId: Int): Future[Unit] =
     if (featureFlag) {
       val update = Json.obj(
         "$set" -> Json.obj(lastIndexKey -> nextId)

@@ -57,7 +57,8 @@ class DepartureIdRepositorySpec extends AnyFreeSpec with Matchers with ScalaFutu
                   Json.obj(
                     "_id"        -> "record_id",
                     "last-index" -> 1
-                  ))
+                  )
+                )
           }
       }.futureValue
 
@@ -66,6 +67,12 @@ class DepartureIdRepositorySpec extends AnyFreeSpec with Matchers with ScalaFutu
 
       first mustBe DepartureId(2)
       second mustBe DepartureId(3)
+    }
+
+    "must not allow setting next DepartureId when testOnly features are disabled" in {
+      intercept[Exception] {
+        service.setLatestId(3).futureValue
+      }
     }
   }
 

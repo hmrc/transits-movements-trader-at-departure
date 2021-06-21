@@ -70,7 +70,7 @@ class TestOnlySeedDataControllerSpec extends SpecBase with ScalaCheckPropertyChe
       "when there no first Eori value specified" in {
         when(mockRepository.bulkInsert(any())).thenReturn(Future.successful(()))
         when(mockRepository.getMaxDepartureId).thenReturn(Future.successful(Some(DepartureId(134))))
-        when(mockIdRepository.setNextId(any())).thenReturn(Future.successful(()))
+        when(mockIdRepository.setLatestId(any())).thenReturn(Future.successful(()))
 
         val request: FakeRequest[AnyContentAsJson] = FakeRequest(POST, testOnly.controllers.routes.TestOnlySeedDataController.seedData().url)
           .withHeaders("channel" -> ChannelType.web.toString)
@@ -95,13 +95,13 @@ class TestOnlySeedDataControllerSpec extends SpecBase with ScalaCheckPropertyChe
         )
 
         verify(mockRepository, times(20)).bulkInsert(any())
-        verify(mockIdRepository, times(1)).setNextId(eqTo(135))
+        verify(mockIdRepository, times(1)).setLatestId(eqTo(134))
       }
 
       "when there is a first Eori value specified" in {
         when(mockRepository.bulkInsert(any())).thenReturn(Future.successful(()))
         when(mockRepository.getMaxDepartureId).thenReturn(Future.successful(Some(DepartureId(312))))
-        when(mockIdRepository.setNextId(any())).thenReturn(Future.successful(()))
+        when(mockIdRepository.setLatestId(any())).thenReturn(Future.successful(()))
 
         val request: FakeRequest[AnyContentAsJson] = FakeRequest(POST, testOnly.controllers.routes.TestOnlySeedDataController.seedData().url)
           .withHeaders("channel" -> ChannelType.web.toString)
@@ -127,7 +127,7 @@ class TestOnlySeedDataControllerSpec extends SpecBase with ScalaCheckPropertyChe
         )
 
         verify(mockRepository, times(20)).bulkInsert(any())
-        verify(mockIdRepository, times(1)).setNextId(eqTo(313))
+        verify(mockIdRepository, times(1)).setLatestId(eqTo(312))
       }
 
     }
