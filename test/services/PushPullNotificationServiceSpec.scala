@@ -37,10 +37,6 @@ import uk.gov.hmrc.http.UpstreamErrorResponse
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.xml.NodeSeq
-import models.DepartureId
-import java.time.LocalDateTime
-import models.DepartureMessageNotification
-import models.MessageType
 
 class PushPullNotificationServiceSpec extends SpecBase with BeforeAndAfterEach with ScalaCheckPropertyChecks {
   val mockConnector = mock[PushPullNotificationConnector]
@@ -97,15 +93,12 @@ class PushPullNotificationServiceSpec extends SpecBase with BeforeAndAfterEach w
         val testBody: NodeSeq = <test>test content</test>
         val boxIdMatcher      = refEq(testBoxId).asInstanceOf[BoxId]
 
-        val mockedPostNotification = mockConnector.postNotification(boxIdMatcher, any[DepartureMessageNotification])(any[ExecutionContext], any[HeaderCarrier])
+        val mockedPostNotification = mockConnector.postNotification(boxIdMatcher, any[NodeSeq])(any[ExecutionContext], any[HeaderCarrier])
         val successfulResult       = Future.successful(Right(()))
-
-        val testDepartureId  = DepartureId(1)
-        val testNotification = DepartureMessageNotification(testDepartureId, 1, LocalDateTime.now, MessageType.DepartureDeclaration, testBody)
 
         given(mockedPostNotification).willReturn(successfulResult)
 
-        Await.result(service.sendPushNotification(testBox.boxId, testNotification), 30.seconds).mustEqual(())
+        Await.result(service.sendPushNotification(testBox.boxId, testBody), 30.seconds).mustEqual(())
       }
 
       "should not return anything when call fails" in {
@@ -113,14 +106,11 @@ class PushPullNotificationServiceSpec extends SpecBase with BeforeAndAfterEach w
         val testBody: NodeSeq = <test>test content</test>
         val boxIdMatcher      = refEq(testBoxId).asInstanceOf[BoxId]
 
-        val mockedPostNotification = mockConnector.postNotification(boxIdMatcher, any[DepartureMessageNotification])(any[ExecutionContext], any[HeaderCarrier])
-
-        val testDepartureId  = DepartureId(1)
-        val testNotification = DepartureMessageNotification(testDepartureId, 1, LocalDateTime.now, MessageType.DepartureDeclaration, testBody)
+        val mockedPostNotification = mockConnector.postNotification(boxIdMatcher, any[NodeSeq])(any[ExecutionContext], any[HeaderCarrier])
 
         given(mockedPostNotification).willReturn(Future.failed(new RuntimeException))
 
-        Await.result(service.sendPushNotification(testBox.boxId, testNotification), 30.seconds).mustEqual(())
+        Await.result(service.sendPushNotification(testBox.boxId, testBody), 30.seconds).mustEqual(())
 
       }
     }
