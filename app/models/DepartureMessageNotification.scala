@@ -23,11 +23,12 @@ import models.request.DepartureResponseRequest
 
 import java.time.LocalDateTime
 import scala.xml.NodeSeq
-import config.Constants
 
 case class DepartureMessageNotification(departureId: DepartureId, messageId: Int, received: LocalDateTime, messageType: MessageType, body: NodeSeq)
 
 object DepartureMessageNotification {
+
+  private def requestId(departureId: DepartureId): String = s"/customs/transits/movements/departures/${departureId.index}"
 
   implicit val writesDepartureId: Writes[DepartureId] = Writes.of[String].contramap(_.index.toString)
 
@@ -43,7 +44,7 @@ object DepartureMessageNotification {
   implicit val writesDepartureMessageNotificationWithRequestId: OWrites[DepartureMessageNotification] =
     OWrites.transform(writesDepartureMessageNotification) {
       (departure, obj) =>
-        obj ++ Json.obj("requestId" -> Constants.requestId(departure.departureId))
+        obj ++ Json.obj("requestId" -> requestId(departure.departureId))
     }
 
   def fromRequest(request: DepartureResponseRequest[NodeSeq], timestamp: LocalDateTime): DepartureMessageNotification =

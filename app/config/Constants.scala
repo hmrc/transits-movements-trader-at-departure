@@ -19,7 +19,6 @@ package config
 import models.DepartureId
 
 object Constants {
-  def requestId(departureId: DepartureId): String = s"/customs/transits/movements/departures/${departureId.index}"
-  val BoxName                                     = s"customs/transits##1.0##notificationUrl"
-  val XClientIdHeader                             = "X-Client-Id"
+  val BoxName         = s"customs/transits##1.0##notificationUrl"
+  val XClientIdHeader = "X-Client-Id"
 }
