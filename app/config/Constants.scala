@@ -16,6 +16,8 @@
 
 package config
 
+import models.DepartureId
+
 object Constants {
   val BoxName         = s"customs/transits##1.0##notificationUrl"
   val XClientIdHeader = "X-Client-Id"
