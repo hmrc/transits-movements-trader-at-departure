@@ -19,7 +19,6 @@ package services
 import connectors.PushPullNotificationConnector
 import models.Box
 import models.BoxId
-import models.DepartureMessageNotification
 import play.api.Logging
 import play.api.http.Status._
 import uk.gov.hmrc.http.HeaderCarrier
@@ -28,6 +27,7 @@ import uk.gov.hmrc.http.UpstreamErrorResponse
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
+import scala.xml.NodeSeq
 import scala.util.control.NonFatal
 
 class PushPullNotificationService @Inject()(connector: PushPullNotificationConnector) extends Logging {
@@ -47,9 +47,9 @@ class PushPullNotificationService @Inject()(connector: PushPullNotificationConne
           None
       }
 
-  def sendPushNotification(boxId: BoxId, notification: DepartureMessageNotification)(implicit ec: ExecutionContext, hc: HeaderCarrier): Future[Unit] =
+  def sendPushNotification(boxId: BoxId, body: NodeSeq)(implicit ec: ExecutionContext, hc: HeaderCarrier): Future[Unit] =
     connector
-      .postNotification(boxId, notification)
+      .postNotification(boxId, body)
       .map {
         case Left(UpstreamErrorResponse(message, statusCode, _, _)) =>
           logger.warn(s"Error $statusCode received while sending notification for boxId $boxId: $message")
