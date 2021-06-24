@@ -152,7 +152,7 @@ class MessageSummaryService {
 
         val guaranteeNotValidNotificationCount = guaranteeNotValidNotifications.length
 
-        if (guaranteeNotValidNotificationCount > 0 && departureDeclarationCount(departure.messages) == guaranteeNotValidNotificationCount)
+        if (guaranteeNotValidNotificationCount > 0 && departure.status == DepartureStatus.GuaranteeNotValid)
           Some(guaranteeNotValidNotifications.maxBy(_._1.messageCorrelationId))
         else
           None
