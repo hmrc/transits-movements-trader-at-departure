@@ -29,6 +29,7 @@ import models.StatusTransition
 import models.SubmissionProcessingResult.SubmissionFailureExternal
 import models.SubmissionProcessingResult.SubmissionFailureInternal
 import models.SubmissionProcessingResult.SubmissionSuccess
+import models.DepartureMessageNotification
 import play.api.Logging
 import play.api.mvc.Action
 import play.api.mvc.ControllerComponents
@@ -58,7 +59,14 @@ class NCTSMessageController @Inject()(
     request.departure.notificationBox
       .map {
         box =>
-          pushPullNotificationService.sendPushNotification(box.boxId, request.body)
+          XmlMessageParser.dateTimeOfPrepR(request.body) match {
+            case Left(error) =>
+              logger.error(s"Error while parsing message timestamp: ${error.message}")
+              Future.unit
+            case Right(timestamp) =>
+              val notification = DepartureMessageNotification.fromRequest(request, timestamp)
+              pushPullNotificationService.sendPushNotification(box.boxId, notification)
+          }
       }
       .getOrElse(Future.unit)
 

@@ -31,6 +31,10 @@ import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.xml.NodeSeq
+import models.DepartureMessageNotification
+import models.DepartureId
+import java.time.LocalDateTime
+import models.MessageType
 
 class PushPullNotificationConnectorSpec extends AnyFreeSpec with WiremockSuite with ScalaFutures with Matchers with IntegrationPatience {
   override protected def portConfigKey: String = "microservice.services.push-pull-notifications-api.port"
@@ -124,6 +128,9 @@ class PushPullNotificationConnectorSpec extends AnyFreeSpec with WiremockSuite w
       val testBoxId         = "1c5b9365-18a6-55a5-99c9-83a091ac7f26"
       val testUrlPath       = s"/box/$testBoxId/notifications"
 
+      val testDepartureId  = DepartureId(1)
+      val testNotification = DepartureMessageNotification(testDepartureId, 1, LocalDateTime.now, MessageType.DepartureDeclaration, testBody)
+
       "should return a Right[Unit] when the notification is successfully POSTed" in {
 
         server.stubFor {
@@ -134,7 +141,7 @@ class PushPullNotificationConnectorSpec extends AnyFreeSpec with WiremockSuite w
 
         running(app) {
           val connector = app.injector.instanceOf[PushPullNotificationConnector]
-          val result    = connector.postNotification(BoxId(testBoxId), testBody)
+          val result    = connector.postNotification(BoxId(testBoxId), testNotification)
 
           result.futureValue.right.get.mustEqual(())
         }
@@ -164,7 +171,7 @@ class PushPullNotificationConnectorSpec extends AnyFreeSpec with WiremockSuite w
               }
 
               val connector = app.injector.instanceOf[PushPullNotificationConnector]
-              val result    = connector.postNotification(BoxId(testBoxId), testBody)
+              val result    = connector.postNotification(BoxId(testBoxId), testNotification)
 
               result.futureValue.left.get.statusCode mustBe code
 
