@@ -37,6 +37,7 @@ object StatusTransition {
     PositiveAcknowledgement -> PositiveAcknowledgement,
     PositiveAcknowledgement -> MrnAllocated,
     PositiveAcknowledgement -> DepartureRejected,
+    PositiveAcknowledgement -> WriteOffNotification,
     // MrnAllocated transitions
     MrnAllocated -> MrnAllocated,
     MrnAllocated -> ControlDecisionNotification,
@@ -62,6 +63,7 @@ object StatusTransition {
     DeclarationCancellationRequest -> CancellationDecision,
     DeclarationCancellationRequest -> DeclarationCancellationRequestNegativeAcknowledgement,
     DeclarationCancellationRequest -> ReleaseForTransit,
+    DeclarationCancellationRequest -> NoReleaseForTransit,
     // CancellationDecision transitions
     CancellationDecision -> CancellationDecision,
     CancellationDecision -> WriteOffNotification,
