@@ -129,8 +129,19 @@ class StatusTransitionSpec extends SpecBase with ScalaCheckDrivenPropertyChecks 
       )
     }
 
+    "transition to WriteOffNotification when receiving a WriteOffNotification event" in {
+      StatusTransition.transition(DepartureStatus.PositiveAcknowledgement, MessageReceivedEvent.WriteOffNotification) mustEqual Right(
+        DepartureStatus.WriteOffNotification
+      )
+    }
+
     "return an error message when receiving any other event" in {
-      val validMessages   = Seq(MessageReceivedEvent.MrnAllocated, MessageReceivedEvent.PositiveAcknowledgement, MessageReceivedEvent.DepartureRejected)
+      val validMessages = Seq(
+        MessageReceivedEvent.MrnAllocated,
+        MessageReceivedEvent.PositiveAcknowledgement,
+        MessageReceivedEvent.DepartureRejected,
+        MessageReceivedEvent.WriteOffNotification
+      )
       val invalidMessages = MessageReceivedEvent.values.diff(validMessages)
       invalidMessages.foreach {
         m =>
@@ -327,12 +338,19 @@ class StatusTransitionSpec extends SpecBase with ScalaCheckDrivenPropertyChecks 
       )
     }
 
+    "transition to NoReleaseForTransit when receiving an NoReleaseForTransit event" in {
+      StatusTransition.transition(DepartureStatus.DeclarationCancellationRequest, MessageReceivedEvent.NoReleaseForTransit) mustEqual Right(
+        DepartureStatus.NoReleaseForTransit
+      )
+    }
+
     "return an error message when receiving any other event" in {
       val validMessages = Seq(
         MessageReceivedEvent.DeclarationCancellationRequest,
         MessageReceivedEvent.CancellationDecision,
         MessageReceivedEvent.XMLSubmissionNegativeAcknowledgement,
-        MessageReceivedEvent.ReleaseForTransit
+        MessageReceivedEvent.ReleaseForTransit,
+        MessageReceivedEvent.NoReleaseForTransit
       )
       val invalidMessages = MessageReceivedEvent.values.diff(validMessages)
       invalidMessages.foreach {
