@@ -42,7 +42,7 @@ object DepartureMessageNotification {
       (__ \ "messageUri").write[String] and
         (__ \ "requestId").write[String] and
         (__ \ "departureId").write[DepartureId] and
-        (__ \ "messageId").write[String].contramap[MessageId](_.index.toString) and
+        (__ \ "messageId").write[String].contramap[MessageId](_.publicValue.toString) and
         (__ \ "received").write[LocalDateTime] and
         (__ \ "messageType").write[MessageType]
     )(unlift(DepartureMessageNotification.unapply))
@@ -57,7 +57,7 @@ object DepartureMessageNotification {
     val messageId    = MessageId.fromIndex(request.departure.messages.length)
     val departureUrl = requestId(request.departure.departureId)
     DepartureMessageNotification(
-      s"$departureUrl/messages/${messageId.index}",
+      s"$departureUrl/messages/${messageId.publicValue}",
       departureUrl,
       request.departure.departureId,
       messageId,
