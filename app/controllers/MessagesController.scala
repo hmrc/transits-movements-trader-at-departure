@@ -16,7 +16,6 @@
 
 package controllers
 
-import javax.inject.Inject
 import audit.AuditService
 import audit.AuditType.DepartureCancellationRequestSubmitted
 import com.kenshoo.play.metrics.Metrics
@@ -35,12 +34,14 @@ import play.api.mvc.AnyContent
 import play.api.mvc.ControllerComponents
 import services.DepartureService
 import services.SubmitMessageService
+import services.XmlMessageParser
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
+import java.time.OffsetDateTime
+import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.xml.NodeSeq
-import java.time.OffsetDateTime
 
 class MessagesController @Inject()(
   cc: ControllerComponents,
@@ -68,10 +69,15 @@ class MessagesController @Inject()(
                   request.body
                 ) match {
                 case Right(message) =>
-                  StatusTransition.transition(request.departure.status, MessageReceivedEvent.DeclarationCancellationRequest) match {
-                    case Right(status) =>
+                  XmlMessageParser.mrnR(request.body) match {
+                    case Left(error) =>
+                      logger.warn(error.message)
+                      Future.successful(BadRequest(error.message))
+                    case Right(mrn) if !request.departure.movementReferenceNumber.contains(mrn) =>
+                      Future.successful(BadRequest("TODO: get content for error message when the MRN in the cancellation doesn't match or isn't populated"))
+                    case Right(_) =>
                       submitMessageService
-                        .submitMessage(departureId, request.departure.nextMessageId, message, status, request.channel)
+                        .submitMessage(departureId, request.departure.nextMessageId, message, DepartureStatus.DeclarationCancellationRequest, request.channel)
                         .map {
                           case SubmissionProcessingResult.SubmissionFailureInternal =>
                             InternalServerError
@@ -86,11 +92,8 @@ class MessagesController @Inject()(
                                 "Location" -> routes.MessagesController.getMessage(request.departure.departureId, request.departure.nextMessageId).url
                               )
                         }
-                    case Left(error) =>
-                      Future.successful(BadRequest(error.reason))
                   }
                 case Left(error) =>
-                  logger.warn(error.message)
                   Future.successful(BadRequest(error.message))
               }
             case _ =>

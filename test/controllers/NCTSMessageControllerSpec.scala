@@ -237,28 +237,6 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
         }
       }
 
-      "must return BadRequest, when the valid message is out of sequence" in {
-        when(mockDepartureRepository.get(any())).thenReturn(Future.successful(Some(acknowledgedDeparture)))
-        when(mockLockRepository.lock(any())).thenReturn(Future.successful(true))
-        when(mockLockRepository.unlock(any())).thenReturn(Future.successful(()))
-
-        val application = baseApplicationBuilder
-          .overrides(bind[DepartureRepository].toInstance(mockDepartureRepository), bind[LockRepository].toInstance(mockLockRepository))
-          .build()
-
-        running(application) {
-          val request = FakeRequest(POST, routes.NCTSMessageController.post(messageSender).url)
-            .withXmlBody(requestCancellationDecisionBody)
-            .withHeaders("X-Message-Type" -> MessageType.CancellationDecision.code)
-
-          val result = route(application, request).value
-          contentAsString(
-            result
-          ) mustEqual "Can only accept this type of message [CancellationDecision] directly after [DeclarationCancellationRequest or ReleaseForTransit] messages. Current message state is [PositiveAcknowledgement]."
-          status(result) mustEqual BAD_REQUEST
-        }
-      }
-
       "must return BadRequest, when the service is unable to find a mrn before attempting to save the message (mrnAllocated)" in {
 
         when(mockDepartureRepository.get(any())).thenReturn(Future.successful(Some(acknowledgedDeparture)))
