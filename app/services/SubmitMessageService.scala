@@ -106,6 +106,9 @@ class SubmitMessageService @Inject()(departureRepository: DepartureRepository, m
       }
     }
 
+  def submitDeparture2(departure: Departure)(implicit hc: HeaderCarrier): Future[SubmissionProcessingResult] =
+    departureRepository.dumbTransaction(submitDeparture(departure))
+
   def submitDeparture(departure: Departure)(implicit hc: HeaderCarrier): Future[SubmissionProcessingResult] =
     departureRepository
       .insert(departure)
@@ -119,7 +122,10 @@ class SubmitMessageService @Inject()(departureRepository: DepartureRepository, m
               case _ @EisSubmissionSuccessful =>
                 departureRepository
                   .setDepartureStateAndMessageState(departure.departureId, messageId, DepartureStatus.DepartureSubmitted, MessageStatus.SubmissionSucceeded)
-                  .map(_ => SubmissionProcessingResult.SubmissionSuccess)
+                  .map(_ => {
+                    println("we were successful")
+                    SubmissionProcessingResult.SubmissionSuccess
+                  })
                   .recover({
                     case _ =>
                       logger.warn("Mongo failure when updating message status")

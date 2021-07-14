@@ -80,7 +80,7 @@ class DeparturesController @Inject()(
                     Future.successful(BadRequest(error.message))
                   case Right(departure) =>
                     submitMessageService
-                      .submitDeparture(departure)
+                      .submitDeparture2(departure)
                       .map {
                         case SubmissionProcessingResult.SubmissionFailureInternal =>
                           InternalServerError

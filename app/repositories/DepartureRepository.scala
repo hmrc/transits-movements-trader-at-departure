@@ -17,12 +17,11 @@
 package repositories
 
 import cats.syntax.all._
-
 import java.time.Clock
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
-import config.AppConfig
 
+import config.AppConfig
 import javax.inject.Inject
 import models._
 import play.api.libs.json.JsObject
@@ -30,6 +29,8 @@ import play.api.libs.json.Json
 import play.modules.reactivemongo.ReactiveMongoApi
 import reactivemongo.api.bson.collection.BSONSerializationPack
 import reactivemongo.api.Cursor
+import reactivemongo.api.DefaultDB
+import reactivemongo.api.FailoverStrategy
 import reactivemongo.api.commands.WriteResult
 import reactivemongo.api.indexes.Index.Aux
 import reactivemongo.api.indexes.IndexType
@@ -120,6 +121,31 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfi
           _ => ()
         )
     }
+
+//  def withTransaction[A](mongoBlock: DefaultDB => Future[A]): Future[A] =
+//    for {
+//      db            <- mongo.database
+//      dbSession     <- db.startSession(false)
+//      dbTransaction <- dbSession.startTransaction(None)
+//      result        <- mongoBlock(dbTransaction)
+//      committed     <- dbTransaction.connectionState.
+//    } yield result
+
+  def dumbTransaction(logicBlock: Future[SubmissionProcessingResult]): Future[SubmissionProcessingResult] =
+    for {
+      db            <- mongo.database
+      dbSession     <- db.startSession(false)
+      dbTransaction <- dbSession.startTransaction(None)
+      logicResult   <- logicBlock
+      _ <- logicResult match {
+        case SubmissionProcessingResult.SubmissionSuccess =>
+          dbTransaction.commitTransaction(false)
+        case _ =>
+          dbTransaction.abortTransaction(false)
+      }
+      _ <- dbSession.endSession(false)
+
+    } yield logicResult
 
   private lazy val featureFlag: Boolean = config.get[Boolean]("feature-flags.testOnly.enabled")
 
