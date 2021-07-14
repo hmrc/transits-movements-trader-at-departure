@@ -33,11 +33,8 @@ class MessageIdSpec extends AnyFreeSpec with Matchers with ScalaCheckPropertyChe
     "must bind from a URL for all message id values greater than zero and return the index of the message" in {
       forAll(intsAboveValue(0)) {
         value =>
-          val expectedMessageIndex = value - 1
-
           val result = pathBindable.bind("key", value.toString).right.value
-
-          result.index mustEqual expectedMessageIndex
+          result.index mustEqual value
       }
     }
 
@@ -51,10 +48,9 @@ class MessageIdSpec extends AnyFreeSpec with Matchers with ScalaCheckPropertyChe
     "must unbind and convert the index to the message id value" in {
       forAll(intsAboveValue(0)) {
         value =>
-          val messageId            = MessageId.fromIndex(value)
-          val expectedMessageIndex = (value + 1).toString
+          val messageId = MessageId(value)
 
-          pathBindable.unbind("key", messageId) mustEqual expectedMessageIndex
+          pathBindable.unbind("key", messageId) mustEqual value.toString
       }
 
     }

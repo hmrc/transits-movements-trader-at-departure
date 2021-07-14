@@ -16,7 +16,6 @@
 
 package controllers
 
-import javax.inject.Inject
 import audit.AuditService
 import audit.AuditType.DepartureCancellationRequestSubmitted
 import com.kenshoo.play.metrics.Metrics
@@ -37,10 +36,11 @@ import services.DepartureService
 import services.SubmitMessageService
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
+import java.time.OffsetDateTime
+import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.xml.NodeSeq
-import java.time.OffsetDateTime
 
 class MessagesController @Inject()(
   cc: ControllerComponents,
@@ -64,14 +64,17 @@ class MessagesController @Inject()(
           MessageType.getMessageType(request.body) match {
             case Some(MessageType.DeclarationCancellationRequest) =>
               departureService
-                .makeMessageWithStatus(request.departure.departureId, request.departure.nextMessageCorrelationId, MessageType.DeclarationCancellationRequest)(
+                .makeMessageWithStatus(request.departure.departureId,
+                                       request.departure.nextMessageId,
+                                       request.departure.nextMessageCorrelationId,
+                                       MessageType.DeclarationCancellationRequest)(
                   request.body
                 ) match {
                 case Right(message) =>
                   StatusTransition.transition(request.departure.status, MessageReceivedEvent.DeclarationCancellationRequest) match {
                     case Right(status) =>
                       submitMessageService
-                        .submitMessage(departureId, request.departure.nextMessageId, message, status, request.channel)
+                        .submitMessage(departureId, message, status, request.channel)
                         .map {
                           case SubmissionProcessingResult.SubmissionFailureInternal =>
                             InternalServerError
@@ -116,8 +119,8 @@ class MessagesController @Inject()(
         implicit request =>
           val messages = request.departure.messages.toList
 
-          if (messages.isDefinedAt(messageId.index) && messages(messageId.index).optStatus != Some(SubmissionFailed))
-            Ok(Json.toJsObject(ResponseMessage.build(departureId, messageId, messages(messageId.index))))
+          if (messages.isDefinedAt(messageId.index - 1) && messages(messageId.index - 1).optStatus != Some(SubmissionFailed))
+            Ok(Json.toJsObject(ResponseMessage.build(departureId, messages(messageId.index - 1))))
           else NotFound
       }
     }

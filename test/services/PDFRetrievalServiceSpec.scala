@@ -24,6 +24,7 @@ import models.ChannelType
 import models.Departure
 import models.DepartureId
 import models.DepartureStatus
+import models.MessageId
 import models.MessageType
 import models.MessageWithoutStatus
 import org.mockito.ArgumentMatchers.any
@@ -35,8 +36,9 @@ import org.mockito.Mockito.when
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.IntegrationPatience
 import uk.gov.hmrc.http.NotFoundException
-import java.time.LocalDateTime
 import utils.JsonHelper
+
+import java.time.LocalDateTime
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
@@ -63,7 +65,7 @@ class PDFRetrievalServiceSpec extends SpecBase with JsonHelper with IntegrationP
       LocalDateTime.now(),
       2,
       NonEmptyList(
-        MessageWithoutStatus(LocalDateTime.now(), MessageType.DepartureDeclaration, <node></node>, 1, convertXmlToJson(<node></node>.toString())),
+        MessageWithoutStatus(MessageId(1), LocalDateTime.now(), MessageType.DepartureDeclaration, <node></node>, 1, convertXmlToJson(<node></node>.toString())),
         Nil
       ),
       None
@@ -76,7 +78,13 @@ class PDFRetrievalServiceSpec extends SpecBase with JsonHelper with IntegrationP
         "should return PDF with correct headers if all messages found and returned from manage documents where message does not contain safety and security" in {
           when(mockMessageRetrievalService.getReleaseForTransitMessage(eqTo(departure)))
             .thenReturn(
-              Some(MessageWithoutStatus(LocalDateTime.now, MessageType.ReleaseForTransit, <blank2></blank2>, 2, convertXmlToJson(<blank2></blank2>.toString())))
+              Some(
+                MessageWithoutStatus(MessageId(2),
+                                     LocalDateTime.now,
+                                     MessageType.ReleaseForTransit,
+                                     <blank2></blank2>,
+                                     2,
+                                     convertXmlToJson(<blank2></blank2>.toString())))
             )
 
           val headers = Map("Content-Disposition" -> Seq("value"), "Content-Type" -> Seq("value"), "OtherHeader" -> Seq("value"))
@@ -95,7 +103,13 @@ class PDFRetrievalServiceSpec extends SpecBase with JsonHelper with IntegrationP
         "should return the PDF with correct headers if all messages found and returned from manage documents where safety and security is 0" in {
           when(mockMessageRetrievalService.getReleaseForTransitMessage(eqTo(departure)))
             .thenReturn(
-              Some(MessageWithoutStatus(LocalDateTime.now, MessageType.ReleaseForTransit, safetyXML(0), 2, convertXmlToJson(<blank2></blank2>.toString())))
+              Some(
+                MessageWithoutStatus(MessageId(2),
+                                     LocalDateTime.now,
+                                     MessageType.ReleaseForTransit,
+                                     safetyXML(0),
+                                     2,
+                                     convertXmlToJson(<blank2></blank2>.toString())))
             )
 
           val headers = Map("Content-Disposition" -> Seq("value"), "Content-Type" -> Seq("value"), "OtherHeader" -> Seq("value"))
@@ -114,7 +128,13 @@ class PDFRetrievalServiceSpec extends SpecBase with JsonHelper with IntegrationP
         "should return an UnexpectedError an unexpected response PDF" in {
           when(mockMessageRetrievalService.getReleaseForTransitMessage(eqTo(departure)))
             .thenReturn(
-              Some(MessageWithoutStatus(LocalDateTime.now, MessageType.ReleaseForTransit, <blank1></blank1>, 2, convertXmlToJson(<blank1></blank1>.toString())))
+              Some(
+                MessageWithoutStatus(MessageId(2),
+                                     LocalDateTime.now,
+                                     MessageType.ReleaseForTransit,
+                                     <blank1></blank1>,
+                                     2,
+                                     convertXmlToJson(<blank1></blank1>.toString())))
             )
 
           when(mockManageDocumentsConnector.getTadPDF(eqTo(<blank1></blank1>))(any()))
@@ -129,7 +149,13 @@ class PDFRetrievalServiceSpec extends SpecBase with JsonHelper with IntegrationP
         "should return an UnexpectedError if there is a failure in retrieving the PDF" in {
           when(mockMessageRetrievalService.getReleaseForTransitMessage(eqTo(departure)))
             .thenReturn(
-              Some(MessageWithoutStatus(LocalDateTime.now, MessageType.ReleaseForTransit, <blank1></blank1>, 2, convertXmlToJson(<blank1></blank1>.toString())))
+              Some(
+                MessageWithoutStatus(MessageId(2),
+                                     LocalDateTime.now,
+                                     MessageType.ReleaseForTransit,
+                                     <blank1></blank1>,
+                                     2,
+                                     convertXmlToJson(<blank1></blank1>.toString())))
             )
 
           when(mockManageDocumentsConnector.getTadPDF(eqTo(<blank1></blank1>))(any()))
@@ -156,7 +182,7 @@ class PDFRetrievalServiceSpec extends SpecBase with JsonHelper with IntegrationP
         val xml = safetyXML(1)
         "should return PDF with correct headers if all messages found and returned from manage documents where message contains safety and security" in {
           when(mockMessageRetrievalService.getReleaseForTransitMessage(eqTo(departure)))
-            .thenReturn(Some(MessageWithoutStatus(LocalDateTime.now, MessageType.ReleaseForTransit, xml, 2, convertXmlToJson(xml.toString()))))
+            .thenReturn(Some(MessageWithoutStatus(MessageId(2), LocalDateTime.now, MessageType.ReleaseForTransit, xml, 2, convertXmlToJson(xml.toString()))))
 
           val headers = Map("Content-Disposition" -> Seq("value"), "Content-Type" -> Seq("value"), "OtherHeader" -> Seq("value"))
 
@@ -175,7 +201,7 @@ class PDFRetrievalServiceSpec extends SpecBase with JsonHelper with IntegrationP
 
         "should return an UnexpectedError an unexpected response PDF" in {
           when(mockMessageRetrievalService.getReleaseForTransitMessage(eqTo(departure)))
-            .thenReturn(Some(MessageWithoutStatus(LocalDateTime.now, MessageType.ReleaseForTransit, xml, 2, convertXmlToJson(xml.toString()))))
+            .thenReturn(Some(MessageWithoutStatus(MessageId(2), LocalDateTime.now, MessageType.ReleaseForTransit, xml, 2, convertXmlToJson(xml.toString()))))
 
           when(mockManageDocumentsConnector.getTsadPDF(eqTo(xml))(any()))
             .thenReturn(Future.failed(new NotFoundException("Sorry An Exception Occurred")))
@@ -190,7 +216,7 @@ class PDFRetrievalServiceSpec extends SpecBase with JsonHelper with IntegrationP
 
         "should return an UnexpectedError if there is a failure in retrieving the PDF" in {
           when(mockMessageRetrievalService.getReleaseForTransitMessage(eqTo(departure)))
-            .thenReturn(Some(MessageWithoutStatus(LocalDateTime.now, MessageType.ReleaseForTransit, xml, 2, convertXmlToJson(xml.toString()))))
+            .thenReturn(Some(MessageWithoutStatus(MessageId(2), LocalDateTime.now, MessageType.ReleaseForTransit, xml, 2, convertXmlToJson(xml.toString()))))
 
           when(mockManageDocumentsConnector.getTsadPDF(eqTo(xml))(any()))
             .thenReturn(Future.failed(new NotFoundException("Sorry An Exception Occurred")))

@@ -67,6 +67,7 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 import scala.concurrent.Future
 import scala.xml.Utility.trim
+import models.MessageId
 
 class DeparturesControllerSpec
     extends SpecBase
@@ -105,6 +106,7 @@ class DeparturesControllerSpec
     </CC015B>
 
   def movementMessage(messageCorrelationId: Int): MessageWithStatus = MessageWithStatus(
+    MessageId(1),
     localDateTime,
     MessageType.DepartureDeclaration,
     savedXmlMessage(messageCorrelationId).map(trim),

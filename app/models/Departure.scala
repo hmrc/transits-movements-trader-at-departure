@@ -49,10 +49,10 @@ case class Departure(
   notificationBox: Option[Box]
 ) extends BaseDeparture {
 
-  def nextMessageId: MessageId = MessageId.fromIndex(messages.length)
+  def nextMessageId: MessageId = MessageId(messages.length + 1)
 
   def messagesWithId: NonEmptyList[(Message, MessageId)] =
-    messages.mapWithIndex(_ -> MessageId.fromIndex(_))
+    messages.map(msg => msg -> msg.messageId)
 
 }
 
@@ -97,4 +97,6 @@ object Departure {
         (__ \ "notificationBox").writeNullable[Box]
     )(unlift(Departure.unapply))
 
+  implicit def formatsDeparture(implicit write: Writes[LocalDateTime]): OFormat[Departure] =
+    OFormat(readsDeparture, writesDeparture)
 }

@@ -17,23 +17,16 @@
 package models
 
 import play.api.mvc.PathBindable
+import play.api.libs.json.Json
+import play.api.libs.json.Format
 
-final class MessageId private (val index: Int) {
-  override def toString: String = s"MessageId($index)"
-
-  override def equals(obj: Any): Boolean = obj match {
-    case x: MessageId => x.index == this.index
-    case _            => false
-  }
-}
+case class MessageId(index: Int)
 
 object MessageId {
 
-  def fromMessageIdValue(messageId: Int): Option[MessageId] = if (messageId > 0) Some(new MessageId(messageId - 1)) else None
+  def fromMessageIdValue(messageId: Int): Option[MessageId] = if (messageId > 0) Some(new MessageId(messageId)) else None
 
-  def unapply(arg: MessageId): Some[Int] = Some(arg.index + 1)
-
-  def fromIndex(index: Int): MessageId = new MessageId(index)
+  implicit val formatMessageId: Format[MessageId] = Json.valueFormat[MessageId]
 
   implicit val pathBindableMessageId: PathBindable[MessageId] = new PathBindable[MessageId] {
     override def bind(key: String, value: String): Either[String, MessageId] =
@@ -41,7 +34,7 @@ object MessageId {
         .bind(key, value)
         .fold(
           Left(_),
-          fromMessageIdValue _ andThen {
+          fromMessageIdValue(_) match {
             case Some(messageId) => Right(messageId)
             case x               => Left(s"Invalid MessageId. The MessageId must be > 0, instead got $x")
           }

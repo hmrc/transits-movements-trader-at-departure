@@ -23,6 +23,7 @@ import reactivemongo.api._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import migrations.MigrationRunner
 
 object MongoSuite {
 
@@ -44,8 +45,9 @@ trait MongoSuite {
 
     val departureRepository = app.injector.instanceOf[DepartureRepository]
     val lockRepository = app.injector.instanceOf[LockRepository]
+    val migrationRunner = app.injector.instanceOf[MigrationRunner]
 
-    val services = Seq(departureRepository.started, lockRepository.started)
+    val services = Seq(departureRepository.started, lockRepository.started, migrationRunner.migrationsCompleted.future)
 
     Future.sequence(services).map(_ => ())
   }
