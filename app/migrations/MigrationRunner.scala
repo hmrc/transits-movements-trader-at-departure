@@ -20,45 +20,27 @@ import com.github.cloudyrock.mongock.driver.mongodb.sync.v4.driver.MongoSync4Dri
 import com.github.cloudyrock.standalone.MongockStandalone
 import com.github.cloudyrock.standalone.event.StandaloneMigrationSuccessEvent
 import com.mongodb.ConnectionString
-import com.mongodb.MongoClientSettings
 import com.mongodb.client.MongoClients
 import com.mongodb.connection.ClusterType
-import config.AppConfig
-import models.Departure
-import models.MongoDateTimeFormats
-import org.bson.codecs.configuration.CodecRegistries
 import play.api.Configuration
 import play.api.Logging
-import uk.gov.hmrc.mongo.play.json.Codecs
 
 import javax.inject.Inject
 import javax.inject.Singleton
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 import scala.concurrent.Promise
 
 @Singleton
-class MigrationRunner @Inject()(config: Configuration, appConfig: AppConfig) extends Logging {
-  lazy val migrationsCompleted = Promise[StandaloneMigrationSuccessEvent]()
+class MigrationRunner @Inject()(config: Configuration)(implicit ec: ExecutionContext) extends Logging {
 
-  private lazy val mongockRunner = {
-    val connectionString = new ConnectionString(config.get[String]("mongodb.uri"))
+  private lazy val migrationsCompletedPromise = Promise[StandaloneMigrationSuccessEvent]()
+  lazy val migrationsCompleted = migrationsCompletedPromise.future
 
-    val clientSettings = MongoClientSettings
-      .builder()
-      .applyConnectionString(connectionString)
-      .codecRegistry(
-        CodecRegistries.fromRegistries(
-          CodecRegistries.fromCodecs(
-            Codecs.playFormatCodec(MongoDateTimeFormats.localDateTimeFormat),
-            Codecs.playFormatCodec(Departure.formatsDeparture)
-          ),
-          MongoClientSettings.getDefaultCodecRegistry()
-        )
-      )
-      .build()
-
-    val mongoClient = MongoClients.create(clientSettings)
-
-    val mongoDriver = MongoSync4Driver.withDefaultLock(mongoClient, appConfig.appName)
+  def makeMongockRunner(completionPromise: Promise[StandaloneMigrationSuccessEvent]) = {
+    val mongoDbUri  = new ConnectionString(config.get[String]("mongodb.uri"))
+    val mongoClient = MongoClients.create(mongoDbUri)
+    val mongoDriver = MongoSync4Driver.withDefaultLock(mongoClient, mongoDbUri.getDatabase())
 
     val clusterType = mongoClient.getClusterDescription.getType
     if (clusterType == ClusterType.STANDALONE || clusterType == ClusterType.UNKNOWN) {
@@ -77,16 +59,23 @@ class MigrationRunner @Inject()(config: Configuration, appConfig: AppConfig) ext
       .setMigrationSuccessListener {
         successEvent =>
           logger.info("Finished Mongock migrations successfully")
-          migrationsCompleted.success(successEvent)
+          completionPromise.success(successEvent)
       }
       .setMigrationFailureListener {
         failureEvent =>
           val exception = failureEvent.getException
           logger.error("Mongock migrations failed", exception)
-          migrationsCompleted.failure(exception)
+          completionPromise.failure(exception)
       }
       .buildRunner()
   }
 
-  mongockRunner.execute()
+  def runMigrations(): Future[StandaloneMigrationSuccessEvent] =
+    Future {
+      val completionPromise = Promise[StandaloneMigrationSuccessEvent]()
+      makeMongockRunner(completionPromise).execute()
+      completionPromise.future
+    }.flatten
+
+  makeMongockRunner(migrationsCompletedPromise).execute()
 }

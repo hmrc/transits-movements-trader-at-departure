@@ -47,7 +47,7 @@ trait MongoSuite {
     val lockRepository = app.injector.instanceOf[LockRepository]
     val migrationRunner = app.injector.instanceOf[MigrationRunner]
 
-    val services = Seq(departureRepository.started, lockRepository.started, migrationRunner.migrationsCompleted.future)
+    val services = Seq(departureRepository.started, lockRepository.started, migrationRunner.migrationsCompleted)
 
     Future.sequence(services).map(_ => ())
   }

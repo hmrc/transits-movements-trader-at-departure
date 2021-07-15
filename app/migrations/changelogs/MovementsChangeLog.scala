@@ -21,17 +21,16 @@ import com.github.cloudyrock.mongock.ChangeLog
 import com.github.cloudyrock.mongock.ChangeSet
 import com.mongodb.client.MongoDatabase
 import com.mongodb.client.model._
-import models.Departure
+import org.bson.Document
 import repositories.DepartureRepository
 
 import scala.collection.JavaConverters._
-import org.bson.Document
 
 @ChangeLog(order = "001")
 class MovementsChangeLog {
 
   @ChangeSet(order = "001", id = "addMessageIdToMessages", author = "transits-movements-trader-at-departure")
-  def addMessageIdToMessages(mongo: MongoDatabase) = {
+  def addMessageIdToMessages(mongo: MongoDatabase): Unit = {
     val collection = mongo.getCollection(DepartureRepository.collectionName)
 
     collection
@@ -39,20 +38,22 @@ class MovementsChangeLog {
       .asScala
       .foreach {
         doc =>
-          collection.updateOne(
-            Filters.eq("_id", doc.getInteger("_id")),
-            Updates.combine(
-              doc
-                .getList("messages", classOf[Document])
-                .asScala
-                .toList
-                .mapWithIndex {
+          val messages = doc
+            .getList("messages", classOf[Document])
+            .asScala
+            .toList
+
+          if (messages.nonEmpty) {
+            collection.updateOne(
+              Filters.eq("_id", doc.getInteger("_id")),
+              Updates.combine(
+                messages.mapWithIndex {
                   case (_, index) =>
                     Updates.set(s"messages.$index.messageId", index + 1)
-                }
-                .asJava
+                }.asJava
+              )
             )
-          )
+          }
       }
   }
 }
