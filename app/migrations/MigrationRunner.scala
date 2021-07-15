@@ -35,7 +35,7 @@ import scala.concurrent.Promise
 class MigrationRunner @Inject()(config: Configuration)(implicit ec: ExecutionContext) extends Logging {
 
   private lazy val migrationsCompletedPromise = Promise[StandaloneMigrationSuccessEvent]()
-  lazy val migrationsCompleted = migrationsCompletedPromise.future
+  lazy val migrationsCompleted                = migrationsCompletedPromise.future
 
   def makeMongockRunner(completionPromise: Promise[StandaloneMigrationSuccessEvent]) = {
     val mongoDbUri  = new ConnectionString(config.get[String]("mongodb.uri"))
