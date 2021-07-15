@@ -24,6 +24,22 @@ sealed trait MessageResponse {
   val xsdFile: XSDFile
 }
 
+object MessageResponse {
+
+  val values = Seq(
+    MrnAllocatedResponse,
+    DepartureRejectedResponse,
+    PositiveAcknowledgementResponse,
+    ControlDecisionNotificationResponse,
+    NoReleaseForTransitResponse,
+    ReleaseForTransitResponse,
+    CancellationDecisionResponse,
+    WriteOffNotificationResponse,
+    GuaranteeNotValidResponse,
+    XMLSubmissionNegativeAcknowledgementResponse
+  )
+}
+
 case object MrnAllocatedResponse extends MessageResponse {
   override val messageReceived: MessageReceivedEvent = MessageReceivedEvent.MrnAllocated
   override val messageType: MessageType              = MessageType.MrnAllocated

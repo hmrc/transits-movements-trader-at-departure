@@ -25,6 +25,9 @@ final class MessageId private (val index: Int) {
     case x: MessageId => x.index == this.index
     case _            => false
   }
+
+  def publicValue: Int = index + 1
+
 }
 
 object MessageId {

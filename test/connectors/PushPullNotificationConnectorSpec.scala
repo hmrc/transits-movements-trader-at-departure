@@ -20,6 +20,10 @@ import com.github.tomakehurst.wiremock.client.WireMock._
 import config.Constants
 import models.Box
 import models.BoxId
+import models.DepartureId
+import models.DepartureMessageNotification
+import models.MessageId
+import models.MessageType
 import org.scalacheck.Gen
 import org.scalatest.concurrent.IntegrationPatience
 import org.scalatest.concurrent.ScalaFutures
@@ -30,16 +34,15 @@ import play.api.test.Helpers._
 import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.xml.NodeSeq
-import models.DepartureMessageNotification
-import models.DepartureId
 import java.time.LocalDateTime
-import models.MessageType
 
 class PushPullNotificationConnectorSpec extends AnyFreeSpec with WiremockSuite with ScalaFutures with Matchers with IntegrationPatience {
   override protected def portConfigKey: String = "microservice.services.push-pull-notifications-api.port"
 
   implicit val headerCarrier: HeaderCarrier = HeaderCarrier()
+
+  private def requestId(departureId: DepartureId): String =
+    s"/customs/transits/movements/departures/${departureId.index}"
 
   "PushPullNotificationConnector" - {
 
@@ -124,12 +127,17 @@ class PushPullNotificationConnectorSpec extends AnyFreeSpec with WiremockSuite w
 
     "postNotification" - {
 
-      val testBody: NodeSeq = <test>some text</test>
-      val testBoxId         = "1c5b9365-18a6-55a5-99c9-83a091ac7f26"
-      val testUrlPath       = s"/box/$testBoxId/notifications"
-
-      val testDepartureId  = DepartureId(1)
-      val testNotification = DepartureMessageNotification(testDepartureId, 1, LocalDateTime.now, MessageType.DepartureDeclaration, testBody)
+      val testBoxId       = "1c5b9365-18a6-55a5-99c9-83a091ac7f26"
+      val testUrlPath     = s"/box/$testBoxId/notifications"
+      val testDepartureId = DepartureId(1)
+      val testMessageUri  = requestId(testDepartureId) + "/messages" + ""
+      val testNotification =
+        DepartureMessageNotification(testMessageUri,
+                                     requestId(testDepartureId),
+                                     testDepartureId,
+                                     MessageId.fromIndex(1),
+                                     LocalDateTime.now,
+                                     MessageType.DepartureDeclaration)
 
       "should return a Right[Unit] when the notification is successfully POSTed" in {
 
