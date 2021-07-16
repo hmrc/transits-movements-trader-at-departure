@@ -24,7 +24,12 @@ import models.request.DepartureResponseRequest
 import java.time.LocalDateTime
 import scala.xml.NodeSeq
 
-case class DepartureMessageNotification(departureId: DepartureId, messageId: Int, received: LocalDateTime, messageType: MessageType, body: NodeSeq)
+case class DepartureMessageNotification(messageUri: String,
+                                        requestId: String,
+                                        departureId: DepartureId,
+                                        messageId: MessageId,
+                                        received: LocalDateTime,
+                                        messageType: MessageType)
 
 object DepartureMessageNotification {
 
@@ -34,11 +39,12 @@ object DepartureMessageNotification {
 
   private val writesDepartureMessageNotification: OWrites[DepartureMessageNotification] =
     (
-      (__ \ "departureId").write[DepartureId] and
-        (__ \ "messageId").write[String].contramap[Int](_.toString) and
+      (__ \ "messageUri").write[String] and
+        (__ \ "requestId").write[String] and
+        (__ \ "departureId").write[DepartureId] and
+        (__ \ "messageId").write[String].contramap[MessageId](_.publicValue.toString) and
         (__ \ "received").write[LocalDateTime] and
-        (__ \ "messageType").write[MessageType] and
-        (__ \ "body").write[NodeSeq]
+        (__ \ "messageType").write[MessageType]
     )(unlift(DepartureMessageNotification.unapply))
 
   implicit val writesDepartureMessageNotificationWithRequestId: OWrites[DepartureMessageNotification] =
@@ -47,12 +53,16 @@ object DepartureMessageNotification {
         obj ++ Json.obj("requestId" -> requestId(departure.departureId))
     }
 
-  def fromRequest(request: DepartureResponseRequest[NodeSeq], timestamp: LocalDateTime): DepartureMessageNotification =
+  def fromRequest(request: DepartureResponseRequest[NodeSeq], timestamp: LocalDateTime): DepartureMessageNotification = {
+    val messageId    = MessageId.fromIndex(request.departure.messages.length)
+    val departureUrl = requestId(request.departure.departureId)
     DepartureMessageNotification(
+      s"$departureUrl/messages/${messageId.publicValue}",
+      departureUrl,
       request.departure.departureId,
-      request.departure.messages.length,
+      messageId,
       timestamp,
-      request.messageResponse.messageType,
-      request.body
+      request.messageResponse.messageType
     )
+  }
 }

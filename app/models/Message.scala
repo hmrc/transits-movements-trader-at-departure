@@ -33,7 +33,7 @@ sealed trait Message {
   def messageType: MessageType
   def message: NodeSeq
   def messageJson: JsObject
-
+  def messageCorrelationId: Int
   def optStatus: Option[MessageStatus]
 
   def receivedBefore(requestedDate: OffsetDateTime): Boolean =
