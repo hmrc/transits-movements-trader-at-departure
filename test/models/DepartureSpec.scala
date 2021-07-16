@@ -37,13 +37,13 @@ class DepartureSpec extends SpecBase with ScalaCheckDrivenPropertyChecks with Mo
     }
   }
 
-  "messageWithId returns a list with the message and the MessageId whose value is one more than the index" in {
+  "messageWithId returns a list with the message and the MessageId from the message" in {
     forAll(departureGenerator) {
       departure =>
         departure.messagesWithId.zipWithIndex.toList.foreach {
           case ((message, messageId), index) =>
             message mustEqual departure.messages.toList(index)
-            (MessageId.unapply(messageId).value - index) mustEqual 1
+            messageId mustEqual message.messageId
         }
     }
   }

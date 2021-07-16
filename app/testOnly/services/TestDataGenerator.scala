@@ -21,6 +21,7 @@ import models.ChannelType
 import models.Departure
 import models.DepartureId
 import models.DepartureStatus.DepartureSubmitted
+import models.MessageId
 import models.MessageStatus
 import models.MessageType.DepartureDeclaration
 import models.MessageWithStatus
@@ -29,9 +30,9 @@ import testOnly.models.SeedEori
 import java.time.Clock
 import java.time.LocalDateTime
 import javax.inject.Inject
+import scala.util.Random
 import scala.xml.Elem
 import scala.xml.XML
-import scala.util.Random
 
 private[services] class TestDataGenerator @Inject()(clock: Clock) {
 
@@ -43,7 +44,7 @@ private[services] class TestDataGenerator @Inject()(clock: Clock) {
 
     val xml = TestDataXMLGenerator.departureDeclaration(eori.format, referenceNumber)
 
-    val movementMessage = MessageWithStatus(dateTime, DepartureDeclaration, xml, MessageStatus.SubmissionSucceeded, 1)
+    val movementMessage = MessageWithStatus(MessageId(1), dateTime, DepartureDeclaration, xml, MessageStatus.SubmissionSucceeded, 1)
 
     Departure(
       departureId,

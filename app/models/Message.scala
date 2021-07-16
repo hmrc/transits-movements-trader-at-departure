@@ -28,6 +28,7 @@ import java.time.ZoneOffset
 import java.time.OffsetDateTime
 
 sealed trait Message {
+  def messageId: MessageId
   def dateTime: LocalDateTime
   def messageType: MessageType
   def message: NodeSeq
@@ -39,22 +40,31 @@ sealed trait Message {
     dateTime.atOffset(ZoneOffset.UTC).isBefore(requestedDate)
 }
 
-final case class MessageWithStatus(dateTime: LocalDateTime,
-                                   messageType: MessageType,
-                                   message: NodeSeq,
-                                   status: MessageStatus,
-                                   messageCorrelationId: Int,
-                                   messageJson: JsObject)
-    extends Message { def optStatus = Some(status) }
+final case class MessageWithStatus(
+  messageId: MessageId,
+  dateTime: LocalDateTime,
+  messageType: MessageType,
+  message: NodeSeq,
+  status: MessageStatus,
+  messageCorrelationId: Int,
+  messageJson: JsObject
+) extends Message { def optStatus = Some(status) }
 
-final case class MessageWithoutStatus(dateTime: LocalDateTime, messageType: MessageType, message: NodeSeq, messageCorrelationId: Int, messageJson: JsObject)
-    extends Message {
+final case class MessageWithoutStatus(
+  messageId: MessageId,
+  dateTime: LocalDateTime,
+  messageType: MessageType,
+  message: NodeSeq,
+  messageCorrelationId: Int,
+  messageJson: JsObject
+) extends Message {
   def optStatus = None
 }
 
 object Message extends NodeSeqFormat with MongoDateTimeFormats {
 
   implicit lazy val reads: Reads[Message] = new Reads[Message] {
+
     override def reads(json: JsValue): JsResult[Message] = (json \ "status").toOption match {
       case Some(_) =>
         json.validate[MessageWithStatus]
@@ -74,36 +84,45 @@ object MessageWithStatus extends NodeSeqFormat with MongoDateTimeFormats with Xm
 
   implicit val readsMessagWithStatus: Reads[MessageWithStatus] =
     (
-      (__ \ "dateTime").read[LocalDateTime] and
+      (__ \ "messageId").read[MessageId] and
+        (__ \ "dateTime").read[LocalDateTime] and
         (__ \ "messageType").read[MessageType] and
         (__ \ "message").read[NodeSeq] and
         (__ \ "status").read[MessageStatus] and
         (__ \ "messageCorrelationId").read[Int] and
         (__ \ "messageJson").read[JsObject].orElse(Reads.pure(Json.obj()))
-    )(MessageWithStatus(_, _, _, _, _, _))
+    )(MessageWithStatus(_, _, _, _, _, _, _))
 
   implicit val writesMessageWithStatus: OWrites[MessageWithStatus] =
     Json.writes[MessageWithStatus]
 
-  def apply(dateTime: LocalDateTime, messageType: MessageType, message: NodeSeq, status: MessageStatus, messageCorrelationId: Int): MessageWithStatus =
-    MessageWithStatus(dateTime, messageType, message, status, messageCorrelationId, toJson(message))
+  def apply(
+    messageId: MessageId,
+    dateTime: LocalDateTime,
+    messageType: MessageType,
+    message: NodeSeq,
+    status: MessageStatus,
+    messageCorrelationId: Int
+  ): MessageWithStatus =
+    MessageWithStatus(messageId, dateTime, messageType, message, status, messageCorrelationId, toJson(message))
 }
 
 object MessageWithoutStatus extends NodeSeqFormat with MongoDateTimeFormats with XmlToJson {
 
   implicit val readsMessagWithoutStatus: Reads[MessageWithoutStatus] =
     (
-      (__ \ "dateTime").read[LocalDateTime] and
+      (__ \ "messageId").read[MessageId] and
+        (__ \ "dateTime").read[LocalDateTime] and
         (__ \ "messageType").read[MessageType] and
         (__ \ "message").read[NodeSeq] and
         (__ \ "messageCorrelationId").read[Int] and
         (__ \ "messageJson").read[JsObject].orElse(Reads.pure(Json.obj()))
-    )(MessageWithoutStatus(_, _, _, _, _))
+    )(MessageWithoutStatus(_, _, _, _, _, _))
 
   implicit val writesMessageWithoutStatus: OWrites[MessageWithoutStatus] =
     Json.writes[MessageWithoutStatus]
 
-  def apply(dateTime: LocalDateTime, messageType: MessageType, message: NodeSeq, messageCorrelationId: Int): MessageWithoutStatus =
-    MessageWithoutStatus(dateTime, messageType, message, messageCorrelationId, toJson(message))
+  def apply(messageId: MessageId, dateTime: LocalDateTime, messageType: MessageType, message: NodeSeq, messageCorrelationId: Int): MessageWithoutStatus =
+    MessageWithoutStatus(messageId, dateTime, messageType, message, messageCorrelationId, toJson(message))
 
 }

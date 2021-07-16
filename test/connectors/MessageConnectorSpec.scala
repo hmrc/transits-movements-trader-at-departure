@@ -16,9 +16,6 @@
 
 package connectors
 
-import java.time.LocalDateTime
-import java.time.OffsetDateTime
-
 import com.github.tomakehurst.wiremock.client.WireMock._
 import connectors.MessageConnector.EisSubmissionResult.DownstreamBadGateway
 import connectors.MessageConnector.EisSubmissionResult.DownstreamInternalServerError
@@ -27,6 +24,7 @@ import generators.ModelGenerators
 import models.ChannelType.api
 import models.ChannelType.web
 import models.DepartureId
+import models.MessageId
 import models.MessageStatus
 import models.MessageType
 import models.MessageWithStatus
@@ -42,6 +40,9 @@ import play.api.Configuration
 import play.api.Environment
 import play.api.test.Helpers.running
 import uk.gov.hmrc.http.HeaderCarrier
+
+import java.time.LocalDateTime
+import java.time.OffsetDateTime
 
 class MessageConnectorSpec
     extends AnyFreeSpec
@@ -92,6 +93,7 @@ class MessageConnectorSpec
             )
             val app = appBuilder.build()
             val postValue = MessageWithStatus(
+              MessageId(1),
               LocalDateTime.now(),
               messageType,
               <CC007A>test</CC007A>,
@@ -129,6 +131,7 @@ class MessageConnectorSpec
             )
 
             val postValue = MessageWithStatus(
+              MessageId(1),
               LocalDateTime.now(),
               messageType,
               <CC007A>test</CC007A>,
@@ -168,6 +171,7 @@ class MessageConnectorSpec
             )
 
             val postValue = MessageWithStatus(
+              MessageId(1),
               LocalDateTime.now(),
               messageType,
               <CC007A>test</CC007A>,
@@ -208,6 +212,7 @@ class MessageConnectorSpec
             )
 
             val postValue = MessageWithStatus(
+              MessageId(1),
               LocalDateTime.now(),
               messageType,
               <CC007A>test</CC007A>,

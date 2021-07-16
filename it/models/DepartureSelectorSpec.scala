@@ -36,7 +36,7 @@ class DepartureSelectorSpec extends AnyFreeSpec with Matchers with ScalaFutures 
 
     "must serialise from MessageSelector" in {
 
-      val messageSelector: DepartureSelector = MessageSelector(DepartureId(1), MessageId.fromIndex(1))
+      val messageSelector: DepartureSelector = MessageSelector(DepartureId(1), MessageId(1))
 
       val expectedResult = JsObject(
         Map(
@@ -44,7 +44,7 @@ class DepartureSelectorSpec extends AnyFreeSpec with Matchers with ScalaFutures 
             JsArray(
               Seq(
                 Json.obj("_id" -> 1),
-                Json.obj("messages.1.status" -> Json.obj("$exists" -> true))
+                Json.obj("messages.0.status" -> Json.obj("$exists" -> true))
               )
             )
         )

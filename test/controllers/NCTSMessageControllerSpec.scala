@@ -148,7 +148,7 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
 
       "must return OK, when the service validates and save the message (mrnAllocated)" in {
         when(mockDepartureRepository.get(any())).thenReturn(Future.successful(Some(acknowledgedDeparture)))
-        when(mockSaveMessageService.validateXmlSaveMessageUpdateMrn(any(), any(), any(), any(), any()))
+        when(mockSaveMessageService.validateXmlSaveMessageUpdateMrn(any(), any(), any(), any(), any(), any()))
           .thenReturn(Future.successful(SubmissionProcessingResult.SubmissionSuccess))
         when(mockLockRepository.lock(any())).thenReturn(Future.successful(true))
         when(mockLockRepository.unlock(any())).thenReturn(Future.successful(()))
@@ -178,7 +178,7 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
 
       "must not send push notification when there is no notificationBox present" in {
         when(mockDepartureRepository.get(any())).thenReturn(Future.successful(Some(acknowledgedDeparture)))
-        when(mockSaveMessageService.validateXmlSaveMessageUpdateMrn(any(), any(), any(), any(), any()))
+        when(mockSaveMessageService.validateXmlSaveMessageUpdateMrn(any(), any(), any(), any(), any(), any()))
           .thenReturn(Future.successful(SubmissionProcessingResult.SubmissionSuccess))
         when(mockLockRepository.lock(any())).thenReturn(Future.successful(true))
         when(mockLockRepository.unlock(any())).thenReturn(Future.successful(()))
@@ -209,7 +209,7 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
         def boxIdMatcher = refEq(testBoxId).asInstanceOf[BoxId]
 
         when(mockDepartureRepository.get(any())).thenReturn(Future.successful(Some(acknowledgedDepartureWithNotificationBox)))
-        when(mockSaveMessageService.validateXmlSaveMessageUpdateMrn(any(), any(), any(), any(), any()))
+        when(mockSaveMessageService.validateXmlSaveMessageUpdateMrn(any(), any(), any(), any(), any(), any()))
           .thenReturn(Future.successful(SubmissionProcessingResult.SubmissionSuccess))
         when(mockLockRepository.lock(any())).thenReturn(Future.successful(true))
         when(mockLockRepository.unlock(any())).thenReturn(Future.successful(()))
@@ -262,7 +262,7 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
       "must return BadRequest, when the service is unable to find a mrn before attempting to save the message (mrnAllocated)" in {
 
         when(mockDepartureRepository.get(any())).thenReturn(Future.successful(Some(acknowledgedDeparture)))
-        when(mockSaveMessageService.validateXmlSaveMessageUpdateMrn(any(), any(), any(), any(), any()))
+        when(mockSaveMessageService.validateXmlSaveMessageUpdateMrn(any(), any(), any(), any(), any(), any()))
           .thenReturn(Future.successful(SubmissionProcessingResult.SubmissionSuccess))
         when(mockLockRepository.lock(any())).thenReturn(Future.successful(true))
         when(mockLockRepository.unlock(any())).thenReturn(Future.successful(()))
@@ -290,7 +290,7 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
       "must return BadRequest, when the service is unable to save the message with an external error" in {
 
         when(mockDepartureRepository.get(any())).thenReturn(Future.successful(Some(acknowledgedDeparture)))
-        when(mockSaveMessageService.validateXmlSaveMessageUpdateMrn(any(), any(), any(), any(), any()))
+        when(mockSaveMessageService.validateXmlSaveMessageUpdateMrn(any(), any(), any(), any(), any(), any()))
           .thenReturn(Future.successful(SubmissionProcessingResult.SubmissionFailureExternal))
         when(mockLockRepository.lock(any())).thenReturn(Future.successful(true))
         when(mockLockRepository.unlock(any())).thenReturn(Future.successful(()))
@@ -317,7 +317,7 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
       "must return InternalServerError, when the service is unable to save the message with an internal error" in {
 
         when(mockDepartureRepository.get(any())).thenReturn(Future.successful(Some(acknowledgedDeparture)))
-        when(mockSaveMessageService.validateXmlSaveMessageUpdateMrn(any(), any(), any(), any(), any()))
+        when(mockSaveMessageService.validateXmlSaveMessageUpdateMrn(any(), any(), any(), any(), any(), any()))
           .thenReturn(Future.successful(SubmissionProcessingResult.SubmissionFailureInternal))
         when(mockLockRepository.lock(any())).thenReturn(Future.successful(true))
         when(mockLockRepository.unlock(any())).thenReturn(Future.successful(()))
@@ -344,7 +344,7 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
       "must return OK, when the service validates and save the message (not MrnAllocated)" in {
 
         when(mockDepartureRepository.get(any())).thenReturn(Future.successful(Some(departure)))
-        when(mockSaveMessageService.validateXmlAndSaveMessage(any(), any(), any(), any()))
+        when(mockSaveMessageService.validateXmlAndSaveMessage(any(), any(), any(), any(), any()))
           .thenReturn(Future.successful(SubmissionProcessingResult.SubmissionSuccess))
         when(mockLockRepository.lock(any())).thenReturn(Future.successful(true))
         when(mockLockRepository.unlock(any())).thenReturn(Future.successful(()))
@@ -401,7 +401,7 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
 
       "must lock, return Internal Server Error and unlock if adding the message to the movement fails" in {
         when(mockDepartureRepository.get(any())).thenReturn(Future.successful(Some(departure)))
-        when(mockSaveMessageService.validateXmlAndSaveMessage(any(), any(), any(), any()))
+        when(mockSaveMessageService.validateXmlAndSaveMessage(any(), any(), any(), any(), any()))
           .thenReturn(Future.successful(SubmissionProcessingResult.SubmissionFailureInternal))
         when(mockLockRepository.lock(any())).thenReturn(Future.successful(true))
         when(mockLockRepository.unlock(any())).thenReturn(Future.successful(()))
@@ -449,14 +449,14 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
           contentAsString(result) mustEqual "A 'X-Message-Type' header must be defined in the request."
           status(result) mustEqual BAD_REQUEST
           verify(mockLockRepository, times(1)).lock(departureId)
-          verify(mockSaveMessageService, never()).validateXmlAndSaveMessage(any(), any(), any(), any())
+          verify(mockSaveMessageService, never()).validateXmlAndSaveMessage(any(), any(), any(), any(), any())
           verify(mockLockRepository, times(1)).unlock(departureId)
         }
       }
 
       "must lock the departure, return BadRequest error and unlock when fail to validate message" in {
         when(mockDepartureRepository.get(any())).thenReturn(Future.successful(Some(departure)))
-        when(mockSaveMessageService.validateXmlAndSaveMessage(any(), any(), any(), any()))
+        when(mockSaveMessageService.validateXmlAndSaveMessage(any(), any(), any(), any(), any()))
           .thenReturn(Future.successful(SubmissionProcessingResult.SubmissionFailureExternal))
         when(mockLockRepository.lock(any())).thenReturn(Future.successful(true))
         when(mockLockRepository.unlock(any())).thenReturn(Future.successful(()))
@@ -479,7 +479,7 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
           contentAsString(result) mustBe empty
           status(result) mustEqual BAD_REQUEST
           verify(mockLockRepository, times(1)).lock(departureId)
-          verify(mockSaveMessageService, times(1)).validateXmlAndSaveMessage(any(), any(), any(), any())
+          verify(mockSaveMessageService, times(1)).validateXmlAndSaveMessage(any(), any(), any(), any(), any())
           verify(mockLockRepository, times(1)).unlock(departureId)
         }
       }

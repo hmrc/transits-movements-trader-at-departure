@@ -16,10 +16,6 @@
 
 package services
 
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.LocalTime
-
 import base.SpecBase
 import cats.data.NonEmptyList
 import models.ChannelType.api
@@ -33,9 +29,12 @@ import repositories.DepartureIdRepository
 import utils.Format
 import utils.JsonHelper
 
-import scala.concurrent.Future
 import java.time.Clock
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
 import java.time.ZoneOffset
+import scala.concurrent.Future
 
 class DepartureServiceSpec extends SpecBase with JsonHelper with IntegrationPatience with StreamlinedXmlEquality {
 
@@ -92,6 +91,7 @@ class DepartureServiceSpec extends SpecBase with JsonHelper with IntegrationPati
         lastUpdated = dateTime,
         messages = NonEmptyList.one(
           MessageWithStatus(
+            MessageId(1),
             dateTime,
             MessageType.DepartureDeclaration,
             savedMovement,
@@ -178,6 +178,7 @@ class DepartureServiceSpec extends SpecBase with JsonHelper with IntegrationPati
       val messageCorrelationId = 1
       val expectedMessage =
         MessageWithStatus(
+          MessageId(1),
           LocalDateTime.of(dateOfPrep, timeOfPrep),
           MessageType.DepartureDeclaration,
           savedMovement,
@@ -186,7 +187,7 @@ class DepartureServiceSpec extends SpecBase with JsonHelper with IntegrationPati
           convertXmlToJson(savedMovement.toString)
         )
 
-      val result = service.makeMessageWithStatus(id, messageCorrelationId, MessageType.DepartureDeclaration)(movement)
+      val result = service.makeMessageWithStatus(id, expectedMessage.messageId, messageCorrelationId, MessageType.DepartureDeclaration)(movement)
       result.right.get mustEqual expectedMessage
     }
 
@@ -206,7 +207,7 @@ class DepartureServiceSpec extends SpecBase with JsonHelper with IntegrationPati
           <TimOfPreMES10>{Format.timeFormatted(timeOfPrep)}</TimOfPreMES10>
         </Foo>
 
-      val result = service.makeMessageWithStatus(DepartureId(1), 1, MessageType.DepartureDeclaration)(movement)
+      val result = service.makeMessageWithStatus(DepartureId(1), MessageId(1), 1, MessageType.DepartureDeclaration)(movement)
       result.isLeft mustBe true
     }
   }

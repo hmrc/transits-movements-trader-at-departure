@@ -110,7 +110,7 @@ class PushPullNotificationServiceSpec extends SpecBase with BeforeAndAfterEach w
         val testNotification = DepartureMessageNotification(testMessageUri,
                                                             requestId(testDepartureId),
                                                             testDepartureId,
-                                                            MessageId.fromIndex(1),
+                                                            MessageId(2),
                                                             LocalDateTime.now,
                                                             MessageType.DepartureDeclaration)
 
@@ -131,7 +131,7 @@ class PushPullNotificationServiceSpec extends SpecBase with BeforeAndAfterEach w
         val testNotification = DepartureMessageNotification(testMessageUri,
                                                             requestId(testDepartureId),
                                                             testDepartureId,
-                                                            MessageId.fromIndex(1),
+                                                            MessageId(2),
                                                             LocalDateTime.now,
                                                             MessageType.DepartureDeclaration)
 

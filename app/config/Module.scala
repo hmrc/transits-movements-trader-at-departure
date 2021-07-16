@@ -22,6 +22,7 @@ import com.google.inject.AbstractModule
 import controllers.actions._
 import repositories.DepartureIdRepository
 import repositories.DepartureRepository
+import migrations.MigrationRunner
 import utils.MessageTranslation
 import java.time.Clock
 
@@ -35,6 +36,7 @@ class Module extends AbstractModule {
     bind(classOf[AuthenticatedGetDepartureForReadActionProvider]).to(classOf[AuthenticatedGetDepartureForReadActionProviderImpl])
     bind(classOf[MessageTranslation]).asEagerSingleton()
     bind(classOf[Clock]).toInstance(Clock.systemUTC)
+    bind(classOf[MigrationRunner]).asEagerSingleton()
   }
 
 }

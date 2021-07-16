@@ -38,6 +38,9 @@ trait MongoDateTimeFormats {
     )
   }
 
+  implicit val localDateTimeFormat: Format[LocalDateTime] =
+    Format(localDateTimeRead, localDateTimeWrite)
+
   implicit val offsetDateTimeRead: Reads[OffsetDateTime] =
     localDateTimeRead.map(_.atOffset(ZoneOffset.UTC))
 

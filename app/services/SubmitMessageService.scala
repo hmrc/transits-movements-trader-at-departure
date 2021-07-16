@@ -41,7 +41,7 @@ import scala.util.Success
 class SubmitMessageService @Inject()(departureRepository: DepartureRepository, messageConnector: MessageConnector)(implicit clock: Clock, ec: ExecutionContext)
     extends Logging {
 
-  def submitMessage(departureId: DepartureId, messageId: MessageId, message: MessageWithStatus, departureStatus: DepartureStatus, channelType: ChannelType)(
+  def submitMessage(departureId: DepartureId, message: MessageWithStatus, departureStatus: DepartureStatus, channelType: ChannelType)(
     implicit hc: HeaderCarrier): Future[SubmissionProcessingResult] =
     departureRepository.addNewMessage(departureId, message) flatMap {
       case Failure(_) =>
@@ -55,7 +55,7 @@ class SubmitMessageService @Inject()(departureRepository: DepartureRepository, m
               val newStatus = message.status.transition(submissionResult)
 
               departureRepository
-                .setDepartureStateAndMessageState(departureId, messageId, departureStatus, newStatus)
+                .setDepartureStateAndMessageState(departureId, message.messageId, departureStatus, newStatus)
                 .map(_ => SubmissionProcessingResult.SubmissionSuccess)
                 .recover({
                   case _ =>
@@ -68,9 +68,9 @@ class SubmitMessageService @Inject()(departureRepository: DepartureRepository, m
             case submissionResult: EisSubmissionRejected =>
               logger.warn(s"Failure for submitMessage of type: ${message.messageType.code}, and details: " + submissionResult.toString)
 
-              val messageSelector     = MessageSelector(departureId, messageId)
+              val messageSelector     = MessageSelector(departureId, message.messageId)
               val newStatus           = message.status.transition(submissionResult)
-              val messageStatusUpdate = MessageStatusUpdate(messageId, newStatus)
+              val messageStatusUpdate = MessageStatusUpdate(message.messageId, newStatus)
 
               departureRepository
                 .updateDeparture(messageSelector, messageStatusUpdate)
@@ -90,9 +90,9 @@ class SubmitMessageService @Inject()(departureRepository: DepartureRepository, m
             case submissionResult: EisSubmissionFailureDownstream =>
               logger.warn(s"Failure for submitMessage of type: ${message.messageType.code}, and details: " + submissionResult.toString)
 
-              val messageSelector     = MessageSelector(departureId, messageId)
+              val messageSelector     = MessageSelector(departureId, message.messageId)
               val newStatus           = message.status.transition(submissionResult)
-              val messageStatusUpdate = MessageStatusUpdate(messageId, newStatus)
+              val messageStatusUpdate = MessageStatusUpdate(message.messageId, newStatus)
 
               departureRepository
                 .updateDeparture(messageSelector, messageStatusUpdate)

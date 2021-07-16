@@ -17,19 +17,16 @@
 package repositories
 
 import cats.syntax.all._
-
-import java.time.Clock
-import java.time.LocalDateTime
-import java.time.OffsetDateTime
 import config.AppConfig
-
-import javax.inject.Inject
 import models._
+import models.response.ResponseDeparture
+import models.response.ResponseDepartures
+import play.api.Configuration
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
 import play.modules.reactivemongo.ReactiveMongoApi
-import reactivemongo.api.bson.collection.BSONSerializationPack
 import reactivemongo.api.Cursor
+import reactivemongo.api.bson.collection.BSONSerializationPack
 import reactivemongo.api.commands.WriteResult
 import reactivemongo.api.indexes.Index.Aux
 import reactivemongo.api.indexes.IndexType
@@ -38,14 +35,15 @@ import reactivemongo.play.json.ImplicitBSONHandlers.JsObjectDocumentWriter
 import reactivemongo.play.json.collection.JSONCollection
 import utils.IndexUtils
 
+import java.time.Clock
+import java.time.LocalDateTime
+import java.time.OffsetDateTime
+import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
-import scala.util.Success
 import scala.util.Failure
+import scala.util.Success
 import scala.util.Try
-import models.response.ResponseDepartures
-import models.response.ResponseDeparture
-import play.api.Configuration
 
 class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfig, config: Configuration)(implicit ec: ExecutionContext, clock: Clock)
     extends MongoDateTimeFormats {

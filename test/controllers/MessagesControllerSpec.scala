@@ -16,10 +16,6 @@
 
 package controllers
 
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.LocalTime
-
 import audit.AuditService
 import audit.AuditType._
 import base.SpecBase
@@ -40,8 +36,8 @@ import org.mockito.ArgumentMatchers.{eq => eqTo}
 import org.mockito.Mockito.times
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.when
-import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Arbitrary
+import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.IntegrationPatience
@@ -50,17 +46,21 @@ import play.api.inject.bind
 import play.api.libs.json.Json
 import play.api.test.FakeRequest
 import play.api.test.Helpers.GET
+import play.api.test.Helpers._
 import play.api.test.Helpers.contentAsJson
 import play.api.test.Helpers.route
 import play.api.test.Helpers.running
-import play.api.test.Helpers._
 import repositories.DepartureRepository
 import repositories.LockRepository
 import services.SubmitMessageService
 import utils.Format
 import utils.JsonHelper
-import scala.concurrent.Future
+
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
 import java.time.ZoneOffset
+import scala.concurrent.Future
 
 class MessagesControllerSpec
     extends SpecBase
@@ -112,6 +112,7 @@ class MessagesControllerSpec
     </CC015A>
 
   val message = MessageWithStatus(
+    MessageId(1),
     localDateTime,
     MessageType.DeclarationCancellationRequest,
     savedDeclarationCancellationRequestXml,
@@ -120,7 +121,7 @@ class MessagesControllerSpec
     savedDeclarationCancellationRequestJsonBody
   )
 
-  val messageId = MessageId.fromIndex(0)
+  val messageId = MessageId(1)
 
   val departureWithOneMessage: Gen[Departure] = for {
     departure <- arbitrary[Departure]
@@ -153,7 +154,7 @@ class MessagesControllerSpec
       when(mockLockRepository.unlock(any())).thenReturn(Future.successful(()))
       when(mockDepartureRepository.get(any(), any())).thenReturn(Future.successful(Some(departure)))
 
-      when(mockSubmitMessageService.submitMessage(any(), any(), any(), eqTo(DepartureStatus.DeclarationCancellationRequest), any())(any()))
+      when(mockSubmitMessageService.submitMessage(any(), any(), eqTo(DepartureStatus.DeclarationCancellationRequest), any())(any()))
         .thenReturn(Future.successful(SubmissionProcessingResult.SubmissionSuccess))
 
       val application = baseApplicationBuilder
@@ -174,10 +175,9 @@ class MessagesControllerSpec
         contentAsString(result) mustBe empty
         status(result) mustEqual ACCEPTED
 
-        header("Location", result).value must be(routes.MessagesController.getMessage(departure.departureId, MessageId.fromIndex(1)).url)
+        header("Location", result).value must be(routes.MessagesController.getMessage(departure.departureId, MessageId(2)).url)
 
         verify(mockSubmitMessageService, times(1)).submitMessage(eqTo(departure.departureId),
-                                                                 eqTo(MessageId.fromIndex(1)),
                                                                  any(),
                                                                  eqTo(DepartureStatus.DeclarationCancellationRequest),
                                                                  any())(any())
@@ -223,7 +223,7 @@ class MessagesControllerSpec
       when(mockLockRepository.unlock(any())).thenReturn(Future.successful(()))
       when(mockDepartureRepository.get(any(), any())).thenReturn(Future.successful(Some(departure)))
 
-      when(mockSubmitMessageService.submitMessage(any(), any(), any(), any(), any())(any()))
+      when(mockSubmitMessageService.submitMessage(any(), any(), any(), any())(any()))
         .thenReturn(Future.successful(SubmissionProcessingResult.SubmissionFailureInternal))
 
       val application = baseApplicationBuilder
@@ -317,7 +317,7 @@ class MessagesControllerSpec
       when(mockLockRepository.unlock(any())).thenReturn(Future.successful(()))
       when(mockDepartureRepository.get(any(), any())).thenReturn(Future.successful(Some(departure)))
 
-      when(mockSubmitMessageService.submitMessage(any(), any(), any(), any(), any())(any()))
+      when(mockSubmitMessageService.submitMessage(any(), any(), any(), any())(any()))
         .thenReturn(Future.successful(SubmissionProcessingResult.SubmissionFailureExternal))
 
       val application = baseApplicationBuilder
@@ -349,7 +349,7 @@ class MessagesControllerSpec
       when(mockLockRepository.unlock(any())).thenReturn(Future.successful(()))
       when(mockDepartureRepository.get(any(), any())).thenReturn(Future.successful(Some(departure)))
 
-      when(mockSubmitMessageService.submitMessage(any(), any(), any(), any(), any())(any()))
+      when(mockSubmitMessageService.submitMessage(any(), any(), any(), any())(any()))
         .thenReturn(Future.successful(SubmissionProcessingResult.SubmissionFailureRejected(ErrorInPayload.responseBody)))
 
       val application = baseApplicationBuilder
@@ -381,7 +381,7 @@ class MessagesControllerSpec
       when(mockLockRepository.unlock(any())).thenReturn(Future.successful(()))
       when(mockDepartureRepository.get(any(), any())).thenReturn(Future.successful(Some(departure)))
 
-      when(mockSubmitMessageService.submitMessage(any(), any(), any(), any(), any())(any()))
+      when(mockSubmitMessageService.submitMessage(any(), any(), any(), any())(any()))
         .thenReturn(Future.successful(SubmissionProcessingResult.SubmissionFailureInternal))
 
       val application = baseApplicationBuilder
@@ -410,7 +410,7 @@ class MessagesControllerSpec
     "must return OK" - {
       "with the retrieved messages" in {
 
-        val message   = Arbitrary.arbitrary[MessageWithStatus].sample.value.copy(status = SubmissionSucceeded)
+        val message   = Arbitrary.arbitrary[MessageWithStatus].sample.value.copy(messageId = MessageId(1), status = SubmissionSucceeded)
         val departure = Arbitrary.arbitrary[Departure].sample.value.copy(messages = NonEmptyList.one(message), eoriNumber = "eori")
 
         val mockDepartureRepository = mock[DepartureRepository]
@@ -429,7 +429,7 @@ class MessagesControllerSpec
 
           status(result) mustEqual OK
 
-          val expectedMessages  = ResponseMessage.build(departure.departureId, MessageId.fromMessageIdValue(1).value, message)
+          val expectedMessages  = ResponseMessage.build(departure.departureId, message)
           val expectedDeparture = ResponseDepartureWithMessages.build(departure, receivedSince = None).copy(messages = Seq(expectedMessages))
 
           contentAsJson(result) mustEqual Json.toJson(expectedDeparture)
@@ -437,11 +437,11 @@ class MessagesControllerSpec
       }
 
       "with only messages that are successful" in {
-        val message1  = Arbitrary.arbitrary[MessageWithStatus].sample.value.copy(status = SubmissionSucceeded)
-        val message2  = Arbitrary.arbitrary[MessageWithStatus].sample.value.copy(status = SubmissionFailed)
+        val message1  = Arbitrary.arbitrary[MessageWithStatus].sample.value.copy(messageId = MessageId(1), status = SubmissionSucceeded)
+        val message2  = Arbitrary.arbitrary[MessageWithStatus].sample.value.copy(messageId = MessageId(2), status = SubmissionFailed)
         val departure = Arbitrary.arbitrary[Departure].sample.value.copy(messages = NonEmptyList.of(message1, message2), eoriNumber = "eori")
 
-        val expectedMessages  = ResponseMessage.build(departure.departureId, MessageId.fromMessageIdValue(1).value, message1)
+        val expectedMessages  = ResponseMessage.build(departure.departureId, message1)
         val expectedDeparture = ResponseDepartureWithMessages.build(departure, receivedSince = None).copy(messages = Seq(expectedMessages))
 
         val mockDepartureRepository = mock[DepartureRepository]
@@ -465,14 +465,14 @@ class MessagesControllerSpec
       }
 
       "with only messages that are successful and stateless" in {
-        val message1 = Arbitrary.arbitrary[MessageWithStatus].sample.value.copy(status = SubmissionSucceeded)
-        val message2 = Arbitrary.arbitrary[MessageWithStatus].sample.value.copy(status = SubmissionFailed)
-        val message3 = Arbitrary.arbitrary[MessageWithoutStatus].sample.value
+        val message1 = Arbitrary.arbitrary[MessageWithStatus].sample.value.copy(messageId = MessageId(1), status = SubmissionSucceeded)
+        val message2 = Arbitrary.arbitrary[MessageWithStatus].sample.value.copy(messageId = MessageId(2), status = SubmissionFailed)
+        val message3 = Arbitrary.arbitrary[MessageWithoutStatus].sample.value.copy(messageId = MessageId(3))
 
         val departure = Arbitrary.arbitrary[Departure].sample.value.copy(messages = NonEmptyList.of(message1, message2, message3), eoriNumber = "eori")
 
-        val expectedMessage1  = ResponseMessage.build(departure.departureId, MessageId.fromMessageIdValue(1).value, message1)
-        val expectedMessage3  = ResponseMessage.build(departure.departureId, MessageId.fromMessageIdValue(3).value, message3)
+        val expectedMessage1  = ResponseMessage.build(departure.departureId, message1)
+        val expectedMessage3  = ResponseMessage.build(departure.departureId, message3)
         val expectedDeparture = ResponseDepartureWithMessages.build(departure, receivedSince = None).copy(messages = Seq(expectedMessage1, expectedMessage3))
 
         val mockDepartureRepository = mock[DepartureRepository]
@@ -526,15 +526,24 @@ class MessagesControllerSpec
         val requestedOffsetDateTime = requestedDateTime.atOffset(ZoneOffset.UTC)
 
         val message1 =
-          Arbitrary.arbitrary[MessageWithStatus].sample.value.copy(status = SubmissionSucceeded, dateTime = LocalDateTime.of(2021, 5, 11, 15, 10, 32))
-        val message2 = Arbitrary.arbitrary[MessageWithStatus].sample.value.copy(status = SubmissionSucceeded, dateTime = requestedDateTime)
+          Arbitrary
+            .arbitrary[MessageWithStatus]
+            .sample
+            .value
+            .copy(messageId = MessageId(1), status = SubmissionSucceeded, dateTime = LocalDateTime.of(2021, 5, 11, 15, 10, 32))
+        val message2 =
+          Arbitrary.arbitrary[MessageWithStatus].sample.value.copy(messageId = MessageId(2), status = SubmissionSucceeded, dateTime = requestedDateTime)
         val message3 =
-          Arbitrary.arbitrary[MessageWithStatus].sample.value.copy(status = SubmissionSucceeded, dateTime = LocalDateTime.of(2021, 5, 12, 17, 5, 24))
+          Arbitrary
+            .arbitrary[MessageWithStatus]
+            .sample
+            .value
+            .copy(messageId = MessageId(3), status = SubmissionSucceeded, dateTime = LocalDateTime.of(2021, 5, 12, 17, 5, 24))
 
         val departure = Arbitrary.arbitrary[Departure].sample.value.copy(messages = NonEmptyList.of(message1, message2, message3), eoriNumber = "eori")
 
-        val expectedMessage2 = ResponseMessage.build(departure.departureId, MessageId.fromMessageIdValue(2).value, message2)
-        val expectedMessage3 = ResponseMessage.build(departure.departureId, MessageId.fromMessageIdValue(3).value, message3)
+        val expectedMessage2 = ResponseMessage.build(departure.departureId, message2)
+        val expectedMessage3 = ResponseMessage.build(departure.departureId, message3)
 
         val expectedDeparture =
           ResponseDepartureWithMessages.build(departure, receivedSince = Some(requestedOffsetDateTime)).copy(messages = Seq(expectedMessage2, expectedMessage3))
@@ -609,7 +618,7 @@ class MessagesControllerSpec
   "getMessage" - {
     "must return Ok with the retrieved message and state SubmissionSuccessful" in {
 
-      val message   = Arbitrary.arbitrary[MessageWithStatus].sample.value.copy(status = SubmissionSucceeded)
+      val message   = Arbitrary.arbitrary[MessageWithStatus].sample.value.copy(messageId = MessageId(1), status = SubmissionSucceeded)
       val departure = Arbitrary.arbitrary[Departure].sample.value.copy(messages = NonEmptyList.one(message), eoriNumber = "eori")
 
       val mockDepartureRepository = mock[DepartureRepository]
@@ -622,17 +631,17 @@ class MessagesControllerSpec
           .build()
 
       running(application) {
-        val request = FakeRequest(GET, routes.MessagesController.getMessage(departure.departureId, MessageId.fromIndex(0)).url)
+        val request = FakeRequest(GET, routes.MessagesController.getMessage(departure.departureId, MessageId(1)).url)
           .withHeaders("channel" -> departure.channel.toString)
         val result = route(application, request).value
 
         status(result) mustEqual OK
-        contentAsJson(result) mustEqual Json.toJson(ResponseMessage.build(departure.departureId, MessageId.fromIndex(0), message))
+        contentAsJson(result) mustEqual Json.toJson(ResponseMessage.build(departure.departureId, message))
       }
     }
 
     "must return Ok with the retrieved message when it has no state" in {
-      val message   = Arbitrary.arbitrary[MessageWithoutStatus].sample.value
+      val message   = Arbitrary.arbitrary[MessageWithoutStatus].sample.value.copy(messageId = MessageId(1))
       val departure = Arbitrary.arbitrary[Departure].sample.value.copy(messages = NonEmptyList.one(message), eoriNumber = "eori")
 
       val mockDepartureRepository = mock[DepartureRepository]
@@ -645,12 +654,12 @@ class MessagesControllerSpec
           .build()
 
       running(application) {
-        val request = FakeRequest(GET, routes.MessagesController.getMessage(departure.departureId, MessageId.fromIndex(0)).url)
+        val request = FakeRequest(GET, routes.MessagesController.getMessage(departure.departureId, MessageId(1)).url)
           .withHeaders("channel" -> departure.channel.toString)
         val result = route(application, request).value
 
         status(result) mustEqual OK
-        contentAsJson(result) mustEqual Json.toJson(ResponseMessage.build(departure.departureId, MessageId.fromIndex(0), message))
+        contentAsJson(result) mustEqual Json.toJson(ResponseMessage.build(departure.departureId, message))
       }
     }
 
@@ -666,7 +675,7 @@ class MessagesControllerSpec
             .build()
 
         running(application) {
-          val request = FakeRequest(GET, routes.MessagesController.getMessage(DepartureId(1), MessageId.fromIndex(0)).url)
+          val request = FakeRequest(GET, routes.MessagesController.getMessage(DepartureId(1), MessageId(1)).url)
             .withHeaders("channel" -> web.toString)
           val result = route(application, request).value
 
@@ -689,7 +698,7 @@ class MessagesControllerSpec
             .build()
 
         running(application) {
-          val request = FakeRequest(GET, routes.MessagesController.getMessage(departure.departureId, MessageId.fromIndex(5)).url)
+          val request = FakeRequest(GET, routes.MessagesController.getMessage(departure.departureId, MessageId(6)).url)
             .withHeaders("channel" -> departure.channel.toString)
           val result = route(application, request).value
 
@@ -712,7 +721,7 @@ class MessagesControllerSpec
             .build()
 
         running(application) {
-          val request = FakeRequest(GET, routes.MessagesController.getMessage(departure.departureId, MessageId.fromIndex(0)).url)
+          val request = FakeRequest(GET, routes.MessagesController.getMessage(departure.departureId, MessageId(1)).url)
             .withHeaders("channel" -> departure.channel.toString)
           val result = route(application, request).value
 
@@ -735,7 +744,7 @@ class MessagesControllerSpec
             .build()
 
         running(application) {
-          val request = FakeRequest(GET, routes.MessagesController.getMessage(departure.departureId, MessageId.fromIndex(0)).url)
+          val request = FakeRequest(GET, routes.MessagesController.getMessage(departure.departureId, MessageId(1)).url)
             .withHeaders("channel" -> departure.channel.toString)
           val result = route(application, request).value
 

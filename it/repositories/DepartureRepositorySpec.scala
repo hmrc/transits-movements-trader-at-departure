@@ -17,8 +17,8 @@
 package repositories
 
 import cats.data.NonEmptyList
-import generators.ModelGenerators
 import config.AppConfig
+import generators.ModelGenerators
 import models.ChannelType.api
 import models.ChannelType.web
 import models.DepartureStatus.DepartureSubmitted
@@ -32,7 +32,6 @@ import models.response.ResponseDeparture
 import models.response.ResponseDepartures
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
-import org.scalactic.source
 import org.scalactic.source.Position
 import org.scalatest._
 import org.scalatest.concurrent.IntegrationPatience
@@ -47,12 +46,10 @@ import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import play.api.test.Helpers.running
+import reactivemongo.play.json.ImplicitBSONHandlers.JsObjectDocumentWriter
 import reactivemongo.play.json.collection.JSONCollection
-
-import scala.util.Success
 import utils.Format
 import utils.JsonHelper
-import reactivemongo.play.json.ImplicitBSONHandlers.JsObjectDocumentWriter
 
 import java.time.Clock
 import java.time.LocalDate
@@ -60,9 +57,10 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.reflect.ClassTag
 import scala.util.Failure
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.util.Success
 
 class DepartureRepositorySpec
   extends AnyFreeSpec
@@ -268,6 +266,7 @@ class DepartureRepositorySpec
 
         val departureDeclarationMessage =
           MessageWithoutStatus(
+            departure.nextMessageId,
             dateTime,
             MessageType.DepartureDeclaration,
             messageBody,
@@ -314,6 +313,7 @@ class DepartureRepositorySpec
 
         val departureDeclaration =
           MessageWithoutStatus(
+            departure.nextMessageId,
             LocalDateTime.of(dateOfPrep, timeOfPrep),
             MessageType.DepartureDeclaration,
             messageBody,
@@ -371,7 +371,7 @@ class DepartureRepositorySpec
         database.flatMap(_.drop()).futureValue
 
         val departure = departureWithOneMessage.sample.value.copy(status = DepartureStatus.Initialized)
-        val messageId = MessageId.fromIndex(0)
+        val messageId = MessageId(1)
 
         service.insert(departure).futureValue
         service.setDepartureStateAndMessageState(departure.departureId, messageId, DepartureSubmitted, SubmissionSucceeded).futureValue
@@ -393,7 +393,7 @@ class DepartureRepositorySpec
         database.flatMap(_.drop()).futureValue
 
         val departure = departureWithOneMessage.sample.value.copy(departureId = DepartureId(1), status = Initialized)
-        val messageId = MessageId.fromIndex(0)
+        val messageId = MessageId(1)
 
         service.insert(departure).futureValue
 
@@ -430,6 +430,7 @@ class DepartureRepositorySpec
 
         val declarationRejectedMessage =
           MessageWithoutStatus(
+            departure.nextMessageId,
             dateTime,
             MessageType.DeclarationRejected,
             messageBody,
@@ -474,6 +475,7 @@ class DepartureRepositorySpec
 
         val declarationRejected =
           MessageWithoutStatus(
+            departure.nextMessageId,
             LocalDateTime.of(dateOfPrep, timeOfPrep),
             MessageType.DeclarationRejected,
             messageBody,
@@ -510,6 +512,7 @@ class DepartureRepositorySpec
 
         val mrnAllocatedMessage =
           MessageWithoutStatus(
+            departure.nextMessageId,
             dateTime,
             MessageType.MrnAllocated,
             messageBody,
@@ -558,6 +561,7 @@ class DepartureRepositorySpec
 
         val mrnAllocatedMessage =
           MessageWithoutStatus(
+            departure.nextMessageId,
             LocalDateTime.of(dateOfPrep, timeOfPrep),
             MessageType.MrnAllocated,
             messageBody,

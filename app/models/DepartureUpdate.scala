@@ -59,8 +59,8 @@ object MessageStatusUpdate extends MongoDateTimeFormats {
         Json.obj(
           "$set" ->
             Json.obj(
-              s"messages.${value.messageId.index}.status" -> value.messageStatus,
-              "lastUpdated"                               -> Json.toJson(LocalDateTime.now(clock))
+              s"messages.${value.messageId.index - 1}.status" -> value.messageStatus,
+              "lastUpdated"                                   -> Json.toJson(LocalDateTime.now(clock))
             )
       )
     )

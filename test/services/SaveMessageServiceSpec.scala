@@ -16,9 +16,6 @@
 
 package services
 
-import java.time.LocalDate
-import java.time.LocalTime
-
 import base.SpecBase
 import models._
 import org.mockito.ArgumentMatchers.{eq => eqTo, _}
@@ -28,6 +25,8 @@ import play.api.inject.bind
 import repositories.DepartureRepository
 import utils.Format
 
+import java.time.LocalDate
+import java.time.LocalTime
 import scala.concurrent.Future
 import scala.util.Failure
 import scala.util.Success
@@ -72,7 +71,9 @@ class SaveMessageServiceSpec extends SpecBase with BeforeAndAfterEach {
         </CC016A>
 
       val result =
-        saveMessageService.validateXmlAndSaveMessage(departureRejected, messageSender, DepartureRejectedResponse, DepartureStatus.DepartureRejected).futureValue
+        saveMessageService
+          .validateXmlAndSaveMessage(MessageId(2), departureRejected, messageSender, DepartureRejectedResponse, DepartureStatus.DepartureRejected)
+          .futureValue
 
       result mustBe SubmissionProcessingResult.SubmissionSuccess
       verify(mockDepartureRepository, times(1)).addResponseMessage(eqTo(departureId), any(), eqTo(DepartureStatus.DepartureRejected))
@@ -106,7 +107,9 @@ class SaveMessageServiceSpec extends SpecBase with BeforeAndAfterEach {
         </CC016A>
 
       val result =
-        saveMessageService.validateXmlAndSaveMessage(departureRejected, messageSender, DepartureRejectedResponse, DepartureStatus.DepartureRejected).futureValue
+        saveMessageService
+          .validateXmlAndSaveMessage(MessageId(2), departureRejected, messageSender, DepartureRejectedResponse, DepartureStatus.DepartureRejected)
+          .futureValue
 
       result mustBe SubmissionProcessingResult.SubmissionFailureInternal
       verify(mockDepartureRepository, times(1)).addResponseMessage(any(), any(), any())
@@ -132,7 +135,7 @@ class SaveMessageServiceSpec extends SpecBase with BeforeAndAfterEach {
       val requestInvalidXmlBody = <Invalid> invalid </Invalid>
 
       val result = saveMessageService
-        .validateXmlAndSaveMessage(requestInvalidXmlBody, messageSender, DepartureRejectedResponse, DepartureStatus.DepartureRejected)
+        .validateXmlAndSaveMessage(MessageId(2), requestInvalidXmlBody, messageSender, DepartureRejectedResponse, DepartureStatus.DepartureRejected)
         .futureValue
 
       result mustBe SubmissionProcessingResult.SubmissionFailureExternal
@@ -165,7 +168,7 @@ class SaveMessageServiceSpec extends SpecBase with BeforeAndAfterEach {
         </CC016A>
 
       val result = saveMessageService
-        .validateXmlAndSaveMessage(requestInvalidXmlBody, messageSender, DepartureRejectedResponse, DepartureStatus.DepartureRejected)
+        .validateXmlAndSaveMessage(MessageId(2), requestInvalidXmlBody, messageSender, DepartureRejectedResponse, DepartureStatus.DepartureRejected)
         .futureValue
 
       result mustBe SubmissionProcessingResult.SubmissionFailureExternal
@@ -217,7 +220,12 @@ class SaveMessageServiceSpec extends SpecBase with BeforeAndAfterEach {
         </CC028A>
 
       val result = saveMessageService
-        .validateXmlSaveMessageUpdateMrn(mrnAllocated, messageSender, MrnAllocatedResponse, DepartureStatus.MrnAllocated, MovementReferenceNumber(mrn))
+        .validateXmlSaveMessageUpdateMrn(MessageId(2),
+                                         mrnAllocated,
+                                         messageSender,
+                                         MrnAllocatedResponse,
+                                         DepartureStatus.MrnAllocated,
+                                         MovementReferenceNumber(mrn))
         .futureValue
 
       result mustBe SubmissionProcessingResult.SubmissionSuccess
@@ -260,7 +268,12 @@ class SaveMessageServiceSpec extends SpecBase with BeforeAndAfterEach {
           </HEAHEA>
         </CC028A>
       val result = saveMessageService
-        .validateXmlSaveMessageUpdateMrn(mrnAllocated, messageSender, MrnAllocatedResponse, DepartureStatus.MrnAllocated, MovementReferenceNumber(mrn))
+        .validateXmlSaveMessageUpdateMrn(MessageId(2),
+                                         mrnAllocated,
+                                         messageSender,
+                                         MrnAllocatedResponse,
+                                         DepartureStatus.MrnAllocated,
+                                         MovementReferenceNumber(mrn))
         .futureValue
 
       result mustBe SubmissionProcessingResult.SubmissionFailureInternal
@@ -291,7 +304,8 @@ class SaveMessageServiceSpec extends SpecBase with BeforeAndAfterEach {
       val requestInvalidXmlBody = <Invalid> invalid </Invalid>
 
       val result = saveMessageService
-        .validateXmlSaveMessageUpdateMrn(requestInvalidXmlBody,
+        .validateXmlSaveMessageUpdateMrn(MessageId(2),
+                                         requestInvalidXmlBody,
                                          messageSender,
                                          DepartureRejectedResponse,
                                          DepartureStatus.DepartureRejected,
@@ -332,7 +346,12 @@ class SaveMessageServiceSpec extends SpecBase with BeforeAndAfterEach {
         </CC028A>
 
       val result = saveMessageService
-        .validateXmlSaveMessageUpdateMrn(mrnAllocated, messageSender, MrnAllocatedResponse, DepartureStatus.MrnAllocated, MovementReferenceNumber(mrn))
+        .validateXmlSaveMessageUpdateMrn(MessageId(2),
+                                         mrnAllocated,
+                                         messageSender,
+                                         MrnAllocatedResponse,
+                                         DepartureStatus.MrnAllocated,
+                                         MovementReferenceNumber(mrn))
         .futureValue
 
       result mustBe SubmissionProcessingResult.SubmissionFailureExternal

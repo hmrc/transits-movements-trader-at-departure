@@ -33,7 +33,7 @@ class MessagesSummarySpec extends SpecBase with ModelGenerators with ScalaCheckD
       val messageId = 1
 
       Json.toJson(
-        MessagesSummary(departure, MessageId.fromIndex(0))
+        MessagesSummary(departure, MessageId(messageId))
       ) mustBe Json.obj(
         "departureId" -> departure.departureId,
         "messages" ->
@@ -50,7 +50,7 @@ class MessagesSummarySpec extends SpecBase with ModelGenerators with ScalaCheckD
       val negativeAcknowledgementId = 2
 
       Json.toJson(
-        MessagesSummary(departure, MessageId.fromIndex(0), xmlSubmissionNegativeAcknowledgement = Some(MessageId.fromIndex(1)))
+        MessagesSummary(departure, MessageId(messageId), xmlSubmissionNegativeAcknowledgement = Some(MessageId(negativeAcknowledgementId)))
       ) mustBe Json.obj(
         "departureId" -> departure.departureId,
         "messages" ->
@@ -68,7 +68,7 @@ class MessagesSummarySpec extends SpecBase with ModelGenerators with ScalaCheckD
       val rejectionId = 2
 
       Json.toJson(
-        MessagesSummary(departure, MessageId.fromIndex(0), declarationRejection = Some(MessageId.fromIndex(1)))
+        MessagesSummary(departure, MessageId(messageId), declarationRejection = Some(MessageId(rejectionId)))
       ) mustBe Json.obj(
         "departureId" -> departure.departureId,
         "messages" ->
@@ -87,7 +87,7 @@ class MessagesSummarySpec extends SpecBase with ModelGenerators with ScalaCheckD
       val mrnAllocated = 3
 
       Json.toJson(
-        MessagesSummary(departure, MessageId.fromIndex(0), declarationRejection = Some(MessageId.fromIndex(1)), mrnAllocated = Some(MessageId.fromIndex(2)))
+        MessagesSummary(departure, MessageId(messageId), declarationRejection = Some(MessageId(rejectionId)), mrnAllocated = Some(MessageId(mrnAllocated)))
       ) mustBe Json.obj(
         "departureId" -> departure.departureId,
         "messages" ->
@@ -110,10 +110,10 @@ class MessagesSummarySpec extends SpecBase with ModelGenerators with ScalaCheckD
       Json.toJson(
         MessagesSummary(
           departure,
-          MessageId.fromIndex(0),
-          declarationRejection = Some(MessageId.fromIndex(1)),
-          mrnAllocated = Some(MessageId.fromIndex(2)),
-          controlDecision = Some(MessageId.fromIndex(3))
+          MessageId(messageId),
+          declarationRejection = Some(MessageId(rejectionId)),
+          mrnAllocated = Some(MessageId(mrnAllocated)),
+          controlDecision = Some(MessageId(controlDecision))
         )
       ) mustBe Json.obj(
         "departureId" -> departure.departureId,
@@ -138,10 +138,10 @@ class MessagesSummarySpec extends SpecBase with ModelGenerators with ScalaCheckD
       Json.toJson(
         MessagesSummary(
           departure,
-          MessageId.fromIndex(0),
-          declarationRejection = Some(MessageId.fromIndex(1)),
-          mrnAllocated = Some(MessageId.fromIndex(2)),
-          guaranteeNotValid = Some(MessageId.fromIndex(3))
+          MessageId(messageId),
+          declarationRejection = Some(MessageId(rejectionId)),
+          mrnAllocated = Some(MessageId(mrnAllocated)),
+          guaranteeNotValid = Some(MessageId(guaranteeNotValidId))
         )
       ) mustBe Json.obj(
         "departureId" -> departure.departureId,
@@ -167,11 +167,11 @@ class MessagesSummarySpec extends SpecBase with ModelGenerators with ScalaCheckD
       Json.toJson(
         MessagesSummary(
           departure,
-          MessageId.fromIndex(0),
-          declarationRejection = Some(MessageId.fromIndex(1)),
-          mrnAllocated = Some(MessageId.fromIndex(2)),
-          guaranteeNotValid = Some(MessageId.fromIndex(3)),
-          cancellationDecision = Some(MessageId.fromIndex(4))
+          MessageId(messageId),
+          declarationRejection = Some(MessageId(rejectionId)),
+          mrnAllocated = Some(MessageId(mrnAllocated)),
+          guaranteeNotValid = Some(MessageId(guaranteeNotValidId)),
+          cancellationDecision = Some(MessageId(cancellationId))
         )
       ) mustBe Json.obj(
         "departureId" -> departure.departureId,
@@ -199,12 +199,12 @@ class MessagesSummarySpec extends SpecBase with ModelGenerators with ScalaCheckD
       Json.toJson(
         MessagesSummary(
           departure,
-          MessageId.fromIndex(0),
-          declarationRejection = Some(MessageId.fromIndex(1)),
-          mrnAllocated = Some(MessageId.fromIndex(2)),
-          guaranteeNotValid = Some(MessageId.fromIndex(3)),
-          cancellationDecision = Some(MessageId.fromIndex(4)),
-          declarationCancellationRequest = Some(MessageId.fromIndex(5))
+          MessageId(messageId),
+          declarationRejection = Some(MessageId(rejectionId)),
+          mrnAllocated = Some(MessageId(mrnAllocated)),
+          guaranteeNotValid = Some(MessageId(guaranteeNotValidId)),
+          cancellationDecision = Some(MessageId(cancellationId)),
+          declarationCancellationRequest = Some(MessageId(cancellationRequestId))
         )
       ) mustBe Json.obj(
         "departureId" -> departure.departureId,
@@ -234,13 +234,13 @@ class MessagesSummarySpec extends SpecBase with ModelGenerators with ScalaCheckD
       Json.toJson(
         MessagesSummary(
           departure,
-          MessageId.fromIndex(0),
-          declarationRejection = Some(MessageId.fromIndex(1)),
-          mrnAllocated = Some(MessageId.fromIndex(2)),
-          guaranteeNotValid = Some(MessageId.fromIndex(3)),
-          cancellationDecision = Some(MessageId.fromIndex(4)),
-          declarationCancellationRequest = Some(MessageId.fromIndex(5)),
-          noReleaseForTransit = Some(MessageId.fromIndex(6))
+          MessageId(messageId),
+          declarationRejection = Some(MessageId(rejectionId)),
+          mrnAllocated = Some(MessageId(mrnAllocated)),
+          guaranteeNotValid = Some(MessageId(guaranteeNotValidId)),
+          cancellationDecision = Some(MessageId(cancellationId)),
+          declarationCancellationRequest = Some(MessageId(cancellationRequestId)),
+          noReleaseForTransit = Some(MessageId(noReleaseForTransit))
         )
       ) mustBe Json.obj(
         "departureId" -> departure.departureId,

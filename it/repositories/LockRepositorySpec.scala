@@ -38,7 +38,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class LockRepositorySpec
     extends AnyFreeSpec
     with Matchers
-    with FailOnUnindexedQueries
+    with MongoSuite
     with ScalaFutures
     with IntegrationPatience
     with OptionValues
@@ -50,7 +50,7 @@ class LockRepositorySpec
     "must lock an departureId when it is not already locked" in {
       database.flatMap(_.drop()).futureValue
 
-      val app = new GuiceApplicationBuilder().build()
+      val app = new GuiceApplicationBuilder().configure("metrics.jvm" -> false).build()
 
       val departureId = DepartureId(1)
 
@@ -76,7 +76,7 @@ class LockRepositorySpec
     "must not lock an departureId that is already locked" in {
       database.flatMap(_.drop()).futureValue
 
-      val app = new GuiceApplicationBuilder().build()
+      val app = new GuiceApplicationBuilder().configure("metrics.jvm" -> false).build()
 
       val departureId = DepartureId(1)
 
@@ -98,7 +98,7 @@ class LockRepositorySpec
     "must remove an existing lock" in {
       database.flatMap(_.drop()).futureValue
 
-      val app = new GuiceApplicationBuilder().build()
+      val app = new GuiceApplicationBuilder().configure("metrics.jvm" -> false).build()
 
       val departureId = DepartureId(1)
 
@@ -123,7 +123,7 @@ class LockRepositorySpec
     "must not fail when asked to remove a lock that doesn't exist" in {
       database.flatMap(_.drop()).futureValue
 
-      val app = new GuiceApplicationBuilder().build()
+      val app = new GuiceApplicationBuilder().configure("metrics.jvm" -> false).build()
 
       val departureId = DepartureId(1)
 
@@ -141,7 +141,7 @@ class LockRepositorySpec
     "a lock's created field must be a date for the ttl index" in {
       database.flatMap(_.drop()).futureValue
 
-      val app = new GuiceApplicationBuilder().build()
+      val app = new GuiceApplicationBuilder().configure("metrics.jvm" -> false).build()
 
       val departureId = DepartureId(1)
 

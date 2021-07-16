@@ -50,15 +50,16 @@ object ResponseDepartureWithMessages {
       departure.status,
       departure.created,
       departure.lastUpdated,
-      departure.messagesWithId
+      departure.messages
         .filterNot {
-          case (message, _) =>
+          message =>
             val failedMessage            = message.optStatus == Some(SubmissionFailed)
             lazy val beforeRequestedDate = receivedSince.fold(false)(message.receivedBefore)
             failedMessage || beforeRequestedDate
         }
         .map {
-          case (message, messageId) => ResponseMessage.build(departure.departureId, messageId, message)
+          message =>
+            ResponseMessage.build(departure.departureId, message)
         }
     )
 
