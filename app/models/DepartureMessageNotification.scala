@@ -16,20 +16,24 @@
 
 package models
 
+import models.request.DepartureResponseRequest
+import play.api.http.HeaderNames
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 import utils.NodeSeqFormat._
-import models.request.DepartureResponseRequest
 
 import java.time.LocalDateTime
 import scala.xml.NodeSeq
 
-case class DepartureMessageNotification(messageUri: String,
-                                        requestId: String,
-                                        departureId: DepartureId,
-                                        messageId: MessageId,
-                                        received: LocalDateTime,
-                                        messageType: MessageType)
+case class DepartureMessageNotification(
+  messageUri: String,
+  requestId: String,
+  departureId: DepartureId,
+  messageId: MessageId,
+  received: LocalDateTime,
+  messageType: MessageType,
+  messageBody: Option[NodeSeq]
+)
 
 object DepartureMessageNotification {
 
@@ -44,7 +48,8 @@ object DepartureMessageNotification {
         (__ \ "departureId").write[DepartureId] and
         (__ \ "messageId").write[String].contramap[MessageId](_.publicValue.toString) and
         (__ \ "received").write[LocalDateTime] and
-        (__ \ "messageType").write[MessageType]
+        (__ \ "messageType").write[MessageType] and
+        (__ \ "messageBody").writeNullable[NodeSeq]
     )(unlift(DepartureMessageNotification.unapply))
 
   implicit val writesDepartureMessageNotificationWithRequestId: OWrites[DepartureMessageNotification] =
@@ -54,15 +59,18 @@ object DepartureMessageNotification {
     }
 
   def fromRequest(request: DepartureResponseRequest[NodeSeq], timestamp: LocalDateTime): DepartureMessageNotification = {
-    val messageId    = MessageId.fromIndex(request.departure.messages.length)
-    val departureUrl = requestId(request.departure.departureId)
+    val oneHundredKilobytes = 100000
+    val messageId           = MessageId.fromIndex(request.departure.messages.length)
+    val departureUrl        = requestId(request.departure.departureId)
+    val bodySize            = request.headers.get(HeaderNames.CONTENT_LENGTH).map(_.toInt)
     DepartureMessageNotification(
       s"$departureUrl/messages/${messageId.publicValue}",
       departureUrl,
       request.departure.departureId,
       messageId,
       timestamp,
-      request.messageResponse.messageType
+      request.messageResponse.messageType,
+      if (bodySize.exists(_ <= oneHundredKilobytes)) Some(request.body) else None
     )
   }
 }

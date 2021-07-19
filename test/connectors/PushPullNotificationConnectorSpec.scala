@@ -129,6 +129,7 @@ class PushPullNotificationConnectorSpec extends AnyFreeSpec with WiremockSuite w
 
       val testBoxId       = "1c5b9365-18a6-55a5-99c9-83a091ac7f26"
       val testUrlPath     = s"/box/$testBoxId/notifications"
+      val testBody        = <test>test content</test>
       val testDepartureId = DepartureId(1)
       val testMessageUri  = requestId(testDepartureId) + "/messages" + ""
       val testNotification =
@@ -137,7 +138,8 @@ class PushPullNotificationConnectorSpec extends AnyFreeSpec with WiremockSuite w
                                      testDepartureId,
                                      MessageId.fromIndex(1),
                                      LocalDateTime.now,
-                                     MessageType.DepartureDeclaration)
+                                     MessageType.DepartureDeclaration,
+                                     Some(testBody))
 
       "should return a Right[Unit] when the notification is successfully POSTed" in {
 
