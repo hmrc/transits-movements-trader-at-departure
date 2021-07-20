@@ -70,7 +70,7 @@ object DepartureMessageNotification {
       messageId,
       timestamp,
       request.messageResponse.messageType,
-      if (bodySize.exists(_ <= oneHundredKilobytes)) Some(request.body) else None
+      if (bodySize.exists(_ < oneHundredKilobytes)) Some(request.body) else None
     )
   }
 }
