@@ -49,8 +49,8 @@ object MessageSelector {
     messageSelector =>
       Json.obj(
         "$and" -> Json.arr(
-          Json.obj("_id"                                                     -> messageSelector.departureId),
-          Json.obj(s"messages.${messageSelector.messageId.index - 1}.status" -> Json.obj("$exists" -> true))
+          Json.obj("_id"                                                 -> messageSelector.departureId),
+          Json.obj(s"messages.${messageSelector.messageId.index}.status" -> Json.obj("$exists" -> true))
         )
     )
   )

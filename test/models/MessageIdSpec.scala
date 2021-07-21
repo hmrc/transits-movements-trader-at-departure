@@ -34,7 +34,7 @@ class MessageIdSpec extends AnyFreeSpec with Matchers with ScalaCheckPropertyChe
       forAll(intsAboveValue(0)) {
         value =>
           val result = pathBindable.bind("key", value.toString).right.value
-          result.index mustEqual value
+          result.value mustEqual value
       }
     }
 

@@ -119,8 +119,8 @@ class MessagesController @Inject()(
         implicit request =>
           val messages = request.departure.messages.toList
 
-          if (messages.isDefinedAt(messageId.index - 1) && messages(messageId.index - 1).optStatus != Some(SubmissionFailed))
-            Ok(Json.toJsObject(ResponseMessage.build(departureId, messages(messageId.index - 1))))
+          if (messages.isDefinedAt(messageId.index) && messages(messageId.index).optStatus != Some(SubmissionFailed))
+            Ok(Json.toJsObject(ResponseMessage.build(departureId, messages(messageId.index))))
           else NotFound
       }
     }

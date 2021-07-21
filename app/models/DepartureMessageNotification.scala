@@ -57,7 +57,7 @@ object DepartureMessageNotification {
     val messageId    = request.departure.nextMessageId
     val departureUrl = requestId(request.departure.departureId)
     DepartureMessageNotification(
-      s"$departureUrl/messages/${messageId.index}",
+      s"$departureUrl/messages/${messageId.value}",
       departureUrl,
       request.departure.departureId,
       messageId,

@@ -20,7 +20,9 @@ import play.api.mvc.PathBindable
 import play.api.libs.json.Json
 import play.api.libs.json.Format
 
-case class MessageId(index: Int)
+case class MessageId(value: Int) {
+  def index: Int = value - 1
+}
 
 object MessageId {
 
@@ -28,9 +30,10 @@ object MessageId {
 
   implicit val formatMessageId: Format[MessageId] = Json.valueFormat[MessageId]
 
-  implicit val pathBindableMessageId: PathBindable[MessageId] = new PathBindable[MessageId] {
+  implicit def pathBindableMessageId(implicit intBindable: PathBindable[Int]): PathBindable[MessageId] = new PathBindable[MessageId] {
+
     override def bind(key: String, value: String): Either[String, MessageId] =
-      implicitly[PathBindable[Int]]
+      intBindable
         .bind(key, value)
         .fold(
           Left(_),
@@ -40,10 +43,8 @@ object MessageId {
           }
         )
 
-    override def unbind(key: String, value: MessageId): String = {
-      val MessageId(messageId) = value
-      messageId.toString
-    }
+    override def unbind(key: String, messageId: MessageId): String =
+      intBindable.unbind(key, messageId.value)
   }
 
 }

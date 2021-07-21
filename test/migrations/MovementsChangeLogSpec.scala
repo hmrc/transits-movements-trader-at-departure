@@ -117,7 +117,7 @@ class MovementsChangeLogSpec extends SpecBase with IntegrationPatience with Befo
             val departure = repo.get(departureId).futureValue.value
             departure.messages.mapWithIndex {
               case (message, index) =>
-                message.messageId.index mustBe (index + 1)
+                message.messageId.value mustBe (index + 1)
             }
         }
       }

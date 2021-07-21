@@ -124,8 +124,8 @@ class DepartureUpdateSpec
         messageStatusUpdate =>
           val expectedUpdateJson = Json.obj(
             "$set" -> Json.obj(
-              s"messages.${messageStatusUpdate.messageId.index - 1}.status" -> messageStatusUpdate.messageStatus,
-              "lastUpdated"                                                 -> LocalDateTime.now(clock)
+              s"messages.${messageStatusUpdate.messageId.index}.status" -> messageStatusUpdate.messageStatus,
+              "lastUpdated"                                             -> LocalDateTime.now(clock)
             )
           )
 
@@ -156,9 +156,9 @@ class DepartureUpdateSpec
         compoundStatusUpdate =>
           val expectedUpdateJson = Json.obj(
             "$set" -> Json.obj(
-              "status"                                                                           -> compoundStatusUpdate.departureStatusUpdate.departureStatus,
-              s"messages.${compoundStatusUpdate.messageStatusUpdate.messageId.index - 1}.status" -> compoundStatusUpdate.messageStatusUpdate.messageStatus,
-              "lastUpdated"                                                                      -> LocalDateTime.now(clock)
+              "status"                                                                       -> compoundStatusUpdate.departureStatusUpdate.departureStatus,
+              s"messages.${compoundStatusUpdate.messageStatusUpdate.messageId.index}.status" -> compoundStatusUpdate.messageStatusUpdate.messageStatus,
+              "lastUpdated"                                                                  -> LocalDateTime.now(clock)
             )
           )
 
