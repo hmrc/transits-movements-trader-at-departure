@@ -9,6 +9,7 @@
     <logger name="helpers.XmlBuilderHelper" level="${logger.XmlBuilderService:-INFO}"/>
     <logger name="controllers.DeparturesController" level="${logger.DeparturesController:-ERROR}"/>
     <logger name="controllers.MessagesController" level="${logger.MessagesController:-ERROR}"/>
+    <logger name="migrations.MigrationRunner" level="${logger.MigrationRunner:-INFO}"/>
 
     <root level="${logger.application:-WARN}">
         <appender-ref ref="STDOUT"/>
