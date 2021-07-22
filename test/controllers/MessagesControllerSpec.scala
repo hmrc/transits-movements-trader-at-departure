@@ -16,10 +16,6 @@
 
 package controllers
 
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.LocalTime
-
 import audit.AuditService
 import audit.AuditType._
 import base.SpecBase
@@ -40,8 +36,8 @@ import org.mockito.ArgumentMatchers.{eq => eqTo}
 import org.mockito.Mockito.times
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.when
-import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Arbitrary
+import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.IntegrationPatience
@@ -50,17 +46,21 @@ import play.api.inject.bind
 import play.api.libs.json.Json
 import play.api.test.FakeRequest
 import play.api.test.Helpers.GET
+import play.api.test.Helpers._
 import play.api.test.Helpers.contentAsJson
 import play.api.test.Helpers.route
 import play.api.test.Helpers.running
-import play.api.test.Helpers._
 import repositories.DepartureRepository
 import repositories.LockRepository
 import services.SubmitMessageService
 import utils.Format
 import utils.JsonHelper
-import scala.concurrent.Future
+
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
 import java.time.ZoneOffset
+import scala.concurrent.Future
 
 class MessagesControllerSpec
     extends SpecBase
@@ -272,6 +272,34 @@ class MessagesControllerSpec
         val result = route(application, request).value
 
         contentAsString(result) mustEqual "The value of element 'DatOfPreMES9' is not valid with respect to pattern 'yyyyMMdd'"
+        status(result) mustEqual BAD_REQUEST
+      }
+    }
+
+    "must return BadRequest if trying to cancel before an MRN is allocated" in {
+      val mockDepartureRepository = mock[DepartureRepository]
+      val mockLockRepository      = mock[LockRepository]
+
+      when(mockLockRepository.lock(any())).thenReturn(Future.successful(true))
+      when(mockLockRepository.unlock(any())).thenReturn(Future.successful(()))
+      when(mockDepartureRepository.get(any(), any())).thenReturn(Future.successful(Some(departure.copy(movementReferenceNumber = None))))
+
+      val application =
+        baseApplicationBuilder
+          .overrides(
+            bind[LockRepository].toInstance(mockLockRepository),
+            bind[DepartureRepository].toInstance(mockDepartureRepository)
+          )
+          .build()
+
+      running(application) {
+        val request = FakeRequest(POST, routes.MessagesController.post(departure.departureId).url)
+          .withHeaders("channel" -> departure.channel.toString)
+          .withXmlBody(declarationCancellationRequestXmlBody)
+
+        val result = route(application, request).value
+
+        contentAsString(result) mustEqual "TODO: get content for error message when the MRN in the cancellation doesn't match or isn't populated"
         status(result) mustEqual BAD_REQUEST
       }
     }

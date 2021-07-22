@@ -16,7 +16,25 @@
 
 package models
 
-sealed trait MessageReceivedEvent
+import MessageReceivedEvent._
+
+sealed trait MessageReceivedEvent {
+
+  def targetStatus: DepartureStatus = this match {
+    case CancellationDecision                 => DepartureStatus.CancellationDecision
+    case ControlDecisionNotification          => DepartureStatus.ControlDecisionNotification
+    case DeclarationCancellationRequest       => DepartureStatus.DeclarationCancellationRequest
+    case DepartureRejected                    => DepartureStatus.DepartureRejected
+    case DepartureSubmitted                   => DepartureStatus.DepartureSubmitted
+    case GuaranteeNotValid                    => DepartureStatus.GuaranteeNotValid
+    case MrnAllocated                         => DepartureStatus.MrnAllocated
+    case NoReleaseForTransit                  => DepartureStatus.NoReleaseForTransit
+    case PositiveAcknowledgement              => DepartureStatus.PositiveAcknowledgement
+    case ReleaseForTransit                    => DepartureStatus.ReleaseForTransit
+    case WriteOffNotification                 => DepartureStatus.WriteOffNotification
+    case XMLSubmissionNegativeAcknowledgement => DepartureStatus.XMLSubmissionNegativeAcknowledgement
+  }
+}
 
 object MessageReceivedEvent {
 
