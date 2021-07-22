@@ -16,19 +16,17 @@
 
 package repositories
 
-import javax.inject.Inject
 import models.DepartureId
+import play.api.Configuration
 import play.api.libs.json.Json
 import play.api.libs.json.Reads
 import play.modules.reactivemongo.ReactiveMongoApi
 import reactivemongo.play.json.ImplicitBSONHandlers.JsObjectDocumentWriter
 import reactivemongo.play.json.collection.JSONCollection
 
+import javax.inject.Inject
 import scala.concurrent.ExecutionContext.Implicits._
 import scala.concurrent.Future
-import scala.util.Failure
-import scala.util.Success
-import play.api.Configuration
 
 class DepartureIdRepository @Inject()(mongo: ReactiveMongoApi, config: Configuration) {
 

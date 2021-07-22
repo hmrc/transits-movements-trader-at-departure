@@ -41,6 +41,7 @@ import play.api.libs.json.Json
 import utils.JsonHelper
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import models.MessageId
 
 class PDFRetrievalControllerISpec extends ApiSpecBase with JsonHelper {
 
@@ -73,6 +74,7 @@ class PDFRetrievalControllerISpec extends ApiSpecBase with JsonHelper {
         3,
         NonEmptyList(
           MessageWithStatus(
+            MessageId(1),
             LocalDateTime.now(),
             MessageType.DepartureDeclaration,
             <departure></departure>,
@@ -81,7 +83,14 @@ class PDFRetrievalControllerISpec extends ApiSpecBase with JsonHelper {
             convertXmlToJson(<departure></departure>.toString)
           ),
           List(
-            MessageWithoutStatus(LocalDateTime.now(), MessageType.ReleaseForTransit, <released></released>, 2, convertXmlToJson(<released></released>.toString))
+            MessageWithoutStatus(
+              MessageId(2),
+              LocalDateTime.now(),
+              MessageType.ReleaseForTransit,
+              <released></released>,
+              2,
+              convertXmlToJson(<released></released>.toString)
+            )
           )
         ),
         None
@@ -138,8 +147,16 @@ class PDFRetrievalControllerISpec extends ApiSpecBase with JsonHelper {
         LocalDateTime.now(),
         3,
         NonEmptyList(
-          MessageWithStatus(LocalDateTime.now(), MessageType.DepartureDeclaration, <departure></departure>, MessageStatus.SubmissionSucceeded, 1, Json.obj()),
-          List(MessageWithoutStatus(LocalDateTime.now(), MessageType.ReleaseForTransit, <released></released>, 2, Json.obj()))
+          MessageWithStatus(
+            MessageId(1),
+            LocalDateTime.now(),
+            MessageType.DepartureDeclaration,
+            <departure></departure>,
+            MessageStatus.SubmissionSucceeded,
+            1,
+            Json.obj()
+          ),
+          List(MessageWithoutStatus(MessageId(2), LocalDateTime.now(), MessageType.ReleaseForTransit, <released></released>, 2, Json.obj()))
         ),
         None
       )

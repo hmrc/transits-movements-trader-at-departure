@@ -20,27 +20,28 @@ import audit.AuditService
 import com.kenshoo.play.metrics.Metrics
 import controllers.actions.CheckMessageTypeActionProvider
 import controllers.actions.GetDepartureForWriteActionProvider
-import javax.inject.Inject
 import metrics.HasActionMetrics
+import models.DepartureMessageNotification
 import models.MessageSender
 import models.MessageType
-import models.request.DepartureResponseRequest
 import models.StatusTransition
 import models.SubmissionProcessingResult.SubmissionFailureExternal
 import models.SubmissionProcessingResult.SubmissionFailureInternal
 import models.SubmissionProcessingResult.SubmissionSuccess
-import models.DepartureMessageNotification
+import models.request.DepartureResponseRequest
 import play.api.Logging
 import play.api.mvc.Action
 import play.api.mvc.ControllerComponents
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
-import scala.xml.NodeSeq
 import services.PushPullNotificationService
 import services.SaveMessageService
 import services.XmlMessageParser
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
+
+import javax.inject.Inject
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
+import scala.xml.NodeSeq
 
 class NCTSMessageController @Inject()(
   cc: ControllerComponents,
@@ -86,7 +87,8 @@ class NCTSMessageController @Inject()(
                       logger.warn(error.message)
                       Future.successful(BadRequest(error.message))
                     case Right(mrn) =>
-                      val processingResult = saveMessageService.validateXmlSaveMessageUpdateMrn(xml, messageSender, response, newState, mrn)
+                      val processingResult =
+                        saveMessageService.validateXmlSaveMessageUpdateMrn(request.departure.nextMessageId, xml, messageSender, response, newState, mrn)
                       processingResult map {
                         case SubmissionSuccess =>
                           auditService.auditNCTSMessages(request.request.departure.channel, response, xml)
@@ -105,7 +107,7 @@ class NCTSMessageController @Inject()(
                       }
                   }
                 case _ =>
-                  val processingResult = saveMessageService.validateXmlAndSaveMessage(xml, messageSender, response, newState)
+                  val processingResult = saveMessageService.validateXmlAndSaveMessage(request.departure.nextMessageId, xml, messageSender, response, newState)
                   processingResult map {
                     case SubmissionSuccess =>
                       auditService.auditNCTSMessages(request.request.departure.channel, response, xml)

@@ -21,28 +21,30 @@ import cats.implicits._
 import com.google.inject.Inject
 import models.DepartureStatus.Initialized
 import models.MessageStatus.SubmissionPending
-import models._
 import models.ParseError.EmptyNodeSeq
+import models._
 import repositories.DepartureIdRepository
 import utils.XMLTransformer
 
+import java.time.Clock
+import java.time.LocalDateTime
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.xml.NodeSeq
-
-import java.time.LocalDateTime
-import java.time.Clock
 
 class DepartureService @Inject()(departureIdRepository: DepartureIdRepository)(implicit clock: Clock, ec: ExecutionContext) {
   import XMLTransformer._
   import XmlMessageParser._
 
-  def makeMessageWithStatus(departureId: DepartureId, messageCorrelationId: Int, messageType: MessageType): ReaderT[ParseHandler, NodeSeq, MessageWithStatus] =
+  def makeMessageWithStatus(departureId: DepartureId,
+                            messageId: MessageId,
+                            messageCorrelationId: Int,
+                            messageType: MessageType): ReaderT[ParseHandler, NodeSeq, MessageWithStatus] =
     for {
       _          <- correctRootNodeR(messageType)
       dateTime   <- dateTimeOfPrepR
       xmlMessage <- updateMesSenMES3(departureId, messageCorrelationId)
-    } yield MessageWithStatus(dateTime, messageType, xmlMessage, SubmissionPending, messageCorrelationId)
+    } yield MessageWithStatus(messageId, dateTime, messageType, xmlMessage, SubmissionPending, messageCorrelationId)
 
   def createDeparture(eori: String, nodeSeq: NodeSeq, channelType: ChannelType, boxOpt: Option[Box]): Future[ParseHandler[Departure]] =
     departureIdRepository
@@ -53,7 +55,7 @@ class DepartureService @Inject()(departureIdRepository: DepartureIdRepository)(i
             _         <- correctRootNodeR(MessageType.DepartureDeclaration)
             dateTime  <- dateTimeOfPrepR
             reference <- referenceR
-            message   <- makeMessageWithStatus(departureId, 1, MessageType.DepartureDeclaration)
+            message   <- makeMessageWithStatus(departureId, MessageId(1), 1, MessageType.DepartureDeclaration)
           } yield
             Departure(
               departureId,
@@ -70,12 +72,12 @@ class DepartureService @Inject()(departureIdRepository: DepartureIdRepository)(i
             )).apply(nodeSeq)
       }
 
-  def makeMessage(messageCorrelationId: Int, messageType: MessageType): ReaderT[ParseHandler, NodeSeq, MessageWithoutStatus] =
+  def makeMessage(messageId: MessageId, messageCorrelationId: Int, messageType: MessageType): ReaderT[ParseHandler, NodeSeq, MessageWithoutStatus] =
     for {
       _          <- correctRootNodeR(messageType)
       dateTime   <- dateTimeOfPrepR
       xmlMessage <- ReaderT[ParseHandler, NodeSeq, NodeSeq](nodeSeqToEither)
-    } yield MessageWithoutStatus(dateTime, messageType, xmlMessage, messageCorrelationId)
+    } yield MessageWithoutStatus(messageId, dateTime, messageType, xmlMessage, messageCorrelationId)
 
   private[this] def nodeSeqToEither(xml: NodeSeq): ParseHandler[NodeSeq] =
     if (xml != null) {

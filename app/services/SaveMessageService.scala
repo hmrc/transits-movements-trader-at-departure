@@ -17,10 +17,10 @@
 package services
 
 import com.google.inject.Inject
-import models._
 import models.SubmissionProcessingResult.SubmissionFailureExternal
 import models.SubmissionProcessingResult.SubmissionFailureInternal
 import models.SubmissionProcessingResult.SubmissionSuccess
+import models._
 import play.api.Logging
 import repositories.DepartureRepository
 
@@ -31,16 +31,19 @@ import scala.util.Success
 import scala.xml.NodeSeq
 
 class SaveMessageService @Inject()(departureRepository: DepartureRepository, departureService: DepartureService, xmlValidationService: XmlValidationService)(
-  implicit ec: ExecutionContext)
-    extends Logging {
+  implicit ec: ExecutionContext
+) extends Logging {
 
-  def validateXmlAndSaveMessage(messageXml: NodeSeq,
-                                messageSender: MessageSender,
-                                messageResponse: MessageResponse,
-                                departureStatus: DepartureStatus): Future[SubmissionProcessingResult] =
+  def validateXmlAndSaveMessage(
+    nextMessageId: MessageId,
+    messageXml: NodeSeq,
+    messageSender: MessageSender,
+    messageResponse: MessageResponse,
+    departureStatus: DepartureStatus
+  ): Future[SubmissionProcessingResult] =
     xmlValidationService.validate(messageXml.toString(), messageResponse.xsdFile) match {
       case Success(_) =>
-        departureService.makeMessage(messageSender.messageCorrelationId, messageResponse.messageType)(messageXml) match {
+        departureService.makeMessage(nextMessageId, messageSender.messageCorrelationId, messageResponse.messageType)(messageXml) match {
           case Right(message) =>
             departureRepository
               .addResponseMessage(messageSender.departureId, message, departureStatus)
@@ -50,20 +53,22 @@ class SaveMessageService @Inject()(departureRepository: DepartureRepository, dep
               }
           case Left(_) => Future.successful(SubmissionFailureExternal)
         }
-      case Failure(e) => {
+      case Failure(e) =>
         logger.warn(s"Failure to validate against XSD. Exception: ${e.getMessage}")
         Future.successful(SubmissionFailureExternal)
-      }
     }
 
-  def validateXmlSaveMessageUpdateMrn(messageXml: NodeSeq,
-                                      messageSender: MessageSender,
-                                      messageResponse: MessageResponse,
-                                      departureStatus: DepartureStatus,
-                                      mrn: MovementReferenceNumber): Future[SubmissionProcessingResult] =
+  def validateXmlSaveMessageUpdateMrn(
+    nextMessageId: MessageId,
+    messageXml: NodeSeq,
+    messageSender: MessageSender,
+    messageResponse: MessageResponse,
+    departureStatus: DepartureStatus,
+    mrn: MovementReferenceNumber
+  ): Future[SubmissionProcessingResult] =
     xmlValidationService.validate(messageXml.toString(), messageResponse.xsdFile) match {
       case Success(_) =>
-        departureService.makeMessage(messageSender.messageCorrelationId, messageResponse.messageType)(messageXml) match {
+        departureService.makeMessage(nextMessageId, messageSender.messageCorrelationId, messageResponse.messageType)(messageXml) match {
           case Right(message) =>
             departureRepository
               .setMrnAndAddResponseMessage(messageSender.departureId, message, departureStatus, mrn)
@@ -73,9 +78,8 @@ class SaveMessageService @Inject()(departureRepository: DepartureRepository, dep
               }
           case Left(_) => Future.successful(SubmissionFailureExternal)
         }
-      case Failure(e) => {
+      case Failure(e) =>
         logger.warn(s"Failure to validate against XSD. Exception: ${e.getMessage}")
         Future.successful(SubmissionFailureExternal)
-      }
     }
 }

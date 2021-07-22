@@ -80,7 +80,7 @@ class MessageSummaryServiceSpec extends SpecBase with ModelGenerators with Scala
               departure =>
                 val (message, messageId) = service.declarationMessage(departure)
                 message mustEqual ie015
-                messageId mustEqual MessageId.fromMessageIdValue(1).value
+                messageId mustEqual ie015.messageId
             }
         }
       }
@@ -92,7 +92,7 @@ class MessageSummaryServiceSpec extends SpecBase with ModelGenerators with Scala
               departure =>
                 val (message, messageId) = service.declarationMessage(departure)
                 message mustEqual ie015
-                messageId mustEqual MessageId.fromMessageIdValue(1).value
+                messageId mustEqual ie015.messageId
             }
         }
       }
@@ -104,7 +104,7 @@ class MessageSummaryServiceSpec extends SpecBase with ModelGenerators with Scala
               departure =>
                 val (message, messageId) = service.declarationMessage(departure)
                 message mustEqual ie015
-                messageId mustEqual MessageId.fromMessageIdValue(3).value
+                messageId mustEqual ie015.messageId
             }
         }
       }
@@ -118,7 +118,7 @@ class MessageSummaryServiceSpec extends SpecBase with ModelGenerators with Scala
               departure =>
                 val (message, messageId) = service.declarationMessage(departure)
                 message mustEqual ie015
-                messageId mustEqual MessageId.fromMessageIdValue(3).value
+                messageId mustEqual ie015.messageId
             }
         }
       }
@@ -157,7 +157,7 @@ class MessageSummaryServiceSpec extends SpecBase with ModelGenerators with Scala
                 val (message, messageId) = service.mrnAllocatedMessage(departure).value
 
                 message mustEqual ie028
-                messageId mustEqual MessageId.fromMessageIdValue(2).value
+                messageId mustEqual ie028.messageId
             }
         }
       }
@@ -170,7 +170,7 @@ class MessageSummaryServiceSpec extends SpecBase with ModelGenerators with Scala
                 val (message, messageId) = service.mrnAllocatedMessage(departure).value
 
                 message mustEqual ie028
-                messageId mustEqual MessageId.fromMessageIdValue(3).value
+                messageId mustEqual ie028.messageId
             }
         }
       }
@@ -199,7 +199,7 @@ class MessageSummaryServiceSpec extends SpecBase with ModelGenerators with Scala
                 val (message, messageId) = service.declarationRejectionMessage(departure).value
 
                 message mustEqual ie016
-                messageId mustEqual MessageId.fromMessageIdValue(2).value
+                messageId mustEqual ie016.messageId
             }
         }
       }
@@ -224,7 +224,7 @@ class MessageSummaryServiceSpec extends SpecBase with ModelGenerators with Scala
                 val (message, messageId) = service.declarationRejectionMessage(departure).value
 
                 message mustEqual ie016
-                messageId mustEqual MessageId.fromMessageIdValue(4).value
+                messageId mustEqual ie016.messageId
             }
         }
       }
@@ -253,7 +253,7 @@ class MessageSummaryServiceSpec extends SpecBase with ModelGenerators with Scala
                 val (message, messageId) = service.guaranteeNotValidRejectionMessage(departure).value
 
                 message mustEqual ie055
-                messageId mustEqual MessageId.fromMessageIdValue(2).value
+                messageId mustEqual ie055.messageId
             }
         }
       }
@@ -280,7 +280,7 @@ class MessageSummaryServiceSpec extends SpecBase with ModelGenerators with Scala
                 val (message, messageId) = service.guaranteeNotValidRejectionMessage(departure).value
 
                 message mustBe secondIE055
-                messageId mustBe MessageId.fromMessageIdValue(3).value
+                messageId mustBe secondIE055.messageId
             }
         }
       }
@@ -293,7 +293,7 @@ class MessageSummaryServiceSpec extends SpecBase with ModelGenerators with Scala
                 val (message, messageId) = service.guaranteeNotValidRejectionMessage(departure).value
 
                 message mustEqual ie055
-                messageId mustEqual MessageId.fromMessageIdValue(4).value
+                messageId mustEqual ie055.messageId
             }
         }
       }
@@ -320,7 +320,7 @@ class MessageSummaryServiceSpec extends SpecBase with ModelGenerators with Scala
               departure =>
                 val (message, messageId) = service.cancellationDecisionMessage(departure).value
                 message mustEqual ie009
-                messageId mustEqual MessageId.fromMessageIdValue(2).value
+                messageId mustEqual ie009.messageId
             }
         }
       }
@@ -333,7 +333,7 @@ class MessageSummaryServiceSpec extends SpecBase with ModelGenerators with Scala
                 val (message, messageId) = service.cancellationDecisionMessage(departure).value
 
                 message mustEqual ie009
-                messageId mustEqual MessageId.fromMessageIdValue(3).value
+                messageId mustEqual ie009.messageId
             }
         }
       }
@@ -360,7 +360,7 @@ class MessageSummaryServiceSpec extends SpecBase with ModelGenerators with Scala
               departure =>
                 val (message, messageId) = service.declarationCancellationRequestMessage(departure).value
                 message mustEqual ie014
-                messageId mustEqual MessageId.fromMessageIdValue(2).value
+                messageId mustEqual ie014.messageId
             }
         }
       }
@@ -373,7 +373,7 @@ class MessageSummaryServiceSpec extends SpecBase with ModelGenerators with Scala
                 val (message, messageId) = service.declarationCancellationRequestMessage(departure).value
 
                 message mustEqual ie014
-                messageId mustEqual MessageId.fromMessageIdValue(3).value
+                messageId mustEqual ie014.messageId
             }
         }
       }
@@ -402,7 +402,7 @@ class MessageSummaryServiceSpec extends SpecBase with ModelGenerators with Scala
                 val (message, messageId) = service.noReleaseForTransitMessage(departure).value
 
                 message mustEqual ie051
-                messageId mustEqual MessageId.fromMessageIdValue(2).value
+                messageId mustEqual ie051.messageId
             }
         }
       }
@@ -415,7 +415,7 @@ class MessageSummaryServiceSpec extends SpecBase with ModelGenerators with Scala
                 val (message, messageId) = service.noReleaseForTransitMessage(departure).value
 
                 message mustEqual ie051
-                messageId mustEqual MessageId.fromMessageIdValue(3).value
+                messageId mustEqual ie051.messageId
             }
         }
       }
@@ -445,7 +445,7 @@ class MessageSummaryServiceSpec extends SpecBase with ModelGenerators with Scala
                 val (message, messageId) = service.controlDecisionMessage(departure).value
 
                 message mustEqual ie060
-                messageId mustEqual MessageId.fromMessageIdValue(2).value
+                messageId mustEqual ie060.messageId
             }
         }
       }
@@ -458,7 +458,7 @@ class MessageSummaryServiceSpec extends SpecBase with ModelGenerators with Scala
                 val (message, messageId) = service.controlDecisionMessage(departure).value
 
                 message mustEqual ie060
-                messageId mustEqual MessageId.fromMessageIdValue(3).value
+                messageId mustEqual ie060.messageId
             }
         }
       }
@@ -489,7 +489,7 @@ class MessageSummaryServiceSpec extends SpecBase with ModelGenerators with Scala
                 val (message, messageId) = service.xmlSubmissionNegativeAcknowledgementMessage(departure).value
 
                 message mustEqual ie917
-                messageId mustEqual MessageId.fromMessageIdValue(2).value
+                messageId mustEqual ie917.messageId
             }
         }
       }
@@ -501,7 +501,7 @@ class MessageSummaryServiceSpec extends SpecBase with ModelGenerators with Scala
               departure =>
                 val (message, messageId) = service.xmlSubmissionNegativeAcknowledgementMessage(departure).value
                 message mustEqual ie917
-                messageId mustEqual MessageId.fromMessageIdValue(5).value
+                messageId mustEqual ie917.messageId
             }
         }
       }
@@ -517,7 +517,7 @@ class MessageSummaryServiceSpec extends SpecBase with ModelGenerators with Scala
           ie015 =>
             forAll(createMovement(NonEmptyList.one(ie015))) {
               departure =>
-                service.messagesSummary(departure) mustEqual MessagesSummary(departure, MessageId.fromMessageIdValue(1).value, None)
+                service.messagesSummary(departure) mustEqual MessagesSummary(departure, ie015.messageId, None)
 
             }
         }
@@ -525,12 +525,12 @@ class MessageSummaryServiceSpec extends SpecBase with ModelGenerators with Scala
 
       "latest IE016 when there is only an IE015 and a IE016" in {
         forAll(ie015Gen, ie016Gen) {
-          (ie015, IE016) =>
-            val messages = NonEmptyList.of(ie015, IE016)
+          (ie015, ie016) =>
+            val messages = NonEmptyList.of(ie015, ie016)
 
             forAll(createMovement(messages)) {
               departure =>
-                val expectedMessageSummary = MessagesSummary(departure, MessageId.fromMessageIdValue(1).value, MessageId.fromMessageIdValue(2))
+                val expectedMessageSummary = MessagesSummary(departure, ie015.messageId, Some(ie016.messageId))
 
                 service.messagesSummary(departure) mustEqual expectedMessageSummary
             }
@@ -542,7 +542,7 @@ class MessageSummaryServiceSpec extends SpecBase with ModelGenerators with Scala
           case (ie015Old, ie016Old, ie015) =>
             forAll(createMovement(NonEmptyList.of(ie015Old, ie016Old, ie015))) {
               departure =>
-                val expectedMessageSummary = MessagesSummary(departure, MessageId.fromMessageIdValue(3).value, None)
+                val expectedMessageSummary = MessagesSummary(departure, ie015.messageId, None)
 
                 service.messagesSummary(departure) mustEqual expectedMessageSummary
             }
@@ -554,7 +554,7 @@ class MessageSummaryServiceSpec extends SpecBase with ModelGenerators with Scala
           case (ie015Old, ie016Old, ie015, ie016) =>
             forAll(createMovement(NonEmptyList.of(ie015Old, ie016Old, ie015, ie016))) {
               departure =>
-                val expectedMessageSummary = MessagesSummary(departure, MessageId.fromMessageIdValue(3).value, MessageId.fromMessageIdValue(4))
+                val expectedMessageSummary = MessagesSummary(departure, ie015.messageId, Some(ie016.messageId))
 
                 service.messagesSummary(departure) mustEqual expectedMessageSummary
             }
@@ -564,13 +564,13 @@ class MessageSummaryServiceSpec extends SpecBase with ModelGenerators with Scala
 
       "IE015 and IE028" in {
         forAll(ie015Gen.submitted.msgCorrId(1), ie028Gen.msgCorrId(2)) {
-          case (ie015, ie0028) =>
-            val messages = NonEmptyList.of(ie015, ie0028)
+          case (ie015, ie028) =>
+            val messages = NonEmptyList.of(ie015, ie028)
 
             forAll(createMovement(messages)) {
               departure =>
                 val expectedMessageSummary =
-                  MessagesSummary(departure, MessageId.fromMessageIdValue(1).value, None, MessageId.fromMessageIdValue(2))
+                  MessagesSummary(departure, ie015.messageId, None, Some(ie028.messageId))
 
                 service.messagesSummary(departure) mustEqual expectedMessageSummary
             }
@@ -585,7 +585,7 @@ class MessageSummaryServiceSpec extends SpecBase with ModelGenerators with Scala
             forAll(createMovementWithState(DepartureStatus.GuaranteeNotValid, messages)) {
               departure =>
                 val expectedMessageSummary =
-                  MessagesSummary(departure, MessageId.fromMessageIdValue(1).value, None, None, MessageId.fromMessageIdValue(2))
+                  MessagesSummary(departure, ie015.messageId, None, None, Some(ie055.messageId))
 
                 service.messagesSummary(departure) mustEqual expectedMessageSummary
             }

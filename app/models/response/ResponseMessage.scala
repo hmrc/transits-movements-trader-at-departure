@@ -32,8 +32,8 @@ case class ResponseMessage(location: String, dateTime: LocalDateTime, messageTyp
 
 object ResponseMessage extends NodeSeqFormat {
 
-  def build(d: DepartureId, mId: MessageId, m: Message) =
-    ResponseMessage(routes.MessagesController.getMessage(d, mId).url, m.dateTime, m.messageType.code, m.message)
+  def build(d: DepartureId, m: Message) =
+    ResponseMessage(routes.MessagesController.getMessage(d, m.messageId).url, m.dateTime, m.messageType.code, m.message)
 
   implicit val writes: OWrites[ResponseMessage] = Json.writes[ResponseMessage]
 }
