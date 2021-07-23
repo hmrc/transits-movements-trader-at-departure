@@ -53,6 +53,7 @@ class MigrationRunner @Inject()(config: Configuration)(implicit ec: ExecutionCon
       .builder()
       .setDriver(mongoDriver)
       .addChangeLogsScanPackage("migrations.changelogs")
+      .dontFailIfCannotAcquireLock()
       .setMigrationStartedListener(
         () => logger.info("Started Mongock migrations")
       )
