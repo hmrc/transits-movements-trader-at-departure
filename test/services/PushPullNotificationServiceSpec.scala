@@ -104,15 +104,19 @@ class PushPullNotificationServiceSpec extends SpecBase with BeforeAndAfterEach w
         val mockedPostNotification = mockConnector.postNotification(boxIdMatcher, any[DepartureMessageNotification])(any[ExecutionContext], any[HeaderCarrier])
         val successfulResult       = Future.successful(Right(()))
 
+        val testEoriNumber  = "1234567800"
         val testDepartureId = DepartureId(1)
         val testMessageUri  = requestId(testDepartureId) + "/messages" + ""
 
-        val testNotification = DepartureMessageNotification(testMessageUri,
-                                                            requestId(testDepartureId),
-                                                            testDepartureId,
-                                                            MessageId(2),
-                                                            LocalDateTime.now,
-                                                            MessageType.DepartureDeclaration)
+        val testNotification = DepartureMessageNotification(
+          testMessageUri,
+          requestId(testDepartureId),
+          testEoriNumber,
+          testDepartureId,
+          MessageId(2),
+          LocalDateTime.now,
+          MessageType.DepartureDeclaration
+        )
 
         given(mockedPostNotification).willReturn(successfulResult)
 
@@ -125,15 +129,19 @@ class PushPullNotificationServiceSpec extends SpecBase with BeforeAndAfterEach w
 
         val mockedPostNotification = mockConnector.postNotification(boxIdMatcher, any[DepartureMessageNotification])(any[ExecutionContext], any[HeaderCarrier])
 
+        val testEoriNumber  = "1234567800"
         val testDepartureId = DepartureId(1)
         val testMessageUri  = requestId(testDepartureId) + "/messages" + ""
 
-        val testNotification = DepartureMessageNotification(testMessageUri,
-                                                            requestId(testDepartureId),
-                                                            testDepartureId,
-                                                            MessageId(2),
-                                                            LocalDateTime.now,
-                                                            MessageType.DepartureDeclaration)
+        val testNotification = DepartureMessageNotification(
+          testMessageUri,
+          requestId(testDepartureId),
+          testEoriNumber,
+          testDepartureId,
+          MessageId(2),
+          LocalDateTime.now,
+          MessageType.DepartureDeclaration
+        )
 
         given(mockedPostNotification).willReturn(Future.failed(new RuntimeException))
 

@@ -52,6 +52,7 @@ class DepartureMessageNotificationSpec extends SpecBase with ScalaCheckDrivenPro
         DepartureMessageNotification(
           s"/customs/transits/movements/departures/${departure.departureId.index}/messages/${departure.messages.length + 1}",
           s"/customs/transits/movements/departures/${departure.departureId.index}",
+          departure.eoriNumber,
           departure.departureId,
           MessageId(departure.messages.length + 1),
           now,
