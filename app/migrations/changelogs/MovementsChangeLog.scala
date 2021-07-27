@@ -29,7 +29,7 @@ import scala.collection.JavaConverters._
 @ChangeLog(order = "001")
 class MovementsChangeLog {
 
-  @ChangeSet(order = "001", id = "addMessageIdToMessages", author = "transits-movements-trader-at-departure")
+  @ChangeSet(order = "001", id = "addMessageIdToMessages", author = "transits-movements-trader-at-departure", runAlways = true)
   def addMessageIdToMessages(mongo: MongoDatabase): Unit = {
     val collection = mongo.getCollection(DepartureRepository.collectionName)
 
