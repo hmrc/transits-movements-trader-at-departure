@@ -23,6 +23,7 @@ import java.time.LocalTime
 import base.SpecBase
 import models.MessageType
 import models.MovementReferenceNumber
+import models.ParseError.LocalDateParseFailure
 import org.scalatest.EitherValues
 import utils.Format
 
@@ -40,16 +41,37 @@ class XmlMessageParserSpec extends SpecBase with EitherValues {
       XmlMessageParser.dateOfPrepR(movement) mustEqual Right(dateOfPrep)
     }
 
-    "will return a Left when the date in the DatOfPreMES9 node is malformed" in {
-      val dateOfPrep: LocalDate = LocalDate.now()
-
-      val message =
+    "will return a LocalDateParseFailure when the date is longer than 8 with a specific message" in {
+      val movement =
         <CC015B>
-          <DatOfPreMES9>{Format.dateFormatted(dateOfPrep) ++ "1"}</DatOfPreMES9>
+          <DatOfPreMES9>202105051</DatOfPreMES9>
         </CC015B>
 
-      val result = XmlMessageParser.dateOfPrepR(message)
-      result.isLeft mustEqual true
+      val result = XmlMessageParser.dateOfPrepR(movement).left.get
+      result mustBe an[LocalDateParseFailure]
+      result.message mustBe "The value of element 'DatOfPreMES9' is neither 6 or 8 characters long"
+    }
+
+    "will return a LocalDateParseFailure when the date is shorter than 6" in {
+      val movement =
+        <CC015B>
+          <DatOfPreMES9>20201</DatOfPreMES9>
+        </CC015B>
+
+      val result = XmlMessageParser.dateOfPrepR(movement).left.get
+      result mustBe an[LocalDateParseFailure]
+      result.message mustBe "The value of element 'DatOfPreMES9' is neither 6 or 8 characters long"
+    }
+
+    "will return a LocalDateParseFailure when the date is 7 digits" in {
+      val movement =
+        <CC015B>
+          <DatOfPreMES9>2020121</DatOfPreMES9>
+        </CC015B>
+
+      val result = XmlMessageParser.dateOfPrepR(movement).left.get
+      result mustBe an[LocalDateParseFailure]
+      result.message mustBe "The value of element 'DatOfPreMES9' is neither 6 or 8 characters long"
     }
 
     "will return a Left when the date in the DatOfPreMES9 node is missing" in {
