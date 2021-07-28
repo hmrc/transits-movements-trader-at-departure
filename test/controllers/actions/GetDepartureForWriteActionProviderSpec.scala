@@ -97,7 +97,7 @@ class GetDepartureForWriteActionProviderSpec
       verify(mockLockRepository, times(1)).unlock(eqTo(departure.departureId))
     }
 
-    "must lock an departure, unlock it, and return Not Found when the departure cannot be found" in {
+    "must lock an departure, unlock it, and return Ok when the departure cannot be found" in {
 
       val departure = arbitrary[Departure].sample.value
 
@@ -119,7 +119,7 @@ class GetDepartureForWriteActionProviderSpec
       val controller = new Harness(actionProvider)
       val result     = controller.get(departure.departureId)(fakeRequest.withHeaders("channel" -> web.toString))
 
-      status(result) mustEqual NOT_FOUND
+      status(result) mustEqual OK
       verify(mockLockRepository, times(1)).lock(eqTo(departure.departureId))
       verify(mockLockRepository, times(1)).unlock(eqTo(departure.departureId))
     }

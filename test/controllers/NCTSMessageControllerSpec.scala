@@ -372,7 +372,7 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
         }
       }
 
-      "must lock, return NotFound and unlock when given a message for a departure that does not exist" in {
+      "must lock, not update the departure repository, return Ok and unlock when given a message for a departure that does not exist" in {
         when(mockDepartureRepository.get(any())).thenReturn(Future.successful(None))
         when(mockLockRepository.lock(any())).thenReturn(Future.successful(true))
         when(mockLockRepository.unlock(any())).thenReturn(Future.successful(()))
@@ -392,7 +392,7 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
           val result = route(application, request).value
 
           contentAsString(result) mustBe empty
-          status(result) mustEqual NOT_FOUND
+          status(result) mustEqual OK
           verify(mockDepartureRepository, never).addResponseMessage(any(), any(), any())
           verify(mockLockRepository, times(1)).lock(departureId)
           verify(mockLockRepository, times(1)).unlock(departureId)
