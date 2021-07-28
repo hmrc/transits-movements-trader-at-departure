@@ -51,9 +51,19 @@ object XmlMessageParser {
 
       val dateOfPrepString = (xml \ "DatOfPreMES9").text
 
-      Try(LocalDate.parse(dateOfPrepString, Format.dateFormatter)) match {
-        case Success(value) => Right(value)
-        case Failure(_)     => Left(LocalDateParseFailure("The value of element 'DatOfPreMES9' is not valid with respect to pattern 'yyyyMMdd'"))
+      val dateFormatterEither = dateOfPrepString.length match {
+        case 6 => Right(Format.dateFormatter6)
+        case 8 => Right(Format.dateFormatter8)
+        case _ => Left(LocalDateParseFailure("The value of element 'DatOfPreMES9' is neither 6 or 8 characters long"))
+      }
+
+      dateFormatterEither.flatMap {
+        dateFormatter =>
+          Try(LocalDate.parse(dateOfPrepString, dateFormatter)) match {
+            case Success(value) => Right(value)
+            case Failure(_) =>
+              Left(LocalDateParseFailure(s"The value of element 'DatOfPreMES9' is not valid with respect to pattern '${dateFormatter.toFormat.toString}'"))
+          }
       }
     })
 

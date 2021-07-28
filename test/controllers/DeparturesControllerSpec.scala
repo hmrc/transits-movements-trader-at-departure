@@ -350,7 +350,7 @@ class DeparturesControllerSpec
 
           val result = route(application, request).value
 
-          contentAsString(result) mustEqual "The value of element 'DatOfPreMES9' is not valid with respect to pattern 'yyyyMMdd'"
+          contentAsString(result) mustEqual "The value of element 'DatOfPreMES9' is neither 6 or 8 characters long"
           status(result) mustEqual BAD_REQUEST
           header("Location", result) must not be defined
         }
