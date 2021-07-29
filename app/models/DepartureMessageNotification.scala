@@ -28,6 +28,7 @@ import scala.xml.NodeSeq
 case class DepartureMessageNotification(
   messageUri: String,
   requestId: String,
+  customerId: String,
   departureId: DepartureId,
   messageId: MessageId,
   received: LocalDateTime,
@@ -45,6 +46,7 @@ object DepartureMessageNotification {
     (
       (__ \ "messageUri").write[String] and
         (__ \ "requestId").write[String] and
+        (__ \ "customerId").write[String] and
         (__ \ "departureId").write[DepartureId] and
         (__ \ "messageId").write[MessageId] and
         (__ \ "received").write[LocalDateTime] and
@@ -60,12 +62,14 @@ object DepartureMessageNotification {
 
   def fromRequest(request: DepartureResponseRequest[NodeSeq], timestamp: LocalDateTime): DepartureMessageNotification = {
     val oneHundredKilobytes = 100000
+    val eoriNumber          = request.departure.eoriNumber
     val messageId           = request.departure.nextMessageId
     val departureUrl        = requestId(request.departure.departureId)
     val bodySize            = request.headers.get(HeaderNames.CONTENT_LENGTH).map(_.toInt)
     DepartureMessageNotification(
       s"$departureUrl/messages/${messageId.value}",
       departureUrl,
+      eoriNumber,
       request.departure.departureId,
       messageId,
       timestamp,
