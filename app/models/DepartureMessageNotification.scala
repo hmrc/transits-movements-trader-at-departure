@@ -46,7 +46,7 @@ object DepartureMessageNotification {
       (__ \ "messageUri").write[String] and
         (__ \ "requestId").write[String] and
         (__ \ "departureId").write[DepartureId] and
-        (__ \ "messageId").write[String].contramap[MessageId](_.publicValue.toString) and
+        (__ \ "messageId").write[MessageId] and
         (__ \ "received").write[LocalDateTime] and
         (__ \ "messageType").write[MessageType] and
         (__ \ "messageBody").writeNullable[NodeSeq]
@@ -60,11 +60,11 @@ object DepartureMessageNotification {
 
   def fromRequest(request: DepartureResponseRequest[NodeSeq], timestamp: LocalDateTime): DepartureMessageNotification = {
     val oneHundredKilobytes = 100000
-    val messageId           = MessageId.fromIndex(request.departure.messages.length)
+    val messageId           = request.departure.nextMessageId
     val departureUrl        = requestId(request.departure.departureId)
     val bodySize            = request.headers.get(HeaderNames.CONTENT_LENGTH).map(_.toInt)
     DepartureMessageNotification(
-      s"$departureUrl/messages/${messageId.publicValue}",
+      s"$departureUrl/messages/${messageId.value}",
       departureUrl,
       request.departure.departureId,
       messageId,

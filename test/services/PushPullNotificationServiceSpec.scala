@@ -110,11 +110,12 @@ class PushPullNotificationServiceSpec extends SpecBase with BeforeAndAfterEach w
           testMessageUri,
           requestId(testDepartureId),
           testDepartureId,
-          MessageId.fromIndex(1),
+          MessageId(2),
           LocalDateTime.now,
           MessageType.DepartureDeclaration,
           Some(testBody)
         )
+
 
         given(mockedPostNotification).willReturn(successfulResult)
 
@@ -135,7 +136,7 @@ class PushPullNotificationServiceSpec extends SpecBase with BeforeAndAfterEach w
           testMessageUri,
           requestId(testDepartureId),
           testDepartureId,
-          MessageId.fromIndex(1),
+          MessageId(2),
           LocalDateTime.now,
           MessageType.DepartureDeclaration,
           Some(testBody)

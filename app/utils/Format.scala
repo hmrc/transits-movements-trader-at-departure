@@ -24,9 +24,10 @@ import java.time.format.DateTimeFormatter
 
 object Format {
 
-  val dateFormatter: DateTimeFormatter               = DateTimeFormatter.ofPattern("yyyyMMdd")
-  def dateFormatted(date: LocalDate): String         = date.format(dateFormatter)
-  def dateFormatted(dateTime: LocalDateTime): String = dateTime.format(dateFormatter)
+  val dateFormatter6: DateTimeFormatter              = DateTimeFormatter.ofPattern("yyMMdd")
+  val dateFormatter8: DateTimeFormatter              = DateTimeFormatter.ofPattern("yyyyMMdd")
+  def dateFormatted(date: LocalDate): String         = date.format(dateFormatter8)
+  def dateFormatted(dateTime: LocalDateTime): String = dateTime.format(dateFormatter8)
 
   val timeFormatter: DateTimeFormatter               = DateTimeFormatter.ofPattern("HHmm")
   def timeFormatted(dateTime: LocalDateTime): String = dateTime.format(timeFormatter)

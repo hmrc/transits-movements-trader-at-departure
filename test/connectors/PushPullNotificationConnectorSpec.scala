@@ -136,7 +136,7 @@ class PushPullNotificationConnectorSpec extends AnyFreeSpec with WiremockSuite w
         DepartureMessageNotification(testMessageUri,
                                      requestId(testDepartureId),
                                      testDepartureId,
-                                     MessageId.fromIndex(1),
+                                     MessageId(2),
                                      LocalDateTime.now,
                                      MessageType.DepartureDeclaration,
                                      Some(testBody))

@@ -67,6 +67,7 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 import scala.concurrent.Future
 import scala.xml.Utility.trim
+import models.MessageId
 
 class DeparturesControllerSpec
     extends SpecBase
@@ -105,6 +106,7 @@ class DeparturesControllerSpec
     </CC015B>
 
   def movementMessage(messageCorrelationId: Int): MessageWithStatus = MessageWithStatus(
+    MessageId(1),
     localDateTime,
     MessageType.DepartureDeclaration,
     savedXmlMessage(messageCorrelationId).map(trim),
@@ -348,7 +350,7 @@ class DeparturesControllerSpec
 
           val result = route(application, request).value
 
-          contentAsString(result) mustEqual "The value of element 'DatOfPreMES9' is not valid with respect to pattern 'yyyyMMdd'"
+          contentAsString(result) mustEqual "The value of element 'DatOfPreMES9' is neither 6 or 8 characters long"
           status(result) mustEqual BAD_REQUEST
           header("Location", result) must not be defined
         }

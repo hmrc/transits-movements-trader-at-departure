@@ -16,11 +16,19 @@
 
 package utils
 
+import java.io.File
+
+import config.AppConfig
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
+import play.api.Configuration
+import play.api.Environment
+import play.api.Mode
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
+import play.api.test.Helpers
 import play.api.test.Helpers.running
+import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 class MessageTranslationSpec extends AnyFreeSpec with Matchers {
 
@@ -79,22 +87,21 @@ class MessageTranslationSpec extends AnyFreeSpec with Matchers {
 
     "must not change any JSON values" in {
 
-      val app = appBuilder.build()
+      val environment = Environment(new File("."), getClass.getClassLoader, Mode.Test)
+      val config      = Configuration.load(environment)
+      val service     = new MessageTranslation(environment, new AppConfig(config, new ServicesConfig(config)))
 
-      running(app) {
-        val service = app.injector.instanceOf[MessageTranslation]
-        val inputJson = Json.obj(
-          "foo" -> "field1",
-          "bar" -> Json.arr(
-            Json.obj("baz" -> "field2"),
-            Json.obj("baz" -> "field2")
-          )
+      val inputJson = Json.obj(
+        "foo" -> "field1",
+        "bar" -> Json.arr(
+          Json.obj("baz" -> "field2"),
+          Json.obj("baz" -> "field2")
         )
+      )
 
-        val result = service.translate(inputJson)
+      val result = service.translate(inputJson)
 
-        result mustEqual inputJson
-      }
+      result mustEqual inputJson
     }
   }
 }
