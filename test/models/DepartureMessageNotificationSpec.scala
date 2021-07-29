@@ -16,8 +16,6 @@
 
 package models
 
-import java.time.LocalDateTime
-
 import base.SpecBase
 import controllers.routes
 import generators.ModelGenerators
@@ -26,9 +24,12 @@ import models.request.DepartureRequest
 import models.request.DepartureResponseRequest
 import org.scalacheck.Gen
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
+import play.api.http.HeaderNames
 import play.api.http.HttpVerbs
 import play.api.test.FakeRequest
 
+import java.nio.charset.StandardCharsets
+import java.time.LocalDateTime
 import scala.xml.NodeSeq
 
 class DepartureMessageNotificationSpec extends SpecBase with ScalaCheckDrivenPropertyChecks with ModelGenerators with HttpVerbs {
@@ -36,13 +37,17 @@ class DepartureMessageNotificationSpec extends SpecBase with ScalaCheckDrivenPro
   val responseGenerator = Gen.oneOf(MessageResponse.values)
 
   "fromRequest" - {
+    val testBody   = <text></text>
+    val bodyLength = testBody.toString.getBytes(StandardCharsets.UTF_8).length
+
     "produces the expected model" in {
       val response      = responseGenerator.sample.value
       val departure     = arbitraryDeparture.arbitrary.sample.value
       val messageSender = MessageSender(departure.departureId, departure.messages.last.messageCorrelationId)
 
       val request = FakeRequest(POST, routes.NCTSMessageController.post(messageSender).url)
-        .withBody[NodeSeq](<text></text>)
+        .withBody[NodeSeq](testBody)
+        .withHeaders(HeaderNames.CONTENT_LENGTH -> bodyLength.toString)
       val departureRequest = DepartureRequest(request, departure, api)
       val responseRequest  = DepartureResponseRequest(departureRequest, response)
 
@@ -56,7 +61,38 @@ class DepartureMessageNotificationSpec extends SpecBase with ScalaCheckDrivenPro
           departure.departureId,
           MessageId(departure.messages.length + 1),
           now,
-          response.messageType
+          response.messageType,
+          Some(testBody)
+        )
+
+      val testNotification = DepartureMessageNotification.fromRequest(responseRequest, now)
+
+      testNotification mustEqual expectedNotification
+    }
+
+    "does not include the message body when it is over 100kb" in {
+      val response      = responseGenerator.sample.value
+      val departure     = arbitraryDeparture.arbitrary.sample.value
+      val messageSender = MessageSender(departure.departureId, departure.messages.last.messageCorrelationId)
+
+      val request = FakeRequest(POST, routes.NCTSMessageController.post(messageSender).url)
+        .withBody[NodeSeq](testBody)
+        .withHeaders(HeaderNames.CONTENT_LENGTH -> "100001")
+      val departureRequest = DepartureRequest(request, departure, api)
+      val responseRequest  = DepartureResponseRequest(departureRequest, response)
+
+      val now = LocalDateTime.now()
+
+      val expectedNotification =
+        DepartureMessageNotification(
+          s"/customs/transits/movements/departures/${departure.departureId.index}/messages/${departure.messages.length + 1}",
+          s"/customs/transits/movements/departures/${departure.departureId.index}",
+          departure.eoriNumber,
+          departure.departureId,
+          MessageId(departure.messages.length + 1),
+          now,
+          response.messageType,
+          None
         )
 
       val testNotification = DepartureMessageNotification.fromRequest(responseRequest, now)

@@ -32,17 +32,15 @@ import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.test.Helpers._
-
-import scala.concurrent.Await
-import scala.concurrent.duration._
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.xml.NodeSeq
 import java.time.LocalDateTime
+import scala.concurrent.Await
+import scala.concurrent.ExecutionContext
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
+import scala.concurrent.duration._
 
 class PushPullNotificationServiceSpec extends SpecBase with BeforeAndAfterEach with ScalaCheckPropertyChecks {
   val mockConnector = mock[PushPullNotificationConnector]
@@ -107,6 +105,7 @@ class PushPullNotificationServiceSpec extends SpecBase with BeforeAndAfterEach w
         val testEoriNumber  = "1234567800"
         val testDepartureId = DepartureId(1)
         val testMessageUri  = requestId(testDepartureId) + "/messages" + ""
+        val testBody        = <test>test content</test>
 
         val testNotification = DepartureMessageNotification(
           testMessageUri,
@@ -115,7 +114,8 @@ class PushPullNotificationServiceSpec extends SpecBase with BeforeAndAfterEach w
           testDepartureId,
           MessageId(2),
           LocalDateTime.now,
-          MessageType.DepartureDeclaration
+          MessageType.DepartureDeclaration,
+          Some(testBody)
         )
 
         given(mockedPostNotification).willReturn(successfulResult)
@@ -132,6 +132,7 @@ class PushPullNotificationServiceSpec extends SpecBase with BeforeAndAfterEach w
         val testEoriNumber  = "1234567800"
         val testDepartureId = DepartureId(1)
         val testMessageUri  = requestId(testDepartureId) + "/messages" + ""
+        val testBody        = <test>test content</test>
 
         val testNotification = DepartureMessageNotification(
           testMessageUri,
@@ -140,7 +141,8 @@ class PushPullNotificationServiceSpec extends SpecBase with BeforeAndAfterEach w
           testDepartureId,
           MessageId(2),
           LocalDateTime.now,
-          MessageType.DepartureDeclaration
+          MessageType.DepartureDeclaration,
+          Some(testBody)
         )
 
         given(mockedPostNotification).willReturn(Future.failed(new RuntimeException))
