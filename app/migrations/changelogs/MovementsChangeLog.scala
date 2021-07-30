@@ -21,6 +21,7 @@ import com.github.cloudyrock.mongock.ChangeLog
 import com.github.cloudyrock.mongock.ChangeSet
 import com.mongodb.client.MongoDatabase
 import com.mongodb.client.model._
+import org.bson.BsonNull
 import org.bson.Document
 import repositories.DepartureRepository
 
@@ -34,7 +35,7 @@ class MovementsChangeLog {
     val collection = mongo.getCollection(DepartureRepository.collectionName)
 
     collection
-      .find()
+      .find(Filters.eq("messages.messageId", BsonNull.VALUE))
       .asScala
       .foreach {
         doc =>
