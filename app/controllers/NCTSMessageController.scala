@@ -77,6 +77,7 @@ class NCTSMessageController @Inject()(
         implicit request =>
           val xml: NodeSeq = request.request.body
           val response     = request.messageResponse
+          val departure    = request.request.departure
 
           StatusTransition.transition(request.departure.status, response.messageReceived) match {
             case Right(newState) =>
@@ -88,13 +89,13 @@ class NCTSMessageController @Inject()(
                       Future.successful(BadRequest(error.message))
                     case Right(mrn) =>
                       val processingResult =
-                        saveMessageService.validateXmlSaveMessageUpdateMrn(request.departure.nextMessageId, xml, messageSender, response, newState, mrn)
+                        saveMessageService.validateXmlSaveMessageUpdateMrn(departure.nextMessageId, xml, messageSender, response, newState, mrn)
                       processingResult map {
                         case SubmissionSuccess =>
-                          auditService.auditNCTSMessages(request.request.departure.channel, response, xml)
+                          auditService.auditNCTSMessages(departure.channel, departure.eoriNumber, response, xml)
                           sendPushNotification(request)
                           Ok.withHeaders(
-                            LOCATION -> routes.MessagesController.getMessage(request.request.departure.departureId, request.request.departure.nextMessageId).url
+                            LOCATION -> routes.MessagesController.getMessage(departure.departureId, departure.nextMessageId).url
                           )
                         case SubmissionFailureInternal =>
                           val message = "Internal Submission Failure " + processingResult
@@ -110,10 +111,10 @@ class NCTSMessageController @Inject()(
                   val processingResult = saveMessageService.validateXmlAndSaveMessage(request.departure.nextMessageId, xml, messageSender, response, newState)
                   processingResult map {
                     case SubmissionSuccess =>
-                      auditService.auditNCTSMessages(request.request.departure.channel, response, xml)
+                      auditService.auditNCTSMessages(departure.channel, departure.eoriNumber, response, xml)
                       sendPushNotification(request)
                       Ok.withHeaders(
-                        LOCATION -> routes.MessagesController.getMessage(request.request.departure.departureId, request.request.departure.nextMessageId).url
+                        LOCATION -> routes.MessagesController.getMessage(departure.departureId, departure.nextMessageId).url
                       )
                     case SubmissionFailureInternal =>
                       val message = "Internal Submission Failure " + processingResult

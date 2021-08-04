@@ -181,7 +181,7 @@ class MessagesControllerSpec
                                                                  any(),
                                                                  eqTo(DepartureStatus.DeclarationCancellationRequest),
                                                                  any())(any())
-        verify(mockAuditService, times(1)).auditEvent(eqTo(DepartureCancellationRequestSubmitted), any(), any())(any())
+        verify(mockAuditService, times(1)).auditEvent(eqTo(DepartureCancellationRequestSubmitted), eqTo(departure.eoriNumber), any(), any())(any())
       }
     }
 
