@@ -67,6 +67,7 @@ class AuditServiceSpec extends SpecBase with ScalaCheckPropertyChecks with Befor
           message <- arbitrary[MessageWithStatus]
         } yield message.copy(message = xml, messageJson = jsObj)
 
+      val requestEori        = "eori"
       val requestXml         = <xml>test</xml>
       val requestedXmlToJson = Json.obj("channel" -> "api", "xml" -> "test")
       val message            = gen(requestXml, requestedXmlToJson).sample.get
@@ -78,7 +79,7 @@ class AuditServiceSpec extends SpecBase with ScalaCheckPropertyChecks with Befor
             .build()
           running(application) {
             val auditService = application.injector.instanceOf[AuditService]
-            auditService.auditEvent(auditType, message, api)
+            auditService.auditEvent(auditType, requestEori, message, api)
             verify(mockAuditConnector, times(1)).sendExplicitAudit[AuditDetails](eqTo(auditType.toString()), any())(any(), any(), any())
             reset(mockAuditConnector)
           }
@@ -109,8 +110,9 @@ class AuditServiceSpec extends SpecBase with ScalaCheckPropertyChecks with Befor
 
           running(application) {
             val auditService = application.injector.instanceOf[AuditService]
+            val departure    = Arbitrary.arbitrary[Departure].sample.value
 
-            auditService.auditNCTSMessages(Arbitrary.arbitrary[Departure].sample.value.channel, response, requestXml)
+            auditService.auditNCTSMessages(departure.channel, departure.eoriNumber, response, requestXml)
 
             verify(mockAuditConnector, times(1)).sendExplicitAudit(eqTo(nctsAuditResponse(response).toString()), any[AuditDetails]())(any(), any(), any())
             reset(mockAuditConnector)

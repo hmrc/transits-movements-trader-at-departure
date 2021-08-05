@@ -89,8 +89,8 @@ class DeparturesController @Inject()(
                         case submissionFailureRejected: SubmissionProcessingResult.SubmissionFailureRejected =>
                           BadRequest(submissionFailureRejected.responseBody)
                         case SubmissionProcessingResult.SubmissionSuccess =>
-                          auditService.auditEvent(DepartureDeclarationSubmitted, departure.messages.head, request.channel)
-                          auditService.auditEvent(MesSenMES3Added, departure.messages.head, request.channel)
+                          auditService.auditEvent(DepartureDeclarationSubmitted, request.eoriNumber, departure.messages.head, request.channel)
+                          auditService.auditEvent(MesSenMES3Added, request.eoriNumber, departure.messages.head, request.channel)
                           Accepted(Json.toJson(boxOpt))
                             .withHeaders(
                               "Location" -> routes.DeparturesController.get(departure.departureId).url

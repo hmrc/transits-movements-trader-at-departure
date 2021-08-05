@@ -31,15 +31,15 @@ import scala.xml.NodeSeq
 
 class AuditService @Inject()(auditConnector: AuditConnector, messageTranslator: MessageTranslation)(implicit ec: ExecutionContext) extends XmlToJson {
 
-  def auditEvent(auditType: AuditType, message: Message, channel: ChannelType)(implicit hc: HeaderCarrier): Unit =
-    internal_auditEvent(auditType, message.message, message.messageJson, channel)
+  def auditEvent(auditType: AuditType, customerId: String, message: Message, channel: ChannelType)(implicit hc: HeaderCarrier): Unit =
+    internal_auditEvent(auditType, customerId, message.message, message.messageJson, channel)
 
-  private def internal_auditEvent(auditType: AuditType, xml: NodeSeq, json: JsObject, channel: ChannelType)(implicit hc: HeaderCarrier) = {
-    val details = AuditDetails(channel, messageTranslator.translate(json), xml.toString())
+  private def internal_auditEvent(auditType: AuditType, customerId: String, xml: NodeSeq, json: JsObject, channel: ChannelType)(implicit hc: HeaderCarrier) = {
+    val details = AuditDetails(channel, customerId, messageTranslator.translate(json), xml.toString())
     auditConnector.sendExplicitAudit(auditType.toString(), Json.toJson(details))
   }
 
-  def auditNCTSMessages(channel: ChannelType, messageResponse: MessageResponse, xml: NodeSeq)(implicit hc: HeaderCarrier): Unit = {
+  def auditNCTSMessages(channel: ChannelType, customerId: String, messageResponse: MessageResponse, xml: NodeSeq)(implicit hc: HeaderCarrier): Unit = {
     val auditType: AuditType = messageResponse match {
       case PositiveAcknowledgementResponse              => PositiveAcknowledgementReceived
       case MrnAllocatedResponse                         => MrnAllocatedReceived
@@ -52,7 +52,7 @@ class AuditService @Inject()(auditConnector: AuditConnector, messageTranslator: 
       case GuaranteeNotValidResponse                    => GuaranteeNotValidReceived
       case XMLSubmissionNegativeAcknowledgementResponse => XMLSubmissionNegativeAcknowledgement
     }
-    internal_auditEvent(auditType, xml, toJson(xml), channel)
+    internal_auditEvent(auditType, customerId, xml, toJson(xml), channel)
   }
 
 }

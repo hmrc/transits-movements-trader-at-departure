@@ -176,8 +176,8 @@ class DeparturesControllerSpec
           val departureMessage: MessageWithStatus = captor.getValue.messages.head.asInstanceOf[MessageWithStatus]
           departureMessage.message.map(trim) mustEqual expectedMessage.message.map(trim)
 
-          verify(mockAuditService, times(1)).auditEvent(eqTo(AuditType.DepartureDeclarationSubmitted), any(), any())(any())
-          verify(mockAuditService, times(1)).auditEvent(eqTo(AuditType.MesSenMES3Added), any(), any())(any())
+          verify(mockAuditService, times(1)).auditEvent(eqTo(AuditType.DepartureDeclarationSubmitted), eqTo(newDeparture.eoriNumber), any(), any())(any())
+          verify(mockAuditService, times(1)).auditEvent(eqTo(AuditType.MesSenMES3Added), eqTo(newDeparture.eoriNumber), any(), any())(any())
         }
       }
 
@@ -225,8 +225,8 @@ class DeparturesControllerSpec
           val departureMessage: MessageWithStatus = captor.getValue.messages.head.asInstanceOf[MessageWithStatus]
           departureMessage.message.map(trim) mustEqual expectedMessage.message.map(trim)
 
-          verify(mockAuditService, times(1)).auditEvent(eqTo(AuditType.DepartureDeclarationSubmitted), any(), any())(any())
-          verify(mockAuditService, times(1)).auditEvent(eqTo(AuditType.MesSenMES3Added), any(), any())(any())
+          verify(mockAuditService, times(1)).auditEvent(eqTo(AuditType.DepartureDeclarationSubmitted), eqTo(newDeparture.eoriNumber), any(), any())(any())
+          verify(mockAuditService, times(1)).auditEvent(eqTo(AuditType.MesSenMES3Added), eqTo(newDeparture.eoriNumber), any(), any())(any())
         }
       }
 
