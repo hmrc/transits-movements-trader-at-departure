@@ -50,13 +50,13 @@ import reactivemongo.play.json.ImplicitBSONHandlers.JsObjectDocumentWriter
 import reactivemongo.play.json.collection.JSONCollection
 import utils.Format
 import utils.JsonHelper
-
 import java.time.Clock
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.reflect.ClassTag
 import scala.util.Failure
@@ -736,6 +736,52 @@ class DepartureRepositorySpec
           val departures = service.fetchAllDepartures(eoriNumber, api, Some(dateTime)).futureValue
 
           departures mustBe ResponseDepartures(Seq(departure4, departure2).map(ResponseDeparture.build), 2, 4)
+        }
+      }
+    }
+
+    "getMessage" - {
+      "must return Some(message) if departure and message exists" in {
+        database.flatMap(_.drop()).futureValue
+
+        val message = arbitrary[models.MessageWithStatus].sample.value.copy(messageId = MessageId(1))
+        val messages = new NonEmptyList(message, Nil)
+        val departure = arbitrary[Departure].sample.value.copy(channel = api, messages = messages)
+
+        service.insert(departure).futureValue
+        val result = service.getMessage(departure.departureId, departure.channel, MessageId(1))
+
+        whenReady(result) {
+          r =>
+            r.isDefined mustBe true
+            r.value mustEqual message
+        }
+      }
+
+      "must return None if departure does not exist" in {
+        database.flatMap(_.drop()).futureValue
+
+        val result = service.getMessage(DepartureId(1), api, MessageId(1))
+
+        whenReady(result) {
+          r =>
+            r.isDefined mustBe false
+        }
+      }
+
+      "must return None if message does not exist" in {
+        database.flatMap(_.drop()).futureValue
+
+        val message = arbitrary[models.MessageWithStatus].sample.value.copy(messageId = MessageId(1))
+        val messages = new NonEmptyList(message, Nil)
+        val departure = arbitrary[Departure].sample.value.copy(channel = api, messages = messages)
+
+        service.insert(departure).futureValue
+        val result = service.getMessage(departure.departureId, departure.channel, MessageId(5))
+
+        whenReady(result) {
+          r =>
+            r.isDefined mustBe false
         }
       }
     }

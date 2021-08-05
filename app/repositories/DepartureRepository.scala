@@ -236,6 +236,38 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfi
     }
   }
 
+  def getMessage(departureId: DepartureId, channelFilter: ChannelType, messageId: MessageId): Future[Option[Message]] =
+    collection.flatMap {
+      c =>
+        c.aggregateWith[Message](allowDiskUse = true) {
+            _ =>
+              import c.aggregationFramework._
+
+              val initialFilter: PipelineOperator =
+                Match(
+                  Json.obj("_id" -> departureId, "channel" -> channelFilter, "messages" -> Json.obj("$elemMatch" -> Json.obj("messageId" -> messageId.value))))
+
+              val unwindMessages = List[PipelineOperator](
+                Unwind(
+                  path = "messages",
+                  includeArrayIndex = None,
+                  preserveNullAndEmptyArrays = None
+                ))
+
+              val secondaryFilter = List[PipelineOperator](Match(Json.obj("messages.messageId" -> messageId.value)))
+
+              val groupById = List[PipelineOperator](GroupField("_id")("messages" -> FirstField("messages")))
+
+              val replaceRoot = List[PipelineOperator](ReplaceRootField("messages"))
+
+              val transformations = unwindMessages ++ secondaryFilter ++ groupById ++ replaceRoot
+
+              (initialFilter, transformations)
+
+          }
+          .headOption
+    }
+
   def addResponseMessage(departureId: DepartureId, message: Message, status: DepartureStatus): Future[Try[Unit]] = {
     val selector = Json.obj(
       "_id" -> departureId
