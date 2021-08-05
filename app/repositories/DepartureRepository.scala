@@ -236,6 +236,18 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfi
     }
   }
 
+  def getWithoutMessages(departureId: DepartureId, channelFilter: ChannelType): Future[Option[DepartureWithoutMessages]] = {
+    val selector = Json.obj(
+      "_id"     -> departureId,
+      "channel" -> channelFilter
+    )
+
+    collection.flatMap {
+      _.find(selector, None)
+        .one[DepartureWithoutMessages]
+    }
+  }
+
   def getMessage(departureId: DepartureId, channelFilter: ChannelType, messageId: MessageId): Future[Option[Message]] =
     collection.flatMap {
       c =>
