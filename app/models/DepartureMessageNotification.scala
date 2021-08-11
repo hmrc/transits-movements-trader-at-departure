@@ -77,4 +77,17 @@ object DepartureMessageNotification {
       if (bodySize.exists(_ < oneHundredKilobytes)) Some(request.body) else None
     )
   }
+
+  def fromDepartureAndResponse(departure: Departure, messageResponse: MessageResponse, timestamp: LocalDateTime): DepartureMessageNotification = {
+    val messageId    = departure.nextMessageId
+    val departureUrl = requestId(departure.departureId)
+    DepartureMessageNotification(
+      s"$departureUrl/messages/${messageId.value}",
+      departureUrl,
+      departure.departureId,
+      messageId,
+      timestamp,
+      messageResponse.messageType
+    )
+  }
 }

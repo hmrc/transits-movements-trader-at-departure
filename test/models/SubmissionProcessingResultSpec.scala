@@ -17,26 +17,68 @@
 package models
 
 import base.SpecBase
+import cats.data.NonEmptyList
 import generators.ModelGenerators
-import models.SubmissionProcessingResult.SubmissionFailureExternal
-import models.SubmissionProcessingResult.SubmissionFailureInternal
-import models.SubmissionProcessingResult.SubmissionFailureRejected
-import models.SubmissionProcessingResult.SubmissionSuccess
+import models.ChannelType.Web
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
+import play.api.libs.json.Json
+
+import java.time.LocalDateTime
 
 class SubmissionProcessingResultSpec extends SpecBase with ScalaCheckDrivenPropertyChecks with ModelGenerators {
 
   "SubmissionProcessingResult.values must contain" - {
     "SubmissionSuccess" in {
-      SubmissionProcessingResult.values must contain(SubmissionSuccess)
+      SubmissionProcessingResult.values must contain(SubmissionProcessingResult.SubmissionSuccess)
     }
 
     "SubmissionFailureInternal" in {
-      SubmissionProcessingResult.values must contain(SubmissionFailureInternal)
+      SubmissionProcessingResult.values must contain(SubmissionProcessingResult.SubmissionFailureInternal)
     }
 
     "SubmissionFailureExternal" in {
-      SubmissionProcessingResult.values must contain(SubmissionFailureExternal)
+      SubmissionProcessingResult.values must contain(SubmissionProcessingResult.SubmissionFailureExternal)
+    }
+  }
+  "toEither" - {
+    val departure: Departure = Departure(
+      departureId = DepartureId(1),
+      channel = Web,
+      movementReferenceNumber = None,
+      referenceNumber = "SomeREf",
+      eoriNumber = "AB123456",
+      status = DepartureStatus.DepartureSubmitted,
+      created = LocalDateTime.of(2021, 2, 2, 2, 2),
+      lastUpdated = LocalDateTime.of(2021, 2, 2, 4, 2),
+      messages = NonEmptyList.one(
+        MessageWithStatus(
+          MessageId(1),
+          LocalDateTime.of(2021, 2, 2, 2, 2),
+          MessageType.DepartureDeclaration,
+          <CC015></CC015>,
+          MessageStatus.SubmissionPending,
+          1,
+          Json.obj("CC029" -> Json.obj())
+        )
+      ),
+      nextMessageCorrelationId = 2,
+      notificationBox = None
+    )
+
+    "must convert from SubmissionProcessingResult.SubmissionFailureInternal to Left(SubmissionFailureInternal)" in {
+      SubmissionProcessingResult.SubmissionFailureInternal.toEither(departure) mustBe Left(SubmissionFailureInternal)
+    }
+
+    "must convert from SubmissionProcessingResult.SubmissionFailureExternal to Left(SubmissionFailureExternal)" in {
+      SubmissionProcessingResult.SubmissionFailureExternal.toEither(departure) mustBe Left(SubmissionFailureExternal)
+    }
+
+    "must convert from SubmissionProcessingResult.SubmissionSuccess to Right(SubmissionSuccess)" in {
+      SubmissionProcessingResult.SubmissionSuccess.toEither(departure) mustBe Right(SubmissionSuccess(departure))
+    }
+
+    "must convert from SubmissionProcessingResult.SubmissionFailureRejected to Left(SubmissionFailureRejected)" in {
+      SubmissionProcessingResult.SubmissionFailureRejected("Woops").toEither(departure) mustBe Left(SubmissionFailureRejected("Woops"))
     }
   }
 }

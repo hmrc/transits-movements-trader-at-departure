@@ -64,7 +64,7 @@ class PDFRetrievalControllerISpec extends ApiSpecBase with JsonHelper {
 
       val departure: Departure = Departure(
         DepartureId(12),
-        ChannelType.web,
+        ChannelType.Web,
         "1234567",
         None,
         "SomeReference",
@@ -138,7 +138,7 @@ class PDFRetrievalControllerISpec extends ApiSpecBase with JsonHelper {
 
       val departure: Departure = Departure(
         DepartureId(12),
-        ChannelType.web,
+        ChannelType.Web,
         "1234567",
         None,
         "SomeReference",

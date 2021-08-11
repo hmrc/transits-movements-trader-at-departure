@@ -20,7 +20,7 @@ import audit.AuditType._
 import base.SpecBase
 import generators.ModelGenerators
 import models.CancellationDecisionResponse
-import models.ChannelType.api
+import models.ChannelType.Api
 import models.ControlDecisionNotificationResponse
 import models.Departure
 import models.DepartureRejectedResponse
@@ -79,7 +79,7 @@ class AuditServiceSpec extends SpecBase with ScalaCheckPropertyChecks with Befor
             .build()
           running(application) {
             val auditService = application.injector.instanceOf[AuditService]
-            auditService.auditEvent(auditType, requestEori, message, api)
+            auditService.auditEvent(auditType, requestEori, message, Api)
             verify(mockAuditConnector, times(1)).sendExplicitAudit[AuditDetails](eqTo(auditType.toString()), any())(any(), any(), any())
             reset(mockAuditConnector)
           }

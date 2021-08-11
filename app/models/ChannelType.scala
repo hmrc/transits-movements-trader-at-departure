@@ -19,12 +19,13 @@ package models
 sealed trait ChannelType
 
 object ChannelType extends Enumerable.Implicits {
-  case object web extends ChannelType
-  case object api extends ChannelType
+  case object Web     extends ChannelType
+  case object Api     extends ChannelType
+  case object Deleted extends ChannelType
 
-  val values: Seq[ChannelType] = Seq(web, api)
+  val values: Seq[ChannelType] = Seq(Web, Api)
 
   implicit val enumerable: Enumerable[ChannelType] =
-    Enumerable(values.map(v => v.toString -> v): _*)
+    Enumerable(values.map(v => v.toString.toLowerCase() -> v): _*)
 
 }

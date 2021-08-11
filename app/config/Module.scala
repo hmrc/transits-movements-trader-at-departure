@@ -36,7 +36,7 @@ class Module extends AbstractModule {
     bind(classOf[AuthenticatedGetDepartureForReadActionProvider]).to(classOf[AuthenticatedGetDepartureForReadActionProviderImpl])
     bind(classOf[MessageTranslation]).asEagerSingleton()
     bind(classOf[Clock]).toInstance(Clock.systemUTC)
-    bind(classOf[MigrationRunner]).asEagerSingleton()
+//    bind(classOf[MigrationRunner]).asEagerSingleton()
   }
 
 }

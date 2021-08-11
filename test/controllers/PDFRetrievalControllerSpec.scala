@@ -65,7 +65,7 @@ class PDFRetrievalControllerSpec extends SpecBase with ScalaCheckPropertyChecks 
       (invocation: InvocationOnMock) => {
         val body = invocation
           .getArgument(0)
-          .asInstanceOf[DepartureRequest[AnyContent] => Future[Result]](DepartureRequest(fakeRequest, testDeparture, ChannelType.web))
+          .asInstanceOf[DepartureRequest[AnyContent] => Future[Result]](DepartureRequest(fakeRequest, testDeparture, ChannelType.Web))
 
         stubControllerComponents().actionBuilder.async(body)
       }

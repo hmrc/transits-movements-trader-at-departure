@@ -17,20 +17,18 @@
 package services
 
 import base.SpecBase
+import cats.data.NonEmptyList
 import config.Constants
 import connectors.PushPullNotificationConnector
-import models.Box
-import models.BoxId
-import models.DepartureId
-import models.DepartureMessageNotification
-import models.MessageId
-import models.MessageType
+import models.ChannelType.Web
+import models.{Box, BoxId, Departure, DepartureId, DepartureMessageNotification, DepartureStatus, MessageId, MessageStatus, MessageType, MessageWithStatus}
 import org.mockito.ArgumentMatchers._
 import org.mockito.BDDMockito._
-import org.mockito.Mockito.reset
+import org.mockito.Mockito.{reset, verify, when}
 import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
+import play.api.libs.json.Json
 import play.api.test.Helpers._
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
@@ -144,6 +142,80 @@ class PushPullNotificationServiceSpec extends SpecBase with BeforeAndAfterEach w
           MessageType.DepartureDeclaration,
           Some(testBody)
         )
+
+        given(mockedPostNotification).willReturn(Future.failed(new RuntimeException))
+
+        Await.result(service.sendPushNotification(testBox.boxId, testNotification), 30.seconds).mustEqual(())
+
+      }
+    }
+
+    "sendPushNotification with Departure" - {
+
+      val initialDeparture: Departure = Departure(
+        departureId = DepartureId(1),
+        channel = Web,
+        movementReferenceNumber = None,
+        referenceNumber = "SomeREf",
+        eoriNumber = "AB123456",
+        status = DepartureStatus.DepartureSubmitted,
+        created = LocalDateTime.of(2021, 2, 2, 2, 2),
+        lastUpdated = LocalDateTime.of(2021, 2, 2, 4, 2),
+        messages = NonEmptyList.one(
+          MessageWithStatus(
+            MessageId(1),
+            LocalDateTime.of(2021, 2, 2, 2, 2),
+            MessageType.DepartureDeclaration,
+            <CC015></CC015>,
+            MessageStatus.SubmissionPending,
+            1,
+            Json.obj("CC029" -> Json.obj())
+          )
+        ),
+        nextMessageCorrelationId = 2,
+        notificationBox = Some(Box(BoxId("boxID"), "boxName"))
+      )
+
+      "should return a unit value when connector call succeeds" in {
+        val boxIdMatcher = refEq(testBoxId).asInstanceOf[BoxId]
+
+        val mockedPostNotification = mockConnector.postNotification(boxIdMatcher, any[DepartureMessageNotification])(any[ExecutionContext], any[HeaderCarrier])
+        val successfulResult: Future[Right[UpstreamErrorResponse, Unit]] = Future.successful(Right(()))
+
+        val testDepartureId = DepartureId(1)
+        val testMessageUri  = requestId(testDepartureId) + "/messages" + ""
+
+        val testNotification = DepartureMessageNotification(testMessageUri,
+          requestId(testDepartureId),
+          testDepartureId,
+          MessageId(2),
+          LocalDateTime.now,
+          MessageType.DepartureDeclaration)
+
+        when(
+          mockConnector.postNotification(boxIdMatcher, any[DepartureMessageNotification])(any[ExecutionContext], any[HeaderCarrier])
+        ).thenReturn(successfulResult)
+
+        Await.result(service.sendPushNotification(testBox.boxId, testNotification), 30.seconds).mustEqual(())
+
+        verify(mockConnector).postNotification(boxIdMatcher, any[DepartureMessageNotification])(any[ExecutionContext], any[HeaderCarrier])
+      }
+
+      "should not return anything when call fails" in {
+
+        val boxIdMatcher = refEq(testBoxId).asInstanceOf[BoxId]
+
+        val mockedPostNotification = mockConnector.postNotification(boxIdMatcher, any[DepartureMessageNotification])(any[ExecutionContext], any[HeaderCarrier])
+
+        val testDepartureId = DepartureId(1)
+        val testMessageUri  = requestId(testDepartureId) + "/messages" + ""
+
+        val testNotification = DepartureMessageNotification(testMessageUri,
+          requestId(testDepartureId),
+          testDepartureId,
+          MessageId(2),
+          LocalDateTime.now,
+          MessageType.DepartureDeclaration)
 
         given(mockedPostNotification).willReturn(Future.failed(new RuntimeException))
 

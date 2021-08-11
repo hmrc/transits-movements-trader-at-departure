@@ -17,7 +17,7 @@
 package controllers.actions
 
 import generators.ModelGenerators
-import models.ChannelType.web
+import models.ChannelType.Web
 import models.Departure
 import models.DepartureId
 import org.mockito.ArgumentMatchers.{eq => eqTo, _}
@@ -117,7 +117,7 @@ class GetDepartureForWriteActionProviderSpec
       val actionProvider = application.injector.instanceOf[GetDepartureForWriteActionProvider]
 
       val controller = new Harness(actionProvider)
-      val result     = controller.get(departure.departureId)(fakeRequest.withHeaders("channel" -> web.toString))
+      val result     = controller.get(departure.departureId)(fakeRequest.withHeaders("channel" -> Web.toString))
 
       status(result) mustEqual OK
       verify(mockLockRepository, times(1)).lock(eqTo(departure.departureId))

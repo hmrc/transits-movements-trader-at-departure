@@ -17,8 +17,8 @@
 package controllers.actions
 
 import generators.ModelGenerators
-import models.ChannelType.api
-import models.ChannelType.web
+import models.ChannelType.Api
+import models.ChannelType.Web
 import models.Departure
 import models.DepartureId
 import org.mockito.ArgumentMatchers.{eq => eqTo, _}
@@ -59,7 +59,7 @@ class AuthenticateGetDepartureForReadActionProviderSpec
   val applicationBuilder = new GuiceApplicationBuilder()
     .configure("metrics.jvm" -> false)
 
-  def fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("", "").withHeaders("channel" -> web.toString())
+  def fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("", "").withHeaders("channel" -> Web.toString())
 
   class Harness(authAndGet: AuthenticatedGetDepartureForReadActionProvider) {
 
@@ -185,7 +185,7 @@ class AuthenticateGetDepartureForReadActionProviderSpec
 
         when(mockAuthConnector.authorise[Enrolments](any(), any())(any(), any()))
           .thenReturn(Future.successful(validEnrolments))
-        when(mockDepartureRepository.get(any(), eqTo(api))).thenReturn(Future.successful(None))
+        when(mockDepartureRepository.get(any(), eqTo(Api))).thenReturn(Future.successful(None))
 
         val application = applicationBuilder
           .overrides(
@@ -197,7 +197,7 @@ class AuthenticateGetDepartureForReadActionProviderSpec
         running(application) {
           val actionProvider = application.injector.instanceOf[AuthenticatedGetDepartureForReadActionProvider]
 
-          val fakeAPIRequest = fakeRequest.withHeaders("channel" -> api.toString())
+          val fakeAPIRequest = fakeRequest.withHeaders("channel" -> Api.toString())
 
           val controller = new Harness(actionProvider)
           val result     = controller.get(departureId)(fakeAPIRequest)
@@ -208,7 +208,7 @@ class AuthenticateGetDepartureForReadActionProviderSpec
 
       "must return Ok when the departure exists and shares the same channel" in {
 
-        val departure = arbitrary[Departure].sample.value copy (eoriNumber = eoriNumber, channel = api)
+        val departure = arbitrary[Departure].sample.value copy (eoriNumber = eoriNumber, channel = Api)
 
         val departureId = arbitrary[DepartureId].sample.value
 
@@ -217,7 +217,7 @@ class AuthenticateGetDepartureForReadActionProviderSpec
 
         when(mockAuthConnector.authorise[Enrolments](any(), any())(any(), any()))
           .thenReturn(Future.successful(validEnrolments))
-        when(mockDepartureRepository.get(any(), eqTo(api))).thenReturn(Future.successful(Some(departure)))
+        when(mockDepartureRepository.get(any(), eqTo(Api))).thenReturn(Future.successful(Some(departure)))
 
         val application = applicationBuilder
           .overrides(

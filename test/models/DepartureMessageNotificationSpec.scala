@@ -19,7 +19,7 @@ package models
 import base.SpecBase
 import controllers.routes
 import generators.ModelGenerators
-import models.ChannelType.api
+import models.ChannelType.Api
 import models.request.DepartureRequest
 import models.request.DepartureResponseRequest
 import org.scalacheck.Gen
@@ -48,7 +48,7 @@ class DepartureMessageNotificationSpec extends SpecBase with ScalaCheckDrivenPro
       val request = FakeRequest(POST, routes.NCTSMessageController.post(messageSender).url)
         .withBody[NodeSeq](testBody)
         .withHeaders(HeaderNames.CONTENT_LENGTH -> bodyLength.toString)
-      val departureRequest = DepartureRequest(request, departure, api)
+      val departureRequest = DepartureRequest(request, departure, Api)
       val responseRequest  = DepartureResponseRequest(departureRequest, response)
 
       val now = LocalDateTime.now()

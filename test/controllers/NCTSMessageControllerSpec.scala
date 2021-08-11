@@ -25,7 +25,7 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import models._
-import models.ChannelType.api
+import models.ChannelType.Api
 import org.mockito.ArgumentMatchers._
 import org.mockito.ArgumentMatchers.{eq => eqTo}
 import org.mockito.Mockito._
@@ -61,7 +61,7 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
 
   private val departure = Departure(
     departureId,
-    api,
+    Api,
     "eori",
     Some(MovementReferenceNumber("mrn")),
     "ref",
@@ -75,7 +75,7 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
 
   private val acknowledgedDeparture = Departure(
     departureId,
-    api,
+    Api,
     "eori",
     Some(MovementReferenceNumber("mrn")),
     "ref",

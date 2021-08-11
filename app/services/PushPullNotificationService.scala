@@ -17,9 +17,7 @@
 package services
 
 import connectors.PushPullNotificationConnector
-import models.Box
-import models.BoxId
-import models.DepartureMessageNotification
+import models.{Box, BoxId, Departure, DepartureMessageNotification, MessageResponse}
 import play.api.Logging
 import play.api.http.Status._
 import uk.gov.hmrc.http.HeaderCarrier
@@ -29,6 +27,7 @@ import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.util.control.NonFatal
+import scala.xml.NodeSeq
 
 class PushPullNotificationService @Inject()(connector: PushPullNotificationConnector) extends Logging {
 
@@ -60,5 +59,20 @@ class PushPullNotificationService @Inject()(connector: PushPullNotificationConne
         case NonFatal(e) =>
           logger.error(s"Error while sending push notification", e)
       }
+
+  def sendPushNotificationIfBoxExists(departure: Departure, messageResponse: MessageResponse, xml: NodeSeq)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
+    departure.notificationBox
+      .map {
+        box =>
+          XmlMessageParser.dateTimeOfPrepR(xml) match {
+            case Left(error) =>
+              logger.error(s"Error while parsing message timestamp: ${error.message}")
+              Future.unit
+            case Right(timestamp) =>
+              val notification = DepartureMessageNotification.fromDepartureAndResponse(departure, messageResponse, timestamp)
+              sendPushNotification(box.boxId, notification)
+          }
+      }
+      .getOrElse(Future.unit)
 
 }

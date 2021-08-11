@@ -23,8 +23,8 @@ import cats.data.NonEmptyList
 import connectors.MessageConnector
 import connectors.MessageConnector.EisSubmissionResult.ErrorInPayload
 import generators.ModelGenerators
-import models.ChannelType.api
-import models.ChannelType.web
+import models.ChannelType.Api
+import models.ChannelType.Web
 import models.MessageStatus.SubmissionFailed
 import models.MessageStatus.SubmissionPending
 import models.MessageStatus.SubmissionSucceeded
@@ -128,7 +128,7 @@ class MessagesControllerSpec
   } yield {
     departure.copy(
       departureId,
-      api,
+      Api,
       "eori",
       Some(mrn),
       "ref",
@@ -204,7 +204,7 @@ class MessagesControllerSpec
 
       running(application) {
         val request = FakeRequest(POST, routes.MessagesController.post(DepartureId(1)).url)
-          .withHeaders("channel" -> web.toString)
+          .withHeaders("channel" -> Web.toString)
           .withXmlBody(declarationCancellationRequestXmlBody)
 
         val result = route(application, request).value
@@ -581,7 +581,7 @@ class MessagesControllerSpec
 
         running(application) {
           val request = FakeRequest(GET, routes.MessagesController.getMessages(DepartureId(1)).url)
-            .withHeaders("channel" -> web.toString)
+            .withHeaders("channel" -> Web.toString)
           val result = route(application, request).value
 
           contentAsString(result) mustBe empty
@@ -676,7 +676,7 @@ class MessagesControllerSpec
 
         running(application) {
           val request = FakeRequest(GET, routes.MessagesController.getMessage(DepartureId(1), MessageId(1)).url)
-            .withHeaders("channel" -> web.toString)
+            .withHeaders("channel" -> Web.toString)
           val result = route(application, request).value
 
           contentAsString(result) mustBe empty
