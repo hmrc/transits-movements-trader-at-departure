@@ -38,11 +38,13 @@ import models.MessageType
 import models.MessageWithStatus
 import models.MrnAllocatedResponse
 import models.ReleaseForTransitResponse
+import models.SubmissionFailureExternal
 import models.SubmissionFailureInternal
 import models.SubmissionProcessingResult
 import models.SubmissionState
 import models.SubmissionSuccess
 import models.TransitionError
+import models.XMLMRNError
 import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.{eq => eqTo}
 import org.mockito.Mockito.never
@@ -133,7 +135,7 @@ class MovementMessageOrchestratorServiceSpec extends SpecBase {
       verify(mockSaveMessageService).validateXmlSaveMessageUpdateMrn(any(), any(), any(), any(), any(), any())
       verify(mockSaveMessageService, never()).validateXmlAndSaveMessage(any(), any(), any(), any(), any())
       verify(mockAuditService).auditNCTSMessages(eqTo(ChannelType.Web), eqTo(MrnAllocatedResponse), any())(any())
-      verifyNoInteractions(mockPullPushService)
+      verify(mockPullPushService).sendPushNotificationIfBoxExists(any(), any(), any())(any(), any())
     }
 
     "must successfully save the message" in new Setup {
@@ -160,7 +162,7 @@ class MovementMessageOrchestratorServiceSpec extends SpecBase {
       verify(mockSaveMessageService, never()).validateXmlSaveMessageUpdateMrn(any(), any(), any(), any(), any(), any())
       verify(mockSaveMessageService).validateXmlAndSaveMessage(any(), any(), any(), any(), any())
       verify(mockAuditService).auditNCTSMessages(eqTo(ChannelType.Web), eqTo(ReleaseForTransitResponse), any())(any())
-      verifyNoInteractions(mockPullPushService)
+      verify(mockPullPushService).sendPushNotificationIfBoxExists(any(), any(), any())(any(), any())
     }
 
     "must return an invalid transition message for an invalid transition" in new Setup {
@@ -214,7 +216,7 @@ class MovementMessageOrchestratorServiceSpec extends SpecBase {
       verifyNoInteractions(mockPullPushService)
     }
 
-    "must return a Left if message cannot be saved" in new Setup {
+    "must return a SubmissionFailureInternal if message cannot be saved for internal errors" in new Setup {
       implicit val request: Request[NodeSeq] = FakeRequest()
         .withBody(<CC029>
           <DatOfPreMES9>20201212</DatOfPreMES9>
@@ -241,6 +243,56 @@ class MovementMessageOrchestratorServiceSpec extends SpecBase {
       verifyNoInteractions(mockPullPushService)
     }
 
-    // TODO add push scenarios from controller spec
+    "must return a SubmissionFailureExternal if message cannot be saved for external errors" in new Setup {
+      implicit val request: Request[NodeSeq] = FakeRequest()
+        .withBody(<CC029>
+          <DatOfPreMES9>20201212</DatOfPreMES9>
+          <TimOfPreMES10>1220</TimOfPreMES10>
+          <HEAHEA>
+            <DocNumHEA5>234444</DocNumHEA5>
+          </HEAHEA>
+        </CC029>)
+        .withHeaders("X-Message-Type" -> "IE029")
+
+      val departure: Departure = initialDeparture.copy(status = DepartureStatus.MrnAllocated)
+
+      when(mockGetDepartureService.getDepartureAndAuditDeletedDepartures(any(), any(), any())(any()))
+        .thenReturn(EitherT[Future, SubmissionState, Departure](Future.successful(Right[SubmissionState, Departure](departure))))
+
+      when(mockSaveMessageService.validateXmlAndSaveMessage(any(), any(), any(), any(), any()))
+        .thenReturn(Future.successful(SubmissionProcessingResult.SubmissionFailureExternal))
+
+      service.saveNCTSMessage(MessageSender(DepartureId(1), 1)).futureValue mustBe Left(SubmissionFailureExternal)
+
+      verify(mockSaveMessageService, never()).validateXmlSaveMessageUpdateMrn(any(), any(), any(), any(), any(), any())
+      verify(mockSaveMessageService).validateXmlAndSaveMessage(any(), any(), any(), any(), any())
+      verify(mockAuditService, never()).auditNCTSMessages(eqTo(ChannelType.Web), eqTo(ReleaseForTransitResponse), any())(any())
+      verifyNoInteractions(mockPullPushService)
+    }
+
+    "must return a Left mrn not found if trying to submit an mrn allocated message" in new Setup {
+      implicit val request: Request[NodeSeq] = FakeRequest()
+        .withBody(<CC015>
+          <DatOfPreMES9>20201212</DatOfPreMES9>
+          <TimOfPreMES10>1220</TimOfPreMES10>
+          <HEAHEA>
+            <DocNumHEA>234444</DocNumHEA>
+          </HEAHEA>
+        </CC015>)
+        .withHeaders("X-Message-Type" -> "IE028")
+
+      when(mockGetDepartureService.getDepartureAndAuditDeletedDepartures(any(), any(), any())(any()))
+        .thenReturn(EitherT[Future, SubmissionState, Departure](Future.successful(Right[SubmissionState, Departure](initialDeparture))))
+
+      when(mockSaveMessageService.validateXmlSaveMessageUpdateMrn(any(), any(), any(), any(), any(), any()))
+        .thenReturn(Future.successful(SubmissionProcessingResult.SubmissionSuccess))
+
+      service.saveNCTSMessage(MessageSender(DepartureId(1), 1)).futureValue mustBe Left(XMLMRNError("The element 'DocNumHEA5' must contain a value."))
+
+      verify(mockSaveMessageService, never()).validateXmlSaveMessageUpdateMrn(any(), any(), any(), any(), any(), any())
+      verify(mockSaveMessageService, never()).validateXmlAndSaveMessage(any(), any(), any(), any(), any())
+      verify(mockAuditService, never()).auditNCTSMessages(any(), any(), any())(any())
+      verifyNoInteractions(mockPullPushService)
+    }
   }
 }

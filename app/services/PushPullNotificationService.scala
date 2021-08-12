@@ -17,7 +17,11 @@
 package services
 
 import connectors.PushPullNotificationConnector
-import models.{Box, BoxId, Departure, DepartureMessageNotification, MessageResponse}
+import models.Box
+import models.BoxId
+import models.Departure
+import models.DepartureMessageNotification
+import models.MessageResponse
 import play.api.Logging
 import play.api.http.Status._
 import uk.gov.hmrc.http.HeaderCarrier
@@ -60,7 +64,11 @@ class PushPullNotificationService @Inject()(connector: PushPullNotificationConne
           logger.error(s"Error while sending push notification", e)
       }
 
-  def sendPushNotificationIfBoxExists(departure: Departure, messageResponse: MessageResponse, xml: NodeSeq)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
+  def sendPushNotificationIfBoxExists(
+    departure: Departure,
+    messageResponse: MessageResponse,
+    xml: NodeSeq
+  )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
     departure.notificationBox
       .map {
         box =>

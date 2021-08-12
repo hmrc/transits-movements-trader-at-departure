@@ -22,7 +22,6 @@ import cats.implicits.catsStdInstancesForFuture
 import com.kenshoo.play.metrics.Metrics
 import metrics.HasMetrics
 import models.Departure
-import models.DepartureMessageNotification
 import models.DepartureStatus
 import models.MessageResponse
 import models.MessageSender
@@ -50,8 +49,6 @@ class MovementMessageOrchestratorService @Inject()(
 )(implicit ec: ExecutionContext)
     extends HasMetrics
     with Logging {
-
-
 
   private def validateAndSaveMessage(messageResponse: MessageResponse,
                                      xml: NodeSeq,

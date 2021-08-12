@@ -21,10 +21,26 @@ import cats.data.NonEmptyList
 import config.Constants
 import connectors.PushPullNotificationConnector
 import models.ChannelType.Web
-import models.{Box, BoxId, Departure, DepartureId, DepartureMessageNotification, DepartureStatus, MessageId, MessageStatus, MessageType, MessageWithStatus}
+import models.Box
+import models.BoxId
+import models.Departure
+import models.DepartureId
+import models.DepartureMessageNotification
+import models.DepartureStatus
+import models.MessageId
+import models.MessageStatus
+import models.MessageType
+import models.MessageWithStatus
+import models.MovementReferenceNumber
+import models.ReleaseForTransitResponse
+import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers._
 import org.mockito.BDDMockito._
-import org.mockito.Mockito.{reset, verify, when}
+import org.mockito.Mockito.never
+import org.mockito.Mockito.reset
+import org.mockito.Mockito.verify
+import org.mockito.Mockito.verifyNoInteractions
+import org.mockito.Mockito.when
 import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
@@ -32,11 +48,14 @@ import play.api.libs.json.Json
 import play.api.test.Helpers._
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
+import utils.Format
 
+import scala.concurrent.ExecutionContext.Implicits.global
+import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.LocalTime
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
@@ -150,7 +169,7 @@ class PushPullNotificationServiceSpec extends SpecBase with BeforeAndAfterEach w
       }
     }
 
-    "sendPushNotification with Departure" - {
+    "sendPushNotificationIfBoxExists" - {
 
       val initialDeparture: Departure = Departure(
         departureId = DepartureId(1),
@@ -173,54 +192,60 @@ class PushPullNotificationServiceSpec extends SpecBase with BeforeAndAfterEach w
           )
         ),
         nextMessageCorrelationId = 2,
-        notificationBox = Some(Box(BoxId("boxID"), "boxName"))
+        notificationBox = None
       )
 
       "should return a unit value when connector call succeeds" in {
-        val boxIdMatcher = refEq(testBoxId).asInstanceOf[BoxId]
 
-        val mockedPostNotification = mockConnector.postNotification(boxIdMatcher, any[DepartureMessageNotification])(any[ExecutionContext], any[HeaderCarrier])
-        val successfulResult: Future[Right[UpstreamErrorResponse, Unit]] = Future.successful(Right(()))
+        val localDate = LocalDate.now()
+        val localTime = LocalTime.of(1, 1)
+        val mrn       = MovementReferenceNumber("weeeee")
 
-        val testDepartureId = DepartureId(1)
-        val testMessageUri  = requestId(testDepartureId) + "/messages" + ""
+        val requestXmlBody =
+          <CC015B>
+            <SynVerNumMES2>123</SynVerNumMES2>
+            <DatOfPreMES9>{Format.dateFormatted(localDate)}</DatOfPreMES9>
+            <TimOfPreMES10>{Format.timeFormatted(localTime)}</TimOfPreMES10>
+            <HEAHEA>
+              <RefNumHEA4>{mrn.value}</RefNumHEA4>
+            </HEAHEA>
+          </CC015B>
 
-        val testNotification = DepartureMessageNotification(testMessageUri,
-          requestId(testDepartureId),
-          testDepartureId,
-          MessageId(2),
-          LocalDateTime.now,
-          MessageType.DepartureDeclaration)
+        val successfulResult: Future[Either[UpstreamErrorResponse, Unit]] = Future.successful(Right(()))
 
         when(
-          mockConnector.postNotification(boxIdMatcher, any[DepartureMessageNotification])(any[ExecutionContext], any[HeaderCarrier])
+          mockConnector.postNotification(BoxId(ArgumentMatchers.eq(testBoxId)), any[DepartureMessageNotification])(any[ExecutionContext], any[HeaderCarrier])
         ).thenReturn(successfulResult)
 
-        Await.result(service.sendPushNotification(testBox.boxId, testNotification), 30.seconds).mustEqual(())
+        val departure = initialDeparture.copy(notificationBox = Some(testBox))
 
-        verify(mockConnector).postNotification(boxIdMatcher, any[DepartureMessageNotification])(any[ExecutionContext], any[HeaderCarrier])
+        Await.result(service.sendPushNotificationIfBoxExists(departure, ReleaseForTransitResponse, requestXmlBody), 30.seconds).mustEqual(())
+
+        verify(mockConnector).postNotification(BoxId(ArgumentMatchers.eq(testBoxId)), any[DepartureMessageNotification])(any[ExecutionContext],
+                                                                                                                         any[HeaderCarrier])
       }
 
-      "should not return anything when call fails" in {
+      "should not post if invalid xml is passed in" in {
 
-        val boxIdMatcher = refEq(testBoxId).asInstanceOf[BoxId]
+        val successfulResult: Future[Either[UpstreamErrorResponse, Unit]] = Future.successful(Right(()))
 
-        val mockedPostNotification = mockConnector.postNotification(boxIdMatcher, any[DepartureMessageNotification])(any[ExecutionContext], any[HeaderCarrier])
+        when(
+          mockConnector.postNotification(BoxId(ArgumentMatchers.eq(testBoxId)), any[DepartureMessageNotification])(any[ExecutionContext], any[HeaderCarrier])
+        ).thenReturn(successfulResult)
 
-        val testDepartureId = DepartureId(1)
-        val testMessageUri  = requestId(testDepartureId) + "/messages" + ""
+        val departure = initialDeparture.copy(notificationBox = Some(testBox))
 
-        val testNotification = DepartureMessageNotification(testMessageUri,
-          requestId(testDepartureId),
-          testDepartureId,
-          MessageId(2),
-          LocalDateTime.now,
-          MessageType.DepartureDeclaration)
+        Await.result(service.sendPushNotificationIfBoxExists(departure, ReleaseForTransitResponse, <Node></Node>), 30.seconds).mustEqual(())
 
-        given(mockedPostNotification).willReturn(Future.failed(new RuntimeException))
+        verifyNoInteractions(mockConnector)
+      }
 
-        Await.result(service.sendPushNotification(testBox.boxId, testNotification), 30.seconds).mustEqual(())
+      "should not post if no box exists" in {
+        val departure = initialDeparture.copy(notificationBox = None)
 
+        Await.result(service.sendPushNotificationIfBoxExists(departure, ReleaseForTransitResponse, <Node></Node>), 30.seconds).mustEqual(())
+
+        verifyNoInteractions(mockConnector)
       }
     }
   }
