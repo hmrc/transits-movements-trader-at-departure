@@ -78,8 +78,8 @@ class MovementMessageOrchestratorService @Inject()(
         departure              <- getDepartureService.getDepartureAndAuditDeletedDepartures(messageSender.departureId, inboundMessageResponse, request.body)
         nextStatus             <- EitherT.fromEither(StatusTransition.transition(departure.status, inboundMessageResponse.messageReceived))
         validatedMessage       <- validateAndSaveMessage(inboundMessageResponse, request.body, departure, messageSender, nextStatus)
-        _ = auditService.auditNCTSMessages(departure.channel, inboundMessageResponse, request.body)
-        _ = pushPullNotificationService.sendPushNotificationIfBoxExists(departure, inboundMessageResponse, request.body)
+        _ = auditService.auditNCTSMessages(departure.channel, departure.eoriNumber, inboundMessageResponse, request.body)
+        _ = pushPullNotificationService.sendPushNotificationIfBoxExists(departure, inboundMessageResponse)
       } yield validatedMessage)
       .value
 }

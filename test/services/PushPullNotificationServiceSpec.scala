@@ -36,7 +36,6 @@ import models.ReleaseForTransitResponse
 import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers._
 import org.mockito.BDDMockito._
-import org.mockito.Mockito.never
 import org.mockito.Mockito.reset
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.verifyNoInteractions
@@ -45,6 +44,8 @@ import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.libs.json.Json
+import play.api.mvc.Request
+import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
@@ -58,6 +59,7 @@ import scala.concurrent.Await
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.concurrent.duration._
+import scala.xml.NodeSeq
 
 class PushPullNotificationServiceSpec extends SpecBase with BeforeAndAfterEach with ScalaCheckPropertyChecks {
   val mockConnector = mock[PushPullNotificationConnector]
@@ -211,6 +213,8 @@ class PushPullNotificationServiceSpec extends SpecBase with BeforeAndAfterEach w
             </HEAHEA>
           </CC015B>
 
+        implicit val request: Request[NodeSeq] = FakeRequest().withBody(requestXmlBody)
+
         val successfulResult: Future[Either[UpstreamErrorResponse, Unit]] = Future.successful(Right(()))
 
         when(
@@ -219,7 +223,7 @@ class PushPullNotificationServiceSpec extends SpecBase with BeforeAndAfterEach w
 
         val departure = initialDeparture.copy(notificationBox = Some(testBox))
 
-        Await.result(service.sendPushNotificationIfBoxExists(departure, ReleaseForTransitResponse, requestXmlBody), 30.seconds).mustEqual(())
+        Await.result(service.sendPushNotificationIfBoxExists(departure, ReleaseForTransitResponse), 30.seconds).mustEqual(())
 
         verify(mockConnector).postNotification(BoxId(ArgumentMatchers.eq(testBoxId)), any[DepartureMessageNotification])(any[ExecutionContext],
                                                                                                                          any[HeaderCarrier])
@@ -228,6 +232,7 @@ class PushPullNotificationServiceSpec extends SpecBase with BeforeAndAfterEach w
       "should not post if invalid xml is passed in" in {
 
         val successfulResult: Future[Either[UpstreamErrorResponse, Unit]] = Future.successful(Right(()))
+        implicit val request: Request[NodeSeq]                            = FakeRequest().withBody(<Node></Node>)
 
         when(
           mockConnector.postNotification(BoxId(ArgumentMatchers.eq(testBoxId)), any[DepartureMessageNotification])(any[ExecutionContext], any[HeaderCarrier])
@@ -235,15 +240,16 @@ class PushPullNotificationServiceSpec extends SpecBase with BeforeAndAfterEach w
 
         val departure = initialDeparture.copy(notificationBox = Some(testBox))
 
-        Await.result(service.sendPushNotificationIfBoxExists(departure, ReleaseForTransitResponse, <Node></Node>), 30.seconds).mustEqual(())
+        Await.result(service.sendPushNotificationIfBoxExists(departure, ReleaseForTransitResponse), 30.seconds).mustEqual(())
 
         verifyNoInteractions(mockConnector)
       }
 
       "should not post if no box exists" in {
-        val departure = initialDeparture.copy(notificationBox = None)
+        val departure                          = initialDeparture.copy(notificationBox = None)
+        implicit val request: Request[NodeSeq] = FakeRequest().withBody(<Node></Node>)
 
-        Await.result(service.sendPushNotificationIfBoxExists(departure, ReleaseForTransitResponse, <Node></Node>), 30.seconds).mustEqual(())
+        Await.result(service.sendPushNotificationIfBoxExists(departure, ReleaseForTransitResponse), 30.seconds).mustEqual(())
 
         verifyNoInteractions(mockConnector)
       }

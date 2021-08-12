@@ -24,6 +24,7 @@ import models.DepartureMessageNotification
 import models.MessageResponse
 import play.api.Logging
 import play.api.http.Status._
+import play.api.mvc.Request
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 
@@ -66,13 +67,12 @@ class PushPullNotificationService @Inject()(connector: PushPullNotificationConne
 
   def sendPushNotificationIfBoxExists(
     departure: Departure,
-    messageResponse: MessageResponse,
-    xml: NodeSeq
-  )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
+    messageResponse: MessageResponse
+  )(implicit hc: HeaderCarrier, ec: ExecutionContext, request: Request[NodeSeq]): Future[Unit] =
     departure.notificationBox
       .map {
         box =>
-          XmlMessageParser.dateTimeOfPrepR(xml) match {
+          XmlMessageParser.dateTimeOfPrepR(request.body) match {
             case Left(error) =>
               logger.error(s"Error while parsing message timestamp: ${error.message}")
               Future.unit

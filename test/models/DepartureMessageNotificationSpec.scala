@@ -26,6 +26,7 @@ import org.scalacheck.Gen
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.http.HeaderNames
 import play.api.http.HttpVerbs
+import play.api.mvc.Request
 import play.api.test.FakeRequest
 
 import java.nio.charset.StandardCharsets
@@ -78,7 +79,7 @@ class DepartureMessageNotificationSpec extends SpecBase with ScalaCheckDrivenPro
       val request = FakeRequest(POST, routes.NCTSMessageController.post(messageSender).url)
         .withBody[NodeSeq](testBody)
         .withHeaders(HeaderNames.CONTENT_LENGTH -> "100001")
-      val departureRequest = DepartureRequest(request, departure, api)
+      val departureRequest = DepartureRequest(request, departure, Api)
       val responseRequest  = DepartureResponseRequest(departureRequest, response)
 
       val now = LocalDateTime.now()
@@ -96,6 +97,65 @@ class DepartureMessageNotificationSpec extends SpecBase with ScalaCheckDrivenPro
         )
 
       val testNotification = DepartureMessageNotification.fromRequest(responseRequest, now)
+
+      testNotification mustEqual expectedNotification
+    }
+  }
+
+  "fromDepartureAndResponse" - {
+    val testBody   = <text></text>
+    val bodyLength = testBody.toString.getBytes(StandardCharsets.UTF_8).length
+
+    "produces the expected model" in {
+      val response  = responseGenerator.sample.value
+      val departure = arbitraryDeparture.arbitrary.sample.value
+
+      implicit val request: FakeRequest[NodeSeq] = FakeRequest()
+        .withBody[NodeSeq](testBody)
+        .withHeaders(HeaderNames.CONTENT_LENGTH -> bodyLength.toString)
+
+      val now = LocalDateTime.now()
+
+      val expectedNotification =
+        DepartureMessageNotification(
+          s"/customs/transits/movements/departures/${departure.departureId.index}/messages/${departure.messages.length + 1}",
+          s"/customs/transits/movements/departures/${departure.departureId.index}",
+          departure.eoriNumber,
+          departure.departureId,
+          MessageId(departure.messages.length + 1),
+          now,
+          response.messageType,
+          Some(testBody)
+        )
+
+      val testNotification = DepartureMessageNotification.fromDepartureAndResponse(departure, response, now)
+
+      testNotification mustEqual expectedNotification
+    }
+
+    "does not include the message body when it is over 100kb" in {
+      val response  = responseGenerator.sample.value
+      val departure = arbitraryDeparture.arbitrary.sample.value
+
+      implicit val request: Request[NodeSeq] = FakeRequest()
+        .withBody[NodeSeq](testBody)
+        .withHeaders(HeaderNames.CONTENT_LENGTH -> "100001")
+
+      val now = LocalDateTime.now()
+
+      val expectedNotification =
+        DepartureMessageNotification(
+          s"/customs/transits/movements/departures/${departure.departureId.index}/messages/${departure.messages.length + 1}",
+          s"/customs/transits/movements/departures/${departure.departureId.index}",
+          departure.eoriNumber,
+          departure.departureId,
+          MessageId(departure.messages.length + 1),
+          now,
+          response.messageType,
+          None
+        )
+
+      val testNotification = DepartureMessageNotification.fromDepartureAndResponse(departure, response, now)
 
       testNotification mustEqual expectedNotification
     }

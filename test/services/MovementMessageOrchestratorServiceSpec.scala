@@ -21,17 +21,13 @@ import base.SpecBase
 import cats.data.EitherT
 import cats.data.NonEmptyList
 import com.kenshoo.play.metrics.Metrics
-import models.ChannelType.Api
 import models.ChannelType.Web
-import models.BoxId
 import models.ChannelType
 import models.Departure
 import models.DepartureId
-import models.DepartureMessageNotification
 import models.DepartureNotFound
 import models.DepartureStatus
 import models.MessageId
-import models.MessageResponse
 import models.MessageSender
 import models.MessageStatus
 import models.MessageType
@@ -48,16 +44,12 @@ import models.XMLMRNError
 import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.{eq => eqTo}
 import org.mockito.Mockito.never
-import org.mockito.Mockito.times
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.verifyNoInteractions
 import org.mockito.Mockito.when
-import org.mockito.invocation.InvocationOnMock
-import org.mockito.stubbing.Answer
 import play.api.libs.json.Json
 import play.api.mvc.Request
 import play.api.test.FakeRequest
-import uk.gov.hmrc.http.HeaderCarrier
 
 import java.time.LocalDateTime
 import scala.concurrent.ExecutionContext
@@ -134,8 +126,8 @@ class MovementMessageOrchestratorServiceSpec extends SpecBase {
 
       verify(mockSaveMessageService).validateXmlSaveMessageUpdateMrn(any(), any(), any(), any(), any(), any())
       verify(mockSaveMessageService, never()).validateXmlAndSaveMessage(any(), any(), any(), any(), any())
-      verify(mockAuditService).auditNCTSMessages(eqTo(ChannelType.Web), eqTo(MrnAllocatedResponse), any())(any())
-      verify(mockPullPushService).sendPushNotificationIfBoxExists(any(), any(), any())(any(), any())
+      verify(mockAuditService).auditNCTSMessages(eqTo(ChannelType.Web), any(), eqTo(MrnAllocatedResponse), any())(any())
+      verify(mockPullPushService).sendPushNotificationIfBoxExists(any(), any())(any(), any(), any())
     }
 
     "must successfully save the message" in new Setup {
@@ -161,8 +153,8 @@ class MovementMessageOrchestratorServiceSpec extends SpecBase {
 
       verify(mockSaveMessageService, never()).validateXmlSaveMessageUpdateMrn(any(), any(), any(), any(), any(), any())
       verify(mockSaveMessageService).validateXmlAndSaveMessage(any(), any(), any(), any(), any())
-      verify(mockAuditService).auditNCTSMessages(eqTo(ChannelType.Web), eqTo(ReleaseForTransitResponse), any())(any())
-      verify(mockPullPushService).sendPushNotificationIfBoxExists(any(), any(), any())(any(), any())
+      verify(mockAuditService).auditNCTSMessages(eqTo(ChannelType.Web), any(), eqTo(ReleaseForTransitResponse), any())(any())
+      verify(mockPullPushService).sendPushNotificationIfBoxExists(any(), any())(any(), any(), any())
     }
 
     "must return an invalid transition message for an invalid transition" in new Setup {
@@ -187,7 +179,7 @@ class MovementMessageOrchestratorServiceSpec extends SpecBase {
 
       verify(mockSaveMessageService, never()).validateXmlSaveMessageUpdateMrn(any(), any(), any(), any(), any(), any())
       verify(mockSaveMessageService, never()).validateXmlAndSaveMessage(any(), any(), any(), any(), any())
-      verify(mockAuditService, never()).auditNCTSMessages(eqTo(ChannelType.Web), eqTo(ReleaseForTransitResponse), any())(any())
+      verify(mockAuditService, never()).auditNCTSMessages(eqTo(ChannelType.Web), any(), eqTo(ReleaseForTransitResponse), any())(any())
       verifyNoInteractions(mockPullPushService)
     }
 
@@ -212,7 +204,7 @@ class MovementMessageOrchestratorServiceSpec extends SpecBase {
 
       verify(mockSaveMessageService, never()).validateXmlSaveMessageUpdateMrn(any(), any(), any(), any(), any(), any())
       verify(mockSaveMessageService, never()).validateXmlAndSaveMessage(any(), any(), any(), any(), any())
-      verify(mockAuditService, never()).auditNCTSMessages(eqTo(ChannelType.Web), eqTo(ReleaseForTransitResponse), any())(any())
+      verify(mockAuditService, never()).auditNCTSMessages(eqTo(ChannelType.Web), any(), eqTo(ReleaseForTransitResponse), any())(any())
       verifyNoInteractions(mockPullPushService)
     }
 
@@ -239,7 +231,7 @@ class MovementMessageOrchestratorServiceSpec extends SpecBase {
 
       verify(mockSaveMessageService, never()).validateXmlSaveMessageUpdateMrn(any(), any(), any(), any(), any(), any())
       verify(mockSaveMessageService).validateXmlAndSaveMessage(any(), any(), any(), any(), any())
-      verify(mockAuditService, never()).auditNCTSMessages(eqTo(ChannelType.Web), eqTo(ReleaseForTransitResponse), any())(any())
+      verify(mockAuditService, never()).auditNCTSMessages(eqTo(ChannelType.Web), any(), eqTo(ReleaseForTransitResponse), any())(any())
       verifyNoInteractions(mockPullPushService)
     }
 
@@ -266,7 +258,7 @@ class MovementMessageOrchestratorServiceSpec extends SpecBase {
 
       verify(mockSaveMessageService, never()).validateXmlSaveMessageUpdateMrn(any(), any(), any(), any(), any(), any())
       verify(mockSaveMessageService).validateXmlAndSaveMessage(any(), any(), any(), any(), any())
-      verify(mockAuditService, never()).auditNCTSMessages(eqTo(ChannelType.Web), eqTo(ReleaseForTransitResponse), any())(any())
+      verify(mockAuditService, never()).auditNCTSMessages(eqTo(ChannelType.Web), any(), eqTo(ReleaseForTransitResponse), any())(any())
       verifyNoInteractions(mockPullPushService)
     }
 
@@ -291,7 +283,7 @@ class MovementMessageOrchestratorServiceSpec extends SpecBase {
 
       verify(mockSaveMessageService, never()).validateXmlSaveMessageUpdateMrn(any(), any(), any(), any(), any(), any())
       verify(mockSaveMessageService, never()).validateXmlAndSaveMessage(any(), any(), any(), any(), any())
-      verify(mockAuditService, never()).auditNCTSMessages(any(), any(), any())(any())
+      verify(mockAuditService, never()).auditNCTSMessages(any(), any(), any(), any())(any())
       verifyNoInteractions(mockPullPushService)
     }
   }

@@ -48,7 +48,7 @@ private[services] class DepartureRetrievalService @Inject()(repository: Departur
       getDepartureById(departureId)
     ).leftMap {
       case submissionState: DepartureNotFound =>
-        auditService.auditNCTSMessages(Deleted, messageResponse, xml)
+        auditService.auditNCTSMessages(Deleted, "Deleted", messageResponse, xml)
         submissionState
       case submissionState => submissionState
     }

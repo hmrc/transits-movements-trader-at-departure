@@ -88,7 +88,7 @@ class DepartureRetrievalServiceSpec extends SpecBase {
       service.getDepartureAndAuditDeletedDepartures(departureId, MrnAllocatedResponse, node).value.futureValue mustBe Right(initialDeparture)
 
       verify(mockRepo).get(eqTo(departureId))
-      verify(mockAuditService, never()).auditNCTSMessages(any(), any(), any())(any())
+      verify(mockAuditService, never()).auditNCTSMessages(any(), any(), any(), any())(any())
     }
 
     "must audit the message if its not found" in new Setup {
@@ -104,7 +104,7 @@ class DepartureRetrievalServiceSpec extends SpecBase {
         .mustBe(Left(DepartureNotFound(s"[GetDepartureService][getDepartureById] Unable to retrieve departure message for arrival id: ${departureId.index}")))
 
       verify(mockRepo).get(eqTo(departureId))
-      verify(mockAuditService).auditNCTSMessages(eqTo(ChannelType.Deleted), eqTo(MrnAllocatedResponse), eqTo(node))(any())
+      verify(mockAuditService).auditNCTSMessages(eqTo(ChannelType.Deleted), eqTo("Deleted"), eqTo(MrnAllocatedResponse), eqTo(node))(any())
     }
   }
 }
