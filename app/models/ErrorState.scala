@@ -16,15 +16,15 @@
 
 package models
 
-trait SubmissionState {
+sealed trait ErrorState {
   val reason: String
 }
 
 case class SubmissionSuccess(departure: Departure)
 
-trait InternalError extends SubmissionState
+sealed trait InternalError extends ErrorState
 
-trait ExternalError extends SubmissionState
+sealed trait ExternalError extends ErrorState
 
 case class DepartureNotFound(reason: String)         extends ExternalError
 case class InvalidMessageType(reason: String)        extends ExternalError

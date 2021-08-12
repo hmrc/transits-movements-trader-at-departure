@@ -21,7 +21,7 @@ import models.DepartureAlreadyLocked
 import models.DepartureId
 import models.FailedToLock
 import models.FailedToUnlock
-import models.SubmissionState
+import models.ErrorState
 import repositories.LockRepository
 
 import javax.inject.Inject
@@ -32,7 +32,7 @@ private[services] class LockService @Inject()(
   lockRepository: LockRepository
 )(implicit ec: ExecutionContext) {
 
-  private def lockDeparture(departureId: DepartureId)(implicit ec: ExecutionContext): EitherT[Future, SubmissionState, Unit] =
+  private def lockDeparture(departureId: DepartureId)(implicit ec: ExecutionContext): EitherT[Future, ErrorState, Unit] =
     EitherT(lockRepository.lock(departureId).map {
       case true  => Right(())
       case false => Left(DepartureAlreadyLocked(departureId))
@@ -40,12 +40,12 @@ private[services] class LockService @Inject()(
       case e => Left(FailedToLock(departureId, e))
     })
 
-  private def unlockDeparture(departureId: DepartureId)(implicit ec: ExecutionContext): EitherT[Future, SubmissionState, Unit] =
+  private def unlockDeparture(departureId: DepartureId)(implicit ec: ExecutionContext): EitherT[Future, ErrorState, Unit] =
     EitherT(lockRepository.unlock(departureId).map(Right.apply) recover {
       case e => Left(FailedToUnlock(departureId, e))
     })
 
-  def withLock[T](departureId: DepartureId)(action: => EitherT[Future, SubmissionState, T]): EitherT[Future, SubmissionState, T] =
+  def withLock[T](departureId: DepartureId)(action: => EitherT[Future, ErrorState, T]): EitherT[Future, ErrorState, T] =
     (for {
       lock    <- lockDeparture(departureId)
       perform <- action

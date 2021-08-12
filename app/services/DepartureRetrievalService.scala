@@ -24,7 +24,7 @@ import models.Departure
 import models.DepartureId
 import models.DepartureNotFound
 import models.MessageResponse
-import models.SubmissionState
+import models.ErrorState
 import play.api.mvc.Request
 import repositories.DepartureRepository
 import uk.gov.hmrc.http.HeaderCarrier
@@ -36,14 +36,14 @@ import scala.xml.NodeSeq
 
 private[services] class DepartureRetrievalService @Inject()(repository: DepartureRepository, auditService: AuditService)(implicit ec: ExecutionContext) {
 
-  private def getDepartureById(departureId: DepartureId): Future[Either[SubmissionState, Departure]] =
+  private def getDepartureById(departureId: DepartureId): Future[Either[ErrorState, Departure]] =
     repository.get(departureId).map {
       case Some(departure) => Right(departure)
       case None            => Left(DepartureNotFound(s"[GetDepartureService][getDepartureById] Unable to retrieve departure message for arrival id: ${departureId.index}"))
     }
 
   def getDepartureAndAuditDeletedDepartures(departureId: DepartureId, messageResponse: MessageResponse, xml: NodeSeq)(
-    implicit hc: HeaderCarrier): EitherT[Future, SubmissionState, Departure] =
+    implicit hc: HeaderCarrier): EitherT[Future, ErrorState, Departure] =
     EitherT(
       getDepartureById(departureId)
     ).leftMap {

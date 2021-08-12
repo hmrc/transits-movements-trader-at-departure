@@ -27,7 +27,7 @@ import models.MessageResponse
 import models.MessageSender
 import models.MrnAllocatedResponse
 import models.StatusTransition
-import models.SubmissionState
+import models.ErrorState
 import models.SubmissionSuccess
 import models.XMLMRNError
 import play.api.Logging
@@ -54,11 +54,11 @@ class MovementMessageOrchestratorService @Inject()(
                                      xml: NodeSeq,
                                      departure: Departure,
                                      messageSender: MessageSender,
-                                     newState: DepartureStatus): EitherT[Future, SubmissionState, SubmissionSuccess] =
+                                     newState: DepartureStatus): EitherT[Future, ErrorState, SubmissionSuccess] =
     messageResponse match {
       case MrnAllocatedResponse =>
         for {
-          mrn <- EitherT.fromEither(XmlMessageParser.mrnR(xml).left.map[SubmissionState](error => XMLMRNError(error.message)))
+          mrn <- EitherT.fromEither(XmlMessageParser.mrnR(xml).left.map[ErrorState](error => XMLMRNError(error.message)))
           savedMessage <- EitherT(
             saveMessageService
               .validateXmlSaveMessageUpdateMrn(departure.nextMessageId, xml, messageSender, messageResponse, newState, mrn)
@@ -71,7 +71,7 @@ class MovementMessageOrchestratorService @Inject()(
   def saveNCTSMessage(messageSender: MessageSender)(
     implicit hc: HeaderCarrier,
     request: Request[NodeSeq]
-  ): Future[Either[SubmissionState, SubmissionSuccess]] =
+  ): Future[Either[ErrorState, SubmissionSuccess]] =
     lockService
       .withLock(messageSender.departureId)(for {
         inboundMessageResponse <- EitherT.fromEither(MessageResponse.fromRequest)

@@ -37,7 +37,7 @@ import models.ReleaseForTransitResponse
 import models.SubmissionFailureExternal
 import models.SubmissionFailureInternal
 import models.SubmissionProcessingResult
-import models.SubmissionState
+import models.ErrorState
 import models.SubmissionSuccess
 import models.TransitionError
 import models.XMLMRNError
@@ -60,7 +60,7 @@ class MovementMessageOrchestratorServiceSpec extends SpecBase {
 
   class Setup {
     case object MockLockService extends LockService(null)(ExecutionContext.global) {
-      override def withLock[T](departureId: DepartureId)(action: => EitherT[Future, SubmissionState, T]): EitherT[Future, SubmissionState, T] = action
+      override def withLock[T](departureId: DepartureId)(action: => EitherT[Future, ErrorState, T]): EitherT[Future, ErrorState, T] = action
     }
 
     val mockLockService: LockService                       = MockLockService
@@ -117,7 +117,7 @@ class MovementMessageOrchestratorServiceSpec extends SpecBase {
         .withHeaders("X-Message-Type" -> "IE028")
 
       when(mockGetDepartureService.getDepartureAndAuditDeletedDepartures(any(), any(), any())(any()))
-        .thenReturn(EitherT[Future, SubmissionState, Departure](Future.successful(Right[SubmissionState, Departure](initialDeparture))))
+        .thenReturn(EitherT[Future, ErrorState, Departure](Future.successful(Right[ErrorState, Departure](initialDeparture))))
 
       when(mockSaveMessageService.validateXmlSaveMessageUpdateMrn(any(), any(), any(), any(), any(), any()))
         .thenReturn(Future.successful(SubmissionProcessingResult.SubmissionSuccess))
@@ -144,7 +144,7 @@ class MovementMessageOrchestratorServiceSpec extends SpecBase {
       val departure: Departure = initialDeparture.copy(status = DepartureStatus.MrnAllocated)
 
       when(mockGetDepartureService.getDepartureAndAuditDeletedDepartures(any(), any(), any())(any()))
-        .thenReturn(EitherT[Future, SubmissionState, Departure](Future.successful(Right[SubmissionState, Departure](departure))))
+        .thenReturn(EitherT[Future, ErrorState, Departure](Future.successful(Right[ErrorState, Departure](departure))))
 
       when(mockSaveMessageService.validateXmlAndSaveMessage(any(), any(), any(), any(), any()))
         .thenReturn(Future.successful(SubmissionProcessingResult.SubmissionSuccess))
@@ -169,7 +169,7 @@ class MovementMessageOrchestratorServiceSpec extends SpecBase {
         .withHeaders("X-Message-Type" -> "IE029")
 
       when(mockGetDepartureService.getDepartureAndAuditDeletedDepartures(any(), any(), any())(any()))
-        .thenReturn(EitherT[Future, SubmissionState, Departure](Future.successful(Right[SubmissionState, Departure](initialDeparture))))
+        .thenReturn(EitherT[Future, ErrorState, Departure](Future.successful(Right[ErrorState, Departure](initialDeparture))))
 
       service
         .saveNCTSMessage(MessageSender(DepartureId(1), 1))
@@ -195,7 +195,7 @@ class MovementMessageOrchestratorServiceSpec extends SpecBase {
         .withHeaders("X-Message-Type" -> "IE029")
 
       when(mockGetDepartureService.getDepartureAndAuditDeletedDepartures(any(), any(), any())(any()))
-        .thenReturn(EitherT[Future, SubmissionState, Departure](Future.successful(Left[SubmissionState, Departure](DepartureNotFound("")))))
+        .thenReturn(EitherT[Future, ErrorState, Departure](Future.successful(Left[ErrorState, Departure](DepartureNotFound("")))))
 
       when(mockSaveMessageService.validateXmlAndSaveMessage(any(), any(), any(), any(), any()))
         .thenReturn(Future.successful(SubmissionProcessingResult.SubmissionSuccess))
@@ -222,7 +222,7 @@ class MovementMessageOrchestratorServiceSpec extends SpecBase {
       val departure: Departure = initialDeparture.copy(status = DepartureStatus.MrnAllocated)
 
       when(mockGetDepartureService.getDepartureAndAuditDeletedDepartures(any(), any(), any())(any()))
-        .thenReturn(EitherT[Future, SubmissionState, Departure](Future.successful(Right[SubmissionState, Departure](departure))))
+        .thenReturn(EitherT[Future, ErrorState, Departure](Future.successful(Right[ErrorState, Departure](departure))))
 
       when(mockSaveMessageService.validateXmlAndSaveMessage(any(), any(), any(), any(), any()))
         .thenReturn(Future.successful(SubmissionProcessingResult.SubmissionFailureInternal))
@@ -249,7 +249,7 @@ class MovementMessageOrchestratorServiceSpec extends SpecBase {
       val departure: Departure = initialDeparture.copy(status = DepartureStatus.MrnAllocated)
 
       when(mockGetDepartureService.getDepartureAndAuditDeletedDepartures(any(), any(), any())(any()))
-        .thenReturn(EitherT[Future, SubmissionState, Departure](Future.successful(Right[SubmissionState, Departure](departure))))
+        .thenReturn(EitherT[Future, ErrorState, Departure](Future.successful(Right[ErrorState, Departure](departure))))
 
       when(mockSaveMessageService.validateXmlAndSaveMessage(any(), any(), any(), any(), any()))
         .thenReturn(Future.successful(SubmissionProcessingResult.SubmissionFailureExternal))
@@ -274,7 +274,7 @@ class MovementMessageOrchestratorServiceSpec extends SpecBase {
         .withHeaders("X-Message-Type" -> "IE028")
 
       when(mockGetDepartureService.getDepartureAndAuditDeletedDepartures(any(), any(), any())(any()))
-        .thenReturn(EitherT[Future, SubmissionState, Departure](Future.successful(Right[SubmissionState, Departure](initialDeparture))))
+        .thenReturn(EitherT[Future, ErrorState, Departure](Future.successful(Right[ErrorState, Departure](initialDeparture))))
 
       when(mockSaveMessageService.validateXmlSaveMessageUpdateMrn(any(), any(), any(), any(), any(), any()))
         .thenReturn(Future.successful(SubmissionProcessingResult.SubmissionSuccess))

@@ -77,7 +77,7 @@ class LockServiceSpec extends SpecBase {
       verify(mockRepo).unlock(eqTo(departureId))
     }
 
-    "return a FailedToUnlock an exception happens when trying to acquire a lock" in new Setup {
+    "return a FailedToUnlock if an exception happens when trying to unlock the record" in new Setup {
       val exception: Exception = new Exception("hello")
 
       when(mockRepo.lock(eqTo(departureId))).thenReturn(Future.successful(true))

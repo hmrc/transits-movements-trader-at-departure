@@ -23,13 +23,13 @@ sealed abstract class WithName(name: String) {
 }
 
 object ChannelType extends Enumerable.Implicits {
-  case object Web     extends WithName("web") with ChannelType
-  case object Api     extends WithName("api") with ChannelType
-  case object Deleted extends WithName("deleted") with ChannelType
+  object Web     extends WithName("web") with ChannelType
+  object Api     extends WithName("api") with ChannelType
+  object Deleted extends WithName("deleted") with ChannelType
 
   val values: Seq[ChannelType] = Seq(Web, Api)
 
   implicit val enumerable: Enumerable[ChannelType] =
-    Enumerable(values.map(v => v.toString.toLowerCase() -> v): _*)
+    Enumerable(values.map(v => v.toString -> v): _*)
 
 }
