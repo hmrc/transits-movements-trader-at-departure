@@ -18,21 +18,21 @@ package controllers.actions
 
 import javax.inject.Inject
 import models.DepartureId
-import models.request.DepartureRequest
+import models.request.DepartureWithMessagesRequest
 import play.api.mvc.ActionBuilder
 import play.api.mvc.AnyContent
-import play.api.mvc.BodyParsers
+import play.api.mvc.DefaultActionBuilder
 
-import scala.concurrent.ExecutionContext
+trait AuthenticatedGetDepartureWithMessagesForReadActionProvider {
+  def apply(departureId: DepartureId): ActionBuilder[DepartureWithMessagesRequest, AnyContent]
+}
 
-class AuthenticatedGetDepartureForWriteActionProvider @Inject()(
-  lock: LockActionProvider,
+class AuthenticatedGetDepartureWithMessagesForReadActionProviderImpl @Inject()(
   authenticate: AuthenticateActionProvider,
-  getDeparture: AuthenticatedGetDepartureActionProvider,
-  ec: ExecutionContext,
-  parser: BodyParsers.Default
-) {
+  getDeparture: AuthenticatedGetDepartureWithMessagesActionProvider,
+  buildDefault: DefaultActionBuilder
+) extends AuthenticatedGetDepartureWithMessagesForReadActionProvider {
 
-  def apply(departureId: DepartureId): ActionBuilder[DepartureRequest, AnyContent] =
-    lock(departureId) andThen authenticate() andThen getDeparture(departureId)
+  def apply(departureId: DepartureId): ActionBuilder[DepartureWithMessagesRequest, AnyContent] =
+    buildDefault andThen authenticate() andThen getDeparture(departureId)
 }

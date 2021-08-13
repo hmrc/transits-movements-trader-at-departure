@@ -19,7 +19,8 @@ package controllers
 import audit.AuditService
 import com.kenshoo.play.metrics.Metrics
 import controllers.actions.CheckMessageTypeActionProvider
-import controllers.actions.GetDepartureForWriteActionProvider
+import controllers.actions.GetDepartureWithMessagesForWriteActionProvider
+import controllers.actions.GetDepartureWithoutMessagesForWriteActionProvider
 import metrics.HasActionMetrics
 import models.DepartureMessageNotification
 import models.MessageSender
@@ -37,15 +38,16 @@ import services.SaveMessageService
 import services.XmlMessageParser
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
-
 import javax.inject.Inject
+
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.xml.NodeSeq
 
 class NCTSMessageController @Inject()(
   cc: ControllerComponents,
-  getDeparture: GetDepartureForWriteActionProvider,
+  getDeparture: GetDepartureWithMessagesForWriteActionProvider,
+  getDepartureWithoutMessages: GetDepartureWithoutMessagesForWriteActionProvider,
   checkMessageType: CheckMessageTypeActionProvider,
   auditService: AuditService,
   saveMessageService: SaveMessageService,
@@ -73,7 +75,7 @@ class NCTSMessageController @Inject()(
 
   def post(messageSender: MessageSender): Action[NodeSeq] =
     withMetricsTimerAction("post-receive-ncts-message") {
-      (getDeparture(messageSender.departureId) andThen checkMessageType())(parse.xml).async {
+      (getDepartureWithoutMessages(messageSender.departureId) andThen checkMessageType())(parse.xml).async {
         implicit request =>
           val xml: NodeSeq = request.request.body
           val response     = request.messageResponse

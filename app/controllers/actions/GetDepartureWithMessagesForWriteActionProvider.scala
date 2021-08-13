@@ -18,15 +18,15 @@ package controllers.actions
 
 import javax.inject.Inject
 import models.DepartureId
-import models.request.DepartureRequest
+import models.request.DepartureWithMessagesRequest
 import play.api.mvc.ActionBuilder
 import play.api.mvc.AnyContent
 
-class GetDepartureForWriteActionProvider @Inject()(
+class GetDepartureWithMessagesForWriteActionProvider @Inject()(
   lock: LockActionProvider,
-  getDeparture: GetDepartureActionProvider
+  getDeparture: GetDepartureWithMessagesActionProvider
 ) {
 
-  def apply(departureId: DepartureId): ActionBuilder[DepartureRequest, AnyContent] =
+  def apply(departureId: DepartureId): ActionBuilder[DepartureWithMessagesRequest, AnyContent] =
     lock(departureId) andThen getDeparture(departureId)
 }

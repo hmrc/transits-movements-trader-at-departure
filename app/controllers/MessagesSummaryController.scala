@@ -17,9 +17,8 @@
 package controllers
 
 import javax.inject.Inject
-
 import com.kenshoo.play.metrics.Metrics
-import controllers.actions.AuthenticatedGetDepartureForReadActionProvider
+import controllers.actions.AuthenticatedGetDepartureWithMessagesForReadActionProvider
 import metrics.HasActionMetrics
 import models.DepartureId
 import play.api.libs.json.Json
@@ -32,7 +31,7 @@ import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import scala.concurrent.ExecutionContext
 
 class MessagesSummaryController @Inject()(
-  authenticateForRead: AuthenticatedGetDepartureForReadActionProvider,
+  authenticateForRead: AuthenticatedGetDepartureWithMessagesForReadActionProvider,
   messageSummaryService: MessageSummaryService,
   cc: ControllerComponents,
   val metrics: Metrics

@@ -16,10 +16,9 @@
 
 package models.request
 
+import models.ChannelType
 import models.DepartureWithoutMessages
-import models.MessageResponse
+import play.api.mvc.Request
 import play.api.mvc.WrappedRequest
 
-case class DepartureResponseRequest[A](request: DepartureWithoutMessagesRequest[A], messageResponse: MessageResponse) extends WrappedRequest[A](request) {
-  def departure: DepartureWithoutMessages = request.departure
-}
+case class DepartureWithoutMessagesRequest[A](request: Request[A], departure: DepartureWithoutMessages, channel: ChannelType) extends WrappedRequest[A](request)

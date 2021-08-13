@@ -41,7 +41,7 @@ import repositories.LockRepository
 
 import scala.concurrent.Future
 
-class GetDepartureForWriteActionProviderSpec
+class GetDepartureWithMessagesForWriteActionProviderSpec
     extends AnyFreeSpec
     with Matchers
     with MockitoSugar
@@ -54,7 +54,7 @@ class GetDepartureForWriteActionProviderSpec
 
   def fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("", "")
 
-  class Harness(getAndLock: GetDepartureForWriteActionProvider) {
+  class Harness(getAndLock: GetDepartureWithMessagesForWriteActionProvider) {
 
     def get(departureId: DepartureId): Action[AnyContent] = getAndLock(departureId) {
       request =>
@@ -86,7 +86,7 @@ class GetDepartureForWriteActionProviderSpec
           bind[LockRepository].toInstance(mockLockRepository)
         )
 
-      val actionProvider = application.injector.instanceOf[GetDepartureForWriteActionProvider]
+      val actionProvider = application.injector.instanceOf[GetDepartureWithMessagesForWriteActionProvider]
 
       val controller = new Harness(actionProvider)
       val result     = controller.get(departure.departureId)(fakeRequest.withHeaders("channel" -> departure.channel.toString))
@@ -114,7 +114,7 @@ class GetDepartureForWriteActionProviderSpec
           bind[LockRepository].toInstance(mockLockRepository)
         )
 
-      val actionProvider = application.injector.instanceOf[GetDepartureForWriteActionProvider]
+      val actionProvider = application.injector.instanceOf[GetDepartureWithMessagesForWriteActionProvider]
 
       val controller = new Harness(actionProvider)
       val result     = controller.get(departure.departureId)(fakeRequest.withHeaders("channel" -> web.toString))
@@ -139,7 +139,7 @@ class GetDepartureForWriteActionProviderSpec
           bind[LockRepository].toInstance(mockLockRepository)
         )
 
-      val actionProvider = application.injector.instanceOf[GetDepartureForWriteActionProvider]
+      val actionProvider = application.injector.instanceOf[GetDepartureWithMessagesForWriteActionProvider]
 
       val controller = new Harness(actionProvider)
       val result     = controller.get(departure.departureId)(fakeRequest)
@@ -166,7 +166,7 @@ class GetDepartureForWriteActionProviderSpec
           bind[LockRepository].toInstance(mockLockRepository)
         )
 
-      val actionProvider = application.injector.instanceOf[GetDepartureForWriteActionProvider]
+      val actionProvider = application.injector.instanceOf[GetDepartureWithMessagesForWriteActionProvider]
 
       val controller = new Harness(actionProvider)
       val result     = controller.failingAction(departure.departureId)(fakeRequest.withHeaders("channel" -> departure.channel.toString))

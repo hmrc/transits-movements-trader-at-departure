@@ -19,8 +19,9 @@ package controllers.actions
 import generators.ModelGenerators
 import models.MessageType._
 import models._
-import models.request.DepartureRequest
 import models.request.DepartureResponseRequest
+import models.request.DepartureWithMessagesRequest
+import models.request.DepartureWithoutMessagesRequest
 import org.scalacheck.Gen
 import org.scalatest.EitherValues
 import org.scalatest.OptionValues
@@ -44,7 +45,7 @@ class CheckMessageTypeActionProviderSpec
     with OptionValues
     with ScalaFutures
     with EitherValues {
-  val fakeDeparture: Departure = arbitraryDeparture.arbitrary.sample.value
+  val fakeDepartureWithoutMessages: DepartureWithoutMessages = arbitraryDepartureWithoutMessages.arbitrary.sample.value
 
   val responseMessages = Map(
     PositiveAcknowledgement.code     -> PositiveAcknowledgementResponse,
@@ -59,7 +60,7 @@ class CheckMessageTypeActionProviderSpec
   )
 
   class Harness extends CheckMessageTypeAction() {
-    def run[A](request: DepartureRequest[A]): Future[Either[Result, DepartureResponseRequest[A]]] = refine(request)
+    def run[A](request: DepartureWithoutMessagesRequest[A]): Future[Either[Result, DepartureResponseRequest[A]]] = refine(request)
   }
 
   "CheckMessageTypeAction" - {
@@ -67,9 +68,11 @@ class CheckMessageTypeActionProviderSpec
       forAll(Gen.oneOf(responseMessages.toSeq)) {
         case (code, response: MessageResponse) => {
           def fakeRequest =
-            DepartureRequest(FakeRequest("", "").withHeaders("X-Message-Type" -> code, "channel" -> fakeDeparture.channel.toString),
-                             fakeDeparture,
-                             fakeDeparture.channel)
+            DepartureWithoutMessagesRequest(
+              FakeRequest("", "").withHeaders("X-Message-Type" -> code, "channel" -> fakeDepartureWithoutMessages.channel.toString),
+              fakeDepartureWithoutMessages,
+              fakeDepartureWithoutMessages.channel
+            )
 
           val action: Harness = new Harness()
 
@@ -84,7 +87,12 @@ class CheckMessageTypeActionProviderSpec
       }
     }
     "must return an BadRequest when the X-Message-Type is missing" in {
-      def fakeRequest = DepartureRequest(FakeRequest("", "").withHeaders("channel" -> fakeDeparture.channel.toString), fakeDeparture, fakeDeparture.channel)
+      def fakeRequest =
+        DepartureWithoutMessagesRequest(
+          FakeRequest("", "").withHeaders("channel" -> fakeDepartureWithoutMessages.channel.toString),
+          fakeDepartureWithoutMessages,
+          fakeDepartureWithoutMessages.channel
+        )
 
       val harness = new Harness
 
@@ -99,9 +107,11 @@ class CheckMessageTypeActionProviderSpec
 
     "must return an BadRequest when the X-Message-Type is invalid" in {
       def fakeRequest =
-        DepartureRequest(FakeRequest("", "").withHeaders("X-Message-Type" -> "Invalid-type", "channel" -> fakeDeparture.channel.toString),
-                         fakeDeparture,
-                         fakeDeparture.channel)
+        DepartureWithoutMessagesRequest(
+          FakeRequest("", "").withHeaders("X-Message-Type" -> "Invalid-type", "channel" -> fakeDepartureWithoutMessages.channel.toString),
+          fakeDepartureWithoutMessages,
+          fakeDepartureWithoutMessages.channel
+        )
 
       val harness = new Harness
 

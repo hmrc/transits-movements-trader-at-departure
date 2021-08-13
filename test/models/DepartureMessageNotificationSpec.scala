@@ -20,16 +20,17 @@ import base.SpecBase
 import controllers.routes
 import generators.ModelGenerators
 import models.ChannelType.api
-import models.request.DepartureRequest
 import models.request.DepartureResponseRequest
+import models.request.DepartureWithMessagesRequest
+import models.request.DepartureWithoutMessagesRequest
 import org.scalacheck.Gen
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.http.HeaderNames
 import play.api.http.HttpVerbs
 import play.api.test.FakeRequest
-
 import java.nio.charset.StandardCharsets
 import java.time.LocalDateTime
+
 import scala.xml.NodeSeq
 
 class DepartureMessageNotificationSpec extends SpecBase with ScalaCheckDrivenPropertyChecks with ModelGenerators with HttpVerbs {
@@ -48,8 +49,9 @@ class DepartureMessageNotificationSpec extends SpecBase with ScalaCheckDrivenPro
       val request = FakeRequest(POST, routes.NCTSMessageController.post(messageSender).url)
         .withBody[NodeSeq](testBody)
         .withHeaders(HeaderNames.CONTENT_LENGTH -> bodyLength.toString)
-      val departureRequest = DepartureRequest(request, departure, api)
-      val responseRequest  = DepartureResponseRequest(departureRequest, response)
+//      val departureRequest = DepartureWithMessagesRequest(request, departure, api)
+      val departureWithoutMessagesRequest = DepartureWithoutMessagesRequest(request, DepartureWithoutMessages.fromDeparture(departure), api)
+      val responseRequest                 = DepartureResponseRequest(departureWithoutMessagesRequest, response)
 
       val now = LocalDateTime.now()
 
@@ -78,7 +80,7 @@ class DepartureMessageNotificationSpec extends SpecBase with ScalaCheckDrivenPro
       val request = FakeRequest(POST, routes.NCTSMessageController.post(messageSender).url)
         .withBody[NodeSeq](testBody)
         .withHeaders(HeaderNames.CONTENT_LENGTH -> "100001")
-      val departureRequest = DepartureRequest(request, departure, api)
+      val departureRequest = DepartureWithoutMessagesRequest(request, DepartureWithoutMessages.fromDeparture(departure), api)
       val responseRequest  = DepartureResponseRequest(departureRequest, response)
 
       val now = LocalDateTime.now()

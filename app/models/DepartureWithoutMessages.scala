@@ -38,7 +38,9 @@ case class DepartureWithoutMessages(
   status: DepartureStatus,
   created: LocalDateTime,
   lastUpdated: LocalDateTime,
-  notificationBox: Option[Box]
+  notificationBox: Option[Box],
+  nextMessageId: MessageId,
+  nextMessageCorrelationId: Int
 ) extends BaseDeparture {}
 
 object DepartureWithoutMessages {
@@ -53,7 +55,9 @@ object DepartureWithoutMessages {
       departure.status,
       departure.created,
       departure.lastUpdated,
-      departure.notificationBox
+      departure.notificationBox,
+      departure.nextMessageId,
+      departure.nextMessageCorrelationId
     )
 
   implicit def formatsNonEmptyList[A](implicit listReads: Reads[List[A]], listWrites: Writes[List[A]]): Format[NonEmptyList[A]] =
@@ -75,19 +79,22 @@ object DepartureWithoutMessages {
         (__ \ "lastUpdated")
           .read(MongoDateTimeFormats.localDateTimeRead)
           .orElse((__ \ "updated").read(MongoDateTimeFormats.localDateTimeRead)) and
-        (__ \ "notificationBox").readNullable[Box]
+        (__ \ "notificationBox").readNullable[Box] and
+        (__ \ "nextMessageId").read[MessageId] and
+        (__ \ "nextMessageCorrelationId").read[Int]
     )(DepartureWithoutMessages.apply _)
 
   val projection: JsObject = Json.obj(
-    "_id"                     -> 1,
-    "channel"                 -> 1,
-    "eoriNumber"              -> 1,
-    "movementReferenceNumber" -> 1,
-    "referenceNumber"         -> 1,
-    "status"                  -> 1,
-    "created"                 -> 1,
-    "updated"                 -> 1,
-    "lastUpdated"             -> 1,
-    "notificationBox"         -> 1
+    "_id"                      -> 1,
+    "channel"                  -> 1,
+    "eoriNumber"               -> 1,
+    "movementReferenceNumber"  -> 1,
+    "referenceNumber"          -> 1,
+    "status"                   -> 1,
+    "created"                  -> 1,
+    "updated"                  -> 1,
+    "lastUpdated"              -> 1,
+    "notificationBox"          -> 1,
+    "nextMessageCorrelationId" -> 1
   )
 }

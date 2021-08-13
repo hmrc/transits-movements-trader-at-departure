@@ -18,12 +18,12 @@ package controllers
 
 import akka.util.ByteString
 import base.SpecBase
-import controllers.actions.AuthenticatedGetDepartureForReadActionProvider
+import controllers.actions.AuthenticatedGetDepartureWithMessagesForReadActionProvider
 import generators.ModelGenerators
 import models.ChannelType
 import models.Departure
 import models.DepartureId
-import models.request.DepartureRequest
+import models.request.DepartureWithMessagesRequest
 import org.mockito.ArgumentMatchers.{eq => eqTo}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
@@ -50,22 +50,22 @@ class PDFRetrievalControllerSpec extends SpecBase with ScalaCheckPropertyChecks 
 
   class Setup(departureId: DepartureId) {
 
-    val mockPDFGenerationService: PDFRetrievalService              = mock[PDFRetrievalService]
-    val mockAction: AuthenticatedGetDepartureForReadActionProvider = mock[AuthenticatedGetDepartureForReadActionProvider]
+    val mockPDFGenerationService: PDFRetrievalService                          = mock[PDFRetrievalService]
+    val mockAction: AuthenticatedGetDepartureWithMessagesForReadActionProvider = mock[AuthenticatedGetDepartureWithMessagesForReadActionProvider]
 
     val controller: PDFRetrievalController = new PDFRetrievalController(mockPDFGenerationService, mockAction, stubControllerComponents(), new TestMetrics)
 
-    private val fakeActionBuilder: ActionBuilder[DepartureRequest, AnyContent] = mock[ActionBuilder[DepartureRequest, AnyContent]]
+    private val fakeActionBuilder: ActionBuilder[DepartureWithMessagesRequest, AnyContent] = mock[ActionBuilder[DepartureWithMessagesRequest, AnyContent]]
 
     val testDeparture: Departure = arbitrary[Departure].sample.value
 
     when(mockAction(departureId = departureId)).thenReturn(fakeActionBuilder)
 
-    when(fakeActionBuilder.async(any[DepartureRequest[AnyContent] => Future[Result]])).thenAnswer(
+    when(fakeActionBuilder.async(any[DepartureWithMessagesRequest[AnyContent] => Future[Result]])).thenAnswer(
       (invocation: InvocationOnMock) => {
         val body = invocation
           .getArgument(0)
-          .asInstanceOf[DepartureRequest[AnyContent] => Future[Result]](DepartureRequest(fakeRequest, testDeparture, ChannelType.web))
+          .asInstanceOf[DepartureWithMessagesRequest[AnyContent] => Future[Result]](DepartureWithMessagesRequest(fakeRequest, testDeparture, ChannelType.web))
 
         stubControllerComponents().actionBuilder.async(body)
       }

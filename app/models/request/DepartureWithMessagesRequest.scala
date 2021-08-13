@@ -21,4 +21,4 @@ import models.Departure
 import play.api.mvc.Request
 import play.api.mvc.WrappedRequest
 
-case class DepartureRequest[A](request: Request[A], departure: Departure, channel: ChannelType) extends WrappedRequest[A](request)
+case class DepartureWithMessagesRequest[A](request: Request[A], departure: Departure, channel: ChannelType) extends WrappedRequest[A](request)

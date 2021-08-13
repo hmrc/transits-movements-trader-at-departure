@@ -211,6 +211,50 @@ class DepartureRepositorySpec
       }
     }
 
+    "getWithoutMessages(departureId: DepartureId)" - {
+      "must get an departure when it exists" in {
+        database.flatMap(_.drop()).futureValue
+
+        val departure = arbitrary[Departure].sample.value
+        val departureWithoutMessages = DepartureWithoutMessages.fromDeparture(departure)
+        service.insert(departure).futureValue
+        val result = service.getWithoutMessages(departure.departureId)
+
+        whenReady(result) {
+          r =>
+            r.value mustEqual departureWithoutMessages
+        }
+      }
+
+      "must return None when an departure does not exist" in {
+        database.flatMap(_.drop()).futureValue
+
+        val departure = arbitrary[Departure].sample.value copy(departureId = DepartureId(1))
+
+        service.insert(departure).futureValue
+        val result = service.getWithoutMessages(DepartureId(2), web)
+
+        whenReady(result) {
+          r =>
+            r.isDefined mustBe false
+        }
+      }
+
+      "must return None when a departure exists, but with a different channel type" in {
+        database.flatMap(_.drop()).futureValue
+
+        val departure = arbitrary[Departure].sample.value copy(departureId = DepartureId(1), api)
+
+        service.insert(departure).futureValue
+        val result = service.get(DepartureId(1), web)
+
+        whenReady(result) {
+          r =>
+            r.isDefined mustBe false
+        }
+      }
+    }
+
     "getWithoutMessages(departureId: DepartureId, channelFilter: ChannelType)" - {
       "must get an departure when it exists and has the right channel type" in {
         database.flatMap(_.drop()).futureValue
@@ -254,7 +298,6 @@ class DepartureRepositorySpec
         }
       }
     }
-
 
     "setMessageState" - {
       "must update the status of a specific message in an existing departure" in {
@@ -653,19 +696,6 @@ class DepartureRepositorySpec
     }
 
     "fetchAllDepartures" - {
-
-      def convertToDepartureWithoutMessages(departure: Departure): DepartureWithoutMessages =
-        DepartureWithoutMessages(
-          departure.departureId,
-          departure.channel,
-          departure.eoriNumber,
-          departure.movementReferenceNumber,
-          departure.referenceNumber,
-          departure.status,
-          departure.created,
-          departure.lastUpdated,
-          departure.notificationBox
-        )
 
       "return DeparturesWithoutMessages that match an eoriNumber and channel type" in {
         database.flatMap(_.drop()).futureValue

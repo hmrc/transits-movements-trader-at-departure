@@ -17,7 +17,7 @@
 package controllers
 
 import com.kenshoo.play.metrics.Metrics
-import controllers.actions.AuthenticatedGetDepartureForReadActionProvider
+import controllers.actions.AuthenticatedGetDepartureWithMessagesForReadActionProvider
 import metrics.HasActionMetrics
 import models.DepartureId
 import play.api.mvc.Action
@@ -34,7 +34,7 @@ import scala.concurrent.ExecutionContext
 
 class PDFRetrievalController @Inject()(
   pdfGenerationService: PDFRetrievalService,
-  authenticateForRead: AuthenticatedGetDepartureForReadActionProvider,
+  authenticateForRead: AuthenticatedGetDepartureWithMessagesForReadActionProvider,
   cc: ControllerComponents,
   val metrics: Metrics
 )(implicit ec: ExecutionContext)

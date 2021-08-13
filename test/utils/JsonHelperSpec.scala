@@ -26,10 +26,6 @@ import play.api.test.Helpers.running
 
 class JsonHelperSpec extends AnyFreeSpec with Matchers with MockitoSugar {
 
-  val appBuilder: GuiceApplicationBuilder =
-    new GuiceApplicationBuilder()
-      .configure("message-translation-file" -> "TestMessageTranslation.json")
-
   class Harness() extends JsonHelper
 
   "JsonHelper" - {
@@ -37,28 +33,18 @@ class JsonHelperSpec extends AnyFreeSpec with Matchers with MockitoSugar {
     "must convert xml to json" in {
       val xml = "<xml><test1>one</test1><test1>two</test1></xml>"
 
-      val app = appBuilder.build()
-
-      running(app) {
-        val jsonHelper = new Harness
-
-        val expectedResult: JsObject = Json.obj("xml" -> Json.obj("test1" -> Json.arr("one", "two")))
-        val result: JsObject         = jsonHelper.convertXmlToJson(xml)
-        result mustBe expectedResult
-      }
+      val jsonHelper               = new Harness
+      val expectedResult: JsObject = Json.obj("xml" -> Json.obj("test1" -> Json.arr("one", "two")))
+      val result: JsObject         = jsonHelper.convertXmlToJson(xml)
+      result mustBe expectedResult
     }
 
     "must return empty JsObject on failing to convert xml to json" in {
       val invalidXml = "<xml><test1>one</test1><test1></xml>"
 
-      val app = appBuilder.build()
-
-      running(app) {
-        val jsonHelper = new Harness
-
-        val result: JsObject = jsonHelper.convertXmlToJson(invalidXml)
-        result mustBe Json.obj()
-      }
+      val jsonHelper       = new Harness
+      val result: JsObject = jsonHelper.convertXmlToJson(invalidXml)
+      result mustBe Json.obj()
     }
   }
 }

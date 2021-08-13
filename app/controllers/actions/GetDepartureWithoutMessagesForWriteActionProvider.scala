@@ -14,12 +14,19 @@
  * limitations under the License.
  */
 
-package models.request
+package controllers.actions
 
-import models.DepartureWithoutMessages
-import models.MessageResponse
-import play.api.mvc.WrappedRequest
+import javax.inject.Inject
+import models.DepartureId
+import models.request.DepartureWithoutMessagesRequest
+import play.api.mvc.ActionBuilder
+import play.api.mvc.AnyContent
 
-case class DepartureResponseRequest[A](request: DepartureWithoutMessagesRequest[A], messageResponse: MessageResponse) extends WrappedRequest[A](request) {
-  def departure: DepartureWithoutMessages = request.departure
+class GetDepartureWithoutMessagesForWriteActionProvider @Inject()(
+  lock: LockActionProvider,
+  getDeparture: GetDepartureWithoutMessagesActionProvider
+) {
+
+  def apply(departureId: DepartureId): ActionBuilder[DepartureWithoutMessagesRequest, AnyContent] =
+    lock(departureId) andThen getDeparture(departureId)
 }

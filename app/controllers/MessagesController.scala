@@ -20,13 +20,13 @@ import audit.AuditService
 import audit.AuditType.DepartureCancellationRequestSubmitted
 import com.kenshoo.play.metrics.Metrics
 import controllers.actions.AuthenticateActionProvider
-import controllers.actions.AuthenticatedGetDepartureForReadActionProvider
-import controllers.actions.AuthenticatedGetDepartureForWriteActionProvider
+import controllers.actions.AuthenticatedGetDepartureWithMessagesForReadActionProvider
+import controllers.actions.AuthenticatedGetDepartureWithoutMessagesForWriteActionProvider
 import metrics.HasActionMetrics
 import models.MessageStatus.SubmissionFailed
-import models.request
 import models._
-import models.request.DepartureRequest
+import models.request.DepartureWithMessagesRequest
+import models.request.DepartureWithoutMessagesRequest
 import models.response.ResponseDepartureWithMessages
 import models.response.ResponseMessage
 import play.api.Logging
@@ -41,7 +41,6 @@ import java.time.OffsetDateTime
 
 import cats.data.OptionT
 import javax.inject.Inject
-import play.api.mvc.Results.NotFound
 import repositories.DepartureRepository
 
 import scala.concurrent.ExecutionContext
@@ -51,8 +50,8 @@ import scala.xml.NodeSeq
 class MessagesController @Inject()(
   cc: ControllerComponents,
   authenticate: AuthenticateActionProvider,
-  authenticateForRead: AuthenticatedGetDepartureForReadActionProvider,
-  authenticateForWrite: AuthenticatedGetDepartureForWriteActionProvider,
+  authenticateForReadWithMessages: AuthenticatedGetDepartureWithMessagesForReadActionProvider,
+  authenticateForWriteWithoutMessages: AuthenticatedGetDepartureWithoutMessagesForWriteActionProvider,
   departureService: DepartureService,
   auditService: AuditService,
   submitMessageService: SubmitMessageService,
@@ -67,8 +66,8 @@ class MessagesController @Inject()(
 
   def post(departureId: DepartureId): Action[NodeSeq] =
     withMetricsTimerAction("post-submit-message") {
-      authenticateForWrite(departureId).async(parse.xml) {
-        implicit request: DepartureRequest[NodeSeq] =>
+      authenticateForWriteWithoutMessages(departureId).async(parse.xml) {
+        implicit request: DepartureWithoutMessagesRequest[NodeSeq] =>
           MessageType.getMessageType(request.body) match {
             case Some(MessageType.DeclarationCancellationRequest) =>
               departureService
@@ -113,7 +112,7 @@ class MessagesController @Inject()(
 
   def getMessages(departureId: DepartureId, receivedSince: Option[OffsetDateTime]): Action[AnyContent] =
     withMetricsTimerAction("get-all-departure-messages") {
-      authenticateForRead(departureId) {
+      authenticateForReadWithMessages(departureId) {
         implicit request =>
           val response = ResponseDepartureWithMessages.build(request.departure, receivedSince)
           messagesCount.update(response.messages.length)

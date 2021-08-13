@@ -462,7 +462,7 @@ class DeparturesControllerSpec
         .build()
 
       val departure = Arbitrary.arbitrary[Departure].sample.value.copy(eoriNumber = "eori")
-      when(mockDepartureRepository.get(any(), any())).thenReturn(Future.successful(Some(departure)))
+      when(mockDepartureRepository.getWithoutMessages(any(), any())).thenReturn(Future.successful(Some(DepartureWithoutMessages.fromDeparture(departure))))
 
       running(application) {
         val request = FakeRequest(GET, routes.DeparturesController.get(DepartureId(1)).url)
@@ -482,7 +482,7 @@ class DeparturesControllerSpec
         .overrides(bind[DepartureRepository].toInstance(mockDepartureRepository))
         .build()
 
-      when(mockDepartureRepository.get(any(), any())).thenReturn(Future.successful(None))
+      when(mockDepartureRepository.getWithoutMessages(any(), any())).thenReturn(Future.successful(None))
 
       running(application) {
         val request = FakeRequest(GET, routes.DeparturesController.get(DepartureId(1)).url)
@@ -502,7 +502,7 @@ class DeparturesControllerSpec
         .build()
 
       val departure = Arbitrary.arbitrary[Departure].sample.value.copy(eoriNumber = "eori2")
-      when(mockDepartureRepository.get(any(), any())).thenReturn(Future.successful(Some(departure)))
+      when(mockDepartureRepository.getWithoutMessages(any(), any())).thenReturn(Future.successful(Some(DepartureWithoutMessages.fromDeparture(departure))))
 
       running(application) {
         val request = FakeRequest(GET, routes.DeparturesController.get(DepartureId(1)).url)
@@ -517,7 +517,7 @@ class DeparturesControllerSpec
     "must return an INTERNAL_SERVER_ERROR when we cannot retrieve the departure" in {
       val mockDepartureRepository = mock[DepartureRepository]
 
-      when(mockDepartureRepository.get(any(), any()))
+      when(mockDepartureRepository.getWithoutMessages(any(), any()))
         .thenReturn(Future.failed(new Exception))
 
       val application = baseApplicationBuilder
@@ -547,13 +547,14 @@ class DeparturesControllerSpec
         departure.status,
         departure.created,
         departure.lastUpdated,
-        departure.notificationBox
+        departure.notificationBox,
+        departure.nextMessageId,
+        departure.nextMessageCorrelationId
       )
       val responseDeparture  = ResponseDeparture.build(departure)
       val responseDepartures = ResponseDepartures(Seq(responseDeparture), 1, 1)
 
       when(mockDepartureRepository.fetchAllDepartures(any(), any(), any())).thenReturn(Future.successful(responseDepartures))
-
       val application = baseApplicationBuilder
         .overrides(bind[DepartureRepository].toInstance(mockDepartureRepository))
         .build()

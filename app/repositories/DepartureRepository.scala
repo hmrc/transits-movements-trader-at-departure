@@ -236,16 +236,55 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfi
     }
   }
 
-  def getWithoutMessages(departureId: DepartureId, channelFilter: ChannelType): Future[Option[DepartureWithoutMessages]] = {
-    val selector = Json.obj(
-      "_id"     -> departureId,
-      "channel" -> channelFilter
-    )
+  def getWithoutMessages(departureId: DepartureId): Future[Option[DepartureWithoutMessages]] = {
+    val nextMessageId = Json.obj("nextMessageId" -> Json.obj("$size" -> "$messages"))
 
-    collection.flatMap {
-      _.find(selector, None)
-        .one[DepartureWithoutMessages]
-    }
+    val projection = DepartureWithoutMessages.projection ++ nextMessageId
+
+    collection
+      .flatMap {
+        c =>
+          c.aggregateWith[DepartureWithoutMessages](allowDiskUse = true) {
+              _ =>
+                import c.aggregationFramework._
+
+                val initialFilter: PipelineOperator =
+                  Match(Json.obj("_id" -> departureId))
+
+                val transformations = List[PipelineOperator](Project(projection))
+                (initialFilter, transformations)
+
+            }
+            .headOption
+
+      }
+      .map(opt => opt.map(d => d.copy(nextMessageId = MessageId(d.nextMessageId.value + 1))))
+
+  }
+
+  def getWithoutMessages(departureId: DepartureId, channelFilter: ChannelType): Future[Option[DepartureWithoutMessages]] = {
+    val nextMessageId = Json.obj("nextMessageId" -> Json.obj("$size" -> "$messages"))
+
+    val projection = DepartureWithoutMessages.projection ++ nextMessageId
+
+    collection
+      .flatMap {
+        c =>
+          c.aggregateWith[DepartureWithoutMessages](allowDiskUse = true) {
+              _ =>
+                import c.aggregationFramework._
+
+                val initialFilter: PipelineOperator =
+                  Match(Json.obj("_id" -> departureId, "channel" -> channelFilter))
+
+                val transformations = List[PipelineOperator](Project(projection))
+                (initialFilter, transformations)
+
+            }
+            .headOption
+
+      }
+      .map(opt => opt.map(d => d.copy(nextMessageId = MessageId(d.nextMessageId.value + 1))))
   }
 
   def getMessage(departureId: DepartureId, channelFilter: ChannelType, messageId: MessageId): Future[Option[Message]] =
@@ -349,23 +388,33 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfi
     val countSelector = Json.obj("eoriNumber" -> eoriNumber, "channel" -> channelFilter)
     val selector      = countSelector ++ dateFilter
 
+    val nextMessageId = Json.obj("nextMessageId" -> Json.obj("$size" -> "$messages"))
+
+    val projection = DepartureWithoutMessages.projection ++ nextMessageId
+
     collection.flatMap {
-      coll =>
-        val fetchCount = coll.count(Some(countSelector))
+      c =>
+        val fetchCount = c.count(Some(countSelector))
 
-        val fetchResults = coll
-          .find(selector, DepartureWithoutMessages.projection)
-          .sort(Json.obj("lastUpdated" -> -1))
-          .cursor[DepartureWithoutMessages]()
-          .collect[Seq](appConfig.maxRowsReturned(channelFilter), Cursor.FailOnError())
+        val fetchResults = c.aggregateWith[DepartureWithoutMessages](allowDiskUse = true) {
+          _ =>
+            import c.aggregationFramework._
 
-        (fetchCount, fetchResults).mapN {
-          case (count, results) =>
-            ResponseDepartures(
-              departures = results.map(ResponseDeparture.build),
-              retrievedDepartures = results.length,
-              totalDepartures = count
-            )
+            val initialFilter: PipelineOperator =
+              Match(selector)
+
+            val projected       = List[PipelineOperator](Project(projection))
+            val sort            = List[PipelineOperator](Sort(Descending("lastUpdated")))
+            val limited         = List[PipelineOperator](Limit(appConfig.maxRowsReturned(channelFilter)))
+            val transformations = projected ++ sort ++ limited
+
+            (initialFilter, transformations)
+        }
+        for {
+          results <- fetchResults.collect[Seq](appConfig.maxRowsReturned(channelFilter), Cursor.FailOnError())
+          count   <- fetchCount
+        } yield {
+          ResponseDepartures(results.map(ResponseDeparture.build), results.length, count)
         }
     }
   }
