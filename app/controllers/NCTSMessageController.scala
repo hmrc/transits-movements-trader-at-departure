@@ -19,7 +19,6 @@ package controllers
 import audit.AuditService
 import com.kenshoo.play.metrics.Metrics
 import controllers.actions.CheckMessageTypeActionProvider
-import controllers.actions.GetDepartureWithMessagesForWriteActionProvider
 import controllers.actions.GetDepartureWithoutMessagesForWriteActionProvider
 import metrics.HasActionMetrics
 import models.DepartureMessageNotification
@@ -46,7 +45,6 @@ import scala.xml.NodeSeq
 
 class NCTSMessageController @Inject()(
   cc: ControllerComponents,
-  getDeparture: GetDepartureWithMessagesForWriteActionProvider,
   getDepartureWithoutMessages: GetDepartureWithoutMessagesForWriteActionProvider,
   checkMessageType: CheckMessageTypeActionProvider,
   auditService: AuditService,

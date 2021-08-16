@@ -22,7 +22,6 @@ import models.request.AuthenticatedRequest
 import models.request.DepartureWithMessagesRequest
 import play.api.Logging
 import play.api.mvc.ActionRefiner
-import play.api.mvc.Request
 import play.api.mvc.Result
 import play.api.mvc.Results.InternalServerError
 import play.api.mvc.Results.NotFound
@@ -30,29 +29,6 @@ import repositories.DepartureRepository
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
-
-private[actions] class GetDepartureWithMessagesActionProvider @Inject()(
-  repository: DepartureRepository
-)(implicit ec: ExecutionContext) {
-
-  def apply(departureId: DepartureId): ActionRefiner[Request, DepartureWithMessagesRequest] =
-    new GetDepartureWithMessagesAction(departureId, repository)
-}
-
-private[actions] class GetDepartureWithMessagesAction(
-  departureId: DepartureId,
-  repository: DepartureRepository
-)(implicit val executionContext: ExecutionContext)
-    extends ActionRefiner[Request, DepartureWithMessagesRequest] {
-
-  override protected def refine[A](request: Request[A]): Future[Either[Result, DepartureWithMessagesRequest[A]]] =
-    repository.get(departureId).map {
-      case Some(departure) =>
-        Right(DepartureWithMessagesRequest(request, departure, departure.channel))
-      case None =>
-        Left(NotFound)
-    }
-}
 
 private[actions] class AuthenticatedGetDepartureWithMessagesActionProvider @Inject()(
   repository: DepartureRepository
