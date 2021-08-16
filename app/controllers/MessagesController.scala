@@ -19,10 +19,12 @@ package controllers
 import audit.AuditService
 import audit.AuditType.DepartureCancellationRequestSubmitted
 import com.kenshoo.play.metrics.Metrics
+import controllers.actions.AuthenticateActionProvider
 import controllers.actions.AuthenticatedGetDepartureForReadActionProvider
 import controllers.actions.AuthenticatedGetDepartureForWriteActionProvider
 import metrics.HasActionMetrics
 import models.MessageStatus.SubmissionFailed
+import models.request
 import models._
 import models.request.DepartureRequest
 import models.response.ResponseDepartureWithMessages
@@ -35,20 +37,26 @@ import play.api.mvc.ControllerComponents
 import services.DepartureService
 import services.SubmitMessageService
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
-
 import java.time.OffsetDateTime
+
+import cats.data.OptionT
 import javax.inject.Inject
+import play.api.mvc.Results.NotFound
+import repositories.DepartureRepository
+
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.xml.NodeSeq
 
 class MessagesController @Inject()(
   cc: ControllerComponents,
+  authenticate: AuthenticateActionProvider,
   authenticateForRead: AuthenticatedGetDepartureForReadActionProvider,
   authenticateForWrite: AuthenticatedGetDepartureForWriteActionProvider,
   departureService: DepartureService,
   auditService: AuditService,
   submitMessageService: SubmitMessageService,
+  departureRepository: DepartureRepository,
   val metrics: Metrics
 )(implicit ec: ExecutionContext)
     extends BackendController(cc)
@@ -117,13 +125,19 @@ class MessagesController @Inject()(
 
   def getMessage(departureId: DepartureId, messageId: MessageId): Action[AnyContent] =
     withMetricsTimerAction("get-departure-message") {
-      authenticateForRead(departureId) {
+      authenticate().async {
         implicit request =>
-          val messages = request.departure.messages.toList
+          val result = for {
+            departure <- OptionT(departureRepository.getWithoutMessages(departureId, request.channel))
+            if departure.eoriNumber == request.eoriNumber
+            message <- OptionT(departureRepository.getMessage(departureId, request.channel, messageId))
+            if message.optStatus != Some(SubmissionFailed)
+          } yield {
+            Ok(Json.toJsObject(ResponseMessage.build(departureId, message)))
+          }
 
-          if (messages.isDefinedAt(messageId.index) && messages(messageId.index).optStatus != Some(SubmissionFailed))
-            Ok(Json.toJsObject(ResponseMessage.build(departureId, messages(messageId.index))))
-          else NotFound
+          result.getOrElse(NotFound)
       }
+
     }
 }

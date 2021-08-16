@@ -169,6 +169,14 @@ trait ModelGenerators extends BaseGenerators with JavaTimeGenerators with JsonHe
       } yield models.Departure(id, channel, eN, Some(mrn), rN, status, created, lastUpdated, messages.length + 1, messages, notificationBox)
     }
 
+  implicit lazy val arbitraryDepartureWithoutMessages: Arbitrary[DepartureWithoutMessages] =
+    Arbitrary {
+      arbitraryDeparture.arbitrary.map {
+        dep =>
+          DepartureWithoutMessages.fromDeparture(dep)
+      }
+    }
+
   implicit lazy val arbitraryFailure: Arbitrary[SubmissionFailure] =
     Arbitrary(Gen.oneOf(SubmissionFailureInternal, SubmissionFailureExternal))
 

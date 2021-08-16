@@ -619,11 +619,13 @@ class MessagesControllerSpec
     "must return Ok with the retrieved message and state SubmissionSuccessful" in {
 
       val message   = Arbitrary.arbitrary[MessageWithStatus].sample.value.copy(messageId = MessageId(1), status = SubmissionSucceeded)
-      val departure = Arbitrary.arbitrary[Departure].sample.value.copy(messages = NonEmptyList.one(message), eoriNumber = "eori")
+      val departure = Arbitrary.arbitrary[DepartureWithoutMessages].sample.value.copy(eoriNumber = "eori")
 
       val mockDepartureRepository = mock[DepartureRepository]
-      when(mockDepartureRepository.get(any(), any()))
+      when(mockDepartureRepository.getWithoutMessages(any(), any()))
         .thenReturn(Future.successful(Some(departure)))
+      when(mockDepartureRepository.getMessage(any(), any(), any()))
+        .thenReturn(Future.successful(Some(message)))
 
       val application =
         baseApplicationBuilder
@@ -642,11 +644,13 @@ class MessagesControllerSpec
 
     "must return Ok with the retrieved message when it has no state" in {
       val message   = Arbitrary.arbitrary[MessageWithoutStatus].sample.value.copy(messageId = MessageId(1))
-      val departure = Arbitrary.arbitrary[Departure].sample.value.copy(messages = NonEmptyList.one(message), eoriNumber = "eori")
+      val departure = Arbitrary.arbitrary[DepartureWithoutMessages].sample.value.copy(eoriNumber = "eori")
 
       val mockDepartureRepository = mock[DepartureRepository]
-      when(mockDepartureRepository.get(any(), any()))
+      when(mockDepartureRepository.getWithoutMessages(any(), any()))
         .thenReturn(Future.successful(Some(departure)))
+      when(mockDepartureRepository.getMessage(any(), any(), any()))
+        .thenReturn(Future.successful(Some(message)))
 
       val application =
         baseApplicationBuilder
@@ -666,7 +670,7 @@ class MessagesControllerSpec
     "must return NOT FOUND" - {
       "when departure is not found" in {
         val mockDepartureRepository = mock[DepartureRepository]
-        when(mockDepartureRepository.get(any(), any()))
+        when(mockDepartureRepository.getWithoutMessages(any(), any()))
           .thenReturn(Future.successful(None))
 
         val application =
@@ -686,11 +690,13 @@ class MessagesControllerSpec
 
       "when message does not exist" in {
         val message   = Arbitrary.arbitrary[MessageWithStatus].sample.value.copy(status = SubmissionSucceeded)
-        val departure = Arbitrary.arbitrary[Departure].sample.value.copy(messages = NonEmptyList.one(message), eoriNumber = "eori")
+        val departure = Arbitrary.arbitrary[DepartureWithoutMessages].sample.value.copy(eoriNumber = "eori")
 
         val mockDepartureRepository = mock[DepartureRepository]
-        when(mockDepartureRepository.get(any(), any()))
+        when(mockDepartureRepository.getWithoutMessages(any(), any()))
           .thenReturn(Future.successful(Some(departure)))
+        when(mockDepartureRepository.getMessage(any(), any(), any()))
+          .thenReturn(Future.successful(None))
 
         val application =
           baseApplicationBuilder
@@ -709,11 +715,13 @@ class MessagesControllerSpec
 
       "when status is not equal to successful" in {
         val message   = Arbitrary.arbitrary[MessageWithStatus].sample.value.copy(status = SubmissionFailed)
-        val departure = Arbitrary.arbitrary[Departure].sample.value.copy(messages = NonEmptyList.one(message), eoriNumber = "eori")
+        val departure = Arbitrary.arbitrary[DepartureWithoutMessages].sample.value.copy(eoriNumber = "eori")
 
         val mockDepartureRepository = mock[DepartureRepository]
-        when(mockDepartureRepository.get(any(), any()))
+        when(mockDepartureRepository.getWithoutMessages(any(), any()))
           .thenReturn(Future.successful(Some(departure)))
+        when(mockDepartureRepository.getMessage(any(), any(), any()))
+          .thenReturn(Future.successful(Some(message)))
 
         val application =
           baseApplicationBuilder
@@ -732,11 +740,13 @@ class MessagesControllerSpec
 
       "when message belongs to a departure the user cannot access" in {
         val message   = Arbitrary.arbitrary[MessageWithStatus].sample.value.copy(status = SubmissionSucceeded)
-        val departure = Arbitrary.arbitrary[Departure].sample.value.copy(messages = NonEmptyList.one(message), eoriNumber = "eori2")
+        val departure = Arbitrary.arbitrary[DepartureWithoutMessages].sample.value.copy(eoriNumber = "eori2")
 
         val mockDepartureRepository = mock[DepartureRepository]
-        when(mockDepartureRepository.get(any(), any()))
+        when(mockDepartureRepository.getWithoutMessages(any(), any()))
           .thenReturn(Future.successful(Some(departure)))
+        when(mockDepartureRepository.getMessage(any(), any(), any()))
+          .thenReturn(Future.successful(Some(message)))
 
         val application =
           baseApplicationBuilder

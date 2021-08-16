@@ -50,13 +50,13 @@ import reactivemongo.play.json.ImplicitBSONHandlers.JsObjectDocumentWriter
 import reactivemongo.play.json.collection.JSONCollection
 import utils.Format
 import utils.JsonHelper
-
 import java.time.Clock
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.reflect.ClassTag
 import scala.util.Failure
@@ -137,6 +137,36 @@ class DepartureRepositorySpec
       }
     }
 
+    "get(departureId: DepartureId)" - {
+      "must get an departure when it exists and has the right channel type" in {
+        database.flatMap(_.drop()).futureValue
+
+        val departure = arbitrary[Departure].sample.value
+
+        service.insert(departure).futureValue
+        val result = service.get(departure.departureId)
+
+        whenReady(result) {
+          r =>
+            r.value mustEqual departure
+        }
+      }
+
+      "must return None when an departure does not exist" in {
+        database.flatMap(_.drop()).futureValue
+
+        val departure = arbitrary[Departure].sample.value copy(departureId = DepartureId(1))
+
+        service.insert(departure).futureValue
+        val result = service.get(DepartureId(2))
+
+        whenReady(result) {
+          r =>
+            r.isDefined mustBe false
+        }
+      }
+    }
+
     "get(departureId: DepartureId, channelFilter: ChannelType)" - {
       "must get an departure when it exists and has the right channel type" in {
         database.flatMap(_.drop()).futureValue
@@ -180,6 +210,51 @@ class DepartureRepositorySpec
         }
       }
     }
+
+    "getWithoutMessages(departureId: DepartureId, channelFilter: ChannelType)" - {
+      "must get an departure when it exists and has the right channel type" in {
+        database.flatMap(_.drop()).futureValue
+
+        val departure = arbitrary[Departure].sample.value.copy(channel = api)
+        val departureWithoutMessages = DepartureWithoutMessages.fromDeparture(departure)
+        service.insert(departure).futureValue
+        val result = service.getWithoutMessages(departure.departureId, departure.channel)
+
+        whenReady(result) {
+          r =>
+            r.value mustEqual departureWithoutMessages
+        }
+      }
+
+      "must return None when an departure does not exist" in {
+        database.flatMap(_.drop()).futureValue
+
+        val departure = arbitrary[Departure].sample.value copy(departureId = DepartureId(1), channel = api)
+
+        service.insert(departure).futureValue
+        val result = service.getWithoutMessages(DepartureId(2), web)
+
+        whenReady(result) {
+          r =>
+            r.isDefined mustBe false
+        }
+      }
+
+      "must return None when a departure exists, but with a different channel type" in {
+        database.flatMap(_.drop()).futureValue
+
+        val departure = arbitrary[Departure].sample.value copy(departureId = DepartureId(1), api)
+
+        service.insert(departure).futureValue
+        val result = service.get(DepartureId(1), web)
+
+        whenReady(result) {
+          r =>
+            r.isDefined mustBe false
+        }
+      }
+    }
+
 
     "setMessageState" - {
       "must update the status of a specific message in an existing departure" in {
@@ -736,6 +811,52 @@ class DepartureRepositorySpec
           val departures = service.fetchAllDepartures(eoriNumber, api, Some(dateTime)).futureValue
 
           departures mustBe ResponseDepartures(Seq(departure4, departure2).map(ResponseDeparture.build), 2, 4)
+        }
+      }
+    }
+
+    "getMessage" - {
+      "must return Some(message) if departure and message exists" in {
+        database.flatMap(_.drop()).futureValue
+
+        val message = arbitrary[models.MessageWithStatus].sample.value.copy(messageId = MessageId(1))
+        val messages = new NonEmptyList(message, Nil)
+        val departure = arbitrary[Departure].sample.value.copy(channel = api, messages = messages)
+
+        service.insert(departure).futureValue
+        val result = service.getMessage(departure.departureId, departure.channel, MessageId(1))
+
+        whenReady(result) {
+          r =>
+            r.isDefined mustBe true
+            r.value mustEqual message
+        }
+      }
+
+      "must return None if departure does not exist" in {
+        database.flatMap(_.drop()).futureValue
+
+        val result = service.getMessage(DepartureId(1), api, MessageId(1))
+
+        whenReady(result) {
+          r =>
+            r.isDefined mustBe false
+        }
+      }
+
+      "must return None if message does not exist" in {
+        database.flatMap(_.drop()).futureValue
+
+        val message = arbitrary[models.MessageWithStatus].sample.value.copy(messageId = MessageId(1))
+        val messages = new NonEmptyList(message, Nil)
+        val departure = arbitrary[Departure].sample.value.copy(channel = api, messages = messages)
+
+        service.insert(departure).futureValue
+        val result = service.getMessage(departure.departureId, departure.channel, MessageId(5))
+
+        whenReady(result) {
+          r =>
+            r.isDefined mustBe false
         }
       }
     }
