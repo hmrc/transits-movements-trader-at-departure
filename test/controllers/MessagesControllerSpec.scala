@@ -689,7 +689,6 @@ class MessagesControllerSpec
       }
 
       "when message does not exist" in {
-        val message   = Arbitrary.arbitrary[MessageWithStatus].sample.value.copy(status = SubmissionSucceeded)
         val departure = Arbitrary.arbitrary[DepartureWithoutMessages].sample.value.copy(eoriNumber = "eori")
 
         val mockDepartureRepository = mock[DepartureRepository]

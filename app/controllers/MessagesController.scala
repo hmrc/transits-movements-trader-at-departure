@@ -24,7 +24,6 @@ import controllers.actions.AuthenticatedGetDepartureForReadActionProvider
 import controllers.actions.AuthenticatedGetDepartureForWriteActionProvider
 import metrics.HasActionMetrics
 import models.MessageStatus.SubmissionFailed
-import models.request
 import models._
 import models.request.DepartureRequest
 import models.response.ResponseDepartureWithMessages
@@ -41,7 +40,6 @@ import java.time.OffsetDateTime
 
 import cats.data.OptionT
 import javax.inject.Inject
-import play.api.mvc.Results.NotFound
 import repositories.DepartureRepository
 
 import scala.concurrent.ExecutionContext

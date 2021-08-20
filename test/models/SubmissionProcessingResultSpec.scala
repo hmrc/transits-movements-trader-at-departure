@@ -20,7 +20,6 @@ import base.SpecBase
 import generators.ModelGenerators
 import models.SubmissionProcessingResult.SubmissionFailureExternal
 import models.SubmissionProcessingResult.SubmissionFailureInternal
-import models.SubmissionProcessingResult.SubmissionFailureRejected
 import models.SubmissionProcessingResult.SubmissionSuccess
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 

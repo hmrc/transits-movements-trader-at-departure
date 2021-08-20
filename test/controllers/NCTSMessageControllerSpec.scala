@@ -87,9 +87,8 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
     None
   )
 
-  private val testBoxId    = "1c5b9365-18a6-55a5-99c9-83a091ac7f26"
-  private val testClientId = "X5ZasuQLH0xqKooV_IEw6yjQNfEa"
-  private val testBox      = Box(BoxId(testBoxId), Constants.BoxName)
+  private val testBoxId = "1c5b9365-18a6-55a5-99c9-83a091ac7f26"
+  private val testBox   = Box(BoxId(testBoxId), Constants.BoxName)
 
   private val acknowledgedDepartureWithNotificationBox = acknowledgedDeparture.copy(notificationBox = Some(testBox))
 

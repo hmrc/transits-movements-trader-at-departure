@@ -30,7 +30,6 @@ import models.ChannelType.web
 import models.Departure
 import models.DepartureId
 import models.DepartureStatus
-import models.DepartureWithoutMessages
 import models.MessageSender
 import models.MessageStatus.SubmissionPending
 import models.MessageType
@@ -537,18 +536,7 @@ class DeparturesControllerSpec
     "must return all departures from database" in {
       val mockDepartureRepository = mock[DepartureRepository]
 
-      val departure = Arbitrary.arbitrary[Departure].sample.value.copy(eoriNumber = "eori")
-      val departureWithoutMessages = DepartureWithoutMessages(
-        departure.departureId,
-        departure.channel,
-        departure.eoriNumber,
-        departure.movementReferenceNumber,
-        departure.referenceNumber,
-        departure.status,
-        departure.created,
-        departure.lastUpdated,
-        departure.notificationBox
-      )
+      val departure          = Arbitrary.arbitrary[Departure].sample.value.copy(eoriNumber = "eori")
       val responseDeparture  = ResponseDeparture.build(departure)
       val responseDepartures = ResponseDepartures(Seq(responseDeparture), 1, 1)
 

@@ -21,7 +21,6 @@ import java.time.LocalDateTime
 import controllers.routes
 import models.DepartureId
 import models.Message
-import models.MessageId
 import play.api.libs.json.Json
 import play.api.libs.json.OWrites
 import utils.NodeSeqFormat

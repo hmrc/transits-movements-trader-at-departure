@@ -58,7 +58,81 @@ class PDFRetrievalControllerISpec extends ApiSpecBase with JsonHelper {
   )
 
   "/movements/departures/:departureId/accompanying-document" - {
-    "should return a PDF if all data is present" in {
+    "should return a Tsad PDF if all data is present" in {
+
+      val requestId: String = UUID.randomUUID().toString
+
+      val departure: Departure = Departure(
+        DepartureId(12),
+        ChannelType.web,
+        "1234567",
+        None,
+        "SomeReference",
+        DepartureStatus.ReleaseForTransit,
+        LocalDateTime.now(),
+        LocalDateTime.now(),
+        3,
+        NonEmptyList(
+          MessageWithStatus(
+            MessageId(1),
+            LocalDateTime.now(),
+            MessageType.DepartureDeclaration,
+            <departure></departure>,
+            MessageStatus.SubmissionSucceeded,
+            1,
+            convertXmlToJson(<departure></departure>.toString)
+          ),
+          List(
+            MessageWithoutStatus(
+              MessageId(2),
+              LocalDateTime.now(),
+              MessageType.ReleaseForTransit,
+              <released><HEAHEA><SecHEA358>1</SecHEA358></HEAHEA></released>,
+              2,
+              convertXmlToJson(<released><HEAHEA><SecHEA358>1</SecHEA358></HEAHEA></released>.toString)
+            )
+          )
+        ),
+        None
+      )
+
+      stubForPostWithResponseBody(
+        url = "/auth/authorise",
+        body = """{
+          | "authorisedEnrolments": [{
+          |   "key": "HMCE-NCTS-ORG",
+          |   "identifiers": [{
+          |     "key": "VatRegNoTURN",
+          |     "value": "1234567"
+          |   }],
+          |   "state": "Active"
+          | }]
+          |}""".stripMargin.getBytes(),
+        requestId = requestId
+      )
+
+      database.flatMap(_.drop()).futureValue
+      departureRepo.insert(departure).futureValue
+      departureRepo.get(departure.departureId).futureValue mustBe Some(departure)
+
+      stubForPostWithResponseBody(
+        url = "/transit-movements-trader-manage-documents/transit-security-accompanying-document",
+        body = pdfFile,
+        requestId = requestId,
+        extraHeaders = Seq("Content-Type" -> "application/xml")
+      )
+
+      val response = wsClient
+        .url(s"http://localhost:$port/transits-movements-trader-at-departure/movements/departures/12/accompanying-document")
+        .withHttpHeaders("channel" -> "web", "X-Request-ID" -> requestId)
+        .get()
+        .futureValue
+
+      response.status mustBe OK
+      response.bodyAsBytes mustBe pdfFile
+    }
+
+    "should return a Tad PDF if all data is present" in {
 
       val requestId: String = UUID.randomUUID().toString
 

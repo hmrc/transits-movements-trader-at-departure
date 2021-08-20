@@ -23,11 +23,11 @@ import config.AppConfig
 import metrics.HasMetrics
 import play.api.Logging
 import play.api.libs.ws.WSClient
-import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.xml.NodeSeq
+import uk.gov.hmrc.http.HeaderCarrier
 
 class ManageDocumentsConnector @Inject()(
   config: AppConfig,
@@ -40,14 +40,10 @@ class ManageDocumentsConnector @Inject()(
   def getTadPDF(ie29Message: NodeSeq)(implicit hc: HeaderCarrier): Future[Either[TADErrorResponse, (ByteString, Map[String, Seq[String]])]] =
     withMetricsTimerAsync("get-tad-pdf") {
       timer =>
-        val serviceUrl = s"${config.manageDocumentsUrl}/transit-accompanying-document"
-        val headers = Seq(
-          "Content-Type" -> "application/xml",
-          "User-Agent"   -> config.appName
-        ) ++ hc.headers
-
+        val serviceUrl     = s"${config.manageDocumentsUrl}/transit-accompanying-document"
+        val requestHeaders = hc.headers(Seq("X-Request-Id")) ++ Seq(("Content-Type", "application/xml"), ("User-Agent", config.appName))
         ws.url(serviceUrl)
-          .withHttpHeaders(headers: _*)
+          .withHttpHeaders(requestHeaders: _*)
           .post(ie29Message)
           .map(
             response =>
@@ -65,14 +61,10 @@ class ManageDocumentsConnector @Inject()(
   def getTsadPDF(ie29Message: NodeSeq)(implicit hc: HeaderCarrier): Future[Either[TADErrorResponse, (ByteString, Map[String, Seq[String]])]] =
     withMetricsTimerAsync("get-tsad-pdf") {
       timer =>
-        val serviceUrl = s"${config.manageDocumentsUrl}/transit-security-accompanying-document"
-        val headers = Seq(
-          "Content-Type" -> "application/xml",
-          "User-Agent"   -> config.appName
-        ) ++ hc.headers
-
+        val serviceUrl     = s"${config.manageDocumentsUrl}/transit-security-accompanying-document"
+        val requestHeaders = hc.headers(Seq("X-Request-Id")) ++ Seq(("Content-Type", "application/xml"), ("User-Agent", config.appName))
         ws.url(serviceUrl)
-          .withHttpHeaders(headers: _*)
+          .withHttpHeaders(requestHeaders: _*)
           .post(ie29Message)
           .map(
             response =>
@@ -80,6 +72,7 @@ class ManageDocumentsConnector @Inject()(
                 timer.completeWithSuccess()
                 Right((response.bodyAsBytes, response.headers))
               } else {
+                println(response.status)
                 logger.warn(s"[getTsadPDF] returned an unexpected status (${response.status}) while trying to retrieve the TAD")
                 timer.completeWithFailure()
                 Left(UnexpectedResponse(response.status))

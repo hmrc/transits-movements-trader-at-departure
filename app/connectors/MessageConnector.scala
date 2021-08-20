@@ -70,9 +70,7 @@ class MessageConnector @Inject()(
           )
     }
 
-  private def addHeaders(messageType: MessageType, dateTime: OffsetDateTime, messageSender: MessageSender, channelType: ChannelType)(
-    implicit
-    headerCarrier: HeaderCarrier): Seq[(String, String)] =
+  private def addHeaders(messageType: MessageType, dateTime: OffsetDateTime, messageSender: MessageSender, channelType: ChannelType): Seq[(String, String)] =
     Seq(
       "Date"             -> Format.dateFormattedForHeader(dateTime),
       "Content-Type"     -> "application/xml",

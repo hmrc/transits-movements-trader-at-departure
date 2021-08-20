@@ -21,16 +21,11 @@ import models.DepartureId
 import models.request.DepartureRequest
 import play.api.mvc.ActionBuilder
 import play.api.mvc.AnyContent
-import play.api.mvc.BodyParsers
-
-import scala.concurrent.ExecutionContext
 
 class AuthenticatedGetDepartureForWriteActionProvider @Inject()(
   lock: LockActionProvider,
   authenticate: AuthenticateActionProvider,
-  getDeparture: AuthenticatedGetDepartureActionProvider,
-  ec: ExecutionContext,
-  parser: BodyParsers.Default
+  getDeparture: AuthenticatedGetDepartureActionProvider
 ) {
 
   def apply(departureId: DepartureId): ActionBuilder[DepartureRequest, AnyContent] =
