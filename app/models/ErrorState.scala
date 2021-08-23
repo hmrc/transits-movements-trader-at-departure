@@ -20,34 +20,62 @@ sealed trait ErrorState {
   val reason: String
 }
 
-case class SubmissionSuccess(departure: Departure)
+sealed trait ExternalError                                                            extends ErrorState
+sealed abstract class InternalError(val reason: String)                               extends ErrorState
+sealed abstract class InternalException(val reason: String, val exception: Throwable) extends ErrorState
 
-sealed trait InternalError extends ErrorState
+object ExternalError {
 
-sealed trait ExternalError extends ErrorState
+  def unapply(errorState: ErrorState): Option[String] =
+    errorState match {
+      case x: ExternalError => Some(x.reason)
+      case _                => None
+    }
+}
 
-case class DepartureNotFound(reason: String)         extends ExternalError
-case class InvalidMessageType(reason: String)        extends ExternalError
-case class TransitionError(reason: String)           extends ExternalError
-case class XMLMRNError(reason: String)               extends ExternalError
-case class SubmissionFailureRejected(reason: String) extends ExternalError
+object InternalError {
+
+  def unapply(errorState: ErrorState): Option[String] =
+    errorState match {
+      case x: InternalError => Some(x.reason)
+      case _                => None
+    }
+}
+
+object InternalException {
+
+  def unapply(errorState: ErrorState): Option[(String, Throwable)] =
+    errorState match {
+      case x: InternalException => Some((x.reason, x.exception))
+      case _                    => None
+    }
+}
+
+final case class DepartureNotFound(reason: String)         extends ExternalError
+final case class InvalidMessageType(reason: String)        extends ExternalError
+final case class TransitionError(reason: String)           extends ExternalError
+final case class XMLMRNError(reason: String)               extends ExternalError
+final case class SubmissionFailureRejected(reason: String) extends ExternalError
 
 case object SubmissionFailureExternal extends ExternalError {
   override val reason: String = ""
 }
 
-case object SubmissionFailureInternal extends InternalError {
-  override val reason: String = ""
-}
+final case class DepartureAlreadyLocked(departureId: DepartureId)
+    extends InternalError(
+      s"Internal Submission Failure, Lock for departure id: ${departureId.index} already exists"
+    )
 
-case class FailedToLock(departureId: DepartureId, exception: Throwable) extends InternalError {
-  override val reason: String = s"failed to lock departure id: ${departureId.index} with Exception: ${exception.getMessage}"
-}
+case object SubmissionFailureInternal extends InternalError("Internal Submission Failure, SubmissionFailureInternal")
 
-case class FailedToUnlock(departureId: DepartureId, exception: Throwable) extends InternalError {
-  override val reason: String = s"failed to unlock departure id: ${departureId.index} with Exception: ${exception.getMessage}"
-}
+final class FailedToLock(departureId: DepartureId, exception: Throwable)
+    extends InternalException(
+      s"Internal Submission Failure, failed to lock departure id: ${departureId.index} with exception",
+      exception
+    )
 
-case class DepartureAlreadyLocked(departureId: DepartureId) extends InternalError {
-  override val reason: String = s"Lock for departure id: ${departureId.index} already exists"
-}
+final class FailedToUnlock(departureId: DepartureId, exception: Throwable)
+    extends InternalException(
+      s"Internal Submission Failure, failed to unlock departure id: ${departureId.index} with exception",
+      exception
+    )

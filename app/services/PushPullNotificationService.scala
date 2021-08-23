@@ -34,9 +34,9 @@ import scala.concurrent.Future
 import scala.util.control.NonFatal
 import scala.xml.NodeSeq
 
-class PushPullNotificationService @Inject()(connector: PushPullNotificationConnector) extends Logging {
+class PushPullNotificationService @Inject()(connector: PushPullNotificationConnector)(implicit ec: ExecutionContext) extends Logging {
 
-  def getBox(clientId: String)(implicit ec: ExecutionContext, hc: HeaderCarrier): Future[Option[Box]] =
+  def getBox(clientId: String)(implicit hc: HeaderCarrier): Future[Option[Box]] =
     connector
       .getBox(clientId)
       .map {
@@ -51,7 +51,7 @@ class PushPullNotificationService @Inject()(connector: PushPullNotificationConne
           None
       }
 
-  def sendPushNotification(boxId: BoxId, notification: DepartureMessageNotification)(implicit ec: ExecutionContext, hc: HeaderCarrier): Future[Unit] =
+  def sendPushNotification(boxId: BoxId, notification: DepartureMessageNotification)(implicit hc: HeaderCarrier): Future[Unit] =
     connector
       .postNotification(boxId, notification)
       .map {
@@ -67,8 +67,9 @@ class PushPullNotificationService @Inject()(connector: PushPullNotificationConne
 
   def sendPushNotificationIfBoxExists(
     departure: Departure,
-    messageResponse: MessageResponse
-  )(implicit hc: HeaderCarrier, ec: ExecutionContext, request: Request[NodeSeq]): Future[Unit] =
+    messageResponse: MessageResponse,
+    request: Request[NodeSeq]
+  )(implicit hc: HeaderCarrier): Future[Unit] =
     departure.notificationBox
       .map {
         box =>
@@ -77,7 +78,7 @@ class PushPullNotificationService @Inject()(connector: PushPullNotificationConne
               logger.error(s"Error while parsing message timestamp: ${error.message}")
               Future.unit
             case Right(timestamp) =>
-              val notification = DepartureMessageNotification.fromDepartureAndResponse(departure, messageResponse, timestamp)
+              val notification = DepartureMessageNotification.fromDepartureAndResponse(departure, messageResponse, timestamp, request)
               sendPushNotification(box.boxId, notification)
           }
       }

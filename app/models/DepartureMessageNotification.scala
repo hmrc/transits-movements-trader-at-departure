@@ -79,8 +79,12 @@ object DepartureMessageNotification {
     )
   }
 
-  def fromDepartureAndResponse(departure: Departure, messageResponse: MessageResponse, timestamp: LocalDateTime)(
-    implicit request: Request[NodeSeq]): DepartureMessageNotification = {
+  def fromDepartureAndResponse(
+    departure: Departure,
+    messageResponse: MessageResponse,
+    timestamp: LocalDateTime,
+    request: Request[NodeSeq]
+  ): DepartureMessageNotification = {
     val oneHundredKilobytes = 100000
     val messageId           = departure.nextMessageId
     val departureUrl        = requestId(departure.departureId)

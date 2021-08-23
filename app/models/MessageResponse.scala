@@ -45,7 +45,7 @@ object MessageResponse {
     XMLSubmissionNegativeAcknowledgementResponse
   )
 
-  def fromRequest(implicit request: Request[_]): Either[ErrorState, MessageResponse] =
+  def fromRequest(request: Request[_]): Either[ErrorState, MessageResponse] =
     request.headers.get("X-Message-Type") match {
       case Some(MessageType.PositiveAcknowledgement.code)              => Right(PositiveAcknowledgementResponse)
       case Some(MessageType.MrnAllocated.code)                         => Right(MrnAllocatedResponse)

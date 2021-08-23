@@ -213,9 +213,9 @@ class PushPullNotificationServiceSpec extends SpecBase with BeforeAndAfterEach w
             </HEAHEA>
           </CC015B>
 
-        implicit val request: Request[NodeSeq] = FakeRequest().withBody(requestXmlBody)
+        val request = FakeRequest().withBody(requestXmlBody)
 
-        val successfulResult: Future[Either[UpstreamErrorResponse, Unit]] = Future.successful(Right(()))
+        val successfulResult = Future.successful(Right[UpstreamErrorResponse, Unit](()))
 
         when(
           mockConnector.postNotification(BoxId(ArgumentMatchers.eq(testBoxId)), any[DepartureMessageNotification])(any[ExecutionContext], any[HeaderCarrier])
@@ -223,7 +223,7 @@ class PushPullNotificationServiceSpec extends SpecBase with BeforeAndAfterEach w
 
         val departure = initialDeparture.copy(notificationBox = Some(testBox))
 
-        Await.result(service.sendPushNotificationIfBoxExists(departure, ReleaseForTransitResponse), 30.seconds).mustEqual(())
+        Await.result(service.sendPushNotificationIfBoxExists(departure, ReleaseForTransitResponse, request), 30.seconds).mustEqual(())
 
         verify(mockConnector).postNotification(BoxId(ArgumentMatchers.eq(testBoxId)), any[DepartureMessageNotification])(any[ExecutionContext],
                                                                                                                          any[HeaderCarrier])
@@ -231,8 +231,8 @@ class PushPullNotificationServiceSpec extends SpecBase with BeforeAndAfterEach w
 
       "should not post if invalid xml is passed in" in {
 
-        val successfulResult: Future[Either[UpstreamErrorResponse, Unit]] = Future.successful(Right(()))
-        implicit val request: Request[NodeSeq]                            = FakeRequest().withBody(<Node></Node>)
+        val successfulResult = Future.successful(Right[UpstreamErrorResponse, Unit](()))
+        val request          = FakeRequest().withBody(<Node></Node>)
 
         when(
           mockConnector.postNotification(BoxId(ArgumentMatchers.eq(testBoxId)), any[DepartureMessageNotification])(any[ExecutionContext], any[HeaderCarrier])
@@ -240,16 +240,16 @@ class PushPullNotificationServiceSpec extends SpecBase with BeforeAndAfterEach w
 
         val departure = initialDeparture.copy(notificationBox = Some(testBox))
 
-        Await.result(service.sendPushNotificationIfBoxExists(departure, ReleaseForTransitResponse), 30.seconds).mustEqual(())
+        Await.result(service.sendPushNotificationIfBoxExists(departure, ReleaseForTransitResponse, request), 30.seconds).mustEqual(())
 
         verifyNoInteractions(mockConnector)
       }
 
       "should not post if no box exists" in {
-        val departure                          = initialDeparture.copy(notificationBox = None)
-        implicit val request: Request[NodeSeq] = FakeRequest().withBody(<Node></Node>)
+        val departure = initialDeparture.copy(notificationBox = None)
+        val request   = FakeRequest().withBody(<Node></Node>)
 
-        Await.result(service.sendPushNotificationIfBoxExists(departure, ReleaseForTransitResponse), 30.seconds).mustEqual(())
+        Await.result(service.sendPushNotificationIfBoxExists(departure, ReleaseForTransitResponse, request), 30.seconds).mustEqual(())
 
         verifyNoInteractions(mockConnector)
       }

@@ -22,12 +22,10 @@ import models.DepartureAlreadyLocked
 import models.DepartureId
 import models.FailedToLock
 import models.FailedToUnlock
-import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.{eq => eqTo}
 import org.mockito.Mockito.never
 import org.mockito.Mockito.times
 import org.mockito.Mockito.verify
-import org.mockito.Mockito.verifyNoInteractions
 import org.mockito.Mockito.when
 import repositories.LockRepository
 
@@ -71,7 +69,9 @@ class LockServiceSpec extends SpecBase {
       when(mockRepo.lock(eqTo(departureId))).thenReturn(Future.failed(exception))
       when(mockRepo.unlock(eqTo(departureId))).thenReturn(Future.successful(()))
 
-      service.withLock(departureId)(EitherT.fromEither(Right("Hello"))).value.futureValue mustBe Left(FailedToLock(departureId, exception))
+      val result = service.withLock(departureId)(EitherT.fromEither(Right("Hello"))).value.futureValue
+
+      result.left.value.reason mustBe (new FailedToLock(departureId, exception)).reason
 
       verify(mockRepo).lock(eqTo(departureId))
       verify(mockRepo).unlock(eqTo(departureId))
@@ -83,7 +83,8 @@ class LockServiceSpec extends SpecBase {
       when(mockRepo.lock(eqTo(departureId))).thenReturn(Future.successful(true))
       when(mockRepo.unlock(eqTo(departureId))).thenReturn(Future.failed(exception), Future.successful(()))
 
-      service.withLock(departureId)(EitherT.fromEither(Right("Hello"))).value.futureValue mustBe Left(FailedToUnlock(departureId, exception))
+      val result = service.withLock(departureId)(EitherT.fromEither(Right("Hello"))).value.futureValue
+      result.left.value.reason mustBe (new FailedToUnlock(departureId, exception)).reason
 
       verify(mockRepo).lock(eqTo(departureId))
       verify(mockRepo, times(2))

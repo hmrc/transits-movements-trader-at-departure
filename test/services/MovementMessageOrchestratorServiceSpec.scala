@@ -127,7 +127,7 @@ class MovementMessageOrchestratorServiceSpec extends SpecBase {
       verify(mockSaveMessageService).validateXmlSaveMessageUpdateMrn(any(), any(), any(), any(), any(), any())
       verify(mockSaveMessageService, never()).validateXmlAndSaveMessage(any(), any(), any(), any(), any())
       verify(mockAuditService).auditNCTSMessages(eqTo(ChannelType.Web), any(), eqTo(MrnAllocatedResponse), any())(any())
-      verify(mockPullPushService).sendPushNotificationIfBoxExists(any(), any())(any(), any(), any())
+      verify(mockPullPushService).sendPushNotificationIfBoxExists(any(), any(), any())(any())
     }
 
     "must successfully save the message" in new Setup {
@@ -154,7 +154,7 @@ class MovementMessageOrchestratorServiceSpec extends SpecBase {
       verify(mockSaveMessageService, never()).validateXmlSaveMessageUpdateMrn(any(), any(), any(), any(), any(), any())
       verify(mockSaveMessageService).validateXmlAndSaveMessage(any(), any(), any(), any(), any())
       verify(mockAuditService).auditNCTSMessages(eqTo(ChannelType.Web), any(), eqTo(ReleaseForTransitResponse), any())(any())
-      verify(mockPullPushService).sendPushNotificationIfBoxExists(any(), any())(any(), any(), any())
+      verify(mockPullPushService).sendPushNotificationIfBoxExists(any(), any(), any())(any())
     }
 
     "must return an invalid transition message for an invalid transition" in new Setup {

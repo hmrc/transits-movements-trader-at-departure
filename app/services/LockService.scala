@@ -27,6 +27,7 @@ import repositories.LockRepository
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
+import scala.util.control.NonFatal
 
 private[services] class LockService @Inject()(
   lockRepository: LockRepository
@@ -37,12 +38,12 @@ private[services] class LockService @Inject()(
       case true  => Right(())
       case false => Left(DepartureAlreadyLocked(departureId))
     } recover {
-      case e => Left(FailedToLock(departureId, e))
+      case NonFatal(e) => Left(new FailedToLock(departureId, e))
     })
 
   private def unlockDeparture(departureId: DepartureId)(implicit ec: ExecutionContext): EitherT[Future, ErrorState, Unit] =
     EitherT(lockRepository.unlock(departureId).map(Right.apply) recover {
-      case e => Left(FailedToUnlock(departureId, e))
+      case NonFatal(e) => Left(new FailedToUnlock(departureId, e))
     })
 
   def withLock[T](departureId: DepartureId)(action: => EitherT[Future, ErrorState, T]): EitherT[Future, ErrorState, T] =

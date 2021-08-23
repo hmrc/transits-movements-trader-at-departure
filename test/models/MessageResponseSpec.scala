@@ -26,7 +26,6 @@ import models.MessageType.NoReleaseForTransit
 import models.MessageType.PositiveAcknowledgement
 import models.MessageType.ReleaseForTransit
 import models.MessageType.WriteOffNotification
-import play.api.mvc.AnyContentAsEmpty
 import play.api.mvc.Request
 import play.api.test.FakeRequest
 
@@ -48,19 +47,19 @@ class MessageResponseSpec extends SpecBase {
     responseMessages foreach {
       case (str, response) =>
         s"convert from $str to $response" in {
-          implicit val request: Request[_] = FakeRequest().withHeaders("X-Message-Type" -> str)
-          MessageResponse.fromRequest mustBe Right(response)
+          val request: Request[_] = FakeRequest().withHeaders("X-Message-Type" -> str)
+          MessageResponse.fromRequest(request) mustBe Right(response)
         }
     }
 
     "return an invalid message type for an invalid message type" in {
-      implicit val request: Request[_] = FakeRequest().withHeaders("X-Message-Type" -> "Fake")
-      MessageResponse.fromRequest mustBe Left(InvalidMessageType("Received the following invalid response for X-Message-Type: Fake"))
+      val request: Request[_] = FakeRequest().withHeaders("X-Message-Type" -> "Fake")
+      MessageResponse.fromRequest(request) mustBe Left(InvalidMessageType("Received the following invalid response for X-Message-Type: Fake"))
     }
 
     "return an invalid message type for a missing message type header" in {
-      implicit val request: Request[_] = FakeRequest()
-      MessageResponse.fromRequest mustBe Left(InvalidMessageType("A 'X-Message-Type' header must be defined in the request."))
+      val request: Request[_] = FakeRequest()
+      MessageResponse.fromRequest(request) mustBe Left(InvalidMessageType("A 'X-Message-Type' header must be defined in the request."))
     }
 
   }

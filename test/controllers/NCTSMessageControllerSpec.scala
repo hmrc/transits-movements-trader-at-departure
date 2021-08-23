@@ -98,8 +98,6 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
 
   }
 
-  //TODO: Add tests for the happy path
-
   "post" - {
 
     "when a lock can be acquired" - {

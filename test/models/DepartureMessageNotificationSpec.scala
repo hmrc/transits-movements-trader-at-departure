@@ -110,7 +110,7 @@ class DepartureMessageNotificationSpec extends SpecBase with ScalaCheckDrivenPro
       val response  = responseGenerator.sample.value
       val departure = arbitraryDeparture.arbitrary.sample.value
 
-      implicit val request: FakeRequest[NodeSeq] = FakeRequest()
+      val request: FakeRequest[NodeSeq] = FakeRequest()
         .withBody[NodeSeq](testBody)
         .withHeaders(HeaderNames.CONTENT_LENGTH -> bodyLength.toString)
 
@@ -128,7 +128,7 @@ class DepartureMessageNotificationSpec extends SpecBase with ScalaCheckDrivenPro
           Some(testBody)
         )
 
-      val testNotification = DepartureMessageNotification.fromDepartureAndResponse(departure, response, now)
+      val testNotification = DepartureMessageNotification.fromDepartureAndResponse(departure, response, now, request)
 
       testNotification mustEqual expectedNotification
     }
@@ -137,7 +137,7 @@ class DepartureMessageNotificationSpec extends SpecBase with ScalaCheckDrivenPro
       val response  = responseGenerator.sample.value
       val departure = arbitraryDeparture.arbitrary.sample.value
 
-      implicit val request: Request[NodeSeq] = FakeRequest()
+      val request: Request[NodeSeq] = FakeRequest()
         .withBody[NodeSeq](testBody)
         .withHeaders(HeaderNames.CONTENT_LENGTH -> "100001")
 
@@ -155,7 +155,7 @@ class DepartureMessageNotificationSpec extends SpecBase with ScalaCheckDrivenPro
           None
         )
 
-      val testNotification = DepartureMessageNotification.fromDepartureAndResponse(departure, response, now)
+      val testNotification = DepartureMessageNotification.fromDepartureAndResponse(departure, response, now, request)
 
       testNotification mustEqual expectedNotification
     }

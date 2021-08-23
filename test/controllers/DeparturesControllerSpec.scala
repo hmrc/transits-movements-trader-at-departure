@@ -146,7 +146,7 @@ class DeparturesControllerSpec
 
         when(mockDepartureIdRepository.nextId()).thenReturn(Future.successful(newDeparture.departureId))
         when(mockSubmitMessageService.submitDeparture(any())(any())).thenReturn(Future.successful(SubmissionProcessingResult.SubmissionSuccess))
-        when(mockPushPullNotificationService.getBox(any())(any(), any())).thenReturn(Future.successful(None))
+        when(mockPushPullNotificationService.getBox(any())(any())).thenReturn(Future.successful(None))
 
         val application = baseApplicationBuilder
           .overrides(
@@ -196,7 +196,7 @@ class DeparturesControllerSpec
 
         when(mockDepartureIdRepository.nextId()).thenReturn(Future.successful(newDeparture.departureId))
         when(mockSubmitMessageService.submitDeparture(any())(any())).thenReturn(Future.successful(SubmissionProcessingResult.SubmissionSuccess))
-        when(mockPushPullNotificationService.getBox(any())(any(), any())).thenReturn(Future.successful(Some(testBox)))
+        when(mockPushPullNotificationService.getBox(any())(any())).thenReturn(Future.successful(Some(testBox)))
 
         val application = baseApplicationBuilder
           .overrides(
@@ -235,7 +235,7 @@ class DeparturesControllerSpec
         val mockPushPullNotificationService = mock[PushPullNotificationService]
 
         when(mockDepartureIdRepository.nextId()).thenReturn(Future.failed(new Exception))
-        when(mockPushPullNotificationService.getBox(any())(any(), any())).thenReturn(Future.successful(None))
+        when(mockPushPullNotificationService.getBox(any())(any())).thenReturn(Future.successful(None))
 
         val application = baseApplicationBuilder
           .overrides(
@@ -266,7 +266,7 @@ class DeparturesControllerSpec
 
         when(mockDepartureIdRepository.nextId()).thenReturn(Future.successful(departureId))
         when(mockSubmitMessageService.submitDeparture(any())(any())).thenReturn(Future.successful(SubmissionFailureInternal))
-        when(mockPushPullNotificationService.getBox(any())(any(), any())).thenReturn(Future.successful(None))
+        when(mockPushPullNotificationService.getBox(any())(any())).thenReturn(Future.successful(None))
 
         val application = baseApplicationBuilder
           .overrides(
@@ -299,7 +299,7 @@ class DeparturesControllerSpec
 
         when(mockDepartureIdRepository.nextId()).thenReturn(Future.successful(departureId))
         when(mockSubmitMessageService.submitDeparture(any())(any())).thenReturn(Future.successful(SubmissionFailureExternal))
-        when(mockPushPullNotificationService.getBox(any())(any(), any())).thenReturn(Future.successful(None))
+        when(mockPushPullNotificationService.getBox(any())(any())).thenReturn(Future.successful(None))
 
         val application = baseApplicationBuilder
           .overrides(
@@ -329,7 +329,7 @@ class DeparturesControllerSpec
         val mockPushPullNotificationService = mock[PushPullNotificationService]
 
         when(mockDepartureIdRepository.nextId()).thenReturn(Future.successful(DepartureId(1)))
-        when(mockPushPullNotificationService.getBox(any())(any(), any())).thenReturn(Future.successful(None))
+        when(mockPushPullNotificationService.getBox(any())(any())).thenReturn(Future.successful(None))
 
         val application =
           baseApplicationBuilder
@@ -365,7 +365,7 @@ class DeparturesControllerSpec
 
         when(mockDepartureIdRepository.nextId()).thenReturn(Future.successful(departureId))
         when(mockSubmitMessageService.submitDeparture(any())(any())).thenReturn(Future.successful(SubmissionFailureRejected(ErrorInPayload.responseBody)))
-        when(mockPushPullNotificationService.getBox(any())(any(), any())).thenReturn(Future.successful(None))
+        when(mockPushPullNotificationService.getBox(any())(any())).thenReturn(Future.successful(None))
 
         val application = baseApplicationBuilder
           .overrides(
@@ -393,7 +393,7 @@ class DeparturesControllerSpec
         val mockPushPullNotificationService = mock[PushPullNotificationService]
 
         when(mockDepartureIdRepository.nextId()).thenReturn(Future.successful(DepartureId(1)))
-        when(mockPushPullNotificationService.getBox(any())(any(), any())).thenReturn(Future.successful(None))
+        when(mockPushPullNotificationService.getBox(any())(any())).thenReturn(Future.successful(None))
 
         val application =
           baseApplicationBuilder
@@ -427,7 +427,7 @@ class DeparturesControllerSpec
 
         when(mockDepartureIdRepository.nextId()).thenReturn(Future.successful(departureId))
         when(mockSubmitMessageService.submitDeparture(any())(any())).thenReturn(Future.successful(SubmissionProcessingResult.SubmissionFailureInternal))
-        when(mockPushPullNotificationService.getBox(any())(any(), any())).thenReturn(Future.successful(None))
+        when(mockPushPullNotificationService.getBox(any())(any())).thenReturn(Future.successful(None))
 
         val application = baseApplicationBuilder
           .overrides(

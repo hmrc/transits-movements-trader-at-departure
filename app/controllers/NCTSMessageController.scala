@@ -23,6 +23,8 @@ import models.DepartureNotFound
 import models.ExternalError
 import models.MessageSender
 import models.SubmissionSuccess
+import models.InternalException
+import models.InternalError
 import play.api.Logging
 import play.api.mvc.Action
 import play.api.mvc.ControllerComponents
@@ -49,12 +51,15 @@ class NCTSMessageController @Inject()(
           orchestratorService.saveNCTSMessage(messageSender).map {
             case Left(_: DepartureAlreadyLocked) => Locked
             case Left(DepartureNotFound(_))      => Ok
-            case Left(value: ExternalError) =>
-              logger.warn(s"External Submission Failure ${value.reason}")
-              BadRequest(value.reason)
-            case Left(value: models.InternalError) =>
-              logger.warn(s"Internal Submission Failure ${value.reason}")
-              InternalServerError
+            case Left(ExternalError(reason)) =>
+              logger.warn(s"External Submission Failure $reason")
+              BadRequest(reason)
+            case Left(InternalException(reason, exception)) =>
+              logger.warn(reason, exception)
+              InternalServerError(reason)
+            case Left(InternalError(reason)) =>
+              logger.warn(reason)
+              InternalServerError(reason)
             case Right(SubmissionSuccess(departure)) =>
               Ok.withHeaders(
                 LOCATION -> routes.MessagesController.getMessage(departure.departureId, departure.nextMessageId).url
