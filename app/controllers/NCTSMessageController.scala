@@ -50,7 +50,7 @@ class NCTSMessageController @Inject()(
         implicit request =>
           orchestratorService.saveNCTSMessage(messageSender).map {
             case Left(_: DepartureAlreadyLocked) => Locked
-            case Left(DepartureNotFound(_))      => Ok
+            case Left(DepartureNotFound(_))      => NotFound
             case Left(ExternalError(reason)) =>
               logger.warn(s"External Submission Failure $reason")
               BadRequest(reason)

@@ -16,39 +16,24 @@
 
 package controllers
 
-import audit.AuditService
 import base.SpecBase
 import cats.data.NonEmptyList
-import config.Constants
 import generators.ModelGenerators
-
-import java.time.LocalDate
 import java.time.LocalDateTime
-import java.time.LocalTime
 import models._
-import models.ChannelType.Api
 import models.ChannelType.Web
 import org.mockito.ArgumentMatchers._
 import org.mockito.ArgumentMatchers.{eq => eqTo}
 import org.mockito.Mockito._
-import org.scalacheck.Arbitrary
-import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
-import play.api.inject.bind
 import play.api.libs.json.Json
 import play.api.mvc.Result
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import repositories.DepartureRepository
-import repositories.LockRepository
-
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import services.MovementMessageOrchestratorService
-import services.PushPullNotificationService
-import services.SaveMessageService
-import utils.Format
 import utils.TestMetrics
 
 class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks with ModelGenerators with BeforeAndAfterEach {
@@ -110,7 +95,8 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
 
         status(result) mustEqual OK
         header(LOCATION, result) mustBe Some(
-          routes.MessagesController.getMessage(messageSender.departureId, MessageId(messageSender.messageCorrelationId + 1)).url)
+          routes.MessagesController.getMessage(messageSender.departureId, MessageId(messageSender.messageCorrelationId + 1)).url
+        )
         contentAsString(result) mustBe empty
 
         verify(mockMovementMessageOrchestratorService).saveNCTSMessage(eqTo(messageSender))(any(), any())
@@ -118,8 +104,15 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
 
       "must return BadRequest, when the valid message is out of sequence" in new Setup {
         when(mockMovementMessageOrchestratorService.saveNCTSMessage(eqTo(messageSender))(any(), any()))
-          .thenReturn(Future.successful(Left(TransitionError(
-            "Can only accept this type of message [CancellationDecision] directly after [DeclarationCancellationRequest or ReleaseForTransit] messages. Current message state is [PositiveAcknowledgement]."))))
+          .thenReturn(
+            Future.successful(
+              Left(
+                TransitionError(
+                  "Can only accept this type of message [CancellationDecision] directly after [DeclarationCancellationRequest or ReleaseForTransit] messages. Current message state is [PositiveAcknowledgement]."
+                )
+              )
+            )
+          )
 
         val result: Future[Result] = controller.post(messageSender)(FakeRequest().withBody(requestMrnAllocatedBody))
 
@@ -167,7 +160,7 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
       val result: Future[Result] = controller.post(messageSender)(FakeRequest().withBody(requestMrnAllocatedBody))
 
       contentAsString(result) mustBe empty
-      status(result) mustEqual OK
+      status(result) mustEqual NOT_FOUND
     }
 
     "must lock the departure, return BadRequest error and unlock when an XMessageType is invalid" in new Setup {
