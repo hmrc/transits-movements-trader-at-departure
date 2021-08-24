@@ -215,7 +215,7 @@ class DepartureRepositorySpec
       "must get an departure when it exists and has the right channel type" in {
         database.flatMap(_.drop()).futureValue
 
-        val departure = arbitrary[Departure].sample.value.copy(channel = api)
+        val departure = arbitrary[Departure].sample.value.copy(channel = Api)
         val departureWithoutMessages = DepartureWithoutMessages.fromDeparture(departure)
         service.insert(departure).futureValue
         val result = service.getWithoutMessages(departure.departureId, departure.channel)
@@ -229,10 +229,10 @@ class DepartureRepositorySpec
       "must return None when an departure does not exist" in {
         database.flatMap(_.drop()).futureValue
 
-        val departure = arbitrary[Departure].sample.value copy(departureId = DepartureId(1), channel = api)
+        val departure = arbitrary[Departure].sample.value copy(departureId = DepartureId(1), channel = Api)
 
         service.insert(departure).futureValue
-        val result = service.getWithoutMessages(DepartureId(2), web)
+        val result = service.getWithoutMessages(DepartureId(2), Web)
 
         whenReady(result) {
           r =>
@@ -243,10 +243,10 @@ class DepartureRepositorySpec
       "must return None when a departure exists, but with a different channel type" in {
         database.flatMap(_.drop()).futureValue
 
-        val departure = arbitrary[Departure].sample.value copy(departureId = DepartureId(1), api)
+        val departure = arbitrary[Departure].sample.value copy(departureId = DepartureId(1), Api)
 
         service.insert(departure).futureValue
-        val result = service.get(DepartureId(1), web)
+        val result = service.get(DepartureId(1), Web)
 
         whenReady(result) {
           r =>
@@ -821,7 +821,7 @@ class DepartureRepositorySpec
 
         val message = arbitrary[models.MessageWithStatus].sample.value.copy(messageId = MessageId(1))
         val messages = new NonEmptyList(message, Nil)
-        val departure = arbitrary[Departure].sample.value.copy(channel = api, messages = messages)
+        val departure = arbitrary[Departure].sample.value.copy(channel = Api, messages = messages)
 
         service.insert(departure).futureValue
         val result = service.getMessage(departure.departureId, departure.channel, MessageId(1))
@@ -836,7 +836,7 @@ class DepartureRepositorySpec
       "must return None if departure does not exist" in {
         database.flatMap(_.drop()).futureValue
 
-        val result = service.getMessage(DepartureId(1), api, MessageId(1))
+        val result = service.getMessage(DepartureId(1), Api, MessageId(1))
 
         whenReady(result) {
           r =>
@@ -849,7 +849,7 @@ class DepartureRepositorySpec
 
         val message = arbitrary[models.MessageWithStatus].sample.value.copy(messageId = MessageId(1))
         val messages = new NonEmptyList(message, Nil)
-        val departure = arbitrary[Departure].sample.value.copy(channel = api, messages = messages)
+        val departure = arbitrary[Departure].sample.value.copy(channel = Api, messages = messages)
 
         service.insert(departure).futureValue
         val result = service.getMessage(departure.departureId, departure.channel, MessageId(5))
