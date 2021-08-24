@@ -154,7 +154,7 @@ object StatusTransition {
       }
   }
 
-  def transition(currentStatus: DepartureStatus, messageReceived: MessageReceivedEvent): Either[TransitionError, DepartureStatus] =
+  def transition(currentStatus: DepartureStatus, messageReceived: MessageReceivedEvent): Either[ErrorState, DepartureStatus] =
     targetStatus(currentStatus, messageReceived).flatMap {
       transitionToStatus =>
         val allowedFromThisStatus   = allowedStatusForTransition.get(currentStatus).getOrElse(Set.empty)

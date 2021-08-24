@@ -14,19 +14,6 @@
  * limitations under the License.
  */
 
-package controllers.actions
+package models
 
-import models.ChannelType
-import models.ChannelType.Api
-import models.ChannelType.Web
-import play.api.mvc.Request
-
-private[actions] object ChannelUtil {
-
-  def getChannel[A](request: Request[A]): Option[ChannelType] =
-    request.headers.get("channel") match {
-      case Some(channel) if channel.equals(Api.toString) => Some(Api)
-      case Some(channel) if channel.equals(Web.toString) => Some(Web)
-      case _                                             => None
-    }
-}
+final case class SubmissionSuccess(departure: Departure)

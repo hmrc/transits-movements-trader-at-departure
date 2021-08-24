@@ -38,7 +38,7 @@ private[testOnly] class SeedDataParameters(
 
   val numberOfMovements: Int = numberOfUsers * movementsPerUser
 
-  val channelType: ChannelType = channel.getOrElse(ChannelType.web)
+  val channelType: ChannelType = channel.getOrElse(ChannelType.Web)
 
   private val departureIdIterator: Iterator[DepartureId] =
     (startDepartureId.index to (startDepartureId.index + numberOfMovements)).iterator

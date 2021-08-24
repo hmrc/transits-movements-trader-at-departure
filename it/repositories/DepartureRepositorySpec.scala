@@ -19,8 +19,8 @@ package repositories
 import cats.data.NonEmptyList
 import config.AppConfig
 import generators.ModelGenerators
-import models.ChannelType.api
-import models.ChannelType.web
+import models.ChannelType.Api
+import models.ChannelType.Web
 import models.DepartureStatus.DepartureSubmitted
 import models.DepartureStatus.Initialized
 import models.DepartureStatus.MrnAllocated
@@ -171,7 +171,7 @@ class DepartureRepositorySpec
       "must get an departure when it exists and has the right channel type" in {
         database.flatMap(_.drop()).futureValue
 
-        val departure = arbitrary[Departure].sample.value.copy(channel = api)
+        val departure = arbitrary[Departure].sample.value.copy(channel = Api)
 
         service.insert(departure).futureValue
         val result = service.get(departure.departureId, departure.channel)
@@ -185,10 +185,10 @@ class DepartureRepositorySpec
       "must return None when an departure does not exist" in {
         database.flatMap(_.drop()).futureValue
 
-        val departure = arbitrary[Departure].sample.value copy(departureId = DepartureId(1), channel = api)
+        val departure = arbitrary[Departure].sample.value copy(departureId = DepartureId(1), channel = Api)
 
         service.insert(departure).futureValue
-        val result = service.get(DepartureId(2), web)
+        val result = service.get(DepartureId(2), Web)
 
         whenReady(result) {
           r =>
@@ -199,10 +199,10 @@ class DepartureRepositorySpec
       "must return None when a departure exists, but with a different channel type" in {
         database.flatMap(_.drop()).futureValue
 
-        val departure = arbitrary[Departure].sample.value copy(departureId = DepartureId(1), api)
+        val departure = arbitrary[Departure].sample.value copy(departureId = DepartureId(1), Api)
 
         service.insert(departure).futureValue
-        val result = service.get(DepartureId(1), web)
+        val result = service.get(DepartureId(1), Web)
 
         whenReady(result) {
           r =>
@@ -673,9 +673,9 @@ class DepartureRepositorySpec
         val app = new GuiceApplicationBuilder().configure("metrics.jvm" -> false).build()
         val eoriNumber: String = arbitrary[String].sample.value
 
-        val departure1 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = api)
-        val departure2 = arbitrary[Departure].suchThat(_.eoriNumber != eoriNumber).sample.value.copy(channel = api)
-        val departure3 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = web)
+        val departure1 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = Api)
+        val departure2 = arbitrary[Departure].suchThat(_.eoriNumber != eoriNumber).sample.value.copy(channel = Api)
+        val departure3 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = Web)
 
         running(app) {
           started(app).futureValue
@@ -688,8 +688,8 @@ class DepartureRepositorySpec
           }.futureValue
 
 
-          repository.fetchAllDepartures(eoriNumber, api, None).futureValue mustBe ResponseDepartures(Seq(ResponseDeparture.build(departure1)), 1, 1)
-          repository.fetchAllDepartures(eoriNumber, web, None).futureValue mustBe ResponseDepartures(Seq(ResponseDeparture.build(departure3)), 1, 1)
+          repository.fetchAllDepartures(eoriNumber, Api, None).futureValue mustBe ResponseDepartures(Seq(ResponseDeparture.build(departure1)), 1, 1)
+          repository.fetchAllDepartures(eoriNumber, Web, None).futureValue mustBe ResponseDepartures(Seq(ResponseDeparture.build(departure3)), 1, 1)
         }
       }
 
@@ -699,8 +699,8 @@ class DepartureRepositorySpec
         val eoriNumber: String = arbitrary[String].sample.value
 
         val app = new GuiceApplicationBuilder().configure("metrics.jvm" -> false).build()
-        val departure1 = arbitrary[Departure].suchThat(_.eoriNumber != eoriNumber).sample.value.copy(channel = api)
-        val departure2 = arbitrary[Departure].suchThat(_.eoriNumber != eoriNumber).sample.value.copy(channel = api)
+        val departure1 = arbitrary[Departure].suchThat(_.eoriNumber != eoriNumber).sample.value.copy(channel = Api)
+        val departure2 = arbitrary[Departure].suchThat(_.eoriNumber != eoriNumber).sample.value.copy(channel = Api)
 
         running(app) {
           started(app).futureValue
@@ -714,7 +714,7 @@ class DepartureRepositorySpec
               db.collection[JSONCollection](DepartureRepository.collectionName).insert(false).many(jsonArr)
           }.futureValue
 
-          val result = respository.fetchAllDepartures(eoriNumber, api, None).futureValue
+          val result = respository.fetchAllDepartures(eoriNumber, Api, None).futureValue
 
           result mustBe ResponseDepartures(Seq.empty, 0, 0)
         }
@@ -727,9 +727,9 @@ class DepartureRepositorySpec
         val eoriNumber: String = arbitrary[String].sample.value
 
         val now = LocalDateTime.now(clock)
-        val departure1 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = api, lastUpdated = now.withSecond(1))
-        val departure2 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = api, lastUpdated = now.withSecond(2))
-        val departure3 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = api, lastUpdated = now.withSecond(3))
+        val departure1 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = Api, lastUpdated = now.withSecond(1))
+        val departure2 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = Api, lastUpdated = now.withSecond(2))
+        val departure3 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = Api, lastUpdated = now.withSecond(3))
 
         running(app) {
           started(app).futureValue
@@ -738,10 +738,10 @@ class DepartureRepositorySpec
           service.insert(departure2).futureValue
           service.insert(departure3).futureValue
 
-          val maxRows = appConfig.maxRowsReturned(api)
+          val maxRows = appConfig.maxRowsReturned(Api)
           maxRows mustBe 2
 
-          val departures = repository.fetchAllDepartures(eoriNumber, api, updatedSince = None).futureValue
+          val departures = repository.fetchAllDepartures(eoriNumber, Api, updatedSince = None).futureValue
 
           departures.retrievedDepartures mustBe maxRows
 
@@ -756,9 +756,9 @@ class DepartureRepositorySpec
         val eoriNumber: String = arbitrary[String].sample.value
 
         val now = LocalDateTime.now(clock)
-        val departure1 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = web, lastUpdated = now.withSecond(1))
-        val departure2 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = web, lastUpdated = now.withSecond(2))
-        val departure3 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = web, lastUpdated = now.withSecond(3))
+        val departure1 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = Web, lastUpdated = now.withSecond(1))
+        val departure2 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = Web, lastUpdated = now.withSecond(2))
+        val departure3 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = Web, lastUpdated = now.withSecond(3))
 
         running(app) {
           started(app).futureValue
@@ -767,10 +767,10 @@ class DepartureRepositorySpec
           service.insert(departure2).futureValue
           service.insert(departure3).futureValue
 
-          val maxRows = appConfig.maxRowsReturned(web)
+          val maxRows = appConfig.maxRowsReturned(Web)
           maxRows mustBe 1
 
-          val departures = repository.fetchAllDepartures(eoriNumber, web, updatedSince = None).futureValue
+          val departures = repository.fetchAllDepartures(eoriNumber, Web, updatedSince = None).futureValue
 
           departures.retrievedDepartures mustBe maxRows
 
@@ -788,10 +788,10 @@ class DepartureRepositorySpec
           .configure("metrics.jvm" -> false)
           .build()
 
-        val departure1 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = api, lastUpdated = LocalDateTime.of(2021, 4, 30, 9, 30, 31))
-        val departure2 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = api, lastUpdated = LocalDateTime.of(2021, 4, 30, 9, 35, 32))
-        val departure3 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = api, lastUpdated = LocalDateTime.of(2021, 4, 30, 9, 30, 21))
-        val departure4 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = api, lastUpdated = LocalDateTime.of(2021, 4, 30, 10, 15, 16))
+        val departure1 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = Api, lastUpdated = LocalDateTime.of(2021, 4, 30, 9, 30, 31))
+        val departure2 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = Api, lastUpdated = LocalDateTime.of(2021, 4, 30, 9, 35, 32))
+        val departure3 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = Api, lastUpdated = LocalDateTime.of(2021, 4, 30, 9, 30, 21))
+        val departure4 = arbitrary[Departure].sample.value.copy(eoriNumber = eoriNumber, channel = Api, lastUpdated = LocalDateTime.of(2021, 4, 30, 10, 15, 16))
 
         running(app) {
           started(app).futureValue
@@ -808,7 +808,7 @@ class DepartureRepositorySpec
           }.futureValue
 
           val dateTime = OffsetDateTime.of(LocalDateTime.of(2021, 4, 30, 10, 30, 32), ZoneOffset.ofHours(1))
-          val departures = service.fetchAllDepartures(eoriNumber, api, Some(dateTime)).futureValue
+          val departures = service.fetchAllDepartures(eoriNumber, Api, Some(dateTime)).futureValue
 
           departures mustBe ResponseDepartures(Seq(departure4, departure2).map(ResponseDeparture.build), 2, 4)
         }

@@ -26,6 +26,7 @@ import play.api.mvc.Request
 import play.api.mvc.Result
 import play.api.mvc.Results.InternalServerError
 import play.api.mvc.Results.NotFound
+import play.api.mvc.Results.Ok
 import repositories.DepartureRepository
 
 import scala.concurrent.ExecutionContext
@@ -43,14 +44,16 @@ private[actions] class GetDepartureAction(
   departureId: DepartureId,
   repository: DepartureRepository
 )(implicit val executionContext: ExecutionContext)
-    extends ActionRefiner[Request, DepartureRequest] {
+    extends ActionRefiner[Request, DepartureRequest]
+    with Logging {
 
   override protected def refine[A](request: Request[A]): Future[Either[Result, DepartureRequest[A]]] =
     repository.get(departureId).map {
       case Some(departure) =>
         Right(DepartureRequest(request, departure, departure.channel))
       case None =>
-        Left(NotFound)
+        logger.info(s"[GetDepartureAction] Unable to retrieve departure message for departure id: ${departureId.index}")
+        Left(Ok)
     }
 }
 

@@ -41,7 +41,7 @@ class SeedDataParametersSpec extends SpecBase with ScalaCheckDrivenPropertyCheck
             number =>
               val startEori = SeedEori("ZZ", 11, 12)
 
-              val seedDataParameters = SeedDataParameters(number, 2, DepartureId(0), Some(startEori), Some(ChannelType.web))
+              val seedDataParameters = SeedDataParameters(number, 2, DepartureId(0), Some(startEori), Some(ChannelType.Web))
 
               val result = seedDataParameters.seedData.map(_._2).toSet
 
@@ -52,7 +52,7 @@ class SeedDataParametersSpec extends SpecBase with ScalaCheckDrivenPropertyCheck
         "the values of the eori must be increasing from the start value provided" in {
           val startEori = SeedEori("ZZ", 11, 12)
 
-          val seedDataParameters = SeedDataParameters(2, 2, DepartureId(0), Some(startEori), Some(ChannelType.web))
+          val seedDataParameters = SeedDataParameters(2, 2, DepartureId(0), Some(startEori), Some(ChannelType.Web))
 
           val result = seedDataParameters.seedData.map(_._2).toList
 
@@ -63,7 +63,7 @@ class SeedDataParametersSpec extends SpecBase with ScalaCheckDrivenPropertyCheck
           "when there is a start eori specified" in {
             val startEori = SeedEori("ZZ", 11, 12)
 
-            val seedDataParameters = SeedDataParameters(3, 2, DepartureId(0), Some(startEori), Some(ChannelType.web))
+            val seedDataParameters = SeedDataParameters(3, 2, DepartureId(0), Some(startEori), Some(ChannelType.Web))
 
             val result = seedDataParameters.seedData.map(_._2).toList
 

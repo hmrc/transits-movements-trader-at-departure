@@ -16,7 +16,13 @@
 
 package models
 
+import cats.data.EitherT
 import models.XSDFile._
+import play.api.mvc.Request
+
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
+import scala.xml.NodeSeq
 
 sealed trait MessageResponse {
   val messageReceived: MessageReceivedEvent
@@ -38,6 +44,22 @@ object MessageResponse {
     GuaranteeNotValidResponse,
     XMLSubmissionNegativeAcknowledgementResponse
   )
+
+  def fromRequest(request: Request[_]): Either[ErrorState, MessageResponse] =
+    request.headers.get("X-Message-Type") match {
+      case Some(MessageType.PositiveAcknowledgement.code)              => Right(PositiveAcknowledgementResponse)
+      case Some(MessageType.MrnAllocated.code)                         => Right(MrnAllocatedResponse)
+      case Some(MessageType.DeclarationRejected.code)                  => Right(DepartureRejectedResponse)
+      case Some(MessageType.ControlDecisionNotification.code)          => Right(ControlDecisionNotificationResponse)
+      case Some(MessageType.NoReleaseForTransit.code)                  => Right(NoReleaseForTransitResponse)
+      case Some(MessageType.ReleaseForTransit.code)                    => Right(ReleaseForTransitResponse)
+      case Some(MessageType.CancellationDecision.code)                 => Right(CancellationDecisionResponse)
+      case Some(MessageType.WriteOffNotification.code)                 => Right(WriteOffNotificationResponse)
+      case Some(MessageType.GuaranteeNotValid.code)                    => Right(GuaranteeNotValidResponse)
+      case Some(MessageType.XMLSubmissionNegativeAcknowledgement.code) => Right(XMLSubmissionNegativeAcknowledgementResponse)
+      case Some(invalidType)                                           => Left(InvalidMessageType(s"Received the following invalid response for X-Message-Type: $invalidType"))
+      case None                                                        => Left(InvalidMessageType("A 'X-Message-Type' header must be defined in the request."))
+    }
 }
 
 case object MrnAllocatedResponse extends MessageResponse {
