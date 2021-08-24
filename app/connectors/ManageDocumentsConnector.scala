@@ -16,18 +16,21 @@
 
 package connectors
 
-import javax.inject.Inject
 import akka.util.ByteString
 import com.kenshoo.play.metrics.Metrics
 import config.AppConfig
+import config.Constants
 import metrics.HasMetrics
 import play.api.Logging
+import play.api.http.ContentTypes
+import play.api.http.HeaderNames
 import play.api.libs.ws.WSClient
+import uk.gov.hmrc.http.HeaderCarrier
 
+import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.xml.NodeSeq
-import uk.gov.hmrc.http.HeaderCarrier
 
 class ManageDocumentsConnector @Inject()(
   config: AppConfig,
@@ -40,8 +43,13 @@ class ManageDocumentsConnector @Inject()(
   def getTadPDF(ie29Message: NodeSeq)(implicit hc: HeaderCarrier): Future[Either[TADErrorResponse, (ByteString, Map[String, Seq[String]])]] =
     withMetricsTimerAsync("get-tad-pdf") {
       timer =>
-        val serviceUrl     = s"${config.manageDocumentsUrl}/transit-accompanying-document"
-        val requestHeaders = hc.headers(Seq("X-Request-Id")) ++ Seq(("Content-Type", "application/xml"), ("User-Agent", config.appName))
+        val serviceUrl = s"${config.manageDocumentsUrl}/transit-accompanying-document"
+
+        val requestHeaders = hc.headers(Seq(Constants.XClientIdHeader, Constants.XRequestIdHeader)) ++ Seq(
+          HeaderNames.CONTENT_TYPE -> ContentTypes.XML,
+          HeaderNames.USER_AGENT   -> config.appName
+        )
+
         ws.url(serviceUrl)
           .withHttpHeaders(requestHeaders: _*)
           .post(ie29Message)
@@ -61,8 +69,13 @@ class ManageDocumentsConnector @Inject()(
   def getTsadPDF(ie29Message: NodeSeq)(implicit hc: HeaderCarrier): Future[Either[TADErrorResponse, (ByteString, Map[String, Seq[String]])]] =
     withMetricsTimerAsync("get-tsad-pdf") {
       timer =>
-        val serviceUrl     = s"${config.manageDocumentsUrl}/transit-security-accompanying-document"
-        val requestHeaders = hc.headers(Seq("X-Request-Id")) ++ Seq(("Content-Type", "application/xml"), ("User-Agent", config.appName))
+        val serviceUrl = s"${config.manageDocumentsUrl}/transit-security-accompanying-document"
+
+        val requestHeaders = hc.headers(Seq(Constants.XClientIdHeader, Constants.XRequestIdHeader)) ++ Seq(
+          HeaderNames.CONTENT_TYPE -> ContentTypes.XML,
+          HeaderNames.USER_AGENT   -> config.appName
+        )
+
         ws.url(serviceUrl)
           .withHttpHeaders(requestHeaders: _*)
           .post(ie29Message)

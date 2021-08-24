@@ -7,7 +7,7 @@ import sbt.Tests.SubProcess
 val appName = "transits-movements-trader-at-departure"
 
 lazy val microservice = Project(appName, file("."))
-  .enablePlugins(play.sbt.PlayScala, SbtAutoBuildPlugin, SbtGitVersioning, SbtDistributablesPlugin, SbtArtifactory)
+  .enablePlugins(play.sbt.PlayScala, SbtAutoBuildPlugin, SbtGitVersioning, SbtDistributablesPlugin)
   .disablePlugins(JUnitXmlReportPlugin) //Required to prevent https://github.com/scalatest/scalatest/issues/1427
   .configs(IntegrationTest)
   .settings(DefaultBuildSettings.integrationTestSettings())
@@ -20,7 +20,7 @@ lazy val microservice = Project(appName, file("."))
   .settings(scalacSettings)
   .settings(
     majorVersion := 0,
-    scalaVersion := "2.12.13",
+    scalaVersion := "2.12.14",
     resolvers += Resolver.jcenterRepo,
     PlayKeys.playDefaultPort := 9490,
     libraryDependencies ++= AppDependencies.compile ++ AppDependencies.test,
@@ -59,8 +59,8 @@ lazy val scalacSettings = Def.settings(
 
 // Scoverage exclusions and minimums
 lazy val scoverageSettings = Def.settings(
-  parallelExecution in Test := false,
-  ScoverageKeys.coverageMinimum := 90.00,
+  Test / parallelExecution := false,
+  ScoverageKeys.coverageMinimumStmtTotal := 90.00,
   ScoverageKeys.coverageExcludedFiles := "<empty>;.*javascript.*;.*Routes.*;",
   ScoverageKeys.coverageFailOnMinimum := true,
   ScoverageKeys.coverageHighlighting := true,
