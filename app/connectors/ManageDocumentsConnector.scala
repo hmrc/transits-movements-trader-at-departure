@@ -85,7 +85,6 @@ class ManageDocumentsConnector @Inject()(
                 timer.completeWithSuccess()
                 Right((response.bodyAsBytes, response.headers))
               } else {
-                println(response.status)
                 logger.warn(s"[getTsadPDF] returned an unexpected status (${response.status}) while trying to retrieve the TAD")
                 timer.completeWithFailure()
                 Left(UnexpectedResponse(response.status))
