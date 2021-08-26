@@ -18,7 +18,7 @@ package services
 
 import base.SpecBase
 import cats.data.NonEmptyList
-import models.ChannelType.api
+import models.ChannelType.Api
 import models.MessageStatus.SubmissionPending
 import models._
 import org.mockito.Mockito.when
@@ -82,7 +82,7 @@ class DepartureServiceSpec extends SpecBase with JsonHelper with IntegrationPati
 
       val expectedDeparture = Departure(
         departureId = id,
-        channel = api,
+        channel = Api,
         movementReferenceNumber = None,
         referenceNumber = ref,
         eoriNumber = eori,
@@ -104,7 +104,7 @@ class DepartureServiceSpec extends SpecBase with JsonHelper with IntegrationPati
         notificationBox = None
       )
 
-      val result = service.createDeparture(eori, inputMovement, api, None).futureValue
+      val result = service.createDeparture(eori, inputMovement, Api, None).futureValue
 
       result.right.get mustEqual expectedDeparture
     }
@@ -138,7 +138,7 @@ class DepartureServiceSpec extends SpecBase with JsonHelper with IntegrationPati
           </HEAHEA>
         </Foo>
 
-      service.createDeparture(eori, invalidPayload, api, None).futureValue.isLeft mustBe true
+      service.createDeparture(eori, invalidPayload, Api, None).futureValue.isLeft mustBe true
     }
   }
 

@@ -16,7 +16,15 @@
 
 package models
 
-sealed trait SubmissionProcessingResult
+sealed trait SubmissionProcessingResult {
+
+  def toEither(departure: Departure): Either[ErrorState, SubmissionSuccess] = this match {
+    case SubmissionProcessingResult.SubmissionSuccess                 => Right(SubmissionSuccess(departure))
+    case SubmissionProcessingResult.SubmissionFailureInternal         => Left(SubmissionFailureInternal)
+    case SubmissionProcessingResult.SubmissionFailureExternal         => Left(SubmissionFailureExternal)
+    case SubmissionProcessingResult.SubmissionFailureRejected(reason) => Left(SubmissionFailureRejected(reason))
+  }
+}
 
 object SubmissionProcessingResult {
 

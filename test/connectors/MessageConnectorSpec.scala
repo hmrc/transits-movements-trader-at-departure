@@ -21,8 +21,8 @@ import connectors.MessageConnector.EisSubmissionResult.DownstreamBadGateway
 import connectors.MessageConnector.EisSubmissionResult.DownstreamInternalServerError
 import connectors.MessageConnector.EisSubmissionResult.EisSubmissionSuccessful
 import generators.ModelGenerators
-import models.ChannelType.api
-import models.ChannelType.web
+import models.ChannelType.Api
+import models.ChannelType.Web
 import models.DepartureId
 import models.MessageId
 import models.MessageStatus
@@ -64,7 +64,7 @@ class MessageConnectorSpec
 
   private val messageType: MessageType = Gen.oneOf(MessageType.values).sample.value
 
-  private val channelGen = Gen.oneOf(web, api)
+  private val channelGen = Gen.oneOf(Web, Api)
 
   "MessageConnector" - {
 

@@ -16,7 +16,7 @@
 
 package controllers.actions
 
-import models.ChannelType.web
+import models.ChannelType.Web
 
 import javax.inject.Inject
 import models.request.AuthenticatedRequest
@@ -36,7 +36,7 @@ class FakeAuthenticateActionProvider @Inject()(defaultActionBuilder: DefaultActi
 
 class FakeAuthenticateAction extends ActionRefiner[Request, AuthenticatedRequest] {
   override protected def refine[A](request: Request[A]): Future[Either[Result, AuthenticatedRequest[A]]] =
-    Future.successful(Right(AuthenticatedRequest(request, web, "eori")))
+    Future.successful(Right(AuthenticatedRequest(request, Web, "eori")))
 
   override protected def executionContext: ExecutionContext = implicitly[ExecutionContext]
 }

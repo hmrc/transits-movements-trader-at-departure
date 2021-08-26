@@ -16,8 +16,6 @@
 
 package models
 
-sealed case class TransitionError(reason: String)
-
 sealed trait DepartureStatus extends Product with Serializable
 
 object DepartureStatus extends Enumerable.Implicits with MongoDateTimeFormats {

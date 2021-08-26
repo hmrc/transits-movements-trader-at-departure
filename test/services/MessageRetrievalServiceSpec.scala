@@ -43,7 +43,7 @@ class MessageRetrievalServiceSpec extends SpecBase with JsonHelper {
       "Return a Tad Request if both the declaration and releaseFromTransit messages are present" in new Setup {
         val departure: Departure = Departure(
           DepartureId(1),
-          ChannelType.web,
+          ChannelType.Web,
           "AB123456C",
           None,
           "SomeReference",
@@ -106,7 +106,7 @@ class MessageRetrievalServiceSpec extends SpecBase with JsonHelper {
       "Return a None if releaseFromTransit message is not present" in new Setup {
         val departure: Departure = Departure(
           DepartureId(1),
-          ChannelType.web,
+          ChannelType.Web,
           "AB123456C",
           None,
           "SomeReference",

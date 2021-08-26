@@ -16,7 +16,7 @@
 
 package controllers.actions
 
-import models.ChannelType.web
+import models.ChannelType.Web
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
 import org.scalatest.freespec.AnyFreeSpec
@@ -41,7 +41,7 @@ import scala.concurrent.Future
 
 class AuthenticateActionProviderSpec extends AnyFreeSpec with Matchers with MockitoSugar {
 
-  def fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("", "").withHeaders("channel" -> web.toString())
+  def fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("", "").withHeaders("channel" -> Web.toString())
 
   def baseApplication: GuiceApplicationBuilder =
     new GuiceApplicationBuilder()

@@ -20,6 +20,7 @@ import models.request.DepartureResponseRequest
 import play.api.http.HeaderNames
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
+import play.api.mvc.Request
 import utils.NodeSeqFormat._
 
 import java.time.LocalDateTime
@@ -74,6 +75,29 @@ object DepartureMessageNotification {
       messageId,
       timestamp,
       request.messageResponse.messageType,
+      if (bodySize.exists(_ < oneHundredKilobytes)) Some(request.body) else None
+    )
+  }
+
+  def fromDepartureAndResponse(
+    departure: Departure,
+    messageResponse: MessageResponse,
+    timestamp: LocalDateTime,
+    request: Request[NodeSeq]
+  ): DepartureMessageNotification = {
+    val oneHundredKilobytes = 100000
+    val messageId           = departure.nextMessageId
+    val departureUrl        = requestId(departure.departureId)
+    val bodySize            = request.headers.get(HeaderNames.CONTENT_LENGTH).map(_.toInt)
+
+    DepartureMessageNotification(
+      s"$departureUrl/messages/${messageId.value}",
+      departureUrl,
+      departure.eoriNumber,
+      departure.departureId,
+      messageId,
+      timestamp,
+      messageResponse.messageType,
       if (bodySize.exists(_ < oneHundredKilobytes)) Some(request.body) else None
     )
   }
