@@ -17,6 +17,7 @@
 package config
 
 object Constants {
-  val BoxName         = s"customs/transits##1.0##notificationUrl"
-  val XClientIdHeader = "X-Client-Id"
+  val BoxName          = "customs/transits##1.0##notificationUrl"
+  val XClientIdHeader  = "X-Client-Id"
+  val XRequestIdHeader = "X-Request-Id"
 }

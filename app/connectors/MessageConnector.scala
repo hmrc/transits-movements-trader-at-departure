@@ -16,20 +16,23 @@
 
 package connectors
 
-import java.time.OffsetDateTime
 import com.google.inject.Inject
 import com.kenshoo.play.metrics.Metrics
 import config.AppConfig
+import config.Constants
 import connectors.MessageConnector.EisSubmissionResult
 import connectors.MessageConnector.EisSubmissionResult._
-import models._
 import metrics.HasMetrics
+import models._
+import play.api.http.ContentTypes
+import play.api.http.HeaderNames
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.HttpClient
-import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
-import uk.gov.hmrc.http.HttpResponse
+import uk.gov.hmrc.http.HttpReads.Implicits._
+import uk.gov.hmrc.http.UpstreamErrorResponse
 import utils.Format
 
+import java.time.OffsetDateTime
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
@@ -42,44 +45,46 @@ class MessageConnector @Inject()(
 
   def post(departureId: DepartureId, message: MessageWithStatus, dateTime: OffsetDateTime, channelType: ChannelType)(
     implicit
-    headerCarrier: HeaderCarrier): Future[EisSubmissionResult] =
+    hc: HeaderCarrier): Future[EisSubmissionResult] =
     withMetricsTimerAsync("submit-eis-message") {
       timer =>
-        val xmlMessage = TransitWrapper(message.message).toString
-
         val url = config.eisUrl
 
-        lazy val messageSender = MessageSender(departureId, message.messageCorrelationId)
+        val xmlMessage = TransitWrapper(message.message).toString
 
-        val newHeaders = headerCarrier
-          .copy(authorization = None)
-          .withExtraHeaders(addHeaders(message.messageType, dateTime, messageSender, channelType): _*)
+        val messageSender = MessageSender(departureId, message.messageCorrelationId)
+
+        val requestHeaders =
+          hc.headers(Seq(Constants.XClientIdHeader)) ++ messageHeaders(message.messageType, dateTime, messageSender, channelType)
 
         http
-          .POSTString[HttpResponse](url, xmlMessage)(readRaw, hc = newHeaders, implicitly)
-          .map(
-            response =>
-              responseToStatus(response) match {
-                case status @ EisSubmissionSuccessful =>
-                  timer.completeWithSuccess()
-                  status
-                case status =>
-                  timer.completeWithFailure()
-                  status
-            }
-          )
+          .POSTString[Either[UpstreamErrorResponse, Unit]](url, xmlMessage, requestHeaders)
+          .map {
+            _.fold(
+              errorResponse => {
+                timer.completeWithFailure()
+                responseToStatus(errorResponse)
+              },
+              _ => {
+                timer.completeWithSuccess()
+                EisSubmissionSuccessful
+              }
+            )
+          }
     }
 
-  private def addHeaders(messageType: MessageType, dateTime: OffsetDateTime, messageSender: MessageSender, channelType: ChannelType)(
-    implicit
-    headerCarrier: HeaderCarrier): Seq[(String, String)] =
+  private def messageHeaders(
+    messageType: MessageType,
+    dateTime: OffsetDateTime,
+    messageSender: MessageSender,
+    channelType: ChannelType
+  ): Seq[(String, String)] =
     Seq(
-      "Date"             -> Format.dateFormattedForHeader(dateTime),
-      "Content-Type"     -> "application/xml",
-      "Accept"           -> "application/xml",
-      "X-Message-Type"   -> messageType.toString,
-      "X-Message-Sender" -> messageSender.toString,
-      "channel"          -> channelType.toString
+      HeaderNames.DATE         -> Format.dateFormattedForHeader(dateTime),
+      HeaderNames.CONTENT_TYPE -> ContentTypes.XML,
+      "X-Message-Type"         -> messageType.toString,
+      "X-Message-Sender"       -> messageSender.toString,
+      "channel"                -> channelType.toString
     )
 }
 
@@ -90,12 +95,16 @@ object MessageConnector {
   }
 
   object EisSubmissionResult {
-    private val possibleResponses           = List(EisSubmissionSuccessful, ErrorInPayload, VirusFoundOrInvalidToken, DownstreamInternalServerError, DownstreamBadGateway)
-    private val statusesOfPossibleResponses = possibleResponses.map(_.statusCode)
-    private val statusToResponseMapping     = statusesOfPossibleResponses.zip(possibleResponses).toMap
+    private val errorResponses = List(ErrorInPayload, VirusFoundOrInvalidToken, DownstreamInternalServerError, DownstreamBadGateway)
 
-    def responseToStatus(httpResponse: HttpResponse): EisSubmissionResult =
-      statusToResponseMapping.getOrElse(httpResponse.status, UnexpectedHttpResponse(httpResponse))
+    private val responseMapping = errorResponses.map {
+      response =>
+        response.statusCode -> response
+    }.toMap
+
+    def responseToStatus(errorResponse: UpstreamErrorResponse): EisSubmissionResult =
+      responseMapping.getOrElse(errorResponse.statusCode, UnexpectedHttpResponse(errorResponse))
+
     object EisSubmissionSuccessful extends EisSubmissionResult(202, "EIS Successful Submission")
 
     sealed abstract class EisSubmissionFailure(statusCode: Int, responseBody: String) extends EisSubmissionResult(statusCode, responseBody)
@@ -108,7 +117,7 @@ object MessageConnector {
     object DownstreamInternalServerError                                                        extends EisSubmissionFailureDownstream(500, "Downstream internal server error")
     object DownstreamBadGateway                                                                 extends EisSubmissionFailureDownstream(502, "Downstream bad gateway ")
 
-    case class UnexpectedHttpResponse(httpResponse: HttpResponse)
-        extends EisSubmissionFailureDownstream(httpResponse.status, "Unexpected HTTP Response received")
+    case class UnexpectedHttpResponse(errorResponse: UpstreamErrorResponse)
+        extends EisSubmissionFailureDownstream(errorResponse.statusCode, "Unexpected HTTP Response received")
   }
 }

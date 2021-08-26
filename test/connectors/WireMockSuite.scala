@@ -21,18 +21,19 @@ import com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.Suite
-import play.api.Application
 import play.api.inject.bind
-import play.api.inject.Injector
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.inject.guice.GuiceableModule
 import com.kenshoo.play.metrics.Metrics
 import utils.TestMetrics
+import com.github.tomakehurst.wiremock.core.WireMockConfiguration
+import com.github.tomakehurst.wiremock.common.ConsoleNotifier
 
 trait WiremockSuite extends BeforeAndAfterAll with BeforeAndAfterEach {
   this: Suite =>
 
-  protected val server: WireMockServer = new WireMockServer(wireMockConfig().dynamicPort())
+  protected val wiremockConfig: WireMockConfiguration = wireMockConfig().dynamicPort().notifier(new ConsoleNotifier(false))
+  protected val server: WireMockServer                = new WireMockServer(wiremockConfig)
 
   protected def portConfigKey: String
 

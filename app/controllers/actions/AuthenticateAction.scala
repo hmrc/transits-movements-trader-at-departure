@@ -29,7 +29,7 @@ import play.api.mvc.Results.Unauthorized
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.HeaderCarrierConverter
+import uk.gov.hmrc.play.http.HeaderCarrierConverter
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -47,7 +47,7 @@ private[actions] class AuthenticateAction @Inject()(override val authConnector: 
       case None =>
         Future.successful(Left(BadRequest("Missing channel header or incorrect value specified in channel header")))
       case Some(channel) =>
-        implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromHeadersAndSession(request.headers)
+        implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
         authorised(Enrolment(config.enrolmentKey)).retrieve(Retrievals.authorisedEnrolments) {
           enrolments =>
             val eoriNumber = (for {

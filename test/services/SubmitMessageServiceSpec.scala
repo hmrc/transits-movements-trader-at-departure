@@ -51,7 +51,7 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.inject.bind
 import play.api.test.Helpers.running
 import repositories.DepartureRepository
-import uk.gov.hmrc.http.HttpResponse
+import uk.gov.hmrc.http.UpstreamErrorResponse
 import utils.Format
 import utils.JsonHelper
 
@@ -382,7 +382,7 @@ class SubmitMessageServiceSpec extends SpecBase with JsonHelper with ScalaCheckD
         val service = application.injector.instanceOf[SubmitMessageService]
 
         when(mockDepartureRepository.addNewMessage(any(), any())).thenReturn(Future.successful(Success(())))
-        when(mockMessageConnector.post(any(), any(), any(), any())(any())).thenReturn(Future.successful(UnexpectedHttpResponse(HttpResponse(501, ""))))
+        when(mockMessageConnector.post(any(), any(), any(), any())(any())).thenReturn(Future.successful(UnexpectedHttpResponse(UpstreamErrorResponse("", 501))))
         when(mockDepartureRepository.updateDeparture(any(), any())(any())).thenReturn(Future.successful((Success(()))))
 
         val departureId     = arbitrary[DepartureId].sample.value
@@ -410,7 +410,7 @@ class SubmitMessageServiceSpec extends SpecBase with JsonHelper with ScalaCheckD
         val service = application.injector.instanceOf[SubmitMessageService]
 
         when(mockDepartureRepository.addNewMessage(any(), any())).thenReturn(Future.successful(Success(())))
-        when(mockMessageConnector.post(any(), any(), any(), any())(any())).thenReturn(Future.successful(UnexpectedHttpResponse(HttpResponse(501, ""))))
+        when(mockMessageConnector.post(any(), any(), any(), any())(any())).thenReturn(Future.successful(UnexpectedHttpResponse(UpstreamErrorResponse("", 501))))
         when(mockDepartureRepository.updateDeparture(any(), any())(any())).thenReturn(Future.failed(new Exception("failed")))
 
         val departureId     = arbitrary[DepartureId].sample.value
@@ -697,7 +697,7 @@ class SubmitMessageServiceSpec extends SpecBase with JsonHelper with ScalaCheckD
         val service = application.injector.instanceOf[SubmitMessageService]
 
         when(mockDepartureRepository.insert(any())).thenReturn(Future.successful(()))
-        when(mockMessageConnector.post(any(), any(), any(), any())(any())).thenReturn(Future.successful(UnexpectedHttpResponse(HttpResponse(501, ""))))
+        when(mockMessageConnector.post(any(), any(), any(), any())(any())).thenReturn(Future.successful(UnexpectedHttpResponse(UpstreamErrorResponse("", 501))))
         when(mockDepartureRepository.updateDeparture(any(), any())(any())).thenReturn(Future.successful((Success(()))))
 
         val result = service.submitDeparture(departure)
@@ -721,7 +721,7 @@ class SubmitMessageServiceSpec extends SpecBase with JsonHelper with ScalaCheckD
         val service = application.injector.instanceOf[SubmitMessageService]
 
         when(mockDepartureRepository.insert(any())).thenReturn(Future.successful(()))
-        when(mockMessageConnector.post(any(), any(), any(), any())(any())).thenReturn(Future.successful(UnexpectedHttpResponse(HttpResponse(501, ""))))
+        when(mockMessageConnector.post(any(), any(), any(), any())(any())).thenReturn(Future.successful(UnexpectedHttpResponse(UpstreamErrorResponse("", 501))))
         when(mockDepartureRepository.updateDeparture(any(), any())(any())).thenReturn(Future.failed(new Exception("failed")))
 
         val result = service.submitDeparture(departure)

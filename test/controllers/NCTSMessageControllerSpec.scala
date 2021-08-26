@@ -38,10 +38,6 @@ import utils.TestMetrics
 
 class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks with ModelGenerators with BeforeAndAfterEach {
 
-  private val departureId          = DepartureId(1)
-  private val messageCorrelationId = 1
-  private val messageSender        = MessageSender(departureId, messageCorrelationId)
-
   class Setup {
 
     protected val mockMovementMessageOrchestratorService: MovementMessageOrchestratorService = mock[MovementMessageOrchestratorService]

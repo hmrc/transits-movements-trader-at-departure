@@ -16,13 +16,8 @@
 
 package models
 
-import cats.data.EitherT
 import models.XSDFile._
 import play.api.mvc.Request
-
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
-import scala.xml.NodeSeq
 
 sealed trait MessageResponse {
   val messageReceived: MessageReceivedEvent

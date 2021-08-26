@@ -46,7 +46,6 @@ import uk.gov.hmrc.auth.core.EnrolmentIdentifier
 import uk.gov.hmrc.auth.core.Enrolments
 
 import scala.concurrent.Future
-import play.api.test.Helpers
 
 class AuthenticatedGetDepartureForWriteActionProviderSpec
     extends AnyFreeSpec

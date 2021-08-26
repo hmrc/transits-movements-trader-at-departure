@@ -23,13 +23,13 @@ import connectors.UnexpectedResponse
 import controllers.Assets.CONTENT_DISPOSITION
 import controllers.Assets.CONTENT_TYPE
 import models.Departure
-import uk.gov.hmrc.http.HeaderCarrier
 import javax.inject.Inject
 import play.api.Logging
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.xml.NodeSeq
+import uk.gov.hmrc.http.HeaderCarrier
 
 class PDFRetrievalService @Inject()(
   manageDocumentsConnector: ManageDocumentsConnector,
