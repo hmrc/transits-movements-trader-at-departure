@@ -35,7 +35,6 @@ import utils.Format
 import java.time.OffsetDateTime
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
-import play.api.mvc.Accepting
 
 class MessageConnector @Inject()(
   config: AppConfig,
