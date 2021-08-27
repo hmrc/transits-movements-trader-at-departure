@@ -84,6 +84,7 @@ class MessageConnectorSpec
                 .withHeader("X-Message-Type", equalTo(messageType.toString))
                 .withHeader("X-Message-Sender", equalTo(messageSender))
                 .withHeader("channel", equalTo(channel.toString))
+                .withHeader(HeaderNames.ACCEPT, equalTo(acceptHeader))
                 .withRequestBody(matchingXPath("/transitRequest"))
                 .willReturn(
                   aResponse()
@@ -123,6 +124,7 @@ class MessageConnectorSpec
                 .withHeader("X-Request-Id", equalTo("bar"))
                 .withHeader("X-Message-Type", equalTo(messageType.toString))
                 .withHeader("X-Message-Sender", equalTo(messageSender))
+                .withHeader(HeaderNames.ACCEPT, equalTo(acceptHeader))
                 .withHeader("channel", equalTo(channel.toString))
                 .willReturn(
                   aResponse()
@@ -164,6 +166,7 @@ class MessageConnectorSpec
                 .withHeader("X-Request-Id", equalTo("bar"))
                 .withHeader("X-Message-Type", equalTo(messageType.toString))
                 .withHeader("X-Message-Sender", equalTo(messageSender))
+                .withHeader(HeaderNames.ACCEPT, equalTo(acceptHeader))
                 .withHeader("channel", equalTo(channel.toString))
                 .willReturn(
                   aResponse()
@@ -206,6 +209,7 @@ class MessageConnectorSpec
                 .withHeader("X-Request-Id", equalTo("bar"))
                 .withHeader("X-Message-Type", equalTo(messageType.toString))
                 .withHeader("X-Message-Sender", equalTo(messageSender))
+                .withHeader(HeaderNames.ACCEPT, equalTo(acceptHeader))
                 .withHeader("channel", equalTo(channel.toString))
                 .willReturn(
                   aResponse()
@@ -245,4 +249,5 @@ object MessageConnectorSpec {
 
   private val postUrl                        = "/movements/messages"
   private val genFailedStatusCodes: Gen[Int] = Gen.choose(400, 599)
+  private val acceptHeader                   = "application/xml"
 }
