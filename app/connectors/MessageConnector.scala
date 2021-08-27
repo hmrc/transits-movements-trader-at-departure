@@ -35,6 +35,7 @@ import utils.Format
 import java.time.OffsetDateTime
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
+import play.api.mvc.Accepting
 
 class MessageConnector @Inject()(
   config: AppConfig,
@@ -84,7 +85,8 @@ class MessageConnector @Inject()(
       HeaderNames.CONTENT_TYPE -> ContentTypes.XML,
       "X-Message-Type"         -> messageType.toString,
       "X-Message-Sender"       -> messageSender.toString,
-      "channel"                -> channelType.toString
+      "channel"                -> channelType.toString,
+      HeaderNames.ACCEPT       -> ContentTypes.XML
     )
 }
 
