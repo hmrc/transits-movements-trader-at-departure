@@ -540,7 +540,7 @@ class DeparturesControllerSpec
       val responseDeparture  = ResponseDeparture.build(departure)
       val responseDepartures = ResponseDepartures(Seq(responseDeparture), 1, 1)
 
-      when(mockDepartureRepository.fetchAllDepartures(any(), any(), any())).thenReturn(Future.successful(responseDepartures))
+      when(mockDepartureRepository.fetchAllDepartures(any(), any(), any(), any(), any(), any())).thenReturn(Future.successful(responseDepartures))
 
       val application = baseApplicationBuilder
         .overrides(bind[DepartureRepository].toInstance(mockDepartureRepository))
@@ -560,7 +560,7 @@ class DeparturesControllerSpec
       val emptyResponse           = ResponseDepartures(Seq.empty, 0, 0)
       val mockDepartureRepository = mock[DepartureRepository]
 
-      when(mockDepartureRepository.fetchAllDepartures(any(), any(), any())).thenReturn(Future.successful(emptyResponse))
+      when(mockDepartureRepository.fetchAllDepartures(any(), any(), any(), any(), any(), any())).thenReturn(Future.successful(emptyResponse))
 
       val application = baseApplicationBuilder
         .overrides(bind[DepartureRepository].toInstance(mockDepartureRepository))
@@ -578,7 +578,7 @@ class DeparturesControllerSpec
     "must return INTERNAL_SERVER_ERROR when we cannot retrieve departures" in {
       val mockDepartureRepository = mock[DepartureRepository]
 
-      when(mockDepartureRepository.fetchAllDepartures(any(), any(), any())).thenReturn(Future.failed(new Exception))
+      when(mockDepartureRepository.fetchAllDepartures(any(), any(), any(), any(), any(), any())).thenReturn(Future.failed(new Exception))
 
       val application = baseApplicationBuilder
         .overrides(bind[DepartureRepository].toInstance(mockDepartureRepository))

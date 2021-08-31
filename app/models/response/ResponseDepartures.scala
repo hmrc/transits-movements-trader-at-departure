@@ -19,7 +19,7 @@ package models.response
 import play.api.libs.json.Json
 import play.api.libs.json.OWrites
 
-case class ResponseDepartures(departures: Seq[ResponseDeparture], retrievedDepartures: Int, totalDepartures: Int)
+case class ResponseDepartures(departures: Seq[ResponseDeparture], retrievedDepartures: Int, totalDepartures: Int, totalMatched: Option[Int] = None)
 
 object ResponseDepartures {
   implicit val writes: OWrites[ResponseDepartures] = Json.writes[ResponseDepartures]

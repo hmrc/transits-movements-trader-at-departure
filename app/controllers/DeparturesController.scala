@@ -118,12 +118,12 @@ class DeparturesController @Inject()(
       }
     }
 
-  def getDepartures(updatedSince: Option[OffsetDateTime]): Action[AnyContent] =
+  def getDepartures(updatedSince: Option[OffsetDateTime], lrn: Option[String], pageSize: Option[Int] = None, page: Option[Int] = None): Action[AnyContent] =
     withMetricsTimerAction("get-all-departures") {
       authenticate().async {
         implicit request =>
           departureRepository
-            .fetchAllDepartures(request.eoriNumber, request.channel, updatedSince)
+            .fetchAllDepartures(request.eoriNumber, request.channel, updatedSince, lrn, pageSize, page)
             .map {
               responseDepartures =>
                 departuresCount.update(responseDepartures.retrievedDepartures)

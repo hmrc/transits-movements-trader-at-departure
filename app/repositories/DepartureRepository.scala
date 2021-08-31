@@ -257,14 +257,16 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfi
 
               val initialFilter: PipelineOperator =
                 Match(
-                  Json.obj("_id" -> departureId, "channel" -> channelFilter, "messages" -> Json.obj("$elemMatch" -> Json.obj("messageId" -> messageId.value))))
+                  Json.obj("_id" -> departureId, "channel" -> channelFilter, "messages" -> Json.obj("$elemMatch" -> Json.obj("messageId" -> messageId.value)))
+                )
 
               val unwindMessages = List[PipelineOperator](
                 Unwind(
                   path = "messages",
                   includeArrayIndex = None,
                   preserveNullAndEmptyArrays = None
-                ))
+                )
+              )
 
               val secondaryFilter = List[PipelineOperator](Match(Json.obj("messages.messageId" -> messageId.value)))
 
@@ -339,7 +341,14 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfi
     }
   }
 
-  def fetchAllDepartures(eoriNumber: String, channelFilter: ChannelType, updatedSince: Option[OffsetDateTime]): Future[ResponseDepartures] = {
+  def fetchAllDepartures(
+    eoriNumber: String,
+    channelFilter: ChannelType,
+    updatedSince: Option[OffsetDateTime],
+    lrn: Option[String] = None,
+    pageSize: Option[Int] = None,
+    page: Option[Int] = None
+  ): Future[ResponseDepartures] = {
     val dateFilter = updatedSince
       .map(
         dateTime => Json.obj("lastUpdated" -> Json.obj("$gte" -> dateTime))
@@ -348,16 +357,69 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfi
 
     val countSelector = Json.obj("eoriNumber" -> eoriNumber, "channel" -> channelFilter)
     val selector      = countSelector ++ dateFilter
+    lrn
+      .map {
+        lrnSearch =>
+          withLRNSearchQuery(lrnSearch, pageSize, channelFilter, selector, countSelector)
+      }
+      .getOrElse {
+        withPaginationSearchQuery(page, pageSize, channelFilter, selector, countSelector)
+      }
+  }
+
+  private def withLRNSearchQuery(
+    lrn: String,
+    pageSize: Option[Int],
+    channelFilter: ChannelType,
+    selector: JsObject,
+    countSelector: JsObject
+  ): Future[ResponseDepartures] = {
+    val lrnSelector = Json.obj("referenceNumber" -> Json.obj("$regex" -> lrn))
+    val limit       = pageSize.map(Math.max(1, _)).getOrElse(appConfig.maxRowsReturned(channelFilter))
+
+    collection.flatMap {
+      coll =>
+        val fetchCount      = coll.count(Some(countSelector))
+        val totalMatchCount = coll.count(Some(countSelector ++ lrnSelector))
+        val lrnFilter       = selector ++ lrnSelector
+        val fetchResults = coll
+          .find(lrnFilter, Some(DepartureWithoutMessages.projection))
+          .sort(Json.obj("lastUpdated" -> -1))
+          .cursor[DepartureWithoutMessages]()
+          .collect[Seq](limit, Cursor.FailOnError())
+
+        (fetchCount, fetchResults, totalMatchCount).mapN {
+          case (count, results, matchCount) =>
+            ResponseDepartures(
+              departures = results.map(ResponseDeparture.build),
+              retrievedDepartures = results.length,
+              totalDepartures = count,
+              totalMatched = Some(matchCount)
+            )
+        }
+    }
+  }
+
+  private def withPaginationSearchQuery(
+    page: Option[Int],
+    pageSize: Option[Int],
+    channelFilter: ChannelType,
+    selector: JsObject,
+    countSelector: JsObject
+  ): Future[ResponseDepartures] = {
+
+    val limit = pageSize.map(Math.max(1, _)).getOrElse(appConfig.maxRowsReturned(channelFilter))
+    val skip  = Math.abs(page.getOrElse(1) - 1) * limit
 
     collection.flatMap {
       coll =>
         val fetchCount = coll.count(Some(countSelector))
-
         val fetchResults = coll
-          .find(selector, DepartureWithoutMessages.projection)
+          .find(selector, Some(DepartureWithoutMessages.projection))
           .sort(Json.obj("lastUpdated" -> -1))
+          .skip(skip)
           .cursor[DepartureWithoutMessages]()
-          .collect[Seq](appConfig.maxRowsReturned(channelFilter), Cursor.FailOnError())
+          .collect[Seq](limit, Cursor.FailOnError())
 
         (fetchCount, fetchResults).mapN {
           case (count, results) =>
