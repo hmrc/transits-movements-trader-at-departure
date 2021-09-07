@@ -374,7 +374,7 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfi
     selector: JsObject,
     countSelector: JsObject
   ): Future[ResponseDepartures] = {
-    val lrnSelector = Json.obj("referenceNumber" -> Json.obj("$regex" -> lrn))
+    val lrnSelector = Json.obj("referenceNumber" -> Json.obj("$regex" -> lrn, "$options" -> "i"))
     val limit       = pageSize.map(Math.max(1, _)).getOrElse(appConfig.maxRowsReturned(channelFilter))
 
     collection.flatMap {
