@@ -17,16 +17,23 @@
 package api.helpers
 
 import com.github.tomakehurst.wiremock.WireMockServer
+import com.github.tomakehurst.wiremock.common.ConsoleNotifier
+import com.github.tomakehurst.wiremock.core.WireMockConfiguration
+import com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig
 import com.kenshoo.play.metrics.Metrics
-import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, Suite}
+import org.scalatest.BeforeAndAfterAll
+import org.scalatest.BeforeAndAfterEach
+import org.scalatest.Suite
 import play.api.inject.bind
-import play.api.inject.guice.{GuiceApplicationBuilder, GuiceableModule}
+import play.api.inject.guice.GuiceApplicationBuilder
+import play.api.inject.guice.GuiceableModule
 import utils.TestMetrics
 
 trait WiremockSuite extends BeforeAndAfterAll with BeforeAndAfterEach {
   this: Suite =>
 
-  protected val server: WireMockServer = new WireMockServer(11111)
+  protected val wiremockConfig: WireMockConfiguration = wireMockConfig().port(11111).notifier(new ConsoleNotifier(false))
+  protected val server: WireMockServer                = new WireMockServer(wiremockConfig)
 
   protected def portConfigKeys: Seq[String]
 

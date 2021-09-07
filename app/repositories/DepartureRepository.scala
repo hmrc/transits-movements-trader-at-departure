@@ -296,14 +296,16 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfi
 
               val initialFilter: PipelineOperator =
                 Match(
-                  Json.obj("_id" -> departureId, "channel" -> channelFilter, "messages" -> Json.obj("$elemMatch" -> Json.obj("messageId" -> messageId.value))))
+                  Json.obj("_id" -> departureId, "channel" -> channelFilter, "messages" -> Json.obj("$elemMatch" -> Json.obj("messageId" -> messageId.value)))
+                )
 
               val unwindMessages = List[PipelineOperator](
                 Unwind(
                   path = "messages",
                   includeArrayIndex = None,
                   preserveNullAndEmptyArrays = None
-                ))
+                )
+              )
 
               val secondaryFilter = List[PipelineOperator](Match(Json.obj("messages.messageId" -> messageId.value)))
 
@@ -378,46 +380,176 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfi
     }
   }
 
-  def fetchAllDepartures(eoriNumber: String, channelFilter: ChannelType, updatedSince: Option[OffsetDateTime]): Future[ResponseDepartures] = {
-    val dateFilter = updatedSince
-      .map(
-        dateTime => Json.obj("lastUpdated" -> Json.obj("$gte" -> dateTime))
-      )
-      .getOrElse(Json.obj())
+  def fetchAllDepartures(
+    eoriNumber: String,
+    channelFilter: ChannelType,
+    updatedSince: Option[OffsetDateTime],
+    lrn: Option[String] = None,
+    pageSize: Option[Int] = None,
+    page: Option[Int] = None
+  ): Future[ResponseDepartures] = {
+    withMetricsTimerAsync("mongo-get-departures-for-eori") {
+      _ =>
+        val baseSelector = Json.obj("eoriNumber" -> eoriNumber, "channel" -> channelFilter)
 
-    val countSelector = Json.obj("eoriNumber" -> eoriNumber, "channel" -> channelFilter)
-    val selector      = countSelector ++ dateFilter
+        val dateSelector = updatedSince
+          .map {
+            dateTime =>
+              Json.obj("lastUpdated" -> Json.obj("$gte" -> dateTime))
+          }
+          .getOrElse {
+            Json.obj()
+          }
 
-    val nextMessageId = Json.obj("nextMessageId" -> Json.obj("$size" -> "$messages"))
+        val lrnSelector = lrn
+          .map {
+            lrn =>
+              Json.obj("referenceNumber" -> Json.obj("$regex" -> lrn))
+          }
+          .getOrElse {
+            Json.obj()
+          }
 
-    val projection = DepartureWithoutMessages.projection ++ nextMessageId
+        val fullSelector =
+          baseSelector ++ dateSelector ++ mrnSelector
 
-    collection.flatMap {
-      c =>
-        val fetchCount = c.count(Some(countSelector))
+        val nextMessageId = Json.obj("nextMessageId" -> Json.obj("$size" -> "$messages"))
 
-        val fetchResults = c.aggregateWith[DepartureWithoutMessages](allowDiskUse = true) {
-          _ =>
-            import c.aggregationFramework._
+        val projection = DepartureWithoutMessages.projection ++ nextMessageId
 
-            val initialFilter: PipelineOperator =
-              Match(selector)
+        val limit = pageSize.map(Math.max(1, _)).getOrElse(appConfig.maxRowsReturned(channelFilter))
 
-            val projected       = List[PipelineOperator](Project(projection))
-            val sort            = List[PipelineOperator](Sort(Descending("lastUpdated")))
-            val limited         = List[PipelineOperator](Limit(appConfig.maxRowsReturned(channelFilter)))
-            val transformations = projected ++ sort ++ limited
+        val skip = Math.abs(page.getOrElse(1) - 1) * limit
 
-            (initialFilter, transformations)
+        collection.flatMap {
+          coll =>
+            val fetchCount      = coll.count(Some(baseSelector))
+            val fetchMatchCount = coll.count(Some(fullSelector))
+
+            val fetchResults = coll
+              .aggregateWith[DepartureWithoutMessages](allowDiskUse = true) {
+                _ =>
+                  import coll.aggregationFramework._
+
+                  val matchStage   = Match(fullSelector)
+                  val projectStage = Project(projection)
+                  val sortStage    = Sort(Descending("lastUpdated"))
+                  val skipStage    = Skip(skip)
+                  val limitStage   = Limit(limit)
+
+                  val restStages =
+                    if (skip > 0)
+                      List[PipelineOperator](projectStage, sortStage, skipStage, limitStage)
+                    else
+                      List[PipelineOperator](projectStage, sortStage, limitStage)
+
+                  (matchStage, restStages)
+              }
+              .collect[Seq](limit, Cursor.FailOnError())
+
+            (fetchResults, fetchCount, fetchMatchCount).mapN {
+              case (results, count, matchCount) =>
+                ResponseDepartures(
+                  results.map(ResponseDeparture.build),
+                  results.length,
+                  totalArrivals = count,
+                  totalMatched = matchCount
+                )
+            }
         }
-        for {
-          results <- fetchResults.collect[Seq](appConfig.maxRowsReturned(channelFilter), Cursor.FailOnError())
-          count   <- fetchCount
-        } yield {
-          ResponseDepartures(results.map(ResponseDeparture.build), results.length, count)
-        }
-    }
+      }
   }
+
+  // private def withLRNSearchQuery(
+  //   lrn: String,
+  //   pageSize: Option[Int],
+  //   channelFilter: ChannelType,
+  //   selector: JsObject,
+  //   countSelector: JsObject
+  // ): Future[ResponseDepartures] = {
+  //   val lrnSelector = Json.obj("referenceNumber" -> Json.obj("$regex" -> lrn))
+  //   val limit       = pageSize.map(Math.max(1, _)).getOrElse(appConfig.maxRowsReturned(channelFilter))
+
+  //   val nextMessageId = Json.obj("nextMessageId" -> Json.obj("$size" -> "$messages"))
+
+  //   val projection = DepartureWithoutMessages.projection ++ nextMessageId
+
+  //   collection.flatMap {
+  //     c =>
+  //       val fetchCount = c.count(Some(countSelector))
+
+  //       val fetchResults = c.aggregateWith[DepartureWithoutMessages](allowDiskUse = true) {
+  //         _ =>
+  //           import c.aggregationFramework._
+
+  //           val initialFilter: PipelineOperator =
+  //             Match(selector)
+
+  //           val projected       = List[PipelineOperator](Project(projection))
+  //           val sort            = List[PipelineOperator](Sort(Descending("lastUpdated")))
+  //           val limited         = List[PipelineOperator](Limit(appConfig.maxRowsReturned(channelFilter)))
+  //           val transformations = projected ++ sort ++ limited
+
+  //           (initialFilter, transformations)
+  //       }
+  //       for {
+  //         results <- fetchResults.collect[Seq](appConfig.maxRowsReturned(channelFilter), Cursor.FailOnError())
+  //         count   <- fetchCount
+  //       } yield {
+  //         ResponseDepartures(results.map(ResponseDeparture.build), results.length, count)
+  //     coll =>
+  //       val fetchCount      = coll.count(Some(countSelector))
+  //       val totalMatchCount = coll.count(Some(countSelector ++ lrnSelector))
+  //       val lrnFilter       = selector ++ lrnSelector
+  //       val fetchResults = coll
+  //         .find(lrnFilter, Some(DepartureWithoutMessages.projection))
+  //         .sort(Json.obj("lastUpdated" -> -1))
+  //         .cursor[DepartureWithoutMessages]()
+  //         .collect[Seq](limit, Cursor.FailOnError())
+
+  //       (fetchCount, fetchResults, totalMatchCount).mapN {
+  //         case (count, results, matchCount) =>
+  //           ResponseDepartures(
+  //             departures = results.map(ResponseDeparture.build),
+  //             retrievedDepartures = results.length,
+  //             totalDepartures = count,
+  //             totalMatched = Some(matchCount)
+  //           )
+  //       }
+  //   }
+  // }
+
+  // private def withPaginationSearchQuery(
+  //   page: Option[Int],
+  //   pageSize: Option[Int],
+  //   channelFilter: ChannelType,
+  //   selector: JsObject,
+  //   countSelector: JsObject
+  // ): Future[ResponseDepartures] = {
+
+  //   val limit = pageSize.map(Math.max(1, _)).getOrElse(appConfig.maxRowsReturned(channelFilter))
+  //   val skip  = Math.abs(page.getOrElse(1) - 1) * limit
+
+  //   collection.flatMap {
+  //     coll =>
+  //       val fetchCount = coll.count(Some(countSelector))
+  //       val fetchResults = coll
+  //         .find(selector, Some(DepartureWithoutMessages.projection))
+  //         .sort(Json.obj("lastUpdated" -> -1))
+  //         .skip(skip)
+  //         .cursor[DepartureWithoutMessages]()
+  //         .collect[Seq](limit, Cursor.FailOnError())
+
+  //       (fetchCount, fetchResults).mapN {
+  //         case (count, results) =>
+  //           ResponseDepartures(
+  //             departures = results.map(ResponseDeparture.build),
+  //             retrievedDepartures = results.length,
+  //             totalDepartures = count
+  //           )
+  //       }
+  //   }
+  // }
 
   def updateDeparture[A](selector: DepartureSelector, modifier: A)(implicit ev: DepartureModifier[A]): Future[Try[Unit]] = {
 

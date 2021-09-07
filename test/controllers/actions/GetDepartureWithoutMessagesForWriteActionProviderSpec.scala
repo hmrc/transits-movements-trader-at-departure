@@ -17,7 +17,7 @@
 package controllers.actions
 
 import generators.ModelGenerators
-import models.ChannelType.web
+import models.ChannelType.Web
 import models.Departure
 import models.DepartureId
 import models.DepartureWithoutMessages
@@ -98,7 +98,7 @@ class GetDepartureWithoutMessagesForWriteActionProviderSpec
       verify(mockLockRepository, times(1)).unlock(eqTo(departure.departureId))
     }
 
-    "must lock an departure, unlock it, and return Not Found when the departure cannot be found" in {
+    "must lock an departure, unlock it, and return Ok when the departure cannot be found" in {
 
       val departure = arbitrary[DepartureWithoutMessages].sample.value
 
@@ -118,9 +118,9 @@ class GetDepartureWithoutMessagesForWriteActionProviderSpec
       val actionProvider = application.injector.instanceOf[GetDepartureWithoutMessagesForWriteActionProvider]
 
       val controller = new Harness(actionProvider)
-      val result     = controller.get(departure.departureId)(fakeRequest.withHeaders("channel" -> web.toString))
+      val result     = controller.get(departure.departureId)(fakeRequest.withHeaders("channel" -> Web.toString))
 
-      status(result) mustEqual NOT_FOUND
+      status(result) mustEqual OK
       verify(mockLockRepository, times(1)).lock(eqTo(departure.departureId))
       verify(mockLockRepository, times(1)).unlock(eqTo(departure.departureId))
     }

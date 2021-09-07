@@ -16,13 +16,16 @@
 
 package models
 
-sealed trait ChannelType
+sealed abstract class ChannelType(name: String) {
+  override def toString: String = name
+}
 
 object ChannelType extends Enumerable.Implicits {
-  case object web extends ChannelType
-  case object api extends ChannelType
+  object Web     extends ChannelType("web")
+  object Api     extends ChannelType("api")
+  object Deleted extends ChannelType("deleted")
 
-  val values: Seq[ChannelType] = Seq(web, api)
+  val values: Seq[ChannelType] = Seq(Web, Api)
 
   implicit val enumerable: Enumerable[ChannelType] =
     Enumerable(values.map(v => v.toString -> v): _*)

@@ -27,8 +27,11 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
+import play.api.http.ContentTypes
+import play.api.http.HeaderNames
 import play.api.test.Helpers.running
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.RequestId
 
 import scala.concurrent.Future
 import scala.xml.Elem
@@ -46,7 +49,7 @@ class ManageDocumentsConnectorSpec
 
   override protected def portConfigKey: String = "microservice.services.manage-documents.port"
 
-  implicit val headerCarrier: HeaderCarrier = HeaderCarrier()
+  implicit val headerCarrier: HeaderCarrier = HeaderCarrier().copy(requestId = Some(RequestId("bar")), otherHeaders = Seq("X-Client-Id" -> "foo"))
 
   val releasedForTransitXml: Elem = <releaseForTransit>
     <fieldTwo>Field Twos Value</fieldTwo>
@@ -66,8 +69,10 @@ class ManageDocumentsConnectorSpec
 
         server.stubFor(
           post(urlEqualTo("/transit-movements-trader-manage-documents/transit-accompanying-document"))
-            .withHeader("User-Agent", equalTo("transits-movements-trader-at-departure"))
-            .withHeader("Content-Type", equalTo("application/xml"))
+            .withHeader(HeaderNames.CONTENT_TYPE, equalTo(ContentTypes.XML))
+            .withHeader(HeaderNames.USER_AGENT, equalTo("transits-movements-trader-at-departure"))
+            .withHeader("X-Client-Id", equalTo("foo"))
+            .withHeader("X-Request-Id", equalTo("bar"))
             .withRequestBody(equalToXml(expectedXml))
             .willReturn(
               aResponse()
@@ -92,8 +97,10 @@ class ManageDocumentsConnectorSpec
 
         server.stubFor(
           post(urlEqualTo("/transit-movements-trader-manage-documents/transit-accompanying-document"))
-            .withHeader("User-Agent", equalTo("transits-movements-trader-at-departure"))
-            .withHeader("Content-Type", equalTo("application/xml"))
+            .withHeader(HeaderNames.CONTENT_TYPE, equalTo(ContentTypes.XML))
+            .withHeader(HeaderNames.USER_AGENT, equalTo("transits-movements-trader-at-departure"))
+            .withHeader("X-Client-Id", equalTo("foo"))
+            .withHeader("X-Request-Id", equalTo("bar"))
             .withRequestBody(equalToXml(expectedXml))
             .willReturn(
               aResponse()
@@ -118,8 +125,10 @@ class ManageDocumentsConnectorSpec
 
         server.stubFor(
           post(urlEqualTo("/transit-movements-trader-manage-documents/transit-security-accompanying-document"))
-            .withHeader("User-Agent", equalTo("transits-movements-trader-at-departure"))
-            .withHeader("Content-Type", equalTo("application/xml"))
+            .withHeader(HeaderNames.CONTENT_TYPE, equalTo(ContentTypes.XML))
+            .withHeader(HeaderNames.USER_AGENT, equalTo("transits-movements-trader-at-departure"))
+            .withHeader("X-Client-Id", equalTo("foo"))
+            .withHeader("X-Request-Id", equalTo("bar"))
             .withRequestBody(equalToXml(expectedXml))
             .willReturn(
               aResponse()
@@ -144,8 +153,10 @@ class ManageDocumentsConnectorSpec
 
         server.stubFor(
           post(urlEqualTo("/transit-movements-trader-manage-documents/transit-security-accompanying-document"))
-            .withHeader("User-Agent", equalTo("transits-movements-trader-at-departure"))
-            .withHeader("Content-Type", equalTo("application/xml"))
+            .withHeader(HeaderNames.CONTENT_TYPE, equalTo(ContentTypes.XML))
+            .withHeader(HeaderNames.USER_AGENT, equalTo("transits-movements-trader-at-departure"))
+            .withHeader("X-Client-Id", equalTo("foo"))
+            .withHeader("X-Request-Id", equalTo("bar"))
             .withRequestBody(equalToXml(expectedXml))
             .willReturn(
               aResponse()

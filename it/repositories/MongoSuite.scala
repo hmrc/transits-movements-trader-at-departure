@@ -31,11 +31,10 @@ object MongoSuite {
     "config.resource"
   )))
 
-  private lazy val parsedUri =  Future.fromTry{
-    MongoConnection.parseURI(config.get[String]("mongodb.uri"))
-  }
-
-  lazy val connection: Future[MongoConnection] = parsedUri.map {MongoDriver().connection}
+  private lazy val parsedUri =  
+    MongoConnection.fromString(config.get[String]("mongodb.uri"))
+  
+  lazy val connection = parsedUri.flatMap {AsyncDriver().connect(_)}
 }
 
 trait MongoSuite {

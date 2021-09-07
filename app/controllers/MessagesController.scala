@@ -71,10 +71,12 @@ class MessagesController @Inject()(
           MessageType.getMessageType(request.body) match {
             case Some(MessageType.DeclarationCancellationRequest) =>
               departureService
-                .makeMessageWithStatus(request.departure.departureId,
-                                       request.departure.nextMessageId,
-                                       request.departure.nextMessageCorrelationId,
-                                       MessageType.DeclarationCancellationRequest)(
+                .makeMessageWithStatus(
+                  request.departure.departureId,
+                  request.departure.nextMessageId,
+                  request.departure.nextMessageCorrelationId,
+                  MessageType.DeclarationCancellationRequest
+                )(
                   request.body
                 ) match {
                 case Right(message) =>
@@ -90,7 +92,7 @@ class MessagesController @Inject()(
                           case submissionFailureRejected: SubmissionProcessingResult.SubmissionFailureRejected =>
                             BadRequest(submissionFailureRejected.responseBody)
                           case SubmissionProcessingResult.SubmissionSuccess =>
-                            auditService.auditEvent(DepartureCancellationRequestSubmitted, message, request.channel)
+                            auditService.auditEvent(DepartureCancellationRequestSubmitted, request.departure.eoriNumber, message, request.channel)
                             Accepted
                               .withHeaders(
                                 "Location" -> routes.MessagesController.getMessage(request.departure.departureId, request.departure.nextMessageId).url

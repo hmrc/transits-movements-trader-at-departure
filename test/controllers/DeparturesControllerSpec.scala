@@ -25,12 +25,11 @@ import connectors.MessageConnector.EisSubmissionResult.ErrorInPayload
 import generators.ModelGenerators
 import models.Box
 import models.BoxId
-import models.ChannelType.api
-import models.ChannelType.web
+import models.ChannelType.Api
+import models.ChannelType.Web
 import models.Departure
 import models.DepartureId
 import models.DepartureStatus
-import models.DepartureWithoutMessages
 import models.MessageSender
 import models.MessageStatus.SubmissionPending
 import models.MessageType
@@ -117,7 +116,7 @@ class DeparturesControllerSpec
 
   val initializedDeparture = Departure(
     departureId = departureId,
-    channel = api,
+    channel = Api,
     eoriNumber = "eori",
     movementReferenceNumber = None,
     status = DepartureStatus.Initialized,
@@ -140,13 +139,13 @@ class DeparturesControllerSpec
         val mockPushPullNotificationService = mock[PushPullNotificationService]
 
         val expectedMessage: MessageWithStatus = movementMessage(1).copy(messageCorrelationId = 1)
-        val newDeparture                       = initializedDeparture.copy(messages = NonEmptyList.of[MessageWithStatus](expectedMessage), channel = web)
+        val newDeparture                       = initializedDeparture.copy(messages = NonEmptyList.of[MessageWithStatus](expectedMessage), channel = Web)
         val captor: ArgumentCaptor[Departure]  = ArgumentCaptor.forClass(classOf[Departure])
         val testClientId                       = "X5ZasuQLH0xqKooV_IEw6yjQNfEa"
 
         when(mockDepartureIdRepository.nextId()).thenReturn(Future.successful(newDeparture.departureId))
         when(mockSubmitMessageService.submitDeparture(any())(any())).thenReturn(Future.successful(SubmissionProcessingResult.SubmissionSuccess))
-        when(mockPushPullNotificationService.getBox(any())(any(), any())).thenReturn(Future.successful(None))
+        when(mockPushPullNotificationService.getBox(any())(any())).thenReturn(Future.successful(None))
 
         val application = baseApplicationBuilder
           .overrides(
@@ -176,8 +175,8 @@ class DeparturesControllerSpec
           val departureMessage: MessageWithStatus = captor.getValue.messages.head.asInstanceOf[MessageWithStatus]
           departureMessage.message.map(trim) mustEqual expectedMessage.message.map(trim)
 
-          verify(mockAuditService, times(1)).auditEvent(eqTo(AuditType.DepartureDeclarationSubmitted), any(), any())(any())
-          verify(mockAuditService, times(1)).auditEvent(eqTo(AuditType.MesSenMES3Added), any(), any())(any())
+          verify(mockAuditService, times(1)).auditEvent(eqTo(AuditType.DepartureDeclarationSubmitted), eqTo(newDeparture.eoriNumber), any(), any())(any())
+          verify(mockAuditService, times(1)).auditEvent(eqTo(AuditType.MesSenMES3Added), eqTo(newDeparture.eoriNumber), any(), any())(any())
         }
       }
 
@@ -188,7 +187,7 @@ class DeparturesControllerSpec
         val mockPushPullNotificationService = mock[PushPullNotificationService]
 
         val expectedMessage: MessageWithStatus = movementMessage(1).copy(messageCorrelationId = 1)
-        val newDeparture                       = initializedDeparture.copy(messages = NonEmptyList.of[MessageWithStatus](expectedMessage), channel = web)
+        val newDeparture                       = initializedDeparture.copy(messages = NonEmptyList.of[MessageWithStatus](expectedMessage), channel = Web)
         val captor: ArgumentCaptor[Departure]  = ArgumentCaptor.forClass(classOf[Departure])
         val testClientId                       = "X5ZasuQLH0xqKooV_IEw6yjQNfEa"
         val testBoxId                          = "1c5b9365-18a6-55a5-99c9-83a091ac7f26"
@@ -196,7 +195,7 @@ class DeparturesControllerSpec
 
         when(mockDepartureIdRepository.nextId()).thenReturn(Future.successful(newDeparture.departureId))
         when(mockSubmitMessageService.submitDeparture(any())(any())).thenReturn(Future.successful(SubmissionProcessingResult.SubmissionSuccess))
-        when(mockPushPullNotificationService.getBox(any())(any(), any())).thenReturn(Future.successful(Some(testBox)))
+        when(mockPushPullNotificationService.getBox(any())(any())).thenReturn(Future.successful(Some(testBox)))
 
         val application = baseApplicationBuilder
           .overrides(
@@ -225,8 +224,8 @@ class DeparturesControllerSpec
           val departureMessage: MessageWithStatus = captor.getValue.messages.head.asInstanceOf[MessageWithStatus]
           departureMessage.message.map(trim) mustEqual expectedMessage.message.map(trim)
 
-          verify(mockAuditService, times(1)).auditEvent(eqTo(AuditType.DepartureDeclarationSubmitted), any(), any())(any())
-          verify(mockAuditService, times(1)).auditEvent(eqTo(AuditType.MesSenMES3Added), any(), any())(any())
+          verify(mockAuditService, times(1)).auditEvent(eqTo(AuditType.DepartureDeclarationSubmitted), eqTo(newDeparture.eoriNumber), any(), any())(any())
+          verify(mockAuditService, times(1)).auditEvent(eqTo(AuditType.MesSenMES3Added), eqTo(newDeparture.eoriNumber), any(), any())(any())
         }
       }
 
@@ -235,7 +234,7 @@ class DeparturesControllerSpec
         val mockPushPullNotificationService = mock[PushPullNotificationService]
 
         when(mockDepartureIdRepository.nextId()).thenReturn(Future.failed(new Exception))
-        when(mockPushPullNotificationService.getBox(any())(any(), any())).thenReturn(Future.successful(None))
+        when(mockPushPullNotificationService.getBox(any())(any())).thenReturn(Future.successful(None))
 
         val application = baseApplicationBuilder
           .overrides(
@@ -247,7 +246,7 @@ class DeparturesControllerSpec
         running(application) {
 
           val request = FakeRequest(POST, routes.DeparturesController.post().url)
-            .withHeaders("channel" -> web.toString)
+            .withHeaders("channel" -> Web.toString)
             .withXmlBody(requestXmlBody)
 
           val result = route(application, request).value
@@ -266,7 +265,7 @@ class DeparturesControllerSpec
 
         when(mockDepartureIdRepository.nextId()).thenReturn(Future.successful(departureId))
         when(mockSubmitMessageService.submitDeparture(any())(any())).thenReturn(Future.successful(SubmissionFailureInternal))
-        when(mockPushPullNotificationService.getBox(any())(any(), any())).thenReturn(Future.successful(None))
+        when(mockPushPullNotificationService.getBox(any())(any())).thenReturn(Future.successful(None))
 
         val application = baseApplicationBuilder
           .overrides(
@@ -279,7 +278,7 @@ class DeparturesControllerSpec
         running(application) {
 
           val request = FakeRequest(POST, routes.DeparturesController.post().url)
-            .withHeaders("channel" -> web.toString)
+            .withHeaders("channel" -> Web.toString)
             .withXmlBody(requestXmlBody)
 
           val result = route(application, request).value
@@ -299,7 +298,7 @@ class DeparturesControllerSpec
 
         when(mockDepartureIdRepository.nextId()).thenReturn(Future.successful(departureId))
         when(mockSubmitMessageService.submitDeparture(any())(any())).thenReturn(Future.successful(SubmissionFailureExternal))
-        when(mockPushPullNotificationService.getBox(any())(any(), any())).thenReturn(Future.successful(None))
+        when(mockPushPullNotificationService.getBox(any())(any())).thenReturn(Future.successful(None))
 
         val application = baseApplicationBuilder
           .overrides(
@@ -312,7 +311,7 @@ class DeparturesControllerSpec
         running(application) {
 
           val request = FakeRequest(POST, routes.DeparturesController.post().url)
-            .withHeaders("channel" -> web.toString)
+            .withHeaders("channel" -> Web.toString)
             .withXmlBody(requestXmlBody)
 
           val result = route(application, request).value
@@ -329,7 +328,7 @@ class DeparturesControllerSpec
         val mockPushPullNotificationService = mock[PushPullNotificationService]
 
         when(mockDepartureIdRepository.nextId()).thenReturn(Future.successful(DepartureId(1)))
-        when(mockPushPullNotificationService.getBox(any())(any(), any())).thenReturn(Future.successful(None))
+        when(mockPushPullNotificationService.getBox(any())(any())).thenReturn(Future.successful(None))
 
         val application =
           baseApplicationBuilder
@@ -345,7 +344,7 @@ class DeparturesControllerSpec
             <CC015B></CC015B>
 
           val request = FakeRequest(POST, routes.DeparturesController.post().url)
-            .withHeaders("channel" -> web.toString)
+            .withHeaders("channel" -> Web.toString)
             .withXmlBody(requestXmlBody)
 
           val result = route(application, request).value
@@ -365,7 +364,7 @@ class DeparturesControllerSpec
 
         when(mockDepartureIdRepository.nextId()).thenReturn(Future.successful(departureId))
         when(mockSubmitMessageService.submitDeparture(any())(any())).thenReturn(Future.successful(SubmissionFailureRejected(ErrorInPayload.responseBody)))
-        when(mockPushPullNotificationService.getBox(any())(any(), any())).thenReturn(Future.successful(None))
+        when(mockPushPullNotificationService.getBox(any())(any())).thenReturn(Future.successful(None))
 
         val application = baseApplicationBuilder
           .overrides(
@@ -378,7 +377,7 @@ class DeparturesControllerSpec
         running(application) {
 
           val request = FakeRequest(POST, routes.DeparturesController.post().url)
-            .withHeaders("channel" -> web.toString)
+            .withHeaders("channel" -> Web.toString)
             .withXmlBody(requestXmlBody)
 
           val result = route(application, request).value
@@ -393,7 +392,7 @@ class DeparturesControllerSpec
         val mockPushPullNotificationService = mock[PushPullNotificationService]
 
         when(mockDepartureIdRepository.nextId()).thenReturn(Future.successful(DepartureId(1)))
-        when(mockPushPullNotificationService.getBox(any())(any(), any())).thenReturn(Future.successful(None))
+        when(mockPushPullNotificationService.getBox(any())(any())).thenReturn(Future.successful(None))
 
         val application =
           baseApplicationBuilder
@@ -407,7 +406,7 @@ class DeparturesControllerSpec
           val requestXmlBody = <InvalidRootNode></InvalidRootNode>
 
           val request = FakeRequest(POST, routes.DeparturesController.post().url)
-            .withHeaders("channel" -> web.toString)
+            .withHeaders("channel" -> Web.toString)
             .withXmlBody(requestXmlBody)
 
           val result = route(application, request).value
@@ -427,7 +426,7 @@ class DeparturesControllerSpec
 
         when(mockDepartureIdRepository.nextId()).thenReturn(Future.successful(departureId))
         when(mockSubmitMessageService.submitDeparture(any())(any())).thenReturn(Future.successful(SubmissionProcessingResult.SubmissionFailureInternal))
-        when(mockPushPullNotificationService.getBox(any())(any(), any())).thenReturn(Future.successful(None))
+        when(mockPushPullNotificationService.getBox(any())(any())).thenReturn(Future.successful(None))
 
         val application = baseApplicationBuilder
           .overrides(
@@ -440,7 +439,7 @@ class DeparturesControllerSpec
         running(application) {
 
           val request = FakeRequest(POST, routes.DeparturesController.post().url)
-            .withHeaders("channel" -> web.toString)
+            .withHeaders("channel" -> Web.toString)
             .withXmlBody(requestXmlBody)
 
           val result = route(application, request).value
@@ -486,7 +485,7 @@ class DeparturesControllerSpec
 
       running(application) {
         val request = FakeRequest(GET, routes.DeparturesController.get(DepartureId(1)).url)
-          .withHeaders("channel" -> web.toString)
+          .withHeaders("channel" -> Web.toString)
         val result = route(application, request).value
 
         contentAsString(result) mustBe empty
@@ -526,7 +525,7 @@ class DeparturesControllerSpec
 
       running(application) {
         val request = FakeRequest(GET, routes.DeparturesController.get(DepartureId(1)).url)
-          .withHeaders("channel" -> web.toString)
+          .withHeaders("channel" -> Web.toString)
         val result = route(application, request).value
 
         status(result) mustEqual INTERNAL_SERVER_ERROR
@@ -554,7 +553,8 @@ class DeparturesControllerSpec
       val responseDeparture  = ResponseDeparture.build(departure)
       val responseDepartures = ResponseDepartures(Seq(responseDeparture), 1, 1)
 
-      when(mockDepartureRepository.fetchAllDepartures(any(), any(), any())).thenReturn(Future.successful(responseDepartures))
+      when(mockDepartureRepository.fetchAllDepartures(any(), any(), any(), any(), any(), any())).thenReturn(Future.successful(responseDepartures))
+      
       val application = baseApplicationBuilder
         .overrides(bind[DepartureRepository].toInstance(mockDepartureRepository))
         .build()
@@ -573,7 +573,7 @@ class DeparturesControllerSpec
       val emptyResponse           = ResponseDepartures(Seq.empty, 0, 0)
       val mockDepartureRepository = mock[DepartureRepository]
 
-      when(mockDepartureRepository.fetchAllDepartures(any(), any(), any())).thenReturn(Future.successful(emptyResponse))
+      when(mockDepartureRepository.fetchAllDepartures(any(), any(), any(), any(), any(), any())).thenReturn(Future.successful(emptyResponse))
 
       val application = baseApplicationBuilder
         .overrides(bind[DepartureRepository].toInstance(mockDepartureRepository))
@@ -581,7 +581,7 @@ class DeparturesControllerSpec
 
       running(application) {
         val request = FakeRequest(GET, routes.DeparturesController.getDepartures().url)
-          .withHeaders("channel" -> web.toString)
+          .withHeaders("channel" -> Web.toString)
         val result = route(application, request).value
 
         status(result) mustEqual OK
@@ -591,7 +591,7 @@ class DeparturesControllerSpec
     "must return INTERNAL_SERVER_ERROR when we cannot retrieve departures" in {
       val mockDepartureRepository = mock[DepartureRepository]
 
-      when(mockDepartureRepository.fetchAllDepartures(any(), any(), any())).thenReturn(Future.failed(new Exception))
+      when(mockDepartureRepository.fetchAllDepartures(any(), any(), any(), any(), any(), any())).thenReturn(Future.failed(new Exception))
 
       val application = baseApplicationBuilder
         .overrides(bind[DepartureRepository].toInstance(mockDepartureRepository))
@@ -599,7 +599,7 @@ class DeparturesControllerSpec
 
       running(application) {
         val request = FakeRequest(GET, routes.DeparturesController.getDepartures().url)
-          .withHeaders("channel" -> web.toString)
+          .withHeaders("channel" -> Web.toString)
         val result = route(application, request).value
 
         contentAsString(result) mustBe empty

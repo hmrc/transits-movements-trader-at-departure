@@ -16,18 +16,7 @@
 
 package generators
 
-import java.time.LocalDate
-import java.time.LocalDateTime
-
 import config.Constants
-import models.MessageStatus.SubmissionPending
-import models._
-import models.SubmissionProcessingResult.SubmissionFailure
-import models.SubmissionProcessingResult.SubmissionFailureExternal
-import models.SubmissionProcessingResult.SubmissionFailureInternal
-import org.scalacheck.Arbitrary.arbitrary
-import org.scalacheck.Arbitrary
-import org.scalacheck.Gen
 import connectors.MessageConnector.EisSubmissionResult
 import connectors.MessageConnector.EisSubmissionResult.DownstreamInternalServerError
 import connectors.MessageConnector.EisSubmissionResult.EisSubmissionFailure
@@ -37,8 +26,19 @@ import connectors.MessageConnector.EisSubmissionResult.EisSubmissionSuccessful
 import connectors.MessageConnector.EisSubmissionResult.ErrorInPayload
 import connectors.MessageConnector.EisSubmissionResult.UnexpectedHttpResponse
 import connectors.MessageConnector.EisSubmissionResult.VirusFoundOrInvalidToken
-import uk.gov.hmrc.http.HttpResponse
+import models.MessageStatus.SubmissionPending
+import models.SubmissionProcessingResult.SubmissionFailure
+import models.SubmissionProcessingResult.SubmissionFailureExternal
+import models.SubmissionProcessingResult.SubmissionFailureInternal
+import models._
+import org.scalacheck.Arbitrary
+import org.scalacheck.Arbitrary.arbitrary
+import org.scalacheck.Gen
+import uk.gov.hmrc.http.UpstreamErrorResponse
 import utils.JsonHelper
+
+import java.time.LocalDate
+import java.time.LocalDateTime
 
 trait ModelGenerators extends BaseGenerators with JavaTimeGenerators with JsonHelper {
 
@@ -201,7 +201,7 @@ trait ModelGenerators extends BaseGenerators with JavaTimeGenerators with JsonHe
     Arbitrary {
       Gen.oneOf(
         DownstreamInternalServerError,
-        UnexpectedHttpResponse(HttpResponse(418, ""))
+        UnexpectedHttpResponse(UpstreamErrorResponse("", 418))
       )
     }
 

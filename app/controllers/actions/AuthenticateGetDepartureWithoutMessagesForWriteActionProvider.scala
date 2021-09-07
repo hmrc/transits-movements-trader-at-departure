@@ -21,9 +21,6 @@ import models.DepartureId
 import models.request.DepartureWithoutMessagesRequest
 import play.api.mvc.ActionBuilder
 import play.api.mvc.AnyContent
-import play.api.mvc.BodyParsers
-
-import scala.concurrent.ExecutionContext
 
 class AuthenticatedGetDepartureWithoutMessagesForWriteActionProvider @Inject()(
   lock: LockActionProvider,

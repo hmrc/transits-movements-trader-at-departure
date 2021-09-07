@@ -17,16 +17,16 @@
 package controllers.actions
 
 import models.ChannelType
-import models.ChannelType.api
-import models.ChannelType.web
+import models.ChannelType.Api
+import models.ChannelType.Web
 import play.api.mvc.Request
 
 private[actions] object ChannelUtil {
 
   def getChannel[A](request: Request[A]): Option[ChannelType] =
     request.headers.get("channel") match {
-      case Some(channel) if channel.equals(api.toString) => Some(api)
-      case Some(channel) if channel.equals(web.toString) => Some(web)
+      case Some(channel) if channel.equals(Api.toString) => Some(Api)
+      case Some(channel) if channel.equals(Web.toString) => Some(Web)
       case _                                             => None
     }
 }

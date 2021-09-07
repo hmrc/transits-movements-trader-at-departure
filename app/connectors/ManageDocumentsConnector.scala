@@ -16,15 +16,18 @@
 
 package connectors
 
-import javax.inject.Inject
 import akka.util.ByteString
 import com.kenshoo.play.metrics.Metrics
 import config.AppConfig
+import config.Constants
 import metrics.HasMetrics
 import play.api.Logging
+import play.api.http.ContentTypes
+import play.api.http.HeaderNames
 import play.api.libs.ws.WSClient
 import uk.gov.hmrc.http.HeaderCarrier
 
+import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.xml.NodeSeq
@@ -41,13 +44,14 @@ class ManageDocumentsConnector @Inject()(
     withMetricsTimerAsync("get-tad-pdf") {
       timer =>
         val serviceUrl = s"${config.manageDocumentsUrl}/transit-accompanying-document"
-        val headers = Seq(
-          "Content-Type" -> "application/xml",
-          "User-Agent"   -> config.appName
-        ) ++ hc.headers
+
+        val requestHeaders = hc.headers(Seq(Constants.XClientIdHeader, Constants.XRequestIdHeader)) ++ Seq(
+          HeaderNames.CONTENT_TYPE -> ContentTypes.XML,
+          HeaderNames.USER_AGENT   -> config.appName
+        )
 
         ws.url(serviceUrl)
-          .withHttpHeaders(headers: _*)
+          .withHttpHeaders(requestHeaders: _*)
           .post(ie29Message)
           .map(
             response =>
@@ -66,13 +70,14 @@ class ManageDocumentsConnector @Inject()(
     withMetricsTimerAsync("get-tsad-pdf") {
       timer =>
         val serviceUrl = s"${config.manageDocumentsUrl}/transit-security-accompanying-document"
-        val headers = Seq(
-          "Content-Type" -> "application/xml",
-          "User-Agent"   -> config.appName
-        ) ++ hc.headers
+
+        val requestHeaders = hc.headers(Seq(Constants.XClientIdHeader, Constants.XRequestIdHeader)) ++ Seq(
+          HeaderNames.CONTENT_TYPE -> ContentTypes.XML,
+          HeaderNames.USER_AGENT   -> config.appName
+        )
 
         ws.url(serviceUrl)
-          .withHttpHeaders(headers: _*)
+          .withHttpHeaders(requestHeaders: _*)
           .post(ie29Message)
           .map(
             response =>

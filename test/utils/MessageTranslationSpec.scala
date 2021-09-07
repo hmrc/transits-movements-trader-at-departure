@@ -26,7 +26,6 @@ import play.api.Environment
 import play.api.Mode
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
-import play.api.test.Helpers
 import play.api.test.Helpers.running
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 

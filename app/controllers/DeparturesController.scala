@@ -89,8 +89,8 @@ class DeparturesController @Inject()(
                         case submissionFailureRejected: SubmissionProcessingResult.SubmissionFailureRejected =>
                           BadRequest(submissionFailureRejected.responseBody)
                         case SubmissionProcessingResult.SubmissionSuccess =>
-                          auditService.auditEvent(DepartureDeclarationSubmitted, departure.messages.head, request.channel)
-                          auditService.auditEvent(MesSenMES3Added, departure.messages.head, request.channel)
+                          auditService.auditEvent(DepartureDeclarationSubmitted, request.eoriNumber, departure.messages.head, request.channel)
+                          auditService.auditEvent(MesSenMES3Added, request.eoriNumber, departure.messages.head, request.channel)
                           Accepted(Json.toJson(boxOpt))
                             .withHeaders(
                               "Location" -> routes.DeparturesController.get(departure.departureId).url
@@ -117,12 +117,12 @@ class DeparturesController @Inject()(
       }
     }
 
-  def getDepartures(updatedSince: Option[OffsetDateTime]): Action[AnyContent] =
+  def getDepartures(updatedSince: Option[OffsetDateTime], lrn: Option[String], pageSize: Option[Int] = None, page: Option[Int] = None): Action[AnyContent] =
     withMetricsTimerAction("get-all-departures") {
       authenticate().async {
         implicit request =>
           departureRepository
-            .fetchAllDepartures(request.eoriNumber, request.channel, updatedSince)
+            .fetchAllDepartures(request.eoriNumber, request.channel, updatedSince, lrn, pageSize, page)
             .map {
               responseDepartures =>
                 departuresCount.update(responseDepartures.retrievedDepartures)

@@ -15,8 +15,10 @@
  */
 
 package controllers.actions
-import models.ChannelType.web
+
 import models.request.DepartureWithMessagesRequest
+import models.ChannelType.Web
+import models.request.DepartureRequest
 import models.Departure
 import models.DepartureId
 import org.scalatest.exceptions.TestFailedException
@@ -28,13 +30,14 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
 class FakeAuthenticatedGetDepartureWithMessagesForReadActionProvider(departure: Departure) extends AuthenticatedGetDepartureWithMessagesForReadActionProvider {
+
   override def apply(departureId: DepartureId): ActionBuilder[DepartureWithMessagesRequest, AnyContent] =
     new ActionBuilder[DepartureWithMessagesRequest, AnyContent] {
       override def parser: BodyParser[AnyContent] = stubBodyParser()
 
       override def invokeBlock[A](request: Request[A], block: DepartureWithMessagesRequest[A] => Future[Result]): Future[Result] =
         if (departure.departureId == departureId) {
-          block(DepartureWithMessagesRequest(request, departure, web))
+          block(DepartureWithMessagesRequest(request, departure, Web))
         } else {
           throw new TestFailedException(
             s"Bad test data setup. DepartureId on the Departure was ${departure.departureId} but expected to retrieve $departureId",

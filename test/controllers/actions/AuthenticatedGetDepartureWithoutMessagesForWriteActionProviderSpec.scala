@@ -17,8 +17,8 @@
 package controllers.actions
 
 import generators.ModelGenerators
-import models.ChannelType.api
-import models.ChannelType.web
+import models.ChannelType.Api
+import models.ChannelType.Web
 import models.Departure
 import models.DepartureId
 import models.DepartureWithoutMessages
@@ -196,7 +196,7 @@ class AuthenticatedGetDepartureWithoutMessagesForWriteActionProviderSpec
           val actionProvider = application.injector.instanceOf[AuthenticatedGetDepartureWithoutMessagesForWriteActionProvider]
 
           val controller = new Harness(actionProvider)
-          val result     = controller.get(departureId)(fakeRequest.withHeaders("channel" -> web.toString))
+          val result     = controller.get(departureId)(fakeRequest.withHeaders("channel" -> Web.toString))
 
           status(result) mustBe NOT_FOUND
           verify(mockLockRepository, times(1)).lock(eqTo(departureId))
@@ -226,7 +226,7 @@ class AuthenticatedGetDepartureWithoutMessagesForWriteActionProviderSpec
           val actionProvider = application.injector.instanceOf[AuthenticatedGetDepartureWithoutMessagesForWriteActionProvider]
 
           val controller = new Harness(actionProvider)
-          val result     = controller.get(departureId)(fakeRequest.withHeaders("channel" -> api.toString))
+          val result     = controller.get(departureId)(fakeRequest.withHeaders("channel" -> Api.toString))
 
           status(result) mustBe NOT_FOUND
         }
@@ -334,7 +334,7 @@ class AuthenticatedGetDepartureWithoutMessagesForWriteActionProviderSpec
           val actionProvider = application.injector.instanceOf[AuthenticatedGetDepartureWithoutMessagesForWriteActionProvider]
 
           val controller = new Harness(actionProvider)
-          val result     = controller.get(departureId)(fakeRequest.withHeaders("channel" -> web.toString))
+          val result     = controller.get(departureId)(fakeRequest.withHeaders("channel" -> Web.toString))
 
           status(result) mustBe FORBIDDEN
           verify(mockLockRepository, times(1)).lock(eqTo(departureId))

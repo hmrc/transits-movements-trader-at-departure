@@ -16,31 +16,25 @@
 
 package controllers
 
-import audit.AuditService
 import com.kenshoo.play.metrics.Metrics
 import controllers.actions.CheckMessageTypeActionProvider
 import controllers.actions.GetDepartureWithoutMessagesForWriteActionProvider
 import metrics.HasActionMetrics
-import models.DepartureMessageNotification
+import models.DepartureAlreadyLocked
+import models.DepartureNotFound
+import models.ExternalError
 import models.MessageSender
-import models.MessageType
-import models.StatusTransition
-import models.SubmissionProcessingResult.SubmissionFailureExternal
-import models.SubmissionProcessingResult.SubmissionFailureInternal
-import models.SubmissionProcessingResult.SubmissionSuccess
-import models.request.DepartureResponseRequest
+import models.SubmissionSuccess
+import models.InternalException
+import models.InternalError
 import play.api.Logging
 import play.api.mvc.Action
 import play.api.mvc.ControllerComponents
-import services.PushPullNotificationService
-import services.SaveMessageService
-import services.XmlMessageParser
-import uk.gov.hmrc.http.HeaderCarrier
+import services.MovementMessageOrchestratorService
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import javax.inject.Inject
 
 import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
 import scala.xml.NodeSeq
 
 class NCTSMessageController @Inject()(
@@ -50,85 +44,34 @@ class NCTSMessageController @Inject()(
   auditService: AuditService,
   saveMessageService: SaveMessageService,
   pushPullNotificationService: PushPullNotificationService,
+  orchestratorService: MovementMessageOrchestratorService,
   val metrics: Metrics
 )(implicit ec: ExecutionContext)
     extends BackendController(cc)
     with Logging
     with HasActionMetrics {
 
-  private def sendPushNotification(request: DepartureResponseRequest[NodeSeq])(implicit hc: HeaderCarrier): Future[Unit] =
-    request.departure.notificationBox
-      .map {
-        box =>
-          XmlMessageParser.dateTimeOfPrepR(request.body) match {
-            case Left(error) =>
-              logger.error(s"Error while parsing message timestamp: ${error.message}")
-              Future.unit
-            case Right(timestamp) =>
-              val notification = DepartureMessageNotification.fromRequest(request, timestamp)
-              pushPullNotificationService.sendPushNotification(box.boxId, notification)
-          }
-      }
-      .getOrElse(Future.unit)
-
   def post(messageSender: MessageSender): Action[NodeSeq] =
     withMetricsTimerAction("post-receive-ncts-message") {
-      (getDepartureWithoutMessages(messageSender.departureId) andThen checkMessageType())(parse.xml).async {
+      Action(parse.xml).async {
         implicit request =>
-          val xml: NodeSeq = request.request.body
-          val response     = request.messageResponse
-
-          StatusTransition.transition(request.departure.status, response.messageReceived) match {
-            case Right(newState) =>
-              response.messageType match {
-                case MessageType.MrnAllocated =>
-                  XmlMessageParser.mrnR(xml) match {
-                    case Left(error) =>
-                      logger.warn(error.message)
-                      Future.successful(BadRequest(error.message))
-                    case Right(mrn) =>
-                      val processingResult =
-                        saveMessageService.validateXmlSaveMessageUpdateMrn(request.departure.nextMessageId, xml, messageSender, response, newState, mrn)
-                      processingResult map {
-                        case SubmissionSuccess =>
-                          auditService.auditNCTSMessages(request.request.departure.channel, response, xml)
-                          sendPushNotification(request)
-                          Ok.withHeaders(
-                            LOCATION -> routes.MessagesController.getMessage(request.request.departure.departureId, request.request.departure.nextMessageId).url
-                          )
-                        case SubmissionFailureInternal =>
-                          val message = "Internal Submission Failure " + processingResult
-                          logger.warn(message)
-                          InternalServerError
-                        case SubmissionFailureExternal =>
-                          val message = "External Submission Failure " + processingResult
-                          logger.warn(message)
-                          BadRequest
-                      }
-                  }
-                case _ =>
-                  val processingResult = saveMessageService.validateXmlAndSaveMessage(request.departure.nextMessageId, xml, messageSender, response, newState)
-                  processingResult map {
-                    case SubmissionSuccess =>
-                      auditService.auditNCTSMessages(request.request.departure.channel, response, xml)
-                      sendPushNotification(request)
-                      Ok.withHeaders(
-                        LOCATION -> routes.MessagesController.getMessage(request.request.departure.departureId, request.request.departure.nextMessageId).url
-                      )
-                    case SubmissionFailureInternal =>
-                      val message = "Internal Submission Failure " + processingResult
-                      logger.warn(message)
-                      InternalServerError
-                    case SubmissionFailureExternal =>
-                      val message = "External Submission Failure " + processingResult
-                      logger.warn(message)
-                      BadRequest
-                  }
-              }
-            case Left(error) =>
-              Future.successful(BadRequest(error.reason))
+          orchestratorService.saveNCTSMessage(messageSender).map {
+            case Left(_: DepartureAlreadyLocked) => Locked
+            case Left(DepartureNotFound(_))      => NotFound
+            case Left(ExternalError(reason)) =>
+              logger.warn(s"External Submission Failure $reason")
+              BadRequest(reason)
+            case Left(InternalException(reason, exception)) =>
+              logger.warn(reason, exception)
+              InternalServerError(reason)
+            case Left(InternalError(reason)) =>
+              logger.warn(reason)
+              InternalServerError(reason)
+            case Right(SubmissionSuccess(departure)) =>
+              Ok.withHeaders(
+                LOCATION -> routes.MessagesController.getMessage(departure.departureId, departure.nextMessageId).url
+              )
           }
       }
-
     }
 }

@@ -21,8 +21,8 @@ import connectors.MessageConnector.EisSubmissionResult.DownstreamBadGateway
 import connectors.MessageConnector.EisSubmissionResult.DownstreamInternalServerError
 import connectors.MessageConnector.EisSubmissionResult.EisSubmissionSuccessful
 import generators.ModelGenerators
-import models.ChannelType.api
-import models.ChannelType.web
+import models.ChannelType.Api
+import models.ChannelType.Web
 import models.DepartureId
 import models.MessageId
 import models.MessageStatus
@@ -36,10 +36,11 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
-import play.api.Configuration
-import play.api.Environment
+import play.api.http.ContentTypes
+import play.api.http.HeaderNames
 import play.api.test.Helpers.running
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.RequestId
 
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
@@ -59,14 +60,11 @@ class MessageConnectorSpec
 
   override protected def portConfigKey: String = "microservice.services.eis.port"
 
-  implicit val headerCarrier: HeaderCarrier = HeaderCarrier()
+  implicit val headerCarrier: HeaderCarrier = HeaderCarrier().copy(requestId = Some(RequestId("bar")), otherHeaders = Seq("X-Client-Id" -> "foo"))
 
   private val messageType: MessageType = Gen.oneOf(MessageType.values).sample.value
 
-  private val env           = Environment.simple()
-  private val configuration = Configuration.load(env)
-
-  private val channelGen = Gen.oneOf(web, api)
+  private val channelGen = Gen.oneOf(Web, Api)
 
   "MessageConnector" - {
 
@@ -80,12 +78,13 @@ class MessageConnectorSpec
 
             server.stubFor(
               post(urlEqualTo(postUrl))
-                .withHeader("Content-Type", equalTo("application/xml"))
-                .withHeader("Accept", equalTo("application/xml"))
+                .withHeader(HeaderNames.CONTENT_TYPE, equalTo(ContentTypes.XML))
+                .withHeader("X-Client-Id", equalTo("foo"))
+                .withHeader("X-Request-Id", equalTo("bar"))
                 .withHeader("X-Message-Type", equalTo(messageType.toString))
                 .withHeader("X-Message-Sender", equalTo(messageSender))
-                .withRequestBody(matchingXPath("/transitRequest"))
                 .withHeader("channel", equalTo(channel.toString))
+                .withRequestBody(matchingXPath("/transitRequest"))
                 .willReturn(
                   aResponse()
                     .withStatus(202)
@@ -119,8 +118,9 @@ class MessageConnectorSpec
 
             server.stubFor(
               post(urlEqualTo(postUrl))
-                .withHeader("Content-Type", equalTo("application/xml"))
-                .withHeader("Accept", equalTo("application/xml"))
+                .withHeader(HeaderNames.CONTENT_TYPE, equalTo(ContentTypes.XML))
+                .withHeader("X-Client-Id", equalTo("foo"))
+                .withHeader("X-Request-Id", equalTo("bar"))
                 .withHeader("X-Message-Type", equalTo(messageType.toString))
                 .withHeader("X-Message-Sender", equalTo(messageSender))
                 .withHeader("channel", equalTo(channel.toString))
@@ -159,8 +159,9 @@ class MessageConnectorSpec
 
             server.stubFor(
               post(urlEqualTo(postUrl))
-                .withHeader("Content-Type", equalTo("application/xml"))
-                .withHeader("Accept", equalTo("application/xml"))
+                .withHeader(HeaderNames.CONTENT_TYPE, equalTo(ContentTypes.XML))
+                .withHeader("X-Client-Id", equalTo("foo"))
+                .withHeader("X-Request-Id", equalTo("bar"))
                 .withHeader("X-Message-Type", equalTo(messageType.toString))
                 .withHeader("X-Message-Sender", equalTo(messageSender))
                 .withHeader("channel", equalTo(channel.toString))
@@ -200,8 +201,9 @@ class MessageConnectorSpec
 
             server.stubFor(
               post(urlEqualTo(postUrl))
-                .withHeader("Content-Type", equalTo("application/xml"))
-                .withHeader("Accept", equalTo("application/xml"))
+                .withHeader(HeaderNames.CONTENT_TYPE, equalTo(ContentTypes.XML))
+                .withHeader("X-Client-Id", equalTo("foo"))
+                .withHeader("X-Request-Id", equalTo("bar"))
                 .withHeader("X-Message-Type", equalTo(messageType.toString))
                 .withHeader("X-Message-Sender", equalTo(messageSender))
                 .withHeader("channel", equalTo(channel.toString))

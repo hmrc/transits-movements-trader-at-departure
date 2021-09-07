@@ -19,9 +19,12 @@ package services
 import connectors.PushPullNotificationConnector
 import models.Box
 import models.BoxId
+import models.Departure
 import models.DepartureMessageNotification
+import models.MessageResponse
 import play.api.Logging
 import play.api.http.Status._
+import play.api.mvc.Request
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 
@@ -29,10 +32,11 @@ import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.util.control.NonFatal
+import scala.xml.NodeSeq
 
-class PushPullNotificationService @Inject()(connector: PushPullNotificationConnector) extends Logging {
+class PushPullNotificationService @Inject()(connector: PushPullNotificationConnector)(implicit ec: ExecutionContext) extends Logging {
 
-  def getBox(clientId: String)(implicit ec: ExecutionContext, hc: HeaderCarrier): Future[Option[Box]] =
+  def getBox(clientId: String)(implicit hc: HeaderCarrier): Future[Option[Box]] =
     connector
       .getBox(clientId)
       .map {
@@ -47,7 +51,7 @@ class PushPullNotificationService @Inject()(connector: PushPullNotificationConne
           None
       }
 
-  def sendPushNotification(boxId: BoxId, notification: DepartureMessageNotification)(implicit ec: ExecutionContext, hc: HeaderCarrier): Future[Unit] =
+  def sendPushNotification(boxId: BoxId, notification: DepartureMessageNotification)(implicit hc: HeaderCarrier): Future[Unit] =
     connector
       .postNotification(boxId, notification)
       .map {
@@ -60,5 +64,24 @@ class PushPullNotificationService @Inject()(connector: PushPullNotificationConne
         case NonFatal(e) =>
           logger.error(s"Error while sending push notification", e)
       }
+
+  def sendPushNotificationIfBoxExists(
+    departure: Departure,
+    messageResponse: MessageResponse,
+    request: Request[NodeSeq]
+  )(implicit hc: HeaderCarrier): Future[Unit] =
+    departure.notificationBox
+      .map {
+        box =>
+          XmlMessageParser.dateTimeOfPrepR(request.body) match {
+            case Left(error) =>
+              logger.error(s"Error while parsing message timestamp: ${error.message}")
+              Future.unit
+            case Right(timestamp) =>
+              val notification = DepartureMessageNotification.fromDepartureAndResponse(departure, messageResponse, timestamp, request)
+              sendPushNotification(box.boxId, notification)
+          }
+      }
+      .getOrElse(Future.unit)
 
 }

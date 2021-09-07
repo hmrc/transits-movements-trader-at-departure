@@ -69,7 +69,7 @@ class MovementsChangeLogSpec extends SpecBase with IntegrationPatience with Befo
           yield
             Json.obj(
               "_id"                      -> id.index,
-              "channel"                  -> ChannelType.web.toString,
+              "channel"                  -> ChannelType.Web.toString,
               "eoriNumber"               -> eori,
               "referenceNumber"          -> Random.alphanumeric.take(20).mkString,
               "status"                   -> DepartureStatus.DepartureSubmitted.toString,
