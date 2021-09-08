@@ -44,9 +44,16 @@ import scala.concurrent.Future
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
+import metrics.HasMetrics
+import com.kenshoo.play.metrics.Metrics
 
-class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfig, config: Configuration)(implicit ec: ExecutionContext, clock: Clock)
-    extends MongoDateTimeFormats {
+class DepartureRepository @Inject()(
+  mongo: ReactiveMongoApi,
+  appConfig: AppConfig,
+  config: Configuration,
+  val metrics: Metrics
+  )(implicit ec: ExecutionContext,clock: Clock)
+    extends MongoDateTimeFormats with HasMetrics {
 
   private lazy val eoriNumberIndex: Aux[BSONSerializationPack.type] = IndexUtils.index(
     key = Seq("eoriNumber" -> IndexType.Ascending),
@@ -411,7 +418,7 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfi
           }
 
         val fullSelector =
-          baseSelector ++ dateSelector ++ mrnSelector
+          baseSelector ++ dateSelector ++ lrnSelector
 
         val nextMessageId = Json.obj("nextMessageId" -> Json.obj("$size" -> "$messages"))
 
@@ -452,12 +459,13 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfi
                 ResponseDepartures(
                   results.map(ResponseDeparture.build),
                   results.length,
-                  totalArrivals = count,
-                  totalMatched = matchCount
+                  totalDepartures = count,
+                  totalMatched = Some(matchCount)
                 )
             }
         }
-      }
+     }
+    
   }
 
   // private def withLRNSearchQuery(
