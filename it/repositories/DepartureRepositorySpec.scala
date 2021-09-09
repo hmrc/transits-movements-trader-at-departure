@@ -235,7 +235,7 @@ class DepartureRepositorySpec
         val departure = arbitrary[Departure].sample.value copy(departureId = DepartureId(1))
 
         service.insert(departure).futureValue
-        val result = service.getWithoutMessages(DepartureId(2), web)
+        val result = service.getWithoutMessages(DepartureId(2), Web)
 
         whenReady(result) {
           r =>
@@ -246,10 +246,10 @@ class DepartureRepositorySpec
       "must return None when a departure exists, but with a different channel type" in {
         database.flatMap(_.drop()).futureValue
 
-        val departure = arbitrary[Departure].sample.value copy(departureId = DepartureId(1), api)
+        val departure = arbitrary[Departure].sample.value copy(departureId = DepartureId(1), Api)
 
         service.insert(departure).futureValue
-        val result = service.get(DepartureId(1), web)
+        val result = service.get(DepartureId(1), Web)
 
         whenReady(result) {
           r =>

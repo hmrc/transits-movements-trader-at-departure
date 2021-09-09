@@ -213,7 +213,7 @@ class AuthenticatedGetDepartureWithoutMessagesForWriteActionProviderSpec
 
         when(mockAuthConnector.authorise[Enrolments](any(), any())(any(), any()))
           .thenReturn(Future.successful(validEnrolments))
-        when(mockDepartureRepository.getWithoutMessages(any(), eqTo(api))) thenReturn Future.successful(None)
+        when(mockDepartureRepository.getWithoutMessages(any(), eqTo(Api))) thenReturn Future.successful(None)
 
         val application = applicationBuilder
           .overrides(
@@ -234,14 +234,14 @@ class AuthenticatedGetDepartureWithoutMessagesForWriteActionProviderSpec
 
       "must return Ok when the departure exists and shares the same channel" in {
 
-        val departure = arbitrary[DepartureWithoutMessages].sample.value copy (eoriNumber = eoriNumber, channel = api)
+        val departure = arbitrary[DepartureWithoutMessages].sample.value copy (eoriNumber = eoriNumber, channel = Api)
 
         val mockAuthConnector: AuthConnector = mock[AuthConnector]
         val mockDepartureRepository          = mock[DepartureRepository]
 
         when(mockAuthConnector.authorise[Enrolments](any(), any())(any(), any()))
           .thenReturn(Future.successful(validEnrolments))
-        when(mockDepartureRepository.getWithoutMessages(any(), eqTo(api))) thenReturn Future.successful(Some(departure))
+        when(mockDepartureRepository.getWithoutMessages(any(), eqTo(Api))) thenReturn Future.successful(Some(departure))
 
         val application = applicationBuilder
           .overrides(

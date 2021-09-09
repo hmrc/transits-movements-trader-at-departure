@@ -52,8 +52,9 @@ class DepartureRepository @Inject()(
   appConfig: AppConfig,
   config: Configuration,
   val metrics: Metrics
-  )(implicit ec: ExecutionContext,clock: Clock)
-    extends MongoDateTimeFormats with HasMetrics {
+)(implicit ec: ExecutionContext, clock: Clock)
+    extends MongoDateTimeFormats
+    with HasMetrics {
 
   private lazy val eoriNumberIndex: Aux[BSONSerializationPack.type] = IndexUtils.index(
     key = Seq("eoriNumber" -> IndexType.Ascending),
@@ -394,7 +395,7 @@ class DepartureRepository @Inject()(
     lrn: Option[String] = None,
     pageSize: Option[Int] = None,
     page: Option[Int] = None
-  ): Future[ResponseDepartures] = {
+  ): Future[ResponseDepartures] =
     withMetricsTimerAsync("mongo-get-departures-for-eori") {
       _ =>
         val baseSelector = Json.obj("eoriNumber" -> eoriNumber, "channel" -> channelFilter)
@@ -464,9 +465,7 @@ class DepartureRepository @Inject()(
                 )
             }
         }
-     }
-    
-  }
+    }
 
   // private def withLRNSearchQuery(
   //   lrn: String,

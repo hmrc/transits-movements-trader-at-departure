@@ -50,7 +50,7 @@ class DepartureMessageNotificationSpec extends SpecBase with ScalaCheckDrivenPro
       val request = FakeRequest(POST, routes.NCTSMessageController.post(messageSender).url)
         .withBody[NodeSeq](testBody)
         .withHeaders(HeaderNames.CONTENT_LENGTH -> bodyLength.toString)
-      val departureWithoutMessagesRequest = DepartureWithoutMessagesRequest(request, DepartureWithoutMessages.fromDeparture(departure), api)
+      val departureWithoutMessagesRequest = DepartureWithoutMessagesRequest(request, DepartureWithoutMessages.fromDeparture(departure), Api)
       val responseRequest                 = DepartureResponseRequest(departureWithoutMessagesRequest, response)
 
       val now = LocalDateTime.now()

@@ -44,7 +44,7 @@ private[actions] class GetDepartureWithoutMessagesAction(
   departureId: DepartureId,
   repository: DepartureRepository
 )(implicit val executionContext: ExecutionContext)
-    extends ActionRefiner[Request, DepartureWithoutMessagesRequest] 
+    extends ActionRefiner[Request, DepartureWithoutMessagesRequest]
     with Logging {
 
   override protected def refine[A](request: Request[A]): Future[Either[Result, DepartureWithoutMessagesRequest[A]]] =

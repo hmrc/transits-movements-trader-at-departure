@@ -18,7 +18,6 @@ package controllers.actions
 
 import models.request.DepartureWithMessagesRequest
 import models.ChannelType.Web
-import models.request.DepartureRequest
 import models.Departure
 import models.DepartureId
 import org.scalatest.exceptions.TestFailedException

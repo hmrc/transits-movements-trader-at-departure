@@ -20,7 +20,7 @@ import akka.util.ByteString
 import base.SpecBase
 import controllers.actions.AuthenticatedGetDepartureWithMessagesForReadActionProvider
 import generators.ModelGenerators
-import models.ChannelType
+import models.ChannelType.Web
 import models.Departure
 import models.DepartureId
 import models.request.DepartureWithMessagesRequest
@@ -65,7 +65,7 @@ class PDFRetrievalControllerSpec extends SpecBase with ScalaCheckPropertyChecks 
       (invocation: InvocationOnMock) => {
         val body = invocation
           .getArgument(0)
-          .asInstanceOf[DepartureWithMessagesRequest[AnyContent] => Future[Result]](DepartureWithMessagesRequest(fakeRequest, testDeparture, ChannelType.web))
+          .asInstanceOf[DepartureWithMessagesRequest[AnyContent] => Future[Result]](DepartureWithMessagesRequest(fakeRequest, testDeparture, Web))
 
         stubControllerComponents().actionBuilder.async(body)
       }

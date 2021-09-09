@@ -75,7 +75,11 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
         </HEAHEA>
       </CC028A>
 
-    lazy val controller = new NCTSMessageController(stubControllerComponents(), mockMovementMessageOrchestratorService, testMetrics)(ExecutionContext.global)
+    lazy val controller = new NCTSMessageController(
+      stubControllerComponents(),
+      mockMovementMessageOrchestratorService,
+      testMetrics
+    )(ExecutionContext.global)
 
   }
 

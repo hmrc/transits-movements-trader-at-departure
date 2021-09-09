@@ -67,6 +67,7 @@ import java.time.LocalTime
 import scala.concurrent.Future
 import scala.xml.Utility.trim
 import models.MessageId
+import models.DepartureWithoutMessages
 
 class DeparturesControllerSpec
     extends SpecBase
@@ -554,7 +555,7 @@ class DeparturesControllerSpec
       val responseDepartures = ResponseDepartures(Seq(responseDeparture), 1, 1)
 
       when(mockDepartureRepository.fetchAllDepartures(any(), any(), any(), any(), any(), any())).thenReturn(Future.successful(responseDepartures))
-      
+
       val application = baseApplicationBuilder
         .overrides(bind[DepartureRepository].toInstance(mockDepartureRepository))
         .build()
