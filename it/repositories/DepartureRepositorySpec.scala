@@ -19,25 +19,17 @@ package repositories
 import cats.data.NonEmptyList
 import config.AppConfig
 import generators.ModelGenerators
-import models.ChannelType.Api
-import models.ChannelType.Web
-import models.DepartureStatus.DepartureSubmitted
-import models.DepartureStatus.Initialized
-import models.DepartureStatus.MrnAllocated
-import models.DepartureStatus.PositiveAcknowledgement
-import models.MessageStatus.SubmissionPending
-import models.MessageStatus.SubmissionSucceeded
+import models.ChannelType.{Api, Web}
+import models.DepartureStatus.{DepartureSubmitted, Initialized, MrnAllocated, PositiveAcknowledgement}
+import models.MessageStatus.{SubmissionPending, SubmissionSucceeded}
 import models._
-import models.response.ResponseDeparture
-import models.response.ResponseDepartures
+import models.response.{ResponseDeparture, ResponseDepartures}
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import org.scalactic.source.Position
 import org.scalatest._
-import org.scalatest.concurrent.IntegrationPatience
-import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.exceptions.StackDepthException
-import org.scalatest.exceptions.TestFailedException
+import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
+import org.scalatest.exceptions.{StackDepthException, TestFailedException}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
@@ -46,16 +38,14 @@ import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import play.api.test.Helpers.running
-import reactivemongo.play.json.ImplicitBSONHandlers.JsObjectDocumentWriter
+import reactivemongo.play.json.collection.Helpers.idWrites
 import reactivemongo.play.json.collection.JSONCollection
-import utils.Format
-import utils.JsonHelper
+import utils.{Format, JsonHelper}
 
 import java.time._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.reflect.ClassTag
-import scala.util.Failure
-import scala.util.Success
+import scala.util.{Failure, Success}
 
 class DepartureRepositorySpec
     extends AnyFreeSpec
@@ -655,19 +645,6 @@ class DepartureRepositorySpec
     }
 
     "fetchAllDepartures" - {
-
-      def convertToDepartureWithoutMessages(departure: Departure): DepartureWithoutMessages =
-        DepartureWithoutMessages(
-          departure.departureId,
-          departure.channel,
-          departure.eoriNumber,
-          departure.movementReferenceNumber,
-          departure.referenceNumber,
-          departure.status,
-          departure.created,
-          departure.lastUpdated,
-          departure.notificationBox
-        )
 
       "return DeparturesWithoutMessages that match an eoriNumber and channel type" in {
         database.flatMap(_.drop()).futureValue
