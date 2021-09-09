@@ -42,7 +42,8 @@ import uk.gov.hmrc.auth.core.EnrolmentIdentifier
 import uk.gov.hmrc.auth.core.Enrolments
 
 import scala.concurrent.Future
-import models.ChannelType.{Web, Api}
+import models.ChannelType.Web
+import models.ChannelType.Api
 
 class AuthenticateGetDepartureWithoutMessagesForReadActionProviderSpec
     extends AnyFreeSpec

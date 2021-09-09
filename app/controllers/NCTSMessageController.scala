@@ -42,11 +42,6 @@ import services.PushPullNotificationService
 
 class NCTSMessageController @Inject()(
   cc: ControllerComponents,
-  getDepartureWithoutMessages: GetDepartureWithoutMessagesForWriteActionProvider,
-  checkMessageType: CheckMessageTypeActionProvider,
-  auditService: AuditService,
-  saveMessageService: SaveMessageService,
-  pushPullNotificationService: PushPullNotificationService,
   orchestratorService: MovementMessageOrchestratorService,
   val metrics: Metrics
 )(implicit ec: ExecutionContext)

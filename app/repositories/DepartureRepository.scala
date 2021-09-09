@@ -266,7 +266,12 @@ class DepartureRepository @Inject()(
             .headOption
 
       }
-      .map(opt => opt.map(d => d.copy(nextMessageId = MessageId(d.nextMessageId.value + 1))))
+      .map(
+        opt =>
+          opt.map(
+            d => d.copy(nextMessageId = MessageId(d.nextMessageId.value + 1))
+        )
+      )
 
   }
 
@@ -292,7 +297,12 @@ class DepartureRepository @Inject()(
             .headOption
 
       }
-      .map(opt => opt.map(d => d.copy(nextMessageId = MessageId(d.nextMessageId.value + 1))))
+      .map(
+        opt =>
+          opt.map(
+            d => d.copy(nextMessageId = MessageId(d.nextMessageId.value + 1))
+        )
+      )
   }
 
   def getMessage(departureId: DepartureId, channelFilter: ChannelType, messageId: MessageId): Future[Option[Message]] =
@@ -461,7 +471,7 @@ class DepartureRepository @Inject()(
                   results.map(ResponseDeparture.build),
                   results.length,
                   totalDepartures = count,
-                  totalMatched = Some(matchCount)
+                  totalMatched = matchCount
                 )
             }
         }
