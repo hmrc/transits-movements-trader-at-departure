@@ -33,7 +33,7 @@ class MessageIdSpec extends AnyFreeSpec with Matchers with ScalaCheckPropertyChe
     "must bind from a URL for all message id values greater than zero and return the index of the message" in {
       forAll(intsAboveValue(0)) {
         value =>
-          val result = pathBindable.bind("key", value.toString).right.value
+          val result = pathBindable.bind("key", value.toString).value
           result.value mustEqual value
       }
     }

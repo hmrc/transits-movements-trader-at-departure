@@ -16,13 +16,13 @@
 
 package controllers.actions
 
-import javax.inject.Inject
 import models.DepartureId
-import play.api.mvc._
 import play.api.mvc.Results.InternalServerError
 import play.api.mvc.Results.Locked
+import play.api.mvc._
 import repositories.LockRepository
 
+import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
@@ -56,7 +56,7 @@ private[actions] class LockAction(
               }
           }
           .recoverWith {
-            case e: Exception =>
+            case _: Exception =>
               lockRepository.unlock(departureId).map {
                 _ =>
                   InternalServerError

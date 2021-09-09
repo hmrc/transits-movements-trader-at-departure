@@ -28,7 +28,7 @@ import org.scalatest.concurrent.IntegrationPatience
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.libs.json.Json
 import play.modules.reactivemongo.ReactiveMongoApi
-import reactivemongo.play.json._
+import reactivemongo.play.json.collection.Helpers.idWrites
 import reactivemongo.play.json.collection.JSONCollection
 import repositories.DepartureRepository
 
@@ -37,6 +37,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.Random
 
 class MovementsChangeLogSpec extends SpecBase with IntegrationPatience with BeforeAndAfterAll with GuiceOneAppPerSuite {
+
   val departureIds = (1 to 20).map(DepartureId.apply)
   val eori         = "123456789000"
 

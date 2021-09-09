@@ -451,7 +451,7 @@ class DepartureRepositorySpec
         val messageId = MessageId(1)
 
         service.insert(departure).futureValue
-        service.setDepartureStateAndMessageState(departure.departureId, messageId, DepartureSubmitted, SubmissionSucceeded).futureValue
+        service.setDepartureAndMessageStates(departure.departureId, messageId, DepartureSubmitted, SubmissionSucceeded).futureValue
 
         val updatedDeparture = service.get(departure.departureId, departure.channel)
 
@@ -474,7 +474,7 @@ class DepartureRepositorySpec
 
         service.insert(departure).futureValue
 
-        val setResult = service.setDepartureStateAndMessageState(DepartureId(2), messageId, DepartureSubmitted, SubmissionSucceeded)
+        val setResult = service.setDepartureAndMessageStates(DepartureId(2), messageId, DepartureSubmitted, SubmissionSucceeded)
         setResult.futureValue must not be defined
 
         val result = service.get(departure.departureId, departure.channel)

@@ -19,9 +19,9 @@ package services
 import cats.data.EitherT
 import models.DepartureAlreadyLocked
 import models.DepartureId
+import models.ErrorState
 import models.FailedToLock
 import models.FailedToUnlock
-import models.ErrorState
 import repositories.LockRepository
 
 import javax.inject.Inject
@@ -48,9 +48,9 @@ private[services] class LockService @Inject()(
 
   def withLock[T](departureId: DepartureId)(action: => EitherT[Future, ErrorState, T]): EitherT[Future, ErrorState, T] =
     (for {
-      lock    <- lockDeparture(departureId)
+      _       <- lockDeparture(departureId)
       perform <- action
-      unlock  <- unlockDeparture(departureId)
+      _       <- unlockDeparture(departureId)
     } yield perform) leftFlatMap {
       case e @ DepartureAlreadyLocked(_) => EitherT.fromEither(Left(e))
       case e                             => unlockDeparture(departureId).transform(_ => Left(e))

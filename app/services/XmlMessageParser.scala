@@ -16,10 +16,6 @@
 
 package services
 
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.LocalTime
-
 import cats.data.ReaderT
 import cats.implicits._
 import models.MessageType
@@ -28,6 +24,9 @@ import models.ParseError
 import models.ParseError._
 import utils.Format
 
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
@@ -41,7 +40,7 @@ object XmlMessageParser {
     ReaderT[ParseHandler, NodeSeq, Unit] {
       nodeSeq =>
         nodeSeq.head.label match {
-          case messageType.rootNode => Right(nodeSeq)
+          case messageType.rootNode => Right(())
           case _                    => Left(InvalidRootNode("The root element name does not match 'CC015B'"))
         }
     }
@@ -87,14 +86,14 @@ object XmlMessageParser {
   val referenceR: ReaderT[ParseHandler, NodeSeq, String] =
     ReaderT[ParseHandler, NodeSeq, String](xml =>
       (xml \ "HEAHEA" \ "RefNumHEA4").text match {
-        case refString if !refString.isEmpty => Right(refString)
+        case refString if refString.nonEmpty => Right(refString)
         case _                               => Left(EmptyLocalReferenceNumber("The element 'RefNumHEA4' must contain a value."))
     })
 
   val mrnR: ReaderT[ParseHandler, NodeSeq, MovementReferenceNumber] =
     ReaderT[ParseHandler, NodeSeq, MovementReferenceNumber](xml =>
       (xml \ "HEAHEA" \ "DocNumHEA5").text match {
-        case mrnString if !mrnString.isEmpty => Right(MovementReferenceNumber(mrnString))
+        case mrnString if mrnString.nonEmpty => Right(MovementReferenceNumber(mrnString))
         case _                               => Left(EmptyMovementReferenceNumber("The element 'DocNumHEA5' must contain a value."))
     })
 }

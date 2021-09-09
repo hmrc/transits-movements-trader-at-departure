@@ -19,9 +19,6 @@ package models
 import base.SpecBase
 import cats.data.NonEmptyList
 import generators.ModelGenerators
-import models.SubmissionProcessingResult.SubmissionFailureExternal
-import models.SubmissionProcessingResult.SubmissionFailureInternal
-import models.SubmissionProcessingResult.SubmissionSuccess
 import models.ChannelType.Web
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.libs.json.Json

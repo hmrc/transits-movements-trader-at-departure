@@ -109,7 +109,7 @@ class SubmitMessageServiceSpec extends SpecBase with JsonHelper with ScalaCheckD
       lazy val mockMessageConnector: MessageConnector       = mock[MessageConnector]
 
       when(mockDepartureRepository.addNewMessage(any(), any())).thenReturn(Future.successful(Success(())))
-      when(mockDepartureRepository.setDepartureStateAndMessageState(any(), any(), any(), any())).thenReturn(Future.successful(Some(())))
+      when(mockDepartureRepository.setDepartureAndMessageStates(any(), any(), any(), any())).thenReturn(Future.successful(Some(())))
       when(mockMessageConnector.post(any(), any(), any(), any())(any())).thenReturn(Future.successful(EisSubmissionSuccessful))
 
       val application = baseApplicationBuilder
@@ -134,10 +134,10 @@ class SubmitMessageServiceSpec extends SpecBase with JsonHelper with ScalaCheckD
 
         verify(mockDepartureRepository, times(1)).addNewMessage(eqTo(departureId), eqTo(movementMessage))
         verify(mockMessageConnector, times(1)).post(eqTo(departureId), eqTo(movementMessage), any(), any())(any())
-        verify(mockDepartureRepository, times(1)).setDepartureStateAndMessageState(eqTo(departureId),
-                                                                                   eqTo(messageId),
-                                                                                   eqTo(DepartureStatus.DepartureSubmitted),
-                                                                                   eqTo(MessageStatus.SubmissionSucceeded))
+        verify(mockDepartureRepository, times(1)).setDepartureAndMessageStates(eqTo(departureId),
+                                                                               eqTo(messageId),
+                                                                               eqTo(DepartureStatus.DepartureSubmitted),
+                                                                               eqTo(MessageStatus.SubmissionSucceeded))
 
       }
     }
@@ -147,7 +147,7 @@ class SubmitMessageServiceSpec extends SpecBase with JsonHelper with ScalaCheckD
       val mockMessageConnector    = mock[MessageConnector]
 
       when(mockDepartureRepository.addNewMessage(any(), any())).thenReturn(Future.successful(Success(())))
-      when(mockDepartureRepository.setDepartureStateAndMessageState(any(), any(), any(), any())).thenReturn(Future.successful(None))
+      when(mockDepartureRepository.setDepartureAndMessageStates(any(), any(), any(), any())).thenReturn(Future.successful(None))
       when(mockMessageConnector.post(any(), any(), any(), any())(any())).thenReturn(Future.successful(EisSubmissionSuccessful))
 
       val application = baseApplicationBuilder
@@ -171,10 +171,10 @@ class SubmitMessageServiceSpec extends SpecBase with JsonHelper with ScalaCheckD
         result.futureValue mustEqual SubmissionProcessingResult.SubmissionSuccess
         verify(mockDepartureRepository, times(1)).addNewMessage(eqTo(departureId), eqTo(movementMessage))
         verify(mockMessageConnector, times(1)).post(eqTo(departureId), eqTo(movementMessage), any(), any())(any())
-        verify(mockDepartureRepository, times(1)).setDepartureStateAndMessageState(eqTo(departureId),
-                                                                                   eqTo(messageId),
-                                                                                   eqTo(DepartureStatus.DepartureSubmitted),
-                                                                                   eqTo(MessageStatus.SubmissionSucceeded))
+        verify(mockDepartureRepository, times(1)).setDepartureAndMessageStates(eqTo(departureId),
+                                                                               eqTo(messageId),
+                                                                               eqTo(DepartureStatus.DepartureSubmitted),
+                                                                               eqTo(MessageStatus.SubmissionSucceeded))
       }
 
     }
@@ -184,7 +184,7 @@ class SubmitMessageServiceSpec extends SpecBase with JsonHelper with ScalaCheckD
       val mockMessageConnector    = mock[MessageConnector]
 
       when(mockDepartureRepository.addNewMessage(any(), any())).thenReturn(Future.successful(Success(())))
-      when(mockDepartureRepository.setDepartureStateAndMessageState(any(), any(), any(), any())).thenReturn(Future.failed(new Exception("failed")))
+      when(mockDepartureRepository.setDepartureAndMessageStates(any(), any(), any(), any())).thenReturn(Future.failed(new Exception("failed")))
       when(mockMessageConnector.post(any(), any(), any(), any())(any())).thenReturn(Future.successful(EisSubmissionSuccessful))
 
       val application = baseApplicationBuilder
@@ -259,7 +259,7 @@ class SubmitMessageServiceSpec extends SpecBase with JsonHelper with ScalaCheckD
             when(mockDepartureRepository.addNewMessage(any(), any())).thenReturn(Future.successful(Success(())))
             when(mockMessageConnector.post(any(), any(), any(), any())(any())).thenReturn(Future.successful(submissionFailure))
             when(mockDepartureRepository.updateDeparture(any(), any())(any())).thenReturn(Future.successful((Success(()))))
-            when(mockDepartureRepository.setDepartureStateAndMessageState(any(), any(), any(), any())).thenReturn(Future.successful(Some(())))
+            when(mockDepartureRepository.setDepartureAndMessageStates(any(), any(), any(), any())).thenReturn(Future.successful(Some(())))
 
             val expectedMessage  = movementMessage.copy(messageId = messageId)
             val expectedModifier = MessageStatusUpdate(messageId, SubmissionFailed)
@@ -434,7 +434,7 @@ class SubmitMessageServiceSpec extends SpecBase with JsonHelper with ScalaCheckD
 
       when(mockDepartureRepository.insert(any())).thenReturn(Future.successful(()))
       when(mockMessageConnector.post(any(), any(), any(), any())(any())).thenReturn(Future.successful(EisSubmissionSuccessful))
-      when(mockDepartureRepository.setDepartureStateAndMessageState(any(), any(), any(), any())).thenReturn(Future.successful(Some(())))
+      when(mockDepartureRepository.setDepartureAndMessageStates(any(), any(), any(), any())).thenReturn(Future.successful(Some(())))
 
       val application = baseApplicationBuilder
         .overrides(
@@ -453,7 +453,7 @@ class SubmitMessageServiceSpec extends SpecBase with JsonHelper with ScalaCheckD
 
         verify(mockDepartureRepository, times(1)).insert(eqTo(departure))
         verify(mockMessageConnector, times(1)).post(eqTo(departure.departureId), eqTo(movementMessage), any(), any())(any())
-        verify(mockDepartureRepository, times(1)).setDepartureStateAndMessageState(
+        verify(mockDepartureRepository, times(1)).setDepartureAndMessageStates(
           eqTo(departure.departureId),
           eqTo(messageId),
           eqTo(DepartureStatus.DepartureSubmitted),
@@ -469,7 +469,7 @@ class SubmitMessageServiceSpec extends SpecBase with JsonHelper with ScalaCheckD
 
       when(mockDepartureRepository.insert(any())).thenReturn(Future.successful(()))
       when(mockMessageConnector.post(any(), any(), any(), any())(any())).thenReturn(Future.successful(EisSubmissionSuccessful))
-      when(mockDepartureRepository.setDepartureStateAndMessageState(any(), any(), any(), any())).thenReturn(Future.successful(None))
+      when(mockDepartureRepository.setDepartureAndMessageStates(any(), any(), any(), any())).thenReturn(Future.successful(None))
 
       val application = baseApplicationBuilder
         .overrides(
@@ -487,10 +487,10 @@ class SubmitMessageServiceSpec extends SpecBase with JsonHelper with ScalaCheckD
         result.futureValue mustEqual SubmissionProcessingResult.SubmissionSuccess
         verify(mockDepartureRepository, times(1)).insert(eqTo(departure))
         verify(mockMessageConnector, times(1)).post(eqTo(departure.departureId), eqTo(movementMessage), any(), any())(any())
-        verify(mockDepartureRepository, times(1)).setDepartureStateAndMessageState(eqTo(departure.departureId),
-                                                                                   eqTo(messageId),
-                                                                                   eqTo(DepartureStatus.DepartureSubmitted),
-                                                                                   eqTo(MessageStatus.SubmissionSucceeded))
+        verify(mockDepartureRepository, times(1)).setDepartureAndMessageStates(eqTo(departure.departureId),
+                                                                               eqTo(messageId),
+                                                                               eqTo(DepartureStatus.DepartureSubmitted),
+                                                                               eqTo(MessageStatus.SubmissionSucceeded))
       }
 
     }
@@ -501,7 +501,7 @@ class SubmitMessageServiceSpec extends SpecBase with JsonHelper with ScalaCheckD
 
       when(mockDepartureRepository.insert(any())).thenReturn(Future.successful(()))
       when(mockMessageConnector.post(any(), any(), any(), any())(any())).thenReturn(Future.successful(EisSubmissionSuccessful))
-      when(mockDepartureRepository.setDepartureStateAndMessageState(any(), any(), any(), any())).thenReturn(Future.failed(new Exception("failed")))
+      when(mockDepartureRepository.setDepartureAndMessageStates(any(), any(), any(), any())).thenReturn(Future.failed(new Exception("failed")))
 
       val application = baseApplicationBuilder
         .overrides(

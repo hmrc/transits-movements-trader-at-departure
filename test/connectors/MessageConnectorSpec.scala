@@ -243,6 +243,5 @@ class MessageConnectorSpec
 
 object MessageConnectorSpec {
 
-  private val postUrl                        = "/movements/messages"
-  private val genFailedStatusCodes: Gen[Int] = Gen.choose(400, 599)
+  private val postUrl = "/movements/messages"
 }
