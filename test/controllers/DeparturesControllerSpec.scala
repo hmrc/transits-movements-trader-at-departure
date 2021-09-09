@@ -552,7 +552,7 @@ class DeparturesControllerSpec
         departure.nextMessageCorrelationId
       )
       val responseDeparture  = ResponseDeparture.build(departure)
-      val responseDepartures = ResponseDepartures(Seq(responseDeparture), 1, 1)
+      val responseDepartures = ResponseDepartures(Seq(responseDeparture), 1, 1, 1)
 
       when(mockDepartureRepository.fetchAllDepartures(any(), any(), any(), any(), any(), any())).thenReturn(Future.successful(responseDepartures))
 
@@ -571,7 +571,7 @@ class DeparturesControllerSpec
     }
 
     "must return empty sequence when there are no departures in database" in {
-      val emptyResponse           = ResponseDepartures(Seq.empty, 0, 0)
+      val emptyResponse           = ResponseDepartures(Seq.empty, 0, 0, 0)
       val mockDepartureRepository = mock[DepartureRepository]
 
       when(mockDepartureRepository.fetchAllDepartures(any(), any(), any(), any(), any(), any())).thenReturn(Future.successful(emptyResponse))
