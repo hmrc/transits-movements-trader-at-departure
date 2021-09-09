@@ -966,6 +966,69 @@ class DepartureRepositorySpec
         }
       }
 
+      "must filter results by lrn when substring of lrn search parameter is case insensitive provided matches" in {
+
+        database.flatMap(_.drop()).futureValue
+
+        val eoriNumber: String = arbitrary[String].sample.value
+        val lrn: String        = Gen.listOfN(10, Gen.alphaChar).map(_.mkString).sample.value
+
+        val app = new GuiceApplicationBuilder()
+          .overrides(bind[Clock].toInstance(clock))
+          .configure("metrics.jvm" -> false)
+          .build()
+
+        val departure1 = arbitrary[Departure].sample.value.copy(
+          eoriNumber = eoriNumber,
+          channel = Web,
+          lastUpdated = LocalDateTime.of(2021, 4, 30, 9, 30, 31),
+          referenceNumber = lrn
+        )
+        val departure2 = arbitrary[Departure]
+          .suchThat(_.referenceNumber != lrn)
+          .sample
+          .value
+          .copy(
+            eoriNumber = eoriNumber,
+            channel = Web,
+            lastUpdated = LocalDateTime.of(2021, 5, 30, 9, 35, 32)
+          )
+        val departure3 = arbitrary[Departure].sample.value.copy(
+          eoriNumber = eoriNumber,
+          channel = Web,
+          lastUpdated = LocalDateTime.of(2021, 6, 30, 9, 30, 21),
+          referenceNumber = lrn
+        )
+        val departure4 = arbitrary[Departure]
+          .suchThat(_.referenceNumber != lrn)
+          .sample
+          .value
+          .copy(
+            eoriNumber = eoriNumber,
+            channel = Web,
+            lastUpdated = LocalDateTime.of(2021, 7, 30, 10, 15, 16)
+          )
+
+        running(app) {
+          started(app).futureValue
+
+          val service: DepartureRepository = app.injector.instanceOf[DepartureRepository]
+
+          val allMovements = Seq(departure1, departure2, departure3, departure4)
+
+          val jsonArr = allMovements.map(Json.toJsObject(_))
+
+          database.flatMap {
+            db =>
+              db.collection[JSONCollection](DepartureRepository.collectionName).insert(false).many(jsonArr)
+          }.futureValue
+
+          val departures = service.fetchAllDepartures(eoriNumber, Web, None, Some(lrn.substring(2, 6).toLowerCase()), Some(5)).futureValue
+
+          departures mustBe ResponseDepartures(Seq(departure3, departure1).map(ResponseDeparture.build), 2, 4, Some(2))
+        }
+      }
+
       "must fetch all results based on pageSize 5 for page number 2" in {
         database.flatMap(_.drop()).futureValue
         val eoriNumber: String = arbitrary[String].sample.value
