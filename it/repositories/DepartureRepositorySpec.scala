@@ -999,13 +999,18 @@ class DepartureRepositorySpec
 
           val expectedAllDepartures = allDepartures.map(ResponseDeparture.build).sortBy(_.updated)(_ compareTo _).reverse.slice(5, 10)
 
+          database.flatMap {
+            db =>
+              db.collection[JSONCollection](DepartureRepository.collectionName).insert(false).many(jsonArr)
+          }.futureValue
+
           val departures = service.fetchAllDepartures(eoriNumber, Web, None, None, Some(pageSize), Some(page)).futureValue
 
           departures mustBe ResponseDepartures(expectedAllDepartures, pageSize, allDepartures.size, allDepartures.size)
         }
       }
     }
-
+    
     "getMessage" - {
       "must return Some(message) if departure and message exists" in {
         database.flatMap(_.drop()).futureValue

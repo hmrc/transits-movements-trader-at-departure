@@ -17,7 +17,6 @@
 package controllers.actions
 
 import generators.ModelGenerators
-import models.Departure
 import models.DepartureId
 import models.DepartureWithoutMessages
 import org.mockito.ArgumentMatchers.{eq => eqTo, _}

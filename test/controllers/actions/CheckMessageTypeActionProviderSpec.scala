@@ -20,7 +20,6 @@ import generators.ModelGenerators
 import models.MessageType._
 import models._
 import models.request.DepartureResponseRequest
-import models.request.DepartureWithMessagesRequest
 import models.request.DepartureWithoutMessagesRequest
 import org.scalacheck.Gen
 import org.scalatest.EitherValues

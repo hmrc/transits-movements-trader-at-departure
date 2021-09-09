@@ -537,20 +537,7 @@ class DeparturesControllerSpec
     "must return all departures from database" in {
       val mockDepartureRepository = mock[DepartureRepository]
 
-      val departure = Arbitrary.arbitrary[Departure].sample.value.copy(eoriNumber = "eori")
-      val departureWithoutMessages = DepartureWithoutMessages(
-        departure.departureId,
-        departure.channel,
-        departure.eoriNumber,
-        departure.movementReferenceNumber,
-        departure.referenceNumber,
-        departure.status,
-        departure.created,
-        departure.lastUpdated,
-        departure.notificationBox,
-        departure.nextMessageId,
-        departure.nextMessageCorrelationId
-      )
+      val departure          = Arbitrary.arbitrary[Departure].sample.value.copy(eoriNumber = "eori")
       val responseDeparture  = ResponseDeparture.build(departure)
       val responseDepartures = ResponseDepartures(Seq(responseDeparture), 1, 1, 1)
 

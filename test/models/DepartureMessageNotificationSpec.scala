@@ -21,7 +21,6 @@ import controllers.routes
 import generators.ModelGenerators
 import models.ChannelType.Api
 import models.request.DepartureResponseRequest
-import models.request.DepartureWithMessagesRequest
 import models.request.DepartureWithoutMessagesRequest
 import org.scalacheck.Gen
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
