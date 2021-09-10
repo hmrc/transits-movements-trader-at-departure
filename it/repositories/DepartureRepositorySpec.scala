@@ -20,7 +20,7 @@ import cats.data.NonEmptyList
 import config.AppConfig
 import generators.ModelGenerators
 import models.ChannelType.{Api, Web}
-import models.DepartureStatus.{DepartureSubmitted, Initialized, MrnAllocated, PositiveAcknowledgement}
+import models.DepartureStatus.{Initialized, MrnAllocated, PositiveAcknowledgement}
 import models.MessageStatus.{SubmissionPending, SubmissionSucceeded}
 import models._
 import models.response.{ResponseDeparture, ResponseDepartures}
@@ -28,7 +28,6 @@ import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import org.scalactic.source.Position
 import org.scalatest._
-import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.exceptions.{StackDepthException, TestFailedException}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
@@ -53,10 +52,8 @@ class DepartureRepositorySpec
     with OptionValues
     with ModelGenerators
     with Matchers
-    with ScalaFutures
     with MongoSuite
     with GuiceOneAppPerSuite
-    with IntegrationPatience
     with MongoDateTimeFormats
     with JsonHelper {
 
@@ -429,7 +426,7 @@ class DepartureRepositorySpec
         val updatedDeparture = service.get(departure.departureId, departure.channel).futureValue.value
 
         result mustBe a[Failure[_]]
-        updatedDeparture.status must not be (departureStatus.departureStatus)
+        updatedDeparture.status must not be departureStatus.departureStatus
       }
     }
 
@@ -557,7 +554,7 @@ class DepartureRepositorySpec
         addMessageResult mustBe a[Success[_]]
         updatedDeparture.nextMessageCorrelationId - departure.nextMessageCorrelationId mustBe 0
         updatedDeparture.status mustEqual newState
-        updatedDeparture.movementReferenceNumber mustEqual Some(MovementReferenceNumber(mrn))
+        updatedDeparture.movementReferenceNumber.get mustEqual MovementReferenceNumber(mrn)
         updatedDeparture.messages.size - departure.messages.size mustEqual 1
         updatedDeparture.messages.last mustEqual mrnAllocatedMessage
       }
@@ -933,7 +930,7 @@ class DepartureRepositorySpec
         val eoriNumber: String = arbitrary[String].sample.value
         val lrn: String        = Gen.listOfN(10, Gen.alphaChar).map(_.mkString).sample.value
 
-        val allDepartures = nonEmptyListOfFixSize[Departure](20, arbitrary[Departure])
+        lazy val allDepartures = nonEmptyListOfFixSize[Departure](20, arbitrary[Departure])
           .map(_.toList)
           .sample
           .value

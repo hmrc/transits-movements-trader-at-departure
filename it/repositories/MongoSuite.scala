@@ -17,13 +17,15 @@
 package repositories
 
 import com.typesafe.config.ConfigFactory
+import migrations.MigrationRunner
 import org.scalatest._
+import org.scalatest.concurrent._
+import org.scalatest.time.{Seconds, Span}
 import play.api.{Application, Configuration}
 import reactivemongo.api._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import migrations.MigrationRunner
 
 object MongoSuite {
 
@@ -37,8 +39,10 @@ object MongoSuite {
   lazy val connection = parsedUri.flatMap {AsyncDriver().connect(_)}
 }
 
-trait MongoSuite {
+trait MongoSuite extends ScalaFutures {
   self: TestSuite =>
+
+  implicit override val patienceConfig: PatienceConfig = PatienceConfig(timeout = Span(30, Seconds))
 
   def started(app: Application): Future[Unit] = {
 

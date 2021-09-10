@@ -17,7 +17,6 @@
 package repositories
 
 import models.DepartureId
-import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
@@ -27,7 +26,7 @@ import reactivemongo.play.json.collection.JSONCollection
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class DepartureIdRepositorySpec extends AnyFreeSpec with Matchers with ScalaFutures with MongoSuite with GuiceOneAppPerSuite with IntegrationPatience {
+class DepartureIdRepositorySpec extends AnyFreeSpec with Matchers with MongoSuite with GuiceOneAppPerSuite {
 
   private val service = app.injector.instanceOf[DepartureIdRepository]
 
