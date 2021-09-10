@@ -16,7 +16,7 @@
 
 package repositories
 
-import cats.data.NonEmptyList
+import cats.data.{Chain, NonEmptyList}
 import config.AppConfig
 import generators.ModelGenerators
 import models.ChannelType.{Api, Web}
@@ -25,7 +25,7 @@ import models.MessageStatus.{SubmissionPending, SubmissionSucceeded}
 import models._
 import models.response.{ResponseDeparture, ResponseDepartures}
 import org.scalacheck.Arbitrary.arbitrary
-import org.scalacheck.Gen
+import org.scalacheck.{Arbitrary, Gen}
 import org.scalactic.source.Position
 import org.scalatest._
 import org.scalatest.exceptions.{StackDepthException, TestFailedException}
@@ -78,11 +78,16 @@ class DepartureRepositorySpec
       )
   }
 
-  def nonEmptyListOfFixSize[T](size: Int, gen: Gen[T]): Gen[NonEmptyList[T]] =
-    for {
-      head <- gen
-      tail <- Gen.listOfN(size - 1, gen)
-    } yield NonEmptyList(head, tail)
+  def nonEmptyListOfSize[T](size: Int)(f: (T, Int) => T)(implicit a: Arbitrary[T]): Gen[NonEmptyList[T]] =
+    Gen.listOfN(size, arbitrary[T])
+      // Don't generate duplicate IDs
+      .map(_.foldLeft((Chain.empty[T], 1)) {
+        case ((ts, id), t) =>
+          (ts :+ f(t, id), id + 1)
+      }).map {
+      case (ts, _) =>
+        NonEmptyList.fromListUnsafe(ts.toList)
+    }
 
   val departureWithOneMessage: Gen[Departure] = for {
     departure <- arbitrary[Departure]
@@ -930,7 +935,7 @@ class DepartureRepositorySpec
         val eoriNumber: String = arbitrary[String].sample.value
         val lrn: String        = Gen.listOfN(10, Gen.alphaChar).map(_.mkString).sample.value
 
-        lazy val allDepartures = nonEmptyListOfFixSize[Departure](20, arbitrary[Departure])
+        lazy val allDepartures = nonEmptyListOfSize[Departure](20)((departure, id) => departure.copy(departureId = DepartureId(id)))
           .map(_.toList)
           .sample
           .value
