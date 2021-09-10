@@ -17,7 +17,7 @@
 package utils
 
 import org.json.XML
-import play.api.Logger
+import play.api.Logging
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
 
@@ -25,7 +25,7 @@ import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
 
-trait JsonHelper {
+trait JsonHelper extends Logging {
 
   def toJsonObject(xml: String): JsObject = Json.parse(XML.toJSONObject(xml).toString).as[JsObject]
 
@@ -33,7 +33,7 @@ trait JsonHelper {
     Try(toJsonObject(xml)) match {
       case Success(data) => data
       case Failure(error) =>
-        Logger.error(s"Failed to convert xml to json with error: ${error.getMessage}")
+        logger.error(s"Failed to convert xml to json with error: ${error.getMessage}")
         Json.obj()
     }
 

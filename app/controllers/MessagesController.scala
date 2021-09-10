@@ -18,6 +18,7 @@ package controllers
 
 import audit.AuditService
 import audit.AuditType.DepartureCancellationRequestSubmitted
+import cats.data.OptionT
 import com.kenshoo.play.metrics.Metrics
 import controllers.actions.AuthenticateActionProvider
 import controllers.actions.AuthenticatedGetDepartureForReadActionProvider
@@ -33,15 +34,14 @@ import play.api.libs.json.Json
 import play.api.mvc.Action
 import play.api.mvc.AnyContent
 import play.api.mvc.ControllerComponents
+import repositories.DepartureRepository
 import services.DepartureService
 import services.SubmitMessageService
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
+
 import java.time.OffsetDateTime
-
-import cats.data.OptionT
 import javax.inject.Inject
-import repositories.DepartureRepository
-
+import scala.annotation.nowarn
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.xml.NodeSeq
@@ -121,6 +121,7 @@ class MessagesController @Inject()(
       }
     }
 
+  @nowarn("msg=parameter value departure in anonymous function is never used")
   def getMessage(departureId: DepartureId, messageId: MessageId): Action[AnyContent] =
     withMetricsTimerAction("get-departure-message") {
       authenticate().async {
@@ -129,7 +130,7 @@ class MessagesController @Inject()(
             departure <- OptionT(departureRepository.getWithoutMessages(departureId, request.channel))
             if departure.eoriNumber == request.eoriNumber
             message <- OptionT(departureRepository.getMessage(departureId, request.channel, messageId))
-            if message.optStatus != Some(SubmissionFailed)
+            if !message.optStatus.contains(SubmissionFailed)
           } yield {
             Ok(Json.toJsObject(ResponseMessage.build(departureId, message)))
           }

@@ -19,13 +19,11 @@ package services
 import audit.AuditService
 import cats.data.EitherT
 import models.ChannelType.Deleted
-import models.ChannelType
 import models.Departure
 import models.DepartureId
 import models.DepartureNotFound
-import models.MessageResponse
 import models.ErrorState
-import play.api.mvc.Request
+import models.MessageResponse
 import repositories.DepartureRepository
 import uk.gov.hmrc.http.HeaderCarrier
 

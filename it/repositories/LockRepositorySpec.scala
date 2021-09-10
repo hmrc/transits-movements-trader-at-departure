@@ -18,19 +18,14 @@ package repositories
 
 import generators.ModelGenerators
 import models.DepartureId
-import org.scalatest.EitherValues
-import org.scalatest.OptionValues
-import org.scalatest.concurrent.IntegrationPatience
-import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
+import org.scalatest.{EitherValues, OptionValues}
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.libs.json.JsObject
-import play.api.libs.json.JsSuccess
-import play.api.libs.json.Json
+import play.api.libs.json.{JsObject, JsSuccess, Json}
 import play.api.test.Helpers._
-import reactivemongo.play.json.ImplicitBSONHandlers.JsObjectDocumentWriter
+import reactivemongo.play.json.collection.Helpers.idWrites
 import reactivemongo.play.json.collection.JSONCollection
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -39,8 +34,6 @@ class LockRepositorySpec
     extends AnyFreeSpec
     with Matchers
     with MongoSuite
-    with ScalaFutures
-    with IntegrationPatience
     with OptionValues
     with EitherValues
     with ScalaCheckPropertyChecks

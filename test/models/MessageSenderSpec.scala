@@ -80,7 +80,7 @@ class MessageSenderSpec extends AnyFreeSpec with Matchers with ScalaCheckPropert
 
       val messageSender = MessageSender(DepartureId(123), 1)
 
-      pathBindable.bind("key", messageSender.toString).right.value mustEqual messageSender
+      pathBindable.bind("key", messageSender.toString).value mustEqual messageSender
     }
 
     "must unbind from a URL" in {

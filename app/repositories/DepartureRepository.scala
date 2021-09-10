@@ -26,12 +26,14 @@ import play.api.libs.json.JsObject
 import play.api.libs.json.Json
 import play.modules.reactivemongo.ReactiveMongoApi
 import reactivemongo.api.Cursor
+import reactivemongo.api.ReadConcern
+import reactivemongo.api.WriteConcern
+import reactivemongo.api.bson.BSONDocument
 import reactivemongo.api.bson.collection.BSONSerializationPack
 import reactivemongo.api.commands.WriteResult
 import reactivemongo.api.indexes.Index.Aux
 import reactivemongo.api.indexes.IndexType
-import reactivemongo.bson.BSONDocument
-import reactivemongo.play.json.ImplicitBSONHandlers.JsObjectDocumentWriter
+import reactivemongo.play.json.collection.Helpers.idWrites
 import reactivemongo.play.json.collection.JSONCollection
 import utils.IndexUtils
 
@@ -151,30 +153,27 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfi
       )
 
     collection.flatMap {
-      _.findAndUpdate(selector, modifier)
-        .map {
-          _.lastError
-            .map {
-              le =>
-                if (le.updatedExisting) Success(()) else Failure(new Exception(s"Could not find departure $departureId"))
-            }
-            .getOrElse(Failure(new Exception("Failed to update departure")))
-        }
+      _.findAndUpdate(
+        selector = selector,
+        update = modifier,
+        fetchNewObject = false,
+        upsert = false,
+        sort = None,
+        fields = None,
+        bypassDocumentValidation = false,
+        writeConcern = WriteConcern.Default,
+        maxTime = None,
+        collation = None,
+        arrayFilters = Nil
+      ).map {
+        _.lastError
+          .map {
+            le =>
+              if (le.updatedExisting) Success(()) else Failure(new Exception(s"Could not find departure $departureId"))
+          }
+          .getOrElse(Failure(new Exception("Failed to update departure")))
+      }
     }
-  }
-
-  @deprecated("Use updateDeparture since this will be removed in the next version", "next")
-  def setDepartureStateAndMessageState(
-    departureId: DepartureId,
-    messageId: MessageId,
-    departureState: DepartureStatus,
-    messageState: MessageStatus
-  ): Future[Option[Unit]] = {
-    val selector = DepartureIdSelector(departureId)
-
-    val modifier = CompoundStatusUpdate(DepartureStatusUpdate(departureState), MessageStatusUpdate(messageId, messageState))
-
-    updateDeparture(selector, modifier).map(_.toOption)
   }
 
   def setMessageState(departureId: DepartureId, messageId: Int, messageStatus: MessageStatus): Future[Try[Unit]] = {
@@ -299,15 +298,26 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfi
       )
 
     collection.flatMap {
-      _.findAndUpdate(selector, modifier)
-        .map {
-          _.lastError
-            .map {
-              le =>
-                if (le.updatedExisting) Success(()) else Failure(new Exception(s"Could not find departure $departureId"))
-            }
-            .getOrElse(Failure(new Exception("Failed to update departure")))
-        }
+      _.findAndUpdate(
+        selector = selector,
+        update = modifier,
+        fetchNewObject = false,
+        upsert = false,
+        sort = None,
+        fields = None,
+        bypassDocumentValidation = false,
+        writeConcern = WriteConcern.Default,
+        maxTime = None,
+        collation = None,
+        arrayFilters = Nil
+      ).map {
+        _.lastError
+          .map {
+            le =>
+              if (le.updatedExisting) Success(()) else Failure(new Exception(s"Could not find departure $departureId"))
+          }
+          .getOrElse(Failure(new Exception("Failed to update departure")))
+      }
     }
   }
 
@@ -329,15 +339,26 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfi
       )
 
     collection.flatMap {
-      _.findAndUpdate(selector, modifier)
-        .map {
-          _.lastError
-            .map {
-              le =>
-                if (le.updatedExisting) Success(()) else Failure(new Exception(s"Could not find departure $departureId"))
-            }
-            .getOrElse(Failure(new Exception("Failed to update departure")))
-        }
+      _.findAndUpdate(
+        selector = selector,
+        update = modifier,
+        fetchNewObject = false,
+        upsert = false,
+        sort = None,
+        fields = None,
+        bypassDocumentValidation = false,
+        writeConcern = WriteConcern.Default,
+        maxTime = None,
+        collation = None,
+        arrayFilters = Nil
+      ).map {
+        _.lastError
+          .map {
+            le =>
+              if (le.updatedExisting) Success(()) else Failure(new Exception(s"Could not find departure $departureId"))
+          }
+          .getOrElse(Failure(new Exception("Failed to update departure")))
+      }
     }
   }
 
@@ -379,9 +400,27 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfi
 
     collection.flatMap {
       coll =>
-        val fetchCount      = coll.count(Some(countSelector))
-        val totalMatchCount = coll.count(Some(countSelector ++ lrnSelector))
-        val lrnFilter       = selector ++ lrnSelector
+        val fetchCount = coll
+          .count(
+            selector = Some(countSelector),
+            limit = None,
+            skip = 0,
+            hint = None,
+            readConcern = ReadConcern.Local
+          )
+          .map(_.toInt)
+
+        val totalMatchCount = coll
+          .count(
+            selector = Some(countSelector ++ lrnSelector),
+            limit = None,
+            skip = 0,
+            hint = None,
+            readConcern = ReadConcern.Local
+          )
+          .map(_.toInt)
+
+        val lrnFilter = selector ++ lrnSelector
         val fetchResults = coll
           .find(lrnFilter, Some(DepartureWithoutMessages.projection))
           .sort(Json.obj("lastUpdated" -> -1))
@@ -413,7 +452,16 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfi
 
     collection.flatMap {
       coll =>
-        val fetchCount = coll.count(Some(countSelector))
+        val fetchCount = coll
+          .count(
+            selector = Some(countSelector),
+            limit = None,
+            skip = 0,
+            hint = None,
+            readConcern = ReadConcern.Local
+          )
+          .map(_.toInt)
+
         val fetchResults = coll
           .find(selector, Some(DepartureWithoutMessages.projection))
           .sort(Json.obj("lastUpdated" -> -1))

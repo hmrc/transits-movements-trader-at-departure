@@ -16,23 +16,23 @@
 
 package repositories
 
-import java.time.LocalDateTime
-
 import config.AppConfig
-import javax.inject.Inject
 import models.DepartureId
 import models.MongoDateTimeFormats._
 import play.api.libs.json.Json
 import play.modules.reactivemongo.ReactiveMongoApi
+import reactivemongo.api.WriteConcern
+import reactivemongo.api.bson.BSONDocument
 import reactivemongo.api.bson.collection.BSONSerializationPack
 import reactivemongo.api.commands.LastError
 import reactivemongo.api.indexes.Index.Aux
 import reactivemongo.api.indexes.IndexType
-import reactivemongo.bson.BSONDocument
-import reactivemongo.play.json.ImplicitBSONHandlers.JsObjectDocumentWriter
+import reactivemongo.play.json.collection.Helpers.idWrites
 import reactivemongo.play.json.collection.JSONCollection
 import utils.IndexUtils
 
+import java.time.LocalDateTime
+import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
@@ -77,8 +77,15 @@ class LockRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfig)(im
 
   def unlock(departureId: DepartureId): Future[Unit] =
     collection.flatMap {
-      _.findAndRemove(Json.obj("_id" -> departureId))
-        .map(_ => ())
+      _.findAndRemove(
+        selector = Json.obj("_id" -> departureId),
+        sort = None,
+        fields = None,
+        writeConcern = WriteConcern.Default,
+        maxTime = None,
+        collation = None,
+        arrayFilters = Nil
+      ).map(_ => ())
     }
 }
 

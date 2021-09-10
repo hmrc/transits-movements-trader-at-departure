@@ -17,18 +17,15 @@
 package controllers.actions
 
 import models.ChannelType.Web
-
-import javax.inject.Inject
 import models.request.AuthenticatedRequest
 import play.api.mvc._
 
+import javax.inject.Inject
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
-class FakeAuthenticateActionProvider @Inject()(defaultActionBuilder: DefaultActionBuilder, auth: FakeAuthenticateAction)(
-  implicit executionContext: ExecutionContext)
-    extends AuthenticateActionProvider {
+class FakeAuthenticateActionProvider @Inject()(defaultActionBuilder: DefaultActionBuilder, auth: FakeAuthenticateAction) extends AuthenticateActionProvider {
 
   override def apply(): ActionBuilder[AuthenticatedRequest, AnyContent] =
     defaultActionBuilder andThen auth
