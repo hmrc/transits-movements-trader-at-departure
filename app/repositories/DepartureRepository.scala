@@ -422,7 +422,7 @@ class DepartureRepository @Inject()(
         val lrnSelector = lrn
           .map {
             lrn =>
-              Json.obj("referenceNumber" -> Json.obj("$regex" -> lrn))
+              Json.obj("referenceNumber" -> Json.obj("$regex" -> lrn, "$options" -> "i"))
           }
           .getOrElse {
             Json.obj()

@@ -1024,8 +1024,8 @@ class DepartureRepositorySpec
           }.futureValue
 
           val departures = service.fetchAllDepartures(eoriNumber, Web, None, Some(lrn.substring(2, 6).toLowerCase()), Some(5)).futureValue
-
-          departures mustBe ResponseDepartures(Seq(departure3, departure1).map(ResponseDeparture.build), 2, 4, Some(2))
+          
+          departures mustBe ResponseDepartures(Seq(departure3, departure1).map(ResponseDeparture.build), 2, 4, 2)
         }
       }
 
@@ -1073,7 +1073,7 @@ class DepartureRepositorySpec
         }
       }
     }
-    
+
     "getMessage" - {
       "must return Some(message) if departure and message exists" in {
         database.flatMap(_.drop()).futureValue
