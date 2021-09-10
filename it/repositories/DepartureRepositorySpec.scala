@@ -433,53 +433,6 @@ class DepartureRepositorySpec
       }
     }
 
-    "setDepartureStateAndMessageState" - {
-      "must update the status of the departure and the message in an departure" in {
-        database.flatMap(_.drop()).futureValue
-
-        val departure = departureWithOneMessage.sample.value.copy(status = DepartureStatus.Initialized)
-        val messageId = MessageId(1)
-
-        service.insert(departure).futureValue
-        service.setDepartureAndMessageStates(departure.departureId, messageId, DepartureSubmitted, SubmissionSucceeded).futureValue
-
-        val updatedDeparture = service.get(departure.departureId, departure.channel)
-
-        whenReady(updatedDeparture) {
-          r =>
-            r.value.status mustEqual DepartureSubmitted
-
-            typeMatchOnTestValue(r.value.messages.head) {
-              result: MessageWithStatus =>
-                result.status mustEqual SubmissionSucceeded
-            }
-        }
-      }
-
-      "must fail if the departure cannot be found" in {
-        database.flatMap(_.drop()).futureValue
-
-        val departure = departureWithOneMessage.sample.value.copy(departureId = DepartureId(1), status = Initialized)
-        val messageId = MessageId(1)
-
-        service.insert(departure).futureValue
-
-        val setResult = service.setDepartureAndMessageStates(DepartureId(2), messageId, DepartureSubmitted, SubmissionSucceeded)
-        setResult.futureValue must not be defined
-
-        val result = service.get(departure.departureId, departure.channel)
-
-        whenReady(result) {
-          r =>
-            r.value.status mustEqual Initialized
-            typeMatchOnTestValue(r.value.messages.head) {
-              result: MessageWithStatus =>
-                result.status mustEqual SubmissionPending
-            }
-        }
-      }
-    }
-
     "addResponseMessage" - {
       "must add a message, update the status of a document and update the timestamp" in {
         database.flatMap(_.drop()).futureValue

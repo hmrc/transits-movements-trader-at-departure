@@ -16,13 +16,12 @@
 
 package models
 
-import java.time.Clock
-import java.time.LocalDateTime
-
 import cats._
 import play.api.libs.json.Json
 import play.api.libs.json.Writes
+
 import java.time.Clock
+import java.time.LocalDateTime
 
 sealed trait DepartureUpdate
 

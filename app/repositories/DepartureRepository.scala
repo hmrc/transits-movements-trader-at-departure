@@ -176,19 +176,6 @@ class DepartureRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfi
     }
   }
 
-  def setDepartureAndMessageStates(
-    departureId: DepartureId,
-    messageId: MessageId,
-    departureState: DepartureStatus,
-    messageState: MessageStatus
-  ): Future[Option[Unit]] = {
-    val selector = DepartureIdSelector(departureId)
-
-    val modifier = CompoundStatusUpdate(DepartureStatusUpdate(departureState), MessageStatusUpdate(messageId, messageState))
-
-    updateDeparture(selector, modifier).map(_.toOption)
-  }
-
   def setMessageState(departureId: DepartureId, messageId: Int, messageStatus: MessageStatus): Future[Try[Unit]] = {
     val selector = Json.obj(
       "$and" -> Json.arr(
