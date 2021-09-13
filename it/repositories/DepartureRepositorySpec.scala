@@ -16,28 +16,19 @@
 
 package repositories
 
-import cats.data.NonEmptyList
+import cats.data.{Chain, NonEmptyList}
 import config.AppConfig
 import generators.ModelGenerators
-import models.ChannelType.Api
-import models.ChannelType.Web
-import models.DepartureStatus.DepartureSubmitted
-import models.DepartureStatus.Initialized
-import models.DepartureStatus.MrnAllocated
-import models.DepartureStatus.PositiveAcknowledgement
-import models.MessageStatus.SubmissionPending
-import models.MessageStatus.SubmissionSucceeded
+import models.ChannelType.{Api, Web}
+import models.DepartureStatus.{Initialized, MrnAllocated, PositiveAcknowledgement}
+import models.MessageStatus.{SubmissionPending, SubmissionSucceeded}
 import models._
-import models.response.ResponseDeparture
-import models.response.ResponseDepartures
+import models.response.{ResponseDeparture, ResponseDepartures}
 import org.scalacheck.Arbitrary.arbitrary
-import org.scalacheck.Gen
+import org.scalacheck.{Arbitrary, Gen}
 import org.scalactic.source.Position
 import org.scalatest._
-import org.scalatest.concurrent.IntegrationPatience
-import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.exceptions.StackDepthException
-import org.scalatest.exceptions.TestFailedException
+import org.scalatest.exceptions.{StackDepthException, TestFailedException}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
@@ -46,16 +37,14 @@ import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import play.api.test.Helpers.running
-import reactivemongo.play.json.ImplicitBSONHandlers.JsObjectDocumentWriter
+import reactivemongo.play.json.collection.Helpers.idWrites
 import reactivemongo.play.json.collection.JSONCollection
-import utils.Format
-import utils.JsonHelper
+import utils.{Format, JsonHelper}
 
 import java.time._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.reflect.ClassTag
-import scala.util.Failure
-import scala.util.Success
+import scala.util.{Failure, Success}
 
 class DepartureRepositorySpec
     extends AnyFreeSpec
@@ -63,10 +52,8 @@ class DepartureRepositorySpec
     with OptionValues
     with ModelGenerators
     with Matchers
-    with ScalaFutures
     with MongoSuite
     with GuiceOneAppPerSuite
-    with IntegrationPatience
     with MongoDateTimeFormats
     with JsonHelper {
 
@@ -91,11 +78,16 @@ class DepartureRepositorySpec
       )
   }
 
-  def nonEmptyListOfFixSize[T](size: Int, gen: Gen[T]): Gen[NonEmptyList[T]] =
-    for {
-      head <- gen
-      tail <- Gen.listOfN(size - 1, gen)
-    } yield NonEmptyList(head, tail)
+  def nonEmptyListOfSize[T](size: Int)(f: (T, Int) => T)(implicit a: Arbitrary[T]): Gen[NonEmptyList[T]] =
+    Gen.listOfN(size, arbitrary[T])
+      // Don't generate duplicate IDs
+      .map(_.foldLeft((Chain.empty[T], 1)) {
+        case ((ts, id), t) =>
+          (ts :+ f(t, id), id + 1)
+      }).map {
+      case (ts, _) =>
+        NonEmptyList.fromListUnsafe(ts.toList)
+    }
 
   val departureWithOneMessage: Gen[Departure] = for {
     departure <- arbitrary[Departure]
@@ -483,54 +475,7 @@ class DepartureRepositorySpec
         val updatedDeparture = service.get(departure.departureId, departure.channel).futureValue.value
 
         result mustBe a[Failure[_]]
-        updatedDeparture.status must not be (departureStatus.departureStatus)
-      }
-    }
-
-    "setDepartureStateAndMessageState" - {
-      "must update the status of the departure and the message in an departure" in {
-        database.flatMap(_.drop()).futureValue
-
-        val departure = departureWithOneMessage.sample.value.copy(status = DepartureStatus.Initialized)
-        val messageId = MessageId(1)
-
-        service.insert(departure).futureValue
-        service.setDepartureStateAndMessageState(departure.departureId, messageId, DepartureSubmitted, SubmissionSucceeded).futureValue
-
-        val updatedDeparture = service.get(departure.departureId, departure.channel)
-
-        whenReady(updatedDeparture) {
-          r =>
-            r.value.status mustEqual DepartureSubmitted
-
-            typeMatchOnTestValue(r.value.messages.head) {
-              result: MessageWithStatus =>
-                result.status mustEqual SubmissionSucceeded
-            }
-        }
-      }
-
-      "must fail if the departure cannot be found" in {
-        database.flatMap(_.drop()).futureValue
-
-        val departure = departureWithOneMessage.sample.value.copy(departureId = DepartureId(1), status = Initialized)
-        val messageId = MessageId(1)
-
-        service.insert(departure).futureValue
-
-        val setResult = service.setDepartureStateAndMessageState(DepartureId(2), messageId, DepartureSubmitted, SubmissionSucceeded)
-        setResult.futureValue must not be defined
-
-        val result = service.get(departure.departureId, departure.channel)
-
-        whenReady(result) {
-          r =>
-            r.value.status mustEqual Initialized
-            typeMatchOnTestValue(r.value.messages.head) {
-              result: MessageWithStatus =>
-                result.status mustEqual SubmissionPending
-            }
-        }
+        updatedDeparture.status must not be departureStatus.departureStatus
       }
     }
 
@@ -658,7 +603,7 @@ class DepartureRepositorySpec
         addMessageResult mustBe a[Success[_]]
         updatedDeparture.nextMessageCorrelationId - departure.nextMessageCorrelationId mustBe 0
         updatedDeparture.status mustEqual newState
-        updatedDeparture.movementReferenceNumber mustEqual Some(MovementReferenceNumber(mrn))
+        updatedDeparture.movementReferenceNumber.get mustEqual MovementReferenceNumber(mrn)
         updatedDeparture.messages.size - departure.messages.size mustEqual 1
         updatedDeparture.messages.last mustEqual mrnAllocatedMessage
       }
@@ -1034,7 +979,7 @@ class DepartureRepositorySpec
         val eoriNumber: String = arbitrary[String].sample.value
         val lrn: String        = Gen.listOfN(10, Gen.alphaChar).map(_.mkString).sample.value
 
-        val allDepartures = nonEmptyListOfFixSize[Departure](20, arbitrary[Departure])
+        lazy val allDepartures = nonEmptyListOfSize[Departure](20)((departure, id) => departure.copy(departureId = DepartureId(id)))
           .map(_.toList)
           .sample
           .value

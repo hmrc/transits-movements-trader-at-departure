@@ -21,19 +21,20 @@ import com.codahale.metrics.Histogram
 import com.codahale.metrics.MetricRegistry
 import com.codahale.metrics.Timer
 import com.kenshoo.play.metrics.Metrics
+import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito
 import org.mockito.Mockito._
-import org.mockito.ArgumentMatchers._
-import org.scalatest.BeforeAndAfterAll
-import org.scalatest.OptionValues
 import org.scalatest.compatible.Assertion
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AsyncWordSpecLike
+import org.scalatest.BeforeAndAfterAll
+import org.scalatest.OptionValues
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.mvc.AbstractController
 import play.api.mvc.Results
 import play.api.test.FakeRequest
 import play.api.test.Helpers
+
 import scala.concurrent.Future
 
 class HasMetricsSpec extends AsyncWordSpecLike with Matchers with OptionValues with MockitoSugar with BeforeAndAfterAll {
@@ -65,7 +66,7 @@ class HasMetricsSpec extends AsyncWordSpecLike with Matchers with OptionValues w
   def withTestActionMetrics[A](test: TestHasActionMetrics => A): A =
     test(new TestHasActionMetrics)
 
-  def verifyCompletedWithSuccess(metricName: String, metrics: MockHasMetrics): Assertion = {
+  def verifyCompletedWithSuccess(metrics: MockHasMetrics): Assertion = {
     val inOrder = Mockito.inOrder(metrics.timer, metrics.timerContext, metrics.successCounter)
     inOrder.verify(metrics.timer, times(1)).time()
     inOrder.verify(metrics.timerContext, times(1)).stop()
@@ -77,7 +78,7 @@ class HasMetricsSpec extends AsyncWordSpecLike with Matchers with OptionValues w
     succeed
   }
 
-  def verifyCompletedWithFailure(metricName: String, metrics: MockHasMetrics): Assertion = {
+  def verifyCompletedWithFailure(metrics: MockHasMetrics): Assertion = {
     val inOrder = Mockito.inOrder(metrics.timer, metrics.timerContext, metrics.failureCounter)
     inOrder.verify(metrics.timer, times(1)).time()
     inOrder.verify(metrics.timerContext, times(1)).stop()
@@ -101,7 +102,7 @@ class HasMetricsSpec extends AsyncWordSpecLike with Matchers with OptionValues w
             )
             .map {
               _ =>
-                verifyCompletedWithSuccess(TestMetric, metrics)
+                verifyCompletedWithSuccess(metrics)
             }
       }
 
@@ -114,7 +115,7 @@ class HasMetricsSpec extends AsyncWordSpecLike with Matchers with OptionValues w
                 Future.successful(())
             }
             .map(
-              _ => verifyCompletedWithSuccess(TestMetric, metrics)
+              _ => verifyCompletedWithSuccess(metrics)
             )
       }
 
@@ -126,7 +127,7 @@ class HasMetricsSpec extends AsyncWordSpecLike with Matchers with OptionValues w
             )
             .recover {
               case _ =>
-                verifyCompletedWithFailure(TestMetric, metrics)
+                verifyCompletedWithFailure(metrics)
             }
       }
 
@@ -139,7 +140,7 @@ class HasMetricsSpec extends AsyncWordSpecLike with Matchers with OptionValues w
                 Future.successful(())
             }
             .map(
-              _ => verifyCompletedWithFailure(TestMetric, metrics)
+              _ => verifyCompletedWithFailure(metrics)
             )
       }
 
@@ -155,7 +156,7 @@ class HasMetricsSpec extends AsyncWordSpecLike with Matchers with OptionValues w
                 Future.successful(())
             }
             .map(
-              _ => verifyCompletedWithSuccess(TestMetric, metrics)
+              _ => verifyCompletedWithSuccess(metrics)
             )
       }
 
@@ -172,7 +173,7 @@ class HasMetricsSpec extends AsyncWordSpecLike with Matchers with OptionValues w
                 Future.successful(())
             }
             .map(
-              _ => verifyCompletedWithFailure(TestMetric, metrics)
+              _ => verifyCompletedWithFailure(metrics)
             )
       }
 
@@ -184,7 +185,7 @@ class HasMetricsSpec extends AsyncWordSpecLike with Matchers with OptionValues w
             )
           }
 
-          Future.successful(verifyCompletedWithFailure(TestMetric, metrics))
+          Future.successful(verifyCompletedWithFailure(metrics))
       }
     }
 
@@ -196,7 +197,7 @@ class HasMetricsSpec extends AsyncWordSpecLike with Matchers with OptionValues w
               Future.successful(Results.Continue)
             }
             .map(
-              _ => verifyCompletedWithSuccess(TestMetric, metrics)
+              _ => verifyCompletedWithSuccess(metrics)
             )
       }
 
@@ -207,7 +208,7 @@ class HasMetricsSpec extends AsyncWordSpecLike with Matchers with OptionValues w
               Future.successful(Results.Ok)
             }
             .map(
-              _ => verifyCompletedWithSuccess(TestMetric, metrics)
+              _ => verifyCompletedWithSuccess(metrics)
             )
       }
 
@@ -218,7 +219,7 @@ class HasMetricsSpec extends AsyncWordSpecLike with Matchers with OptionValues w
               Future.successful(Results.NotModified)
             }
             .map(
-              _ => verifyCompletedWithSuccess(TestMetric, metrics)
+              _ => verifyCompletedWithSuccess(metrics)
             )
       }
 
@@ -229,7 +230,7 @@ class HasMetricsSpec extends AsyncWordSpecLike with Matchers with OptionValues w
               Future.successful(Results.EntityTooLarge)
             }
             .map(
-              _ => verifyCompletedWithFailure(TestMetric, metrics)
+              _ => verifyCompletedWithFailure(metrics)
             )
       }
 
@@ -240,7 +241,7 @@ class HasMetricsSpec extends AsyncWordSpecLike with Matchers with OptionValues w
               Future.successful(Results.BadGateway)
             }
             .map(
-              _ => verifyCompletedWithFailure(TestMetric, metrics)
+              _ => verifyCompletedWithFailure(metrics)
             )
       }
 
@@ -250,10 +251,7 @@ class HasMetricsSpec extends AsyncWordSpecLike with Matchers with OptionValues w
             .withMetricsTimerResult(TestMetric) {
               Future.failed(new Exception)
             }
-            .transformWith {
-              case _ =>
-                verifyCompletedWithFailure(TestMetric, metrics)
-            }
+            .transformWith(_ => verifyCompletedWithFailure(metrics))
       }
 
       "increment failure counter when the user throws an exception constructing their code block" in withTestMetrics {
@@ -264,7 +262,7 @@ class HasMetricsSpec extends AsyncWordSpecLike with Matchers with OptionValues w
             }
           }
 
-          Future.successful(verifyCompletedWithFailure(TestMetric, metrics))
+          Future.successful(verifyCompletedWithFailure(metrics))
       }
     }
 
@@ -279,7 +277,7 @@ class HasMetricsSpec extends AsyncWordSpecLike with Matchers with OptionValues w
             }
             .apply(fakeRequest)
             .map(
-              _ => verifyCompletedWithSuccess(TestMetric, metrics)
+              _ => verifyCompletedWithSuccess(metrics)
             )
       }
 
@@ -291,7 +289,7 @@ class HasMetricsSpec extends AsyncWordSpecLike with Matchers with OptionValues w
             }
             .apply(fakeRequest)
             .map(
-              _ => verifyCompletedWithSuccess(TestMetric, metrics)
+              _ => verifyCompletedWithSuccess(metrics)
             )
       }
 
@@ -303,7 +301,7 @@ class HasMetricsSpec extends AsyncWordSpecLike with Matchers with OptionValues w
             }
             .apply(fakeRequest)
             .map(
-              _ => verifyCompletedWithSuccess(TestMetric, metrics)
+              _ => verifyCompletedWithSuccess(metrics)
             )
       }
 
@@ -315,7 +313,7 @@ class HasMetricsSpec extends AsyncWordSpecLike with Matchers with OptionValues w
             }
             .apply(fakeRequest)
             .map(
-              _ => verifyCompletedWithFailure(TestMetric, metrics)
+              _ => verifyCompletedWithFailure(metrics)
             )
       }
 
@@ -327,7 +325,7 @@ class HasMetricsSpec extends AsyncWordSpecLike with Matchers with OptionValues w
             }
             .apply(fakeRequest)
             .map(
-              _ => verifyCompletedWithFailure(TestMetric, metrics)
+              _ => verifyCompletedWithFailure(metrics)
             )
       }
     }

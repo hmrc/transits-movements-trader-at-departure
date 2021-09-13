@@ -21,7 +21,8 @@ import play.api.Configuration
 import play.api.libs.json.Json
 import play.api.libs.json.Reads
 import play.modules.reactivemongo.ReactiveMongoApi
-import reactivemongo.play.json.ImplicitBSONHandlers.JsObjectDocumentWriter
+import reactivemongo.api.WriteConcern
+import reactivemongo.play.json.collection.Helpers.idWrites
 import reactivemongo.play.json.collection.JSONCollection
 
 import javax.inject.Inject
@@ -81,12 +82,22 @@ class DepartureIdRepository @Inject()(mongo: ReactiveMongoApi, config: Configura
     val selector = Json.obj("_id" -> primaryValue)
 
     collection.flatMap(
-      _.findAndUpdate(selector, update, upsert = true, fetchNewObject = true)
-        .map(
-          x =>
-            x.result(indexKeyReads)
-              .getOrElse(throw new Exception(s"Unable to generate DepartureId"))
-        )
+      _.findAndUpdate(
+        selector = selector,
+        update = update,
+        fetchNewObject = true,
+        upsert = true,
+        sort = None,
+        fields = None,
+        bypassDocumentValidation = false,
+        writeConcern = WriteConcern.Default,
+        maxTime = None,
+        collation = None,
+        arrayFilters = Nil
+      ).map(
+        _.result(indexKeyReads)
+          .getOrElse(throw new Exception(s"Unable to generate DepartureId"))
+      )
     )
   }
 }
