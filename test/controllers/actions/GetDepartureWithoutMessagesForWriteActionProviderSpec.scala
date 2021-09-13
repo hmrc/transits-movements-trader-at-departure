@@ -18,8 +18,8 @@ package controllers.actions
 
 import generators.ModelGenerators
 import models.ChannelType.Web
-import models.Departure
 import models.DepartureId
+import models.DepartureWithoutMessages
 import org.mockito.ArgumentMatchers.{eq => eqTo, _}
 import org.mockito.Mockito._
 import org.scalacheck.Arbitrary.arbitrary
@@ -41,7 +41,7 @@ import repositories.LockRepository
 
 import scala.concurrent.Future
 
-class GetDepartureForWriteActionProviderSpec
+class GetDepartureWithoutMessagesForWriteActionProviderSpec
     extends AnyFreeSpec
     with Matchers
     with MockitoSugar
@@ -54,7 +54,7 @@ class GetDepartureForWriteActionProviderSpec
 
   def fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("", "")
 
-  class Harness(getAndLock: GetDepartureForWriteActionProvider) {
+  class Harness(getAndLock: GetDepartureWithoutMessagesForWriteActionProvider) {
 
     def get(departureId: DepartureId): Action[AnyContent] = getAndLock(departureId) {
       request =>
@@ -71,12 +71,12 @@ class GetDepartureForWriteActionProviderSpec
 
     "must lock a departure, retrieve it, then unlock it when the departure exists" in {
 
-      val departure = arbitrary[Departure].sample.value
+      val departure = arbitrary[DepartureWithoutMessages].sample.value
 
       val mockDepartureRepository = mock[DepartureRepository]
       val mockLockRepository      = mock[LockRepository]
 
-      when(mockDepartureRepository.get(any())) thenReturn Future.successful(Some(departure))
+      when(mockDepartureRepository.getWithoutMessages(any())) thenReturn Future.successful(Some(departure))
       when(mockLockRepository.lock(any())) thenReturn Future.successful(true)
       when(mockLockRepository.unlock(any())) thenReturn Future.successful(())
 
@@ -86,7 +86,7 @@ class GetDepartureForWriteActionProviderSpec
           bind[LockRepository].toInstance(mockLockRepository)
         )
 
-      val actionProvider = application.injector.instanceOf[GetDepartureForWriteActionProvider]
+      val actionProvider = application.injector.instanceOf[GetDepartureWithoutMessagesForWriteActionProvider]
 
       val controller = new Harness(actionProvider)
       val result     = controller.get(departure.departureId)(fakeRequest.withHeaders("channel" -> departure.channel.toString))
@@ -99,12 +99,12 @@ class GetDepartureForWriteActionProviderSpec
 
     "must lock an departure, unlock it, and return Ok when the departure cannot be found" in {
 
-      val departure = arbitrary[Departure].sample.value
+      val departure = arbitrary[DepartureWithoutMessages].sample.value
 
       val mockDepartureRepository = mock[DepartureRepository]
       val mockLockRepository      = mock[LockRepository]
 
-      when(mockDepartureRepository.get(any())) thenReturn Future.successful(None)
+      when(mockDepartureRepository.getWithoutMessages(any())) thenReturn Future.successful(None)
       when(mockLockRepository.lock(any())) thenReturn Future.successful(true)
       when(mockLockRepository.unlock(any())) thenReturn Future.successful(())
 
@@ -114,7 +114,7 @@ class GetDepartureForWriteActionProviderSpec
           bind[LockRepository].toInstance(mockLockRepository)
         )
 
-      val actionProvider = application.injector.instanceOf[GetDepartureForWriteActionProvider]
+      val actionProvider = application.injector.instanceOf[GetDepartureWithoutMessagesForWriteActionProvider]
 
       val controller = new Harness(actionProvider)
       val result     = controller.get(departure.departureId)(fakeRequest.withHeaders("channel" -> Web.toString))
@@ -126,7 +126,7 @@ class GetDepartureForWriteActionProviderSpec
 
     "must return Locked if a lock cannot be acquired" in {
 
-      val departure = arbitrary[Departure].sample.value
+      val departure = arbitrary[DepartureWithoutMessages].sample.value
 
       val mockDepartureRepository = mock[DepartureRepository]
       val mockLockRepository      = mock[LockRepository]
@@ -139,7 +139,7 @@ class GetDepartureForWriteActionProviderSpec
           bind[LockRepository].toInstance(mockLockRepository)
         )
 
-      val actionProvider = application.injector.instanceOf[GetDepartureForWriteActionProvider]
+      val actionProvider = application.injector.instanceOf[GetDepartureWithoutMessagesForWriteActionProvider]
 
       val controller = new Harness(actionProvider)
       val result     = controller.get(departure.departureId)(fakeRequest)
@@ -151,12 +151,12 @@ class GetDepartureForWriteActionProviderSpec
 
     "must unlock a departure and return Internal Server Error if the main action fails" in {
 
-      val departure = arbitrary[Departure].sample.value
+      val departure = arbitrary[DepartureWithoutMessages].sample.value
 
       val mockDepartureRepository = mock[DepartureRepository]
       val mockLockRepository      = mock[LockRepository]
 
-      when(mockDepartureRepository.get(any())) thenReturn Future.successful(Some(departure))
+      when(mockDepartureRepository.getWithoutMessages(any())) thenReturn Future.successful(Some(departure))
       when(mockLockRepository.lock(any())) thenReturn Future.successful(true)
       when(mockLockRepository.unlock(any())) thenReturn Future.successful(())
 
@@ -166,7 +166,7 @@ class GetDepartureForWriteActionProviderSpec
           bind[LockRepository].toInstance(mockLockRepository)
         )
 
-      val actionProvider = application.injector.instanceOf[GetDepartureForWriteActionProvider]
+      val actionProvider = application.injector.instanceOf[GetDepartureWithoutMessagesForWriteActionProvider]
 
       val controller = new Harness(actionProvider)
       val result     = controller.failingAction(departure.departureId)(fakeRequest.withHeaders("channel" -> departure.channel.toString))

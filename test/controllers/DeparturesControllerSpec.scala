@@ -67,6 +67,7 @@ import java.time.LocalTime
 import scala.concurrent.Future
 import scala.xml.Utility.trim
 import models.MessageId
+import models.DepartureWithoutMessages
 
 class DeparturesControllerSpec
     extends SpecBase
@@ -461,7 +462,7 @@ class DeparturesControllerSpec
         .build()
 
       val departure = Arbitrary.arbitrary[Departure].sample.value.copy(eoriNumber = "eori")
-      when(mockDepartureRepository.get(any(), any())).thenReturn(Future.successful(Some(departure)))
+      when(mockDepartureRepository.getWithoutMessages(any(), any())).thenReturn(Future.successful(Some(DepartureWithoutMessages.fromDeparture(departure))))
 
       running(application) {
         val request = FakeRequest(GET, routes.DeparturesController.get(DepartureId(1)).url)
@@ -481,7 +482,7 @@ class DeparturesControllerSpec
         .overrides(bind[DepartureRepository].toInstance(mockDepartureRepository))
         .build()
 
-      when(mockDepartureRepository.get(any(), any())).thenReturn(Future.successful(None))
+      when(mockDepartureRepository.getWithoutMessages(any(), any())).thenReturn(Future.successful(None))
 
       running(application) {
         val request = FakeRequest(GET, routes.DeparturesController.get(DepartureId(1)).url)
@@ -501,7 +502,7 @@ class DeparturesControllerSpec
         .build()
 
       val departure = Arbitrary.arbitrary[Departure].sample.value.copy(eoriNumber = "eori2")
-      when(mockDepartureRepository.get(any(), any())).thenReturn(Future.successful(Some(departure)))
+      when(mockDepartureRepository.getWithoutMessages(any(), any())).thenReturn(Future.successful(Some(DepartureWithoutMessages.fromDeparture(departure))))
 
       running(application) {
         val request = FakeRequest(GET, routes.DeparturesController.get(DepartureId(1)).url)
@@ -516,7 +517,7 @@ class DeparturesControllerSpec
     "must return an INTERNAL_SERVER_ERROR when we cannot retrieve the departure" in {
       val mockDepartureRepository = mock[DepartureRepository]
 
-      when(mockDepartureRepository.get(any(), any()))
+      when(mockDepartureRepository.getWithoutMessages(any(), any()))
         .thenReturn(Future.failed(new Exception))
 
       val application = baseApplicationBuilder
@@ -538,7 +539,7 @@ class DeparturesControllerSpec
 
       val departure          = Arbitrary.arbitrary[Departure].sample.value.copy(eoriNumber = "eori")
       val responseDeparture  = ResponseDeparture.build(departure)
-      val responseDepartures = ResponseDepartures(Seq(responseDeparture), 1, 1)
+      val responseDepartures = ResponseDepartures(Seq(responseDeparture), 1, 1, 1)
 
       when(mockDepartureRepository.fetchAllDepartures(any(), any(), any(), any(), any(), any())).thenReturn(Future.successful(responseDepartures))
 
@@ -557,7 +558,7 @@ class DeparturesControllerSpec
     }
 
     "must return empty sequence when there are no departures in database" in {
-      val emptyResponse           = ResponseDepartures(Seq.empty, 0, 0)
+      val emptyResponse           = ResponseDepartures(Seq.empty, 0, 0, 0)
       val mockDepartureRepository = mock[DepartureRepository]
 
       when(mockDepartureRepository.fetchAllDepartures(any(), any(), any(), any(), any(), any())).thenReturn(Future.successful(emptyResponse))

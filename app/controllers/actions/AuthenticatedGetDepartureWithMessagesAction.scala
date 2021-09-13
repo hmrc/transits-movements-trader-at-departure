@@ -19,65 +19,38 @@ package controllers.actions
 import javax.inject.Inject
 import models.DepartureId
 import models.request.AuthenticatedRequest
-import models.request.DepartureRequest
+import models.request.DepartureWithMessagesRequest
 import play.api.Logging
 import play.api.mvc.ActionRefiner
-import play.api.mvc.Request
 import play.api.mvc.Result
 import play.api.mvc.Results.InternalServerError
 import play.api.mvc.Results.NotFound
-import play.api.mvc.Results.Ok
 import repositories.DepartureRepository
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
-private[actions] class GetDepartureActionProvider @Inject()(
+private[actions] class AuthenticatedGetDepartureWithMessagesActionProvider @Inject()(
   repository: DepartureRepository
 )(implicit ec: ExecutionContext) {
 
-  def apply(departureId: DepartureId): ActionRefiner[Request, DepartureRequest] =
-    new GetDepartureAction(departureId, repository)
+  def apply(departureId: DepartureId): ActionRefiner[AuthenticatedRequest, DepartureWithMessagesRequest] =
+    new AuthenticatedGetDepartureWithMessagesAction(departureId, repository)
 }
 
-private[actions] class GetDepartureAction(
+private[actions] class AuthenticatedGetDepartureWithMessagesAction(
   departureId: DepartureId,
   repository: DepartureRepository
 )(implicit val executionContext: ExecutionContext)
-    extends ActionRefiner[Request, DepartureRequest]
+    extends ActionRefiner[AuthenticatedRequest, DepartureWithMessagesRequest]
     with Logging {
 
-  override protected def refine[A](request: Request[A]): Future[Either[Result, DepartureRequest[A]]] =
-    repository.get(departureId).map {
-      case Some(departure) =>
-        Right(DepartureRequest(request, departure, departure.channel))
-      case None =>
-        logger.info(s"[GetDepartureAction] Unable to retrieve departure message for departure id: ${departureId.index}")
-        Left(Ok)
-    }
-}
-
-private[actions] class AuthenticatedGetDepartureActionProvider @Inject()(
-  repository: DepartureRepository
-)(implicit ec: ExecutionContext) {
-
-  def apply(departureId: DepartureId): ActionRefiner[AuthenticatedRequest, DepartureRequest] =
-    new AuthenticatedGetDepartureAction(departureId, repository)
-}
-
-private[actions] class AuthenticatedGetDepartureAction(
-  departureId: DepartureId,
-  repository: DepartureRepository
-)(implicit val executionContext: ExecutionContext)
-    extends ActionRefiner[AuthenticatedRequest, DepartureRequest]
-    with Logging {
-
-  override protected def refine[A](request: AuthenticatedRequest[A]): Future[Either[Result, DepartureRequest[A]]] =
+  override protected def refine[A](request: AuthenticatedRequest[A]): Future[Either[Result, DepartureWithMessagesRequest[A]]] =
     repository
       .get(departureId, request.channel)
       .map {
         case Some(departure) if departure.eoriNumber == request.eoriNumber =>
-          Right(DepartureRequest(request.request, departure, request.channel))
+          Right(DepartureWithMessagesRequest(request.request, departure, request.channel))
         case Some(_) =>
           logger.warn("Attempt to retrieve an departure for another EORI")
           Left(NotFound)

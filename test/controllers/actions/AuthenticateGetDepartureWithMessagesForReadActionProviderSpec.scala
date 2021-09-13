@@ -48,7 +48,7 @@ import uk.gov.hmrc.auth.core.Enrolments
 
 import scala.concurrent.Future
 
-class AuthenticateGetDepartureForReadActionProviderSpec
+class AuthenticateGetDepartureWithMessagesForReadActionProviderSpec
     extends AnyFreeSpec
     with Matchers
     with MockitoSugar
@@ -61,7 +61,7 @@ class AuthenticateGetDepartureForReadActionProviderSpec
 
   def fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("", "").withHeaders("channel" -> Web.toString())
 
-  class Harness(authAndGet: AuthenticatedGetDepartureForReadActionProvider) {
+  class Harness(authAndGet: AuthenticatedGetDepartureWithMessagesForReadActionProvider) {
 
     def get(departureId: DepartureId): Action[AnyContent] = authAndGet(departureId) {
       request =>
@@ -117,7 +117,7 @@ class AuthenticateGetDepartureForReadActionProviderSpec
             bind[AuthConnector].toInstance(mockAuthConnector)
           )
 
-        val actionProvider = application.injector().instanceOf[AuthenticatedGetDepartureForReadActionProvider]
+        val actionProvider = application.injector().instanceOf[AuthenticatedGetDepartureWithMessagesForReadActionProvider]
 
         val controller = new Harness(actionProvider)
         val result     = controller.get(departure.departureId)(fakeRequest)
@@ -143,7 +143,7 @@ class AuthenticateGetDepartureForReadActionProviderSpec
             bind[AuthConnector].toInstance(mockAuthConnector)
           )
 
-        val actionProvider = application.injector().instanceOf[AuthenticatedGetDepartureForReadActionProvider]
+        val actionProvider = application.injector().instanceOf[AuthenticatedGetDepartureWithMessagesForReadActionProvider]
 
         val controller = new Harness(actionProvider)
         val result     = controller.get(departure.departureId)(fakeRequest)
@@ -168,7 +168,7 @@ class AuthenticateGetDepartureForReadActionProviderSpec
             bind[AuthConnector].toInstance(mockAuthConnector)
           )
 
-        val actionProvider = application.injector().instanceOf[AuthenticatedGetDepartureForReadActionProvider]
+        val actionProvider = application.injector().instanceOf[AuthenticatedGetDepartureWithMessagesForReadActionProvider]
 
         val controller = new Harness(actionProvider)
         val result     = controller.get(departureId)(fakeRequest)
@@ -195,7 +195,7 @@ class AuthenticateGetDepartureForReadActionProviderSpec
           .build()
 
         running(application) {
-          val actionProvider = application.injector.instanceOf[AuthenticatedGetDepartureForReadActionProvider]
+          val actionProvider = application.injector.instanceOf[AuthenticatedGetDepartureWithMessagesForReadActionProvider]
 
           val fakeAPIRequest = fakeRequest.withHeaders("channel" -> Api.toString())
 
@@ -227,7 +227,7 @@ class AuthenticateGetDepartureForReadActionProviderSpec
           .build()
 
         running(application) {
-          val actionProvider = application.injector.instanceOf[AuthenticatedGetDepartureForReadActionProvider]
+          val actionProvider = application.injector.instanceOf[AuthenticatedGetDepartureWithMessagesForReadActionProvider]
 
           val fakeAPIRequest = fakeRequest.withHeaders("channel" -> departure.channel.toString())
 
@@ -254,7 +254,7 @@ class AuthenticateGetDepartureForReadActionProviderSpec
             bind[AuthConnector].toInstance(mockAuthConnector)
           )
 
-        val actionProvider = application.injector().instanceOf[AuthenticatedGetDepartureForReadActionProvider]
+        val actionProvider = application.injector().instanceOf[AuthenticatedGetDepartureWithMessagesForReadActionProvider]
 
         val controller = new Harness(actionProvider)
         val result     = controller.get(departureId)(fakeRequest)
@@ -295,7 +295,7 @@ class AuthenticateGetDepartureForReadActionProviderSpec
             bind[AuthConnector].toInstance(mockAuthConnector)
           )
 
-        val actionProvider = application.injector().instanceOf[AuthenticatedGetDepartureForReadActionProvider]
+        val actionProvider = application.injector().instanceOf[AuthenticatedGetDepartureWithMessagesForReadActionProvider]
 
         val controller = new Harness(actionProvider)
         val result     = controller.get(departureId)(fakeRequest)
@@ -349,7 +349,7 @@ class AuthenticateGetDepartureForReadActionProviderSpec
           .build()
 
         running(application) {
-          val actionProvider = application.injector.instanceOf[AuthenticatedGetDepartureForReadActionProvider]
+          val actionProvider = application.injector.instanceOf[AuthenticatedGetDepartureWithMessagesForReadActionProvider]
 
           val controller = new Harness(actionProvider)
           val result     = controller.get(departureId)(fakeRequest.withHeaders(Headers.create()))
@@ -405,7 +405,7 @@ class AuthenticateGetDepartureForReadActionProviderSpec
           .build()
 
         running(application) {
-          val actionProvider = application.injector.instanceOf[AuthenticatedGetDepartureForReadActionProvider]
+          val actionProvider = application.injector.instanceOf[AuthenticatedGetDepartureWithMessagesForReadActionProvider]
 
           val controller = new Harness(actionProvider)
           val result     = controller.get(departureId)(fakeRequest.withHeaders("channel" -> "web2"))

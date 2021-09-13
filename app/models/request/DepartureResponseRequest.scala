@@ -16,10 +16,10 @@
 
 package models.request
 
-import models.Departure
+import models.DepartureWithoutMessages
 import models.MessageResponse
 import play.api.mvc.WrappedRequest
 
-case class DepartureResponseRequest[A](request: DepartureRequest[A], messageResponse: MessageResponse) extends WrappedRequest[A](request) {
-  def departure: Departure = request.departure
+case class DepartureResponseRequest[A](request: DepartureWithoutMessagesRequest[A], messageResponse: MessageResponse) extends WrappedRequest[A](request) {
+  def departure: DepartureWithoutMessages = request.departure
 }

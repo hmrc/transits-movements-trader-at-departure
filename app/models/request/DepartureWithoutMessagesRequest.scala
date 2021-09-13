@@ -14,13 +14,11 @@
  * limitations under the License.
  */
 
-package models.response
+package models.request
 
-import play.api.libs.json.Json
-import play.api.libs.json.OWrites
+import models.ChannelType
+import models.DepartureWithoutMessages
+import play.api.mvc.Request
+import play.api.mvc.WrappedRequest
 
-case class ResponseDepartures(departures: Seq[ResponseDeparture], retrievedDepartures: Int, totalDepartures: Int, totalMatched: Int)
-
-object ResponseDepartures {
-  implicit val writes: OWrites[ResponseDepartures] = Json.writes[ResponseDepartures]
-}
+case class DepartureWithoutMessagesRequest[A](request: Request[A], departure: DepartureWithoutMessages, channel: ChannelType) extends WrappedRequest[A](request)

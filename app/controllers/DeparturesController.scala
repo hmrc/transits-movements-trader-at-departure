@@ -44,7 +44,7 @@ class DeparturesController @Inject()(
   cc: ControllerComponents,
   departureRepository: DepartureRepository,
   authenticate: AuthenticateActionProvider,
-  authenticatedDepartureForRead: AuthenticatedGetDepartureForReadActionProvider,
+  authenticatedDepartureWithoutMessagesForRead: AuthenticatedGetDepartureWithoutMessagesForReadActionProvider,
   departureService: DepartureService,
   auditService: AuditService,
   submitMessageService: SubmitMessageService,
@@ -111,9 +111,8 @@ class DeparturesController @Inject()(
 
   def get(departureId: DepartureId): Action[AnyContent] =
     withMetricsTimerAction("get-departure-by-id") {
-      authenticatedDepartureForRead(departureId) {
+      authenticatedDepartureWithoutMessagesForRead(departureId) {
         implicit request =>
-          messagesCount.update(request.departure.messages.length)
           Ok(Json.toJsObject(ResponseDeparture.build(request.departure)))
       }
     }

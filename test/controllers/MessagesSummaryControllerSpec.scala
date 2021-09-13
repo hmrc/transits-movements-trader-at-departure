@@ -16,8 +16,8 @@
 
 package controllers
 import base.SpecBase
-import controllers.actions.AuthenticatedGetDepartureForReadActionProvider
-import controllers.actions.FakeAuthenticatedGetDepartureForReadActionProvider
+import controllers.actions.AuthenticatedGetDepartureWithMessagesForReadActionProvider
+import controllers.actions.FakeAuthenticatedGetDepartureWithMessagesForReadActionProvider
 import generators.ModelGenerators
 import models.Departure
 import models.MessageId
@@ -49,7 +49,7 @@ class MessagesSummaryControllerSpec extends SpecBase with ScalaCheckPropertyChec
     "must return" - {
 
       "return an OK with the message summary when a departure exists" in {
-        val fake        = FakeAuthenticatedGetDepartureForReadActionProvider(departure)
+        val fake        = FakeAuthenticatedGetDepartureWithMessagesForReadActionProvider(departure)
         val mockService = mock[MessageSummaryService]
 
         val declarationMessageId         = MessageId.fromMessageIdValue(1).value
@@ -61,7 +61,7 @@ class MessagesSummaryControllerSpec extends SpecBase with ScalaCheckPropertyChec
         val app =
           baseApplicationBuilder
             .overrides(
-              bind[AuthenticatedGetDepartureForReadActionProvider].toInstance(fake),
+              bind[AuthenticatedGetDepartureWithMessagesForReadActionProvider].toInstance(fake),
               bind[MessageSummaryService].toInstance(mockService)
             )
             .build()

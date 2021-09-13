@@ -14,11 +14,19 @@
  * limitations under the License.
  */
 
-package models.request
+package controllers.actions
 
-import models.ChannelType
-import models.Departure
-import play.api.mvc.Request
-import play.api.mvc.WrappedRequest
+import javax.inject.Inject
+import models.DepartureId
+import models.request.DepartureWithoutMessagesRequest
+import play.api.mvc.ActionBuilder
+import play.api.mvc.AnyContent
 
-case class DepartureRequest[A](request: Request[A], departure: Departure, channel: ChannelType) extends WrappedRequest[A](request)
+class GetDepartureWithoutMessagesForWriteActionProvider @Inject()(
+  lock: LockActionProvider,
+  getDeparture: GetDepartureWithoutMessagesActionProvider
+) {
+
+  def apply(departureId: DepartureId): ActionBuilder[DepartureWithoutMessagesRequest, AnyContent] =
+    lock(departureId) andThen getDeparture(departureId)
+}

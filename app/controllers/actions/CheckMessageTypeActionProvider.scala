@@ -28,26 +28,28 @@ import models.PositiveAcknowledgementResponse
 import models.ReleaseForTransitResponse
 import models.WriteOffNotificationResponse
 import models.XMLSubmissionNegativeAcknowledgementResponse
-import models.request.DepartureRequest
 import models.request.DepartureResponseRequest
+import models.request.DepartureWithoutMessagesRequest
 import play.api.Logging
 import play.api.mvc.ActionRefiner
 import play.api.mvc.Result
 import play.api.mvc.Results.BadRequest
-
 import javax.inject.Inject
+
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
 class CheckMessageTypeActionProvider @Inject()()(implicit ec: ExecutionContext) {
 
-  def apply(): ActionRefiner[DepartureRequest, DepartureResponseRequest] =
+  def apply(): ActionRefiner[DepartureWithoutMessagesRequest, DepartureResponseRequest] =
     new CheckMessageTypeAction()
 }
 
-class CheckMessageTypeAction()(implicit val executionContext: ExecutionContext) extends ActionRefiner[DepartureRequest, DepartureResponseRequest] with Logging {
+class CheckMessageTypeAction()(implicit val executionContext: ExecutionContext)
+    extends ActionRefiner[DepartureWithoutMessagesRequest, DepartureResponseRequest]
+    with Logging {
 
-  override protected def refine[A](request: DepartureRequest[A]): Future[Either[Result, DepartureResponseRequest[A]]] = {
+  override protected def refine[A](request: DepartureWithoutMessagesRequest[A]): Future[Either[Result, DepartureResponseRequest[A]]] = {
 
     def successMessage(response: MessageResponse): Future[Right[Result, DepartureResponseRequest[A]]] =
       Future.successful(Right(DepartureResponseRequest(request, response)))

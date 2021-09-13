@@ -18,16 +18,21 @@ package controllers.actions
 
 import javax.inject.Inject
 import models.DepartureId
-import models.request.DepartureRequest
+import models.request.DepartureWithMessagesRequest
 import play.api.mvc.ActionBuilder
 import play.api.mvc.AnyContent
+import play.api.mvc.DefaultActionBuilder
 
-class AuthenticatedGetDepartureForWriteActionProvider @Inject()(
-  lock: LockActionProvider,
+trait AuthenticatedGetDepartureWithMessagesForReadActionProvider {
+  def apply(departureId: DepartureId): ActionBuilder[DepartureWithMessagesRequest, AnyContent]
+}
+
+class AuthenticatedGetDepartureWithMessagesForReadActionProviderImpl @Inject()(
   authenticate: AuthenticateActionProvider,
-  getDeparture: AuthenticatedGetDepartureActionProvider
-) {
+  getDeparture: AuthenticatedGetDepartureWithMessagesActionProvider,
+  buildDefault: DefaultActionBuilder
+) extends AuthenticatedGetDepartureWithMessagesForReadActionProvider {
 
-  def apply(departureId: DepartureId): ActionBuilder[DepartureRequest, AnyContent] =
-    lock(departureId) andThen authenticate() andThen getDeparture(departureId)
+  def apply(departureId: DepartureId): ActionBuilder[DepartureWithMessagesRequest, AnyContent] =
+    buildDefault andThen authenticate() andThen getDeparture(departureId)
 }

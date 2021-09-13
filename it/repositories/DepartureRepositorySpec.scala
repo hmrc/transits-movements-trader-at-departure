@@ -206,6 +206,50 @@ class DepartureRepositorySpec
       }
     }
 
+    "getWithoutMessages(departureId: DepartureId)" - {
+      "must get an departure when it exists" in {
+        database.flatMap(_.drop()).futureValue
+
+        val departure                = arbitrary[Departure].sample.value
+        val departureWithoutMessages = DepartureWithoutMessages.fromDeparture(departure)
+        service.insert(departure).futureValue
+        val result = service.getWithoutMessages(departure.departureId)
+
+        whenReady(result) {
+          r =>
+            r.value mustEqual departureWithoutMessages
+        }
+      }
+
+      "must return None when an departure does not exist" in {
+        database.flatMap(_.drop()).futureValue
+
+        val departure = arbitrary[Departure].sample.value copy (departureId = DepartureId(1))
+
+        service.insert(departure).futureValue
+        val result = service.getWithoutMessages(DepartureId(2), Web)
+
+        whenReady(result) {
+          r =>
+            r.isDefined mustBe false
+        }
+      }
+
+      "must return None when a departure exists, but with a different channel type" in {
+        database.flatMap(_.drop()).futureValue
+
+        val departure = arbitrary[Departure].sample.value copy (departureId = DepartureId(1), Api)
+
+        service.insert(departure).futureValue
+        val result = service.get(DepartureId(1), Web)
+
+        whenReady(result) {
+          r =>
+            r.isDefined mustBe false
+        }
+      }
+    }
+
     "getWithoutMessages(departureId: DepartureId, channelFilter: ChannelType)" - {
       "must get an departure when it exists and has the right channel type" in {
         database.flatMap(_.drop()).futureValue
@@ -621,8 +665,8 @@ class DepartureRepositorySpec
               db.collection[JSONCollection](DepartureRepository.collectionName).insert(false).many(jsonArr)
           }.futureValue
 
-          repository.fetchAllDepartures(eoriNumber, Api, None).futureValue mustBe ResponseDepartures(Seq(ResponseDeparture.build(departure1)), 1, 1)
-          repository.fetchAllDepartures(eoriNumber, Web, None).futureValue mustBe ResponseDepartures(Seq(ResponseDeparture.build(departure3)), 1, 1)
+          repository.fetchAllDepartures(eoriNumber, Api, None).futureValue mustBe ResponseDepartures(Seq(ResponseDeparture.build(departure1)), 1, 1, 1)
+          repository.fetchAllDepartures(eoriNumber, Web, None).futureValue mustBe ResponseDepartures(Seq(ResponseDeparture.build(departure3)), 1, 1, 1)
         }
       }
 
@@ -649,7 +693,7 @@ class DepartureRepositorySpec
 
           val result = respository.fetchAllDepartures(eoriNumber, Api, None).futureValue
 
-          result mustBe ResponseDepartures(Seq.empty, 0, 0)
+          result mustBe ResponseDepartures(Seq.empty, 0, 0, 0)
         }
       }
 
@@ -678,7 +722,7 @@ class DepartureRepositorySpec
 
           departures.retrievedDepartures mustBe maxRows
 
-          departures mustBe ResponseDepartures(Seq(departure3, departure2).map(ResponseDeparture.build), 2, 3)
+          departures mustBe ResponseDepartures(Seq(departure3, departure2).map(ResponseDeparture.build), 2, 3, 3)
         }
       }
 
@@ -707,7 +751,7 @@ class DepartureRepositorySpec
 
           departures.retrievedDepartures mustBe maxRows
 
-          departures mustBe ResponseDepartures(Seq(departure3).map(ResponseDeparture.build), 1, 3)
+          departures mustBe ResponseDepartures(Seq(departure3).map(ResponseDeparture.build), 1, 3, 3)
         }
       }
 
@@ -743,7 +787,7 @@ class DepartureRepositorySpec
           val dateTime   = OffsetDateTime.of(LocalDateTime.of(2021, 4, 30, 10, 30, 32), ZoneOffset.ofHours(1))
           val departures = service.fetchAllDepartures(eoriNumber, Api, Some(dateTime)).futureValue
 
-          departures mustBe ResponseDepartures(Seq(departure4, departure2).map(ResponseDeparture.build), 2, 4)
+          departures mustBe ResponseDepartures(Seq(departure4, departure2).map(ResponseDeparture.build), 2, 4, 2)
         }
       }
 
@@ -800,7 +844,7 @@ class DepartureRepositorySpec
 
           val departures = service.fetchAllDepartures(eoriNumber, Web, None, Some(lrn), Some(5)).futureValue
 
-          departures mustBe ResponseDepartures(Seq(departure4, departure3, departure2, departure1).map(ResponseDeparture.build), 4, 4, Some(4))
+          departures mustBe ResponseDepartures(Seq(departure4, departure3, departure2, departure1).map(ResponseDeparture.build), 4, 4, 4)
         }
       }
 
@@ -863,7 +907,7 @@ class DepartureRepositorySpec
 
           val departures = service.fetchAllDepartures(eoriNumber, Web, None, Some(lrn.substring(2, 6)), Some(5)).futureValue
 
-          departures mustBe ResponseDepartures(Seq(departure3, departure1).map(ResponseDeparture.build), 2, 4, Some(2))
+          departures mustBe ResponseDepartures(Seq(departure3, departure1).map(ResponseDeparture.build), 2, 4, 2)
         }
       }
 
@@ -925,8 +969,8 @@ class DepartureRepositorySpec
           }.futureValue
 
           val departures = service.fetchAllDepartures(eoriNumber, Web, None, Some(lrn.substring(2, 6).toLowerCase()), Some(5)).futureValue
-
-          departures mustBe ResponseDepartures(Seq(departure3, departure1).map(ResponseDeparture.build), 2, 4, Some(2))
+          
+          departures mustBe ResponseDepartures(Seq(departure3, departure1).map(ResponseDeparture.build), 2, 4, 2)
         }
       }
 
@@ -970,7 +1014,7 @@ class DepartureRepositorySpec
 
           val departures = service.fetchAllDepartures(eoriNumber, Web, None, None, Some(pageSize), Some(page)).futureValue
 
-          departures mustBe ResponseDepartures(expectedAllDepartures, pageSize, allDepartures.size, None)
+          departures mustBe ResponseDepartures(expectedAllDepartures, pageSize, allDepartures.size, allDepartures.size)
         }
       }
     }
