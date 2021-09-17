@@ -16,46 +16,19 @@
 
 package controllers.actions
 
-import javax.inject.Inject
 import models.DepartureId
 import models.request.AuthenticatedRequest
 import models.request.DepartureWithoutMessagesRequest
 import play.api.Logging
 import play.api.mvc.ActionRefiner
-import play.api.mvc.Request
 import play.api.mvc.Result
 import play.api.mvc.Results.InternalServerError
 import play.api.mvc.Results.NotFound
-import play.api.mvc.Results.Ok
 import repositories.DepartureRepository
 
+import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
-
-private[actions] class GetDepartureWithoutMessagesActionProvider @Inject()(
-  repository: DepartureRepository
-)(implicit ec: ExecutionContext) {
-
-  def apply(departureId: DepartureId): ActionRefiner[Request, DepartureWithoutMessagesRequest] =
-    new GetDepartureWithoutMessagesAction(departureId, repository)
-}
-
-private[actions] class GetDepartureWithoutMessagesAction(
-  departureId: DepartureId,
-  repository: DepartureRepository
-)(implicit val executionContext: ExecutionContext)
-    extends ActionRefiner[Request, DepartureWithoutMessagesRequest]
-    with Logging {
-
-  override protected def refine[A](request: Request[A]): Future[Either[Result, DepartureWithoutMessagesRequest[A]]] =
-    repository.getWithoutMessages(departureId).map {
-      case Some(departure) =>
-        Right(DepartureWithoutMessagesRequest(request, departure, departure.channel))
-      case None =>
-        logger.info(s"[GetDepartureAction] Unable to retrieve departure message for departure id: ${departureId.index}")
-        Left(Ok)
-    }
-}
 
 private[actions] class AuthenticatedGetDepartureWithoutMessagesActionProvider @Inject()(
   repository: DepartureRepository
@@ -76,8 +49,8 @@ private[actions] class AuthenticatedGetDepartureWithoutMessagesAction(
     repository
       .getWithoutMessages(departureId, request.channel)
       .map {
-        case Some(departure) if departure.eoriNumber == request.eoriNumber =>
-          Right(DepartureWithoutMessagesRequest(request.request, departure, request.channel))
+        case Some(departure) if request.hasMatchingEori(departure) =>
+          Right(DepartureWithoutMessagesRequest(request, departure, request.channel))
         case Some(_) =>
           logger.warn("Attempt to retrieve an departure for another EORI")
           Left(NotFound)

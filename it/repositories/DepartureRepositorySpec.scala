@@ -16,19 +16,28 @@
 
 package repositories
 
-import cats.data.{Chain, NonEmptyList}
+import cats.data.Chain
+import cats.data.Ior
+import cats.data.NonEmptyList
 import config.AppConfig
 import generators.ModelGenerators
-import models.ChannelType.{Api, Web}
-import models.DepartureStatus.{Initialized, MrnAllocated, PositiveAcknowledgement}
-import models.MessageStatus.{SubmissionPending, SubmissionSucceeded}
+import models.ChannelType.Api
+import models.ChannelType.Web
+import models.DepartureStatus.Initialized
+import models.DepartureStatus.MrnAllocated
+import models.DepartureStatus.PositiveAcknowledgement
+import models.MessageStatus.SubmissionPending
+import models.MessageStatus.SubmissionSucceeded
 import models._
-import models.response.{ResponseDeparture, ResponseDepartures}
+import models.response.ResponseDeparture
+import models.response.ResponseDepartures
+import org.scalacheck.Arbitrary
 import org.scalacheck.Arbitrary.arbitrary
-import org.scalacheck.{Arbitrary, Gen}
+import org.scalacheck.Gen
 import org.scalactic.source.Position
 import org.scalatest._
-import org.scalatest.exceptions.{StackDepthException, TestFailedException}
+import org.scalatest.exceptions.StackDepthException
+import org.scalatest.exceptions.TestFailedException
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
@@ -39,12 +48,14 @@ import play.api.libs.json.Json
 import play.api.test.Helpers.running
 import reactivemongo.play.json.collection.Helpers.idWrites
 import reactivemongo.play.json.collection.JSONCollection
-import utils.{Format, JsonHelper}
+import utils.Format
+import utils.JsonHelper
 
 import java.time._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.reflect.ClassTag
-import scala.util.{Failure, Success}
+import scala.util.Failure
+import scala.util.Success
 
 class DepartureRepositorySpec
     extends AnyFreeSpec
@@ -665,8 +676,62 @@ class DepartureRepositorySpec
               db.collection[JSONCollection](DepartureRepository.collectionName).insert(false).many(jsonArr)
           }.futureValue
 
-          repository.fetchAllDepartures(eoriNumber, Api, None).futureValue mustBe ResponseDepartures(Seq(ResponseDeparture.build(departure1)), 1, 1, 1)
-          repository.fetchAllDepartures(eoriNumber, Web, None).futureValue mustBe ResponseDepartures(Seq(ResponseDeparture.build(departure3)), 1, 1, 1)
+          repository.fetchAllDepartures(Ior.right(EORINumber(eoriNumber)), Api, None).futureValue mustBe ResponseDepartures(Seq(ResponseDeparture.build(departure1)), 1, 1, 1)
+          repository.fetchAllDepartures(Ior.right(EORINumber(eoriNumber)), Web, None).futureValue mustBe ResponseDepartures(Seq(ResponseDeparture.build(departure3)), 1, 1, 1)
+        }
+      }
+
+      "return DeparturesWithoutMessages with eoriNumber that match legacy TURN and channel type" in {
+        database.flatMap(_.drop()).futureValue
+
+        val app                = new GuiceApplicationBuilder().configure("metrics.jvm" -> false).build()
+        val turn: String = arbitrary[String].sample.value
+
+        val departure1 = arbitrary[Departure].sample.value.copy(eoriNumber = turn, channel = Api)
+        val departure2 = arbitrary[Departure].suchThat(_.eoriNumber != turn).sample.value.copy(channel = Api)
+        val departure3 = arbitrary[Departure].sample.value.copy(eoriNumber = turn, channel = Web)
+
+        running(app) {
+          started(app).futureValue
+
+          val repository = app.injector.instanceOf[DepartureRepository]
+          val departures = Seq(departure1, departure2, departure3)
+
+          database.flatMap {
+            db =>
+              db.collection[JSONCollection](DepartureRepository.collectionName).insert(false).many(departures)
+          }.futureValue
+
+          repository.fetchAllDepartures(Ior.left(TURN(turn)), Api, None).futureValue mustBe ResponseDepartures(Seq(ResponseDeparture.build(departure1)), 1, 1, 1)
+          repository.fetchAllDepartures(Ior.left(TURN(turn)), Web, None).futureValue mustBe ResponseDepartures(Seq(ResponseDeparture.build(departure3)), 1, 1, 1)
+        }
+      }
+
+      "return DeparturesWithoutMessages with eoriNumber that match either eoriNumber or legacy TURN and channel type" in {
+        database.flatMap(_.drop()).futureValue
+
+        val app                = new GuiceApplicationBuilder().configure("metrics.jvm" -> false).build()
+        val eori: String = arbitrary[String].sample.value
+        val turn: String = arbitrary[String].sample.value
+        val ids: Set[String] = Set(eori, turn)
+
+        val departure1 = arbitrary[Departure].sample.value.copy(eoriNumber = eori, channel = Api)
+        val departure2 = arbitrary[Departure].suchThat(departure => !ids.contains(departure.eoriNumber)).sample.value.copy(channel = Api)
+        val departure3 = arbitrary[Departure].sample.value.copy(eoriNumber = turn, channel = Web)
+
+        running(app) {
+          started(app).futureValue
+
+          val repository = app.injector.instanceOf[DepartureRepository]
+          val departures = Seq(departure1, departure2, departure3)
+
+          database.flatMap {
+            db =>
+              db.collection[JSONCollection](DepartureRepository.collectionName).insert(false).many(departures)
+          }.futureValue
+
+          repository.fetchAllDepartures(Ior.both(TURN(turn), EORINumber(eori)), Api, None).futureValue mustBe ResponseDepartures(Seq(ResponseDeparture.build(departure1)), 1, 1, 1)
+          repository.fetchAllDepartures(Ior.both(TURN(turn), EORINumber(eori)), Web, None).futureValue mustBe ResponseDepartures(Seq(ResponseDeparture.build(departure3)), 1, 1, 1)
         }
       }
 
@@ -691,7 +756,7 @@ class DepartureRepositorySpec
               db.collection[JSONCollection](DepartureRepository.collectionName).insert(false).many(jsonArr)
           }.futureValue
 
-          val result = respository.fetchAllDepartures(eoriNumber, Api, None).futureValue
+          val result = respository.fetchAllDepartures(Ior.right(EORINumber(eoriNumber)), Api, None).futureValue
 
           result mustBe ResponseDepartures(Seq.empty, 0, 0, 0)
         }
@@ -718,7 +783,7 @@ class DepartureRepositorySpec
           val maxRows = appConfig.maxRowsReturned(Api)
           maxRows mustBe 2
 
-          val departures = repository.fetchAllDepartures(eoriNumber, Api, updatedSince = None).futureValue
+          val departures = repository.fetchAllDepartures(Ior.right(EORINumber(eoriNumber)), Api, updatedSince = None).futureValue
 
           departures.retrievedDepartures mustBe maxRows
 
@@ -747,7 +812,7 @@ class DepartureRepositorySpec
           val maxRows = appConfig.maxRowsReturned(Web)
           maxRows mustBe 1
 
-          val departures = repository.fetchAllDepartures(eoriNumber, Web, updatedSince = None).futureValue
+          val departures = repository.fetchAllDepartures(Ior.right(EORINumber(eoriNumber)), Web, updatedSince = None).futureValue
 
           departures.retrievedDepartures mustBe maxRows
 
@@ -785,7 +850,7 @@ class DepartureRepositorySpec
           }.futureValue
 
           val dateTime   = OffsetDateTime.of(LocalDateTime.of(2021, 4, 30, 10, 30, 32), ZoneOffset.ofHours(1))
-          val departures = service.fetchAllDepartures(eoriNumber, Api, Some(dateTime)).futureValue
+          val departures = service.fetchAllDepartures(Ior.right(EORINumber(eoriNumber)), Api, Some(dateTime)).futureValue
 
           departures mustBe ResponseDepartures(Seq(departure4, departure2).map(ResponseDeparture.build), 2, 4, 2)
         }
@@ -842,7 +907,7 @@ class DepartureRepositorySpec
               db.collection[JSONCollection](DepartureRepository.collectionName).insert(false).many(jsonArr)
           }.futureValue
 
-          val departures = service.fetchAllDepartures(eoriNumber, Web, None, Some(lrn), Some(5)).futureValue
+          val departures = service.fetchAllDepartures(Ior.right(EORINumber(eoriNumber)), Web, None, Some(lrn), Some(5)).futureValue
 
           departures mustBe ResponseDepartures(Seq(departure4, departure3, departure2, departure1).map(ResponseDeparture.build), 4, 4, 4)
         }
@@ -905,7 +970,7 @@ class DepartureRepositorySpec
               db.collection[JSONCollection](DepartureRepository.collectionName).insert(false).many(jsonArr)
           }.futureValue
 
-          val departures = service.fetchAllDepartures(eoriNumber, Web, None, Some(lrn.substring(2, 6)), Some(5)).futureValue
+          val departures = service.fetchAllDepartures(Ior.right(EORINumber(eoriNumber)), Web, None, Some(lrn.substring(2, 6)), Some(5)).futureValue
 
           departures mustBe ResponseDepartures(Seq(departure3, departure1).map(ResponseDeparture.build), 2, 4, 2)
         }
@@ -968,8 +1033,8 @@ class DepartureRepositorySpec
               db.collection[JSONCollection](DepartureRepository.collectionName).insert(false).many(jsonArr)
           }.futureValue
 
-          val departures = service.fetchAllDepartures(eoriNumber, Web, None, Some(lrn.substring(2, 6).toLowerCase()), Some(5)).futureValue
-          
+          val departures = service.fetchAllDepartures(Ior.right(EORINumber(eoriNumber)), Web, None, Some(lrn.substring(2, 6).toLowerCase()), Some(5)).futureValue
+
           departures mustBe ResponseDepartures(Seq(departure3, departure1).map(ResponseDeparture.build), 2, 4, 2)
         }
       }
@@ -1012,7 +1077,7 @@ class DepartureRepositorySpec
               db.collection[JSONCollection](DepartureRepository.collectionName).insert(false).many(jsonArr)
           }.futureValue
 
-          val departures = service.fetchAllDepartures(eoriNumber, Web, None, None, Some(pageSize), Some(page)).futureValue
+          val departures = service.fetchAllDepartures(Ior.right(EORINumber(eoriNumber)), Web, None, None, Some(pageSize), Some(page)).futureValue
 
           departures mustBe ResponseDepartures(expectedAllDepartures, pageSize, allDepartures.size, allDepartures.size)
         }

@@ -17,6 +17,7 @@
 package services
 
 import base.SpecBase
+import cats.data.Ior
 import cats.data.NonEmptyList
 import models.ChannelType.Api
 import models.MessageStatus.SubmissionPending
@@ -104,7 +105,7 @@ class DepartureServiceSpec extends SpecBase with JsonHelper with IntegrationPati
         notificationBox = None
       )
 
-      val result = service.createDeparture(eori, inputMovement, Api, None).futureValue
+      val result = service.createDeparture(Ior.right(EORINumber(eori)), inputMovement, Api, None).futureValue
 
       result.right.get mustEqual expectedDeparture
     }
@@ -138,7 +139,7 @@ class DepartureServiceSpec extends SpecBase with JsonHelper with IntegrationPati
           </HEAHEA>
         </Foo>
 
-      service.createDeparture(eori, invalidPayload, Api, None).futureValue.isLeft mustBe true
+      service.createDeparture(Ior.right(EORINumber(eori)), invalidPayload, Api, None).futureValue.isLeft mustBe true
     }
   }
 

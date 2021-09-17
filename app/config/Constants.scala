@@ -17,7 +17,14 @@
 package config
 
 object Constants {
-  val BoxName          = "customs/transits##1.0##notificationUrl"
-  val XClientIdHeader  = "X-Client-Id"
-  val XRequestIdHeader = "X-Request-Id"
+  val BoxName: String = "customs/transits##1.0##notificationUrl"
+
+  val XClientIdHeader: String  = "X-Client-Id"
+  val XRequestIdHeader: String = "X-Request-Id"
+
+  val LegacyEnrolmentKey: String   = "HMCE-NCTS-ORG"
+  val LegacyEnrolmentIdKey: String = "VATRegNoTURN"
+
+  val NewEnrolmentKey: String   = "HMRC-CTC-ORG"
+  val NewEnrolmentIdKey: String = "EORINumber"
 }

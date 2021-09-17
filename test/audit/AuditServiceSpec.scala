@@ -18,12 +18,14 @@ package audit
 
 import audit.AuditType._
 import base.SpecBase
+import cats.data.Ior
 import generators.ModelGenerators
 import models.CancellationDecisionResponse
 import models.ChannelType.Api
 import models.ControlDecisionNotificationResponse
 import models.Departure
 import models.DepartureRejectedResponse
+import models.EORINumber
 import models.GuaranteeNotValidResponse
 import models.MessageWithStatus
 import models.MrnAllocatedResponse
@@ -67,7 +69,7 @@ class AuditServiceSpec extends SpecBase with ScalaCheckPropertyChecks with Befor
           message <- arbitrary[MessageWithStatus]
         } yield message.copy(message = xml, messageJson = jsObj)
 
-      val requestEori        = "eori"
+      val requestEori        = Ior.right(EORINumber("eori"))
       val requestXml         = <xml>test</xml>
       val requestedXmlToJson = Json.obj("channel" -> "api", "xml" -> "test")
       val message            = gen(requestXml, requestedXmlToJson).sample.get

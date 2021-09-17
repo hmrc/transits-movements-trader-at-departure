@@ -16,8 +16,11 @@
 
 package repositories
 
+import cats.data.Ior
 import cats.syntax.all._
+import com.kenshoo.play.metrics.Metrics
 import config.AppConfig
+import metrics.HasMetrics
 import models._
 import models.response.ResponseDeparture
 import models.response.ResponseDepartures
@@ -26,7 +29,6 @@ import play.api.libs.json.JsObject
 import play.api.libs.json.Json
 import play.modules.reactivemongo.ReactiveMongoApi
 import reactivemongo.api.Cursor
-import reactivemongo.api.ReadConcern
 import reactivemongo.api.WriteConcern
 import reactivemongo.api.bson.BSONDocument
 import reactivemongo.api.bson.collection.BSONSerializationPack
@@ -46,8 +48,6 @@ import scala.concurrent.Future
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
-import metrics.HasMetrics
-import com.kenshoo.play.metrics.Metrics
 
 class DepartureRepository @Inject()(
   mongo: ReactiveMongoApi,
@@ -420,7 +420,7 @@ class DepartureRepository @Inject()(
   }
 
   def fetchAllDepartures(
-    eoriNumber: String,
+    enrolmentId: Ior[TURN, EORINumber],
     channelFilter: ChannelType,
     updatedSince: Option[OffsetDateTime],
     lrn: Option[String] = None,
@@ -429,7 +429,16 @@ class DepartureRepository @Inject()(
   ): Future[ResponseDepartures] =
     withMetricsTimerAsync("mongo-get-departures-for-eori") {
       _ =>
-        val baseSelector = Json.obj("eoriNumber" -> eoriNumber, "channel" -> channelFilter)
+        val enrolmentIds = enrolmentId.fold(
+          turn => List(turn.value),
+          eoriNumber => List(eoriNumber.value),
+          (turn, eoriNumber) => List(eoriNumber.value, turn.value)
+        )
+
+        val baseSelector = Json.obj(
+          "eoriNumber" -> Json.obj("$in" -> enrolmentIds),
+          "channel"    -> channelFilter
+        )
 
         val dateSelector = updatedSince
           .map {

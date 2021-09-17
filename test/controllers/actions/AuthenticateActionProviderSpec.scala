@@ -51,47 +51,63 @@ class AuthenticateActionProviderSpec extends AnyFreeSpec with Matchers with Mock
 
     def action(): Action[AnyContent] = authenticate() {
       result =>
-        Results.Ok(result.eoriNumber)
+        Results.Ok(result.enrolmentId.fold(_.value, _.value, (_, eori) => eori.value))
     }
   }
+
+  val eoriNumber = "EORI"
+  val turn       = "TURN"
+
+  val unrelatedEnrolment =
+    Enrolment(
+      key = "IR-SA",
+      identifiers = Seq(
+        EnrolmentIdentifier(
+          "UTR",
+          "123"
+        )
+      ),
+      state = "Activated"
+    )
+
+  val newEnrolment =
+    Enrolment(
+      key = "HMRC-CTC-ORG",
+      identifiers = Seq(
+        EnrolmentIdentifier(
+          "EORINumber",
+          eoriNumber
+        )
+      ),
+      state = "Activated"
+    )
+
+  val legacyEnrolment =
+    Enrolment(
+      key = "HMCE-NCTS-ORG",
+      identifiers = Seq(
+        EnrolmentIdentifier(
+          "VATRegNoTURN",
+          turn
+        )
+      ),
+      state = "Activated"
+    )
 
   "authenticate" - {
 
     "when a user has valid enrolments" - {
 
-      val eoriNumber = "EORI"
-
-      val validEnrolments: Enrolments = Enrolments(
-        Set(
-          Enrolment(
-            key = "IR-SA",
-            identifiers = Seq(
-              EnrolmentIdentifier(
-                "UTR",
-                "123"
-              )
-            ),
-            state = "Activated"
-          ),
-          Enrolment(
-            key = "HMCE-NCTS-ORG",
-            identifiers = Seq(
-              EnrolmentIdentifier(
-                "VATRegNoTURN",
-                eoriNumber
-              )
-            ),
-            state = "Activated"
-          )
-        )
-      )
+      val validNewEnrolments: Enrolments    = Enrolments(Set(unrelatedEnrolment, newEnrolment))
+      val validLegacyEnrolments: Enrolments = Enrolments(Set(unrelatedEnrolment, legacyEnrolment))
+      val validBothEnrolments: Enrolments   = Enrolments(Set(unrelatedEnrolment, newEnrolment, legacyEnrolment))
 
       "must pass on the user's EORI" in {
 
         val mockAuthConnector = mock[AuthConnector]
 
         when(mockAuthConnector.authorise[Enrolments](any(), any())(any(), any()))
-          .thenReturn(Future.successful(validEnrolments))
+          .thenReturn(Future.successful(validNewEnrolments))
 
         val application = baseApplication
           .overrides(
@@ -107,36 +123,56 @@ class AuthenticateActionProviderSpec extends AnyFreeSpec with Matchers with Mock
         status(result) mustEqual OK
         contentAsString(result) mustEqual eoriNumber
       }
+
+      "must pass on the user's TURN" in {
+
+        val mockAuthConnector = mock[AuthConnector]
+
+        when(mockAuthConnector.authorise[Enrolments](any(), any())(any(), any()))
+          .thenReturn(Future.successful(validLegacyEnrolments))
+
+        val application = baseApplication
+          .overrides(
+            bind[AuthConnector].toInstance(mockAuthConnector)
+          )
+          .build()
+
+        val actionProvider = application.injector.instanceOf[AuthenticateActionProvider]
+
+        val controller = new Harness(actionProvider)
+        val result     = controller.action()(fakeRequest)
+
+        status(result) mustEqual OK
+        contentAsString(result) mustEqual turn
+      }
+
+      "must pick user's EORI over their TURN if both enrolments are present" in {
+
+        val mockAuthConnector = mock[AuthConnector]
+
+        when(mockAuthConnector.authorise[Enrolments](any(), any())(any(), any()))
+          .thenReturn(Future.successful(validBothEnrolments))
+
+        val application = baseApplication
+          .overrides(
+            bind[AuthConnector].toInstance(mockAuthConnector)
+          )
+          .build()
+
+        val actionProvider = application.injector.instanceOf[AuthenticateActionProvider]
+
+        val controller = new Harness(actionProvider)
+        val result     = controller.action()(fakeRequest)
+
+        status(result) mustEqual OK
+        contentAsString(result) mustEqual eoriNumber
+      }
+
     }
 
     "when channel header is invalid" - {
 
-      val eoriNumber = "EORI"
-
-      val validEnrolments: Enrolments = Enrolments(
-        Set(
-          Enrolment(
-            key = "IR-SA",
-            identifiers = Seq(
-              EnrolmentIdentifier(
-                "UTR",
-                "123"
-              )
-            ),
-            state = "Activated"
-          ),
-          Enrolment(
-            key = "HMCE-NCTS-ORG",
-            identifiers = Seq(
-              EnrolmentIdentifier(
-                "VATRegNoTURN",
-                eoriNumber
-              )
-            ),
-            state = "Activated"
-          )
-        )
-      )
+      val validEnrolments: Enrolments = Enrolments(Set(unrelatedEnrolment, newEnrolment))
 
       "must return BadRequest" in {
 
@@ -165,32 +201,7 @@ class AuthenticateActionProviderSpec extends AnyFreeSpec with Matchers with Mock
 
     "when channel header is missing" - {
 
-      val eoriNumber = "EORI"
-
-      val validEnrolments: Enrolments = Enrolments(
-        Set(
-          Enrolment(
-            key = "IR-SA",
-            identifiers = Seq(
-              EnrolmentIdentifier(
-                "UTR",
-                "123"
-              )
-            ),
-            state = "Activated"
-          ),
-          Enrolment(
-            key = "HMCE-NCTS-ORG",
-            identifiers = Seq(
-              EnrolmentIdentifier(
-                "VATRegNoTURN",
-                eoriNumber
-              )
-            ),
-            state = "Activated"
-          )
-        )
-      )
+      val validEnrolments: Enrolments = Enrolments(Set(unrelatedEnrolment, newEnrolment))
 
       "must return BadRequest" in {
 
@@ -219,20 +230,7 @@ class AuthenticateActionProviderSpec extends AnyFreeSpec with Matchers with Mock
 
     "when a user has invalid enrolments" - {
 
-      val invalidEnrolments = Enrolments(
-        Set(
-          Enrolment(
-            key = "IR-SA",
-            identifiers = Seq(
-              EnrolmentIdentifier(
-                "UTR",
-                "123"
-              )
-            ),
-            state = "Activated"
-          )
-        )
-      )
+      val invalidEnrolments = Enrolments(Set(unrelatedEnrolment))
 
       "must return Forbidden" in {
 

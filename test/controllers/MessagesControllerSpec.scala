@@ -19,6 +19,7 @@ package controllers
 import audit.AuditService
 import audit.AuditType._
 import base.SpecBase
+import cats.data.Ior
 import cats.data.NonEmptyList
 import connectors.MessageConnector
 import connectors.MessageConnector.EisSubmissionResult.ErrorInPayload
@@ -125,7 +126,7 @@ class MessagesControllerSpec
 
   val departureWithOneMessage: Gen[Departure] = for {
     departure <- arbitrary[Departure]
-  } yield {
+  } yield
     departure.copy(
       departureId,
       Api,
@@ -138,7 +139,6 @@ class MessagesControllerSpec
       message.messageCorrelationId,
       NonEmptyList.one(message.copy(messageType = MessageType.MrnAllocated))
     )
-  }
 
   val departure = departureWithOneMessage.sample.value
 
@@ -177,11 +177,19 @@ class MessagesControllerSpec
 
         header("Location", result).value must be(routes.MessagesController.getMessage(departure.departureId, MessageId(2)).url)
 
-        verify(mockSubmitMessageService, times(1)).submitMessage(eqTo(departure.departureId),
-                                                                 any(),
-                                                                 eqTo(DepartureStatus.DeclarationCancellationRequest),
-                                                                 any())(any())
-        verify(mockAuditService, times(1)).auditEvent(eqTo(DepartureCancellationRequestSubmitted), eqTo(departure.eoriNumber), any(), any())(any())
+        verify(mockSubmitMessageService, times(1)).submitMessage(
+          eqTo(departure.departureId),
+          any(),
+          eqTo(DepartureStatus.DeclarationCancellationRequest),
+          any()
+        )(any())
+
+        verify(mockAuditService, times(1)).auditEvent(
+          eqTo(DepartureCancellationRequestSubmitted),
+          eqTo(Ior.right(EORINumber(departure.eoriNumber))),
+          any(),
+          any()
+        )(any())
       }
     }
 

@@ -45,6 +45,9 @@ import services.UnexpectedError
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import utils.TestMetrics
+import models.request.AuthenticatedRequest
+import cats.data.Ior
+import models.EORINumber
 
 class PDFRetrievalControllerSpec extends SpecBase with ScalaCheckPropertyChecks with ModelGenerators with BeforeAndAfterEach {
 
@@ -61,15 +64,16 @@ class PDFRetrievalControllerSpec extends SpecBase with ScalaCheckPropertyChecks 
 
     when(mockAction(departureId = departureId)).thenReturn(fakeActionBuilder)
 
-    when(fakeActionBuilder.async(any[DepartureWithMessagesRequest[AnyContent] => Future[Result]])).thenAnswer(
-      (invocation: InvocationOnMock) => {
+    when(fakeActionBuilder.async(any[DepartureWithMessagesRequest[AnyContent] => Future[Result]])).thenAnswer {
+      (invocation: InvocationOnMock) =>
         val body = invocation
           .getArgument(0)
-          .asInstanceOf[DepartureWithMessagesRequest[AnyContent] => Future[Result]](DepartureWithMessagesRequest(fakeRequest, testDeparture, Web))
+          .asInstanceOf[DepartureWithMessagesRequest[AnyContent] => Future[Result]](
+            DepartureWithMessagesRequest(AuthenticatedRequest(fakeRequest, Web, Ior.right(EORINumber("eori"))), testDeparture, Web)
+          )
 
         stubControllerComponents().actionBuilder.async(body)
-      }
-    )
+    }
   }
 
   "PDFRetrievalController" - {

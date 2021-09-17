@@ -35,6 +35,8 @@ import play.api.test.Helpers._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import models.request.AuthenticatedRequest
+import cats.data.Ior
 
 class CheckMessageTypeActionProviderSpec
     extends AnyFreeSpec
@@ -68,7 +70,11 @@ class CheckMessageTypeActionProviderSpec
         case (code, response: MessageResponse) => {
           def fakeRequest =
             DepartureWithoutMessagesRequest(
-              FakeRequest("", "").withHeaders("X-Message-Type" -> code, "channel" -> fakeDepartureWithoutMessages.channel.toString),
+              AuthenticatedRequest(
+                FakeRequest("", "").withHeaders("X-Message-Type" -> code, "channel" -> fakeDepartureWithoutMessages.channel.toString),
+                fakeDepartureWithoutMessages.channel,
+                Ior.right(EORINumber("eori"))
+              ),
               fakeDepartureWithoutMessages,
               fakeDepartureWithoutMessages.channel
             )
@@ -88,7 +94,11 @@ class CheckMessageTypeActionProviderSpec
     "must return an BadRequest when the X-Message-Type is missing" in {
       def fakeRequest =
         DepartureWithoutMessagesRequest(
-          FakeRequest("", "").withHeaders("channel" -> fakeDepartureWithoutMessages.channel.toString),
+          AuthenticatedRequest(
+            FakeRequest("", "").withHeaders("channel" -> fakeDepartureWithoutMessages.channel.toString),
+            fakeDepartureWithoutMessages.channel,
+            Ior.right(EORINumber("eori"))
+          ),
           fakeDepartureWithoutMessages,
           fakeDepartureWithoutMessages.channel
         )
@@ -107,7 +117,11 @@ class CheckMessageTypeActionProviderSpec
     "must return an BadRequest when the X-Message-Type is invalid" in {
       def fakeRequest =
         DepartureWithoutMessagesRequest(
-          FakeRequest("", "").withHeaders("X-Message-Type" -> "Invalid-type", "channel" -> fakeDepartureWithoutMessages.channel.toString),
+          AuthenticatedRequest(
+            FakeRequest("", "").withHeaders("X-Message-Type" -> "Invalid-type", "channel" -> fakeDepartureWithoutMessages.channel.toString),
+            fakeDepartureWithoutMessages.channel,
+            Ior.right(EORINumber("eori"))
+          ),
           fakeDepartureWithoutMessages,
           fakeDepartureWithoutMessages.channel
         )

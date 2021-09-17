@@ -17,9 +17,8 @@
 package audit
 
 import audit.AuditType._
+import cats.data.Ior
 import models._
-import play.api.libs.json.JsObject
-import play.api.libs.json.Json
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import utils.MessageTranslation
@@ -31,15 +30,13 @@ import scala.xml.NodeSeq
 
 class AuditService @Inject()(auditConnector: AuditConnector, messageTranslator: MessageTranslation)(implicit ec: ExecutionContext) extends XmlToJson {
 
-  def auditEvent(auditType: AuditType, customerId: String, message: Message, channel: ChannelType)(implicit hc: HeaderCarrier): Unit =
-    internal_auditEvent(auditType, customerId, message.message, message.messageJson, channel)
-
-  private def internal_auditEvent(auditType: AuditType, customerId: String, xml: NodeSeq, json: JsObject, channel: ChannelType)(implicit hc: HeaderCarrier) = {
-    val details = AuditDetails(channel, customerId, messageTranslator.translate(json), xml.toString())
-    auditConnector.sendExplicitAudit(auditType.toString(), Json.toJson(details))
+  def auditEvent(auditType: AuditType, customerId: Ior[TURN, EORINumber], message: Message, channel: ChannelType)(implicit hc: HeaderCarrier): Unit = {
+    val details = AuthenticatedAuditDetails(channel, customerId, messageTranslator.translate(message.messageJson))
+    auditConnector.sendExplicitAudit(auditType.toString, details)
   }
 
   def auditNCTSMessages(channel: ChannelType, customerId: String, messageResponse: MessageResponse, xml: NodeSeq)(implicit hc: HeaderCarrier): Unit = {
+
     val auditType: AuditType = messageResponse match {
       case PositiveAcknowledgementResponse              => PositiveAcknowledgementReceived
       case MrnAllocatedResponse                         => MrnAllocatedReceived
@@ -52,7 +49,10 @@ class AuditService @Inject()(auditConnector: AuditConnector, messageTranslator: 
       case GuaranteeNotValidResponse                    => GuaranteeNotValidReceived
       case XMLSubmissionNegativeAcknowledgementResponse => XMLSubmissionNegativeAcknowledgement
     }
-    internal_auditEvent(auditType, customerId, xml, toJson(xml), channel)
+
+    val details = UnauthenticatedAuditDetails(channel, customerId, toJson(xml))
+
+    auditConnector.sendExplicitAudit(auditType.toString, details)
   }
 
 }

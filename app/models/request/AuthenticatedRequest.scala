@@ -16,8 +16,28 @@
 
 package models.request
 
+import cats.data.Ior
 import models.ChannelType
+import models.Departure
+import models.DepartureWithoutMessages
+import models.EORINumber
+import models.TURN
 import play.api.mvc.Request
 import play.api.mvc.WrappedRequest
 
-case class AuthenticatedRequest[A](request: Request[A], channel: ChannelType, eoriNumber: String) extends WrappedRequest[A](request)
+case class AuthenticatedRequest[A](request: Request[A], channel: ChannelType, enrolmentId: Ior[TURN, EORINumber]) extends WrappedRequest[A](request) {
+  private def matchesEori(eoriNumber: String): Boolean =
+    enrolmentId.fold(
+      vatReg => eoriNumber == vatReg.value,
+      eori => eoriNumber == eori.value,
+      (vatReg, eori) =>
+        eoriNumber == vatReg.value ||
+          eoriNumber == eori.value
+    )
+
+  def hasMatchingEori(departure: Departure): Boolean =
+    matchesEori(departure.eoriNumber)
+
+  def hasMatchingEori(departure: DepartureWithoutMessages): Boolean =
+    matchesEori(departure.eoriNumber)
+}

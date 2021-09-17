@@ -26,7 +26,6 @@ import controllers.actions.AuthenticatedGetDepartureWithoutMessagesForWriteActio
 import metrics.HasActionMetrics
 import models.MessageStatus.SubmissionFailed
 import models._
-import models.request.DepartureWithMessagesRequest
 import models.request.DepartureWithoutMessagesRequest
 import models.response.ResponseDepartureWithMessages
 import models.response.ResponseMessage
@@ -92,7 +91,7 @@ class MessagesController @Inject()(
                           case submissionFailureRejected: SubmissionProcessingResult.SubmissionFailureRejected =>
                             BadRequest(submissionFailureRejected.responseBody)
                           case SubmissionProcessingResult.SubmissionSuccess =>
-                            auditService.auditEvent(DepartureCancellationRequestSubmitted, request.departure.eoriNumber, message, request.channel)
+                            auditService.auditEvent(DepartureCancellationRequestSubmitted, request.request.enrolmentId, message, request.channel)
                             Accepted
                               .withHeaders(
                                 "Location" -> routes.MessagesController.getMessage(request.departure.departureId, request.departure.nextMessageId).url
@@ -129,7 +128,7 @@ class MessagesController @Inject()(
         implicit request =>
           val result = for {
             departure <- OptionT(departureRepository.getWithoutMessages(departureId, request.channel))
-            if departure.eoriNumber == request.eoriNumber
+            if request.hasMatchingEori(departure)
             message <- OptionT(departureRepository.getMessage(departureId, request.channel, messageId))
             if !message.optStatus.contains(SubmissionFailed)
           } yield {

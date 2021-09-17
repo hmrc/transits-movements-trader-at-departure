@@ -14,11 +14,6 @@
  * limitations under the License.
  */
 
-package models.request
+package models
 
-import models.ChannelType
-import models.DepartureWithoutMessages
-import play.api.mvc.WrappedRequest
-
-case class DepartureWithoutMessagesRequest[A](request: AuthenticatedRequest[A], departure: DepartureWithoutMessages, channel: ChannelType)
-    extends WrappedRequest[A](request)
+case class EORINumber(value: String) extends AnyVal

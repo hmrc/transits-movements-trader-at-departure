@@ -46,7 +46,7 @@ class DepartureService @Inject()(departureIdRepository: DepartureIdRepository)(i
       xmlMessage <- updateMesSenMES3(departureId, messageCorrelationId)
     } yield MessageWithStatus(messageId, dateTime, messageType, xmlMessage, SubmissionPending, messageCorrelationId)
 
-  def createDeparture(eori: String, nodeSeq: NodeSeq, channelType: ChannelType, boxOpt: Option[Box]): Future[ParseHandler[Departure]] =
+  def createDeparture(enrolmentId: Ior[TURN, EORINumber], nodeSeq: NodeSeq, channelType: ChannelType, boxOpt: Option[Box]): Future[ParseHandler[Departure]] =
     departureIdRepository
       .nextId()
       .map {
@@ -60,7 +60,12 @@ class DepartureService @Inject()(departureIdRepository: DepartureIdRepository)(i
             Departure(
               departureId,
               channelType,
-              eori,
+              // Prefer to use EORI number
+              enrolmentId.fold(
+                turn => turn.value,
+                eoriNumber => eoriNumber.value,
+                (_, eoriNumber) => eoriNumber.value
+              ),
               None,
               reference,
               Initialized,
