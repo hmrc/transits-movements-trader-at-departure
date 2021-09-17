@@ -157,32 +157,6 @@ class MovementMessageOrchestratorServiceSpec extends SpecBase {
       verify(mockPullPushService).sendPushNotificationIfBoxExists(any(), any(), any())(any())
     }
 
-    "must return an invalid transition message for an invalid transition" in new Setup {
-      implicit val request: Request[NodeSeq] = FakeRequest()
-        .withBody(<CC029>
-          <DatOfPreMES9>20201212</DatOfPreMES9>
-          <TimOfPreMES10>1220</TimOfPreMES10>
-          <HEAHEA>
-            <DocNumHEA5>234444</DocNumHEA5>
-          </HEAHEA>
-        </CC029>)
-        .withHeaders("X-Message-Type" -> "IE029")
-
-      when(mockGetDepartureService.getDepartureAndAuditDeletedDepartures(any(), any(), any())(any()))
-        .thenReturn(EitherT[Future, ErrorState, Departure](Future.successful(Right[ErrorState, Departure](initialDeparture))))
-
-      service
-        .saveNCTSMessage(MessageSender(DepartureId(1), 1))
-        .futureValue
-        .mustBe(Left(TransitionError(
-          "Can only accept this type of message [ReleaseForTransit] directly after [ControlDecisionNotification or DeclarationCancellationRequest or GuaranteeNotValid or MrnAllocated] messages. Current message state is [DepartureSubmitted].")))
-
-      verify(mockSaveMessageService, never()).validateXmlSaveMessageUpdateMrn(any(), any(), any(), any(), any(), any())
-      verify(mockSaveMessageService, never()).validateXmlAndSaveMessage(any(), any(), any(), any(), any())
-      verify(mockAuditService, never()).auditNCTSMessages(eqTo(ChannelType.Web), any(), eqTo(ReleaseForTransitResponse), any())(any())
-      verifyNoInteractions(mockPullPushService)
-    }
-
     "must return an Departure Not found when no departure is found" in new Setup {
       implicit val request: Request[NodeSeq] = FakeRequest()
         .withBody(<CC029>

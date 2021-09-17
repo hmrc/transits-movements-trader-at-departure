@@ -80,7 +80,7 @@ class MessagesController @Inject()(
                   request.body
                 ) match {
                 case Right(message) =>
-                  StatusTransition.transition(request.departure.status, MessageReceivedEvent.DeclarationCancellationRequest) match {
+                  StatusTransition.targetStatus(request.departure.status, MessageReceivedEvent.DeclarationCancellationRequest) match {
                     case Right(status) =>
                       submitMessageService
                         .submitMessage(departureId, message, status, request.channel)
