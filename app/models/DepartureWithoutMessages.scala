@@ -40,7 +40,8 @@ case class DepartureWithoutMessages(
   lastUpdated: LocalDateTime,
   notificationBox: Option[Box],
   nextMessageId: MessageId,
-  nextMessageCorrelationId: Int
+  nextMessageCorrelationId: Int,
+  latestMessage: MessageType
 ) extends BaseDeparture {}
 
 object DepartureWithoutMessages {
@@ -57,7 +58,8 @@ object DepartureWithoutMessages {
       departure.lastUpdated,
       departure.notificationBox,
       departure.nextMessageId,
-      departure.nextMessageCorrelationId
+      departure.nextMessageCorrelationId,
+      latestMessage(departure.messages.toList)
     )
 
   implicit def formatsNonEmptyList[A](implicit listReads: Reads[List[A]], listWrites: Writes[List[A]]): Format[NonEmptyList[A]] =
@@ -66,6 +68,12 @@ object DepartureWithoutMessages {
 
       override def reads(json: JsValue): JsResult[NonEmptyList[A]] = json.validate(listReads).map(NonEmptyList.fromListUnsafe)
     }
+
+  def latestMessage(messages: Seq[Message]): MessageType = {
+    messages.reduce{
+      (m1,m2) => if(m1.dateTime.isAfter(m2.dateTime) ) m1.messageType else m2.messageType
+    }
+  }
 
   implicit val readsDeparture: Reads[DepartureWithoutMessages] =
     (
@@ -81,7 +89,8 @@ object DepartureWithoutMessages {
           .orElse((__ \ "updated").read(MongoDateTimeFormats.localDateTimeRead)) and
         (__ \ "notificationBox").readNullable[Box] and
         (__ \ "nextMessageId").read[MessageId] and
-        (__ \ "nextMessageCorrelationId").read[Int]
+        (__ \ "nextMessageCorrelationId").read[Int] and
+        (__ \ "messages").read[Seq[Message]].map(latestMessage)
     )(DepartureWithoutMessages.apply _)
 
   val projection: JsObject = Json.obj(
