@@ -69,11 +69,11 @@ object DepartureWithoutMessages {
       override def reads(json: JsValue): JsResult[NonEmptyList[A]] = json.validate(listReads).map(NonEmptyList.fromListUnsafe)
     }
 
-  def latestMessage(messages: Seq[Message]): MessageType = {
-    messages.reduce{
-      (m1,m2) => if(m1.dateTime.isAfter(m2.dateTime) ) m1.messageType else m2.messageType
-    }
-  }
+  def latestMessage(messages: Seq[Message]): MessageType =
+    messages.reduce {
+      (m1, m2) =>
+        if (m1.dateTime.isAfter(m2.dateTime)) m1 else m2
+    }.messageType
 
   implicit val readsDeparture: Reads[DepartureWithoutMessages] =
     (
