@@ -26,7 +26,7 @@ import play.api.mvc.Request
 import play.api.mvc.WrappedRequest
 
 case class AuthenticatedRequest[A](request: Request[A], channel: ChannelType, enrolmentId: Ior[TURN, EORINumber]) extends WrappedRequest[A](request) {
-  private def matchesEori(eoriNumber: String): Boolean =
+  private def matchesEnrolmentId(eoriNumber: String): Boolean =
     enrolmentId.fold(
       vatReg => eoriNumber == vatReg.value,
       eori => eoriNumber == eori.value,
@@ -35,9 +35,9 @@ case class AuthenticatedRequest[A](request: Request[A], channel: ChannelType, en
           eoriNumber == eori.value
     )
 
-  def hasMatchingEori(departure: Departure): Boolean =
-    matchesEori(departure.eoriNumber)
+  def hasMatchingEnrolmentId(departure: Departure): Boolean =
+    matchesEnrolmentId(departure.eoriNumber)
 
-  def hasMatchingEori(departure: DepartureWithoutMessages): Boolean =
-    matchesEori(departure.eoriNumber)
+  def hasMatchingEnrolmentId(departure: DepartureWithoutMessages): Boolean =
+    matchesEnrolmentId(departure.eoriNumber)
 }

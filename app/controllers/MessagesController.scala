@@ -128,7 +128,7 @@ class MessagesController @Inject()(
         implicit request =>
           val result = for {
             departure <- OptionT(departureRepository.getWithoutMessages(departureId, request.channel))
-            if request.hasMatchingEori(departure)
+            if request.hasMatchingEnrolmentId(departure)
             message <- OptionT(departureRepository.getMessage(departureId, request.channel, messageId))
             if !message.optStatus.contains(SubmissionFailed)
           } yield {

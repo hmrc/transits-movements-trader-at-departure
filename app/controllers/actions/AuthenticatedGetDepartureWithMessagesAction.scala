@@ -49,7 +49,7 @@ private[actions] class AuthenticatedGetDepartureWithMessagesAction(
     repository
       .get(departureId, request.channel)
       .map {
-        case Some(departure) if request.hasMatchingEori(departure) =>
+        case Some(departure) if request.hasMatchingEnrolmentId(departure) =>
           Right(DepartureWithMessagesRequest(request, departure, request.channel))
         case Some(_) =>
           logger.warn("Attempt to retrieve an departure for another EORI")
