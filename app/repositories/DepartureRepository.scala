@@ -454,7 +454,7 @@ class DepartureRepository @Inject()(
 
         val nextMessageId = Json.obj("nextMessageId" -> Json.obj("$size" -> "$messages"))
 
-        val projection = DepartureWithoutMessages.projection ++ nextMessageId
+        val projection: JsObject = DepartureWithoutMessages.projection ++ nextMessageId
 
         val limit = pageSize.map(Math.max(1, _)).getOrElse(appConfig.maxRowsReturned(channelFilter))
 

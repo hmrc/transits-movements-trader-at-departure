@@ -93,6 +93,7 @@ object DepartureWithoutMessages {
         (__ \ "messages").read[Seq[Message]].map(latestMessage)
     )(DepartureWithoutMessages.apply _)
 
+  // TODO is this needed?
   val projection: JsObject = Json.obj(
     "_id"                      -> 1,
     "channel"                  -> 1,
@@ -104,6 +105,7 @@ object DepartureWithoutMessages {
     "updated"                  -> 1,
     "lastUpdated"              -> 1,
     "notificationBox"          -> 1,
-    "nextMessageCorrelationId" -> 1
+    "nextMessageCorrelationId" -> 1,
+    "messages"                 -> 1
   )
 }
