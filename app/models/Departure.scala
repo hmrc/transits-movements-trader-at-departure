@@ -16,21 +16,29 @@
 
 package models
 
-import java.time.LocalDateTime
-
 import cats.data._
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
+import java.time.LocalDateTime
+
 trait BaseDeparture {
   def departureId: DepartureId
+
   def channel: ChannelType
+
   def eoriNumber: String
+
   def movementReferenceNumber: Option[MovementReferenceNumber]
+
   def referenceNumber: String
+
   def status: DepartureStatus
+
   def created: LocalDateTime
+
   def lastUpdated: LocalDateTime
+
   def notificationBox: Option[Box]
 }
 
@@ -53,6 +61,11 @@ case class Departure(
   def messagesWithId: NonEmptyList[(Message, MessageId)] =
     messages.map(msg => msg -> msg.messageId)
 
+  def latestMessage: MessageType =
+    messages.reduce {
+      (m1: Message, m2: Message) =>
+        if (m1.dateTime.isAfter(m2.dateTime)) m1 else m2
+    }.messageType
 }
 
 object Departure {

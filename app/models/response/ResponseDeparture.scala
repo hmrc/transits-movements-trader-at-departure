@@ -17,12 +17,12 @@
 package models.response
 
 import java.time.LocalDateTime
-
 import controllers.routes
 import models.Departure
 import models.DepartureId
 import models.DepartureStatus
 import models.DepartureWithoutMessages
+import models.MessageType
 import models.MovementReferenceNumber
 import play.api.libs.json.Json
 import play.api.libs.json.OWrites
@@ -34,7 +34,8 @@ case class ResponseDeparture(departureId: DepartureId,
                              referenceNumber: String,
                              status: DepartureStatus,
                              created: LocalDateTime,
-                             updated: LocalDateTime)
+                             updated: LocalDateTime,
+                             latestMessageType: MessageType)
 
 object ResponseDeparture {
 
@@ -47,7 +48,8 @@ object ResponseDeparture {
       departure.referenceNumber,
       departure.status,
       departure.created,
-      departure.lastUpdated
+      departure.lastUpdated,
+      departure.latestMessage
     )
 
   def build(departureWithoutMessages: DepartureWithoutMessages): ResponseDeparture =
@@ -59,7 +61,8 @@ object ResponseDeparture {
       departureWithoutMessages.referenceNumber,
       departureWithoutMessages.status,
       departureWithoutMessages.created,
-      departureWithoutMessages.lastUpdated
+      departureWithoutMessages.lastUpdated,
+      departureWithoutMessages.latestMessage
     )
 
   implicit val writes: OWrites[ResponseDeparture] = Json.writes[ResponseDeparture]
