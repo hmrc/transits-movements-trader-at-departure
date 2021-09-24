@@ -26,6 +26,11 @@ import migrations.MigrationRunner
 import utils.MessageTranslation
 import java.time.Clock
 
+import scheduler.BackendScheduler
+import scheduler.ScheduledJobProvider
+import scheduler.ScheduledJobs
+import workers.DeleteDeparturesWorker
+
 class Module extends AbstractModule {
 
   override def configure(): Unit = {
@@ -38,6 +43,9 @@ class Module extends AbstractModule {
     bind(classOf[MessageTranslation]).asEagerSingleton()
     bind(classOf[Clock]).toInstance(Clock.systemUTC)
     bind(classOf[MigrationRunner]).asEagerSingleton()
+    bind(classOf[ScheduledJobs]).toProvider(classOf[ScheduledJobProvider])
+    bind(classOf[BackendScheduler]).asEagerSingleton()
+    bind(classOf[DeleteDeparturesWorker]).asEagerSingleton()
   }
 
 }

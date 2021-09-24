@@ -135,4 +135,9 @@ class DeparturesController @Inject()(
             }
       }
     }
+
+  def test(): Action[AnyContent] = Action.async {
+    implicit request =>
+      departureRepository.deleteCompletedJourneys().map(_ => Ok)
+  }
 }
