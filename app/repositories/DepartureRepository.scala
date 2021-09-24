@@ -26,7 +26,6 @@ import play.api.libs.json.JsObject
 import play.api.libs.json.Json
 import play.modules.reactivemongo.ReactiveMongoApi
 import reactivemongo.api.Cursor
-import reactivemongo.api.ReadConcern
 import reactivemongo.api.WriteConcern
 import reactivemongo.api.bson.BSONDocument
 import reactivemongo.api.bson.collection.BSONSerializationPack
@@ -36,11 +35,12 @@ import reactivemongo.api.indexes.IndexType
 import reactivemongo.play.json.collection.Helpers.idWrites
 import reactivemongo.play.json.collection.JSONCollection
 import utils.IndexUtils
-
 import java.time.Clock
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
+
 import javax.inject.Inject
+
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.util.Failure
@@ -48,6 +48,10 @@ import scala.util.Success
 import scala.util.Try
 import metrics.HasMetrics
 import com.kenshoo.play.metrics.Metrics
+import models.MessageType.DeclarationRejected
+import models.MessageType.WriteOffNotification
+
+import scala.concurrent.duration.Duration
 
 class DepartureRepository @Inject()(
   mongo: ReactiveMongoApi,
@@ -515,6 +519,30 @@ class DepartureRepository @Inject()(
                   x => Failure(new Exception(x))
                 )
                 .getOrElse(Failure(new Exception("Unable to update message status")))
+        }
+    }
+  }
+
+  def deleteCompletedJourneys(): Future[Try[Unit]] = {
+    val writeOffSelector = Json.obj("messages.messageType" -> WriteOffNotification.code)
+    val rejectedSelector = Json.obj("messages.messageType" -> DeclarationRejected.code)
+    val messageSelector  = Json.obj("$or"                  -> Json.arr(writeOffSelector, rejectedSelector))
+
+    val instant          = LocalDateTime.now(clock)
+    val midnight         = LocalDateTime.of(instant.getYear, instant.getMonth, instant.getDayOfMonth, 0, 0, 0)
+    val dateTimeSelector = Json.obj("lastUpdated" -> Json.obj("$gte" -> midnight))
+
+    val unitedSelector = Json.obj(
+      "$and" -> Json.arr(
+        messageSelector,
+        dateTimeSelector
+      ))
+
+    collection.flatMap {
+      c =>
+        c.remove(messageSelector, WriteConcern.Acknowledged, false).map {
+          wr =>
+            if (wr.writeConcernError.isEmpty) Success(()) else Failure(new Exception(s"error when deleting records with query: $unitedSelector"))
         }
     }
   }

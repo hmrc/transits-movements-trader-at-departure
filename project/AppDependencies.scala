@@ -16,7 +16,8 @@ object AppDependencies {
     "com.github.cloudyrock.mongock" % "mongock-standalone"              % mongockVersion,
     "com.github.cloudyrock.mongock" % "mongodb-sync-v4-driver"          % mongockVersion,
     "org.mongodb"                   % "mongodb-driver-sync"             % "4.3.1",
-    "uk.gov.hmrc.mongo"            %% "hmrc-mongo-play-27"              % "0.52.0"
+    "uk.gov.hmrc.mongo"            %% "hmrc-mongo-play-27"              % "0.52.0",
+    "org.quartz-scheduler"          % "quartz"                          % "2.3.2"
   )
 
   val test = Seq(
