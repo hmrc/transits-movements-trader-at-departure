@@ -22,6 +22,7 @@ import models.Departure
 import models.DepartureId
 import models.DepartureStatus
 import models.DepartureWithoutMessages
+import models.LatestMessages
 import models.MessageType
 import models.MovementReferenceNumber
 import play.api.libs.json.Json
@@ -35,7 +36,7 @@ case class ResponseDeparture(departureId: DepartureId,
                              status: DepartureStatus,
                              created: LocalDateTime,
                              updated: LocalDateTime,
-                             latestMessageType: MessageType)
+                             latestMessages: LatestMessages)
 
 object ResponseDeparture {
 
@@ -49,7 +50,7 @@ object ResponseDeparture {
       departure.status,
       departure.created,
       departure.lastUpdated,
-      departure.latestMessage
+      LatestMessages.fromMessages(departure.messages.toList)
     )
 
   def build(departureWithoutMessages: DepartureWithoutMessages): ResponseDeparture =

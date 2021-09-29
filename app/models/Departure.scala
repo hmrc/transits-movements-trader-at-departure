@@ -60,12 +60,6 @@ case class Departure(
 
   def messagesWithId: NonEmptyList[(Message, MessageId)] =
     messages.map(msg => msg -> msg.messageId)
-
-  def latestMessage: MessageType =
-    messages.reduce {
-      (m1: Message, m2: Message) =>
-        if (m1.dateTime.isAfter(m2.dateTime)) m1 else m2
-    }.messageType
 }
 
 object Departure {

@@ -25,7 +25,6 @@ import models.MessageType.MrnAllocated
 import models.MessageType.PositiveAcknowledgement
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks.forAll
-import play.api.libs.json.JsObject
 import play.api.libs.json.Json
 
 import java.time.LocalDateTime
@@ -34,7 +33,8 @@ class DepartureWithoutMessagesSpec extends SpecBase with ModelGenerators with Mo
 
   "DepartureWithoutMessages" - {
     "apply" - {
-      "must return latest message type" in {
+
+      "must return DepartureWithoutMessage with the latest messages meta data" in {
 
         forAll(arbitrary[Departure], arbitrary[MessageWithStatus]) {
           (departure, message) =>
@@ -43,18 +43,23 @@ class DepartureWithoutMessagesSpec extends SpecBase with ModelGenerators with Mo
             val expectedDateTimeMinusHours   = LocalDateTime.now.minusHours(2)
             val expectedDateTimeMinusDays    = LocalDateTime.now.minusDays(1)
 
-            val message1        = message.copy(dateTime = expectedDateTimeMinusDays, messageType = PositiveAcknowledgement)
-            val message2        = message.copy(dateTime = expectedDateTimeMinusMinutes, messageType = DepartureDeclaration)
-            val message3        = message.copy(dateTime = expectedDateTimeMinusHours, messageType = MrnAllocated)
-            val expectedMessage = message.copy(dateTime = expectedDateTime, messageType = DeclarationRejected)
+            val message1 = message.copy(dateTime = expectedDateTimeMinusDays, messageType = PositiveAcknowledgement)
+            val message2 = message.copy(dateTime = expectedDateTimeMinusMinutes, messageType = DepartureDeclaration)
+            val message3 = message.copy(dateTime = expectedDateTimeMinusHours, messageType = MrnAllocated)
+            val message4 = message.copy(dateTime = expectedDateTime, messageType = DeclarationRejected)
 
             val departureWithDateTime = departure.copy(
-              messages = NonEmptyList(message1, List(message2, message3, expectedMessage))
+              messages = NonEmptyList(message1, List(message2, message3, message4))
             )
 
             val result = DepartureWithoutMessages.fromDeparture(departureWithDateTime)
 
-            result.latestMessage mustBe DeclarationRejected
+            val expectedMessageMetaData1 = MessageMetaData(message4.messageType, message4.dateTime)
+            val expectedMessageMetaData2 = MessageMetaData(message2.messageType, message2.dateTime)
+
+            val expectedResult = LatestMessages(expectedMessageMetaData1, expectedMessageMetaData2)
+
+            result.latestMessage mustBe expectedResult
         }
       }
     }
@@ -63,6 +68,8 @@ class DepartureWithoutMessagesSpec extends SpecBase with ModelGenerators with Mo
 
       forAll(arbitrary[Departure]) {
         departure =>
+          val localDateTimeNow = LocalDateTime.now()
+
           val json = Json.obj(
             "_id"                      -> departure.departureId,
             "channel"                  -> departure.channel,
@@ -78,7 +85,7 @@ class DepartureWithoutMessagesSpec extends SpecBase with ModelGenerators with Mo
             "messages" -> Json.arr(
               Json.obj(
                 "messageId"            -> 1,
-                "dateTime"             -> LocalDateTime.now.minusHours(2),
+                "dateTime"             -> localDateTimeNow.minusHours(2),
                 "messageType"          -> "IE928",
                 "message"              -> "<foo></foo>",
                 "messageCorrelationId" -> 1,
@@ -86,7 +93,7 @@ class DepartureWithoutMessagesSpec extends SpecBase with ModelGenerators with Mo
               ),
               Json.obj(
                 "messageId"            -> 2,
-                "dateTime"             -> LocalDateTime.now,
+                "dateTime"             -> localDateTimeNow,
                 "messageType"          -> "IE015",
                 "message"              -> "<foo></foo>",
                 "messageCorrelationId" -> 1,
@@ -94,7 +101,7 @@ class DepartureWithoutMessagesSpec extends SpecBase with ModelGenerators with Mo
               ),
               Json.obj(
                 "messageId"            -> 3,
-                "dateTime"             -> LocalDateTime.now.minusDays(5),
+                "dateTime"             -> localDateTimeNow.minusDays(5),
                 "messageType"          -> "IE016",
                 "message"              -> "<foo></foo>",
                 "messageCorrelationId" -> 1,
@@ -103,9 +110,14 @@ class DepartureWithoutMessagesSpec extends SpecBase with ModelGenerators with Mo
             )
           )
 
+          val expectedMessageMetaData1 = MessageMetaData(DepartureDeclaration, localDateTimeNow)
+          val expectedMessageMetaData2 = MessageMetaData(PositiveAcknowledgement, localDateTimeNow.minusHours(2))
+
+          val expectedResult = LatestMessages(expectedMessageMetaData1, expectedMessageMetaData2)
+
           val result = json.validate[DepartureWithoutMessages].asOpt.value
 
-          result.latestMessage mustBe DepartureDeclaration
+          result.latestMessage mustBe expectedResult
       }
     }
   }
