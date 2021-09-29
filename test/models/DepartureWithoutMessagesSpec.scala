@@ -57,7 +57,7 @@ class DepartureWithoutMessagesSpec extends SpecBase with ModelGenerators with Mo
             val expectedMessageMetaData1 = MessageMetaData(message4.messageType, message4.dateTime)
             val expectedMessageMetaData2 = MessageMetaData(message2.messageType, message2.dateTime)
 
-            val expectedResult = LatestMessages(expectedMessageMetaData1, expectedMessageMetaData2)
+            val expectedResult = LatestMessages(expectedMessageMetaData1, Some(expectedMessageMetaData2))
 
             result.latestMessage mustBe expectedResult
         }
@@ -113,7 +113,7 @@ class DepartureWithoutMessagesSpec extends SpecBase with ModelGenerators with Mo
           val expectedMessageMetaData1 = MessageMetaData(DepartureDeclaration, localDateTimeNow)
           val expectedMessageMetaData2 = MessageMetaData(PositiveAcknowledgement, localDateTimeNow.minusHours(2))
 
-          val expectedResult = LatestMessages(expectedMessageMetaData1, expectedMessageMetaData2)
+          val expectedResult = LatestMessages(expectedMessageMetaData1, Some(expectedMessageMetaData2))
 
           val result = json.validate[DepartureWithoutMessages].asOpt.value
 

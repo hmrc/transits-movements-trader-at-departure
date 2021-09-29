@@ -35,6 +35,17 @@ class LatestMessagesSpec extends SpecBase with ScalaCheckDrivenPropertyChecks wi
 
     "fromMessageMetaData" - {
 
+      "must if one message" in {
+
+        val messageMetaData1 = MessageMetaData(PositiveAcknowledgement, LocalDateTime.now())
+
+        val messageMetaDataList = Seq(messageMetaData1)
+
+        val expectedResult = LatestMessages(messageMetaData1, None)
+
+        LatestMessages.fromMessageMetaData(messageMetaDataList) mustBe expectedResult
+      }
+
       "must order by dateTime and return the top 2 results by days" in {
 
         val messageMetaData1 = MessageMetaData(PositiveAcknowledgement, LocalDateTime.now())
@@ -45,7 +56,7 @@ class LatestMessagesSpec extends SpecBase with ScalaCheckDrivenPropertyChecks wi
 
         val messageMetaDataList = Seq(messageMetaData3, messageMetaData5, messageMetaData1, messageMetaData2, messageMetaData4)
 
-        val expectedResult = LatestMessages(messageMetaData1, messageMetaData2)
+        val expectedResult = LatestMessages(messageMetaData1, Some(messageMetaData2))
 
         LatestMessages.fromMessageMetaData(messageMetaDataList) mustBe expectedResult
       }
@@ -60,7 +71,7 @@ class LatestMessagesSpec extends SpecBase with ScalaCheckDrivenPropertyChecks wi
 
         val messageMetaDataList = Seq(messageMetaData3, messageMetaData5, messageMetaData1, messageMetaData2, messageMetaData4)
 
-        val expectedResult = LatestMessages(messageMetaData1, messageMetaData2)
+        val expectedResult = LatestMessages(messageMetaData1, Some(messageMetaData2))
 
         LatestMessages.fromMessageMetaData(messageMetaDataList) mustBe expectedResult
       }
@@ -75,7 +86,7 @@ class LatestMessagesSpec extends SpecBase with ScalaCheckDrivenPropertyChecks wi
 
         val messageMetaDataList = Seq(messageMetaData3, messageMetaData5, messageMetaData1, messageMetaData2, messageMetaData4)
 
-        val expectedResult = LatestMessages(messageMetaData1, messageMetaData2)
+        val expectedResult = LatestMessages(messageMetaData1, Some(messageMetaData2))
 
         LatestMessages.fromMessageMetaData(messageMetaDataList) mustBe expectedResult
       }
@@ -90,7 +101,7 @@ class LatestMessagesSpec extends SpecBase with ScalaCheckDrivenPropertyChecks wi
 
         val messageMetaDataList = Seq(messageMetaData3, messageMetaData5, messageMetaData1, messageMetaData2, messageMetaData4)
 
-        val expectedResult = LatestMessages(messageMetaData1, messageMetaData2)
+        val expectedResult = LatestMessages(messageMetaData1, Some(messageMetaData2))
 
         LatestMessages.fromMessageMetaData(messageMetaDataList) mustBe expectedResult
       }
@@ -113,7 +124,7 @@ class LatestMessagesSpec extends SpecBase with ScalaCheckDrivenPropertyChecks wi
             val expectedMessage1 = MessageMetaData(message4.messageType, message4.dateTime)
             val expectedMessage2 = MessageMetaData(message5.messageType, message5.dateTime)
 
-            val expectedResult = LatestMessages(expectedMessage1, expectedMessage2)
+            val expectedResult = LatestMessages(expectedMessage1, Some(expectedMessage2))
 
             LatestMessages.fromMessages(messagesToList) mustBe expectedResult
         }
@@ -134,7 +145,7 @@ class LatestMessagesSpec extends SpecBase with ScalaCheckDrivenPropertyChecks wi
             val expectedMessage1 = MessageMetaData(message4.messageType, message4.dateTime)
             val expectedMessage2 = MessageMetaData(message5.messageType, message5.dateTime)
 
-            val expectedResult = LatestMessages(expectedMessage1, expectedMessage2)
+            val expectedResult = LatestMessages(expectedMessage1, Some(expectedMessage2))
 
             LatestMessages.fromMessages(messagesToList) mustBe expectedResult
         }
@@ -155,7 +166,7 @@ class LatestMessagesSpec extends SpecBase with ScalaCheckDrivenPropertyChecks wi
             val expectedMessage1 = MessageMetaData(message4.messageType, message4.dateTime)
             val expectedMessage2 = MessageMetaData(message5.messageType, message5.dateTime)
 
-            val expectedResult = LatestMessages(expectedMessage1, expectedMessage2)
+            val expectedResult = LatestMessages(expectedMessage1, Some(expectedMessage2))
 
             LatestMessages.fromMessages(messagesToList) mustBe expectedResult
         }
@@ -176,7 +187,7 @@ class LatestMessagesSpec extends SpecBase with ScalaCheckDrivenPropertyChecks wi
             val expectedMessage1 = MessageMetaData(message4.messageType, message4.dateTime)
             val expectedMessage2 = MessageMetaData(message5.messageType, message5.dateTime)
 
-            val expectedResult = LatestMessages(expectedMessage1, expectedMessage2)
+            val expectedResult = LatestMessages(expectedMessage1, Some(expectedMessage2))
 
             LatestMessages.fromMessages(messagesToList) mustBe expectedResult
         }

@@ -152,7 +152,8 @@ class MessagesControllerSpec
 
       when(mockLockRepository.lock(any())).thenReturn(Future.successful(true))
       when(mockLockRepository.unlock(any())).thenReturn(Future.successful(()))
-      when(mockDepartureRepository.getWithoutMessages(any(), any())).thenReturn(Future.successful(Some(DepartureWithoutMessages.fromDeparture(departure))))
+      when(mockDepartureRepository.getWithoutMessages(any(), any()))
+        .thenReturn(Future.successful(Some(DepartureWithoutMessages.fromDeparture(departure))))
 
       when(mockSubmitMessageService.submitMessage(any(), any(), eqTo(DepartureStatus.DeclarationCancellationRequest), any())(any()))
         .thenReturn(Future.successful(SubmissionProcessingResult.SubmissionSuccess))

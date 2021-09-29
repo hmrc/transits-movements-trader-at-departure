@@ -21,25 +21,31 @@ import play.api.libs.json.OFormat
 
 import java.time.LocalDateTime
 
-case class LatestMessages(current: MessageMetaData, previous: MessageMetaData)
+case class LatestMessages(current: MessageMetaData, previous: Option[MessageMetaData])
 
 object LatestMessages {
 
   implicit val localDateOrdering: Ordering[LocalDateTime] = _ compareTo _
 
   def fromMessageMetaData(messages: Seq[MessageMetaData]): LatestMessages = {
-    val latestMessages = messages.sortBy(_.dateTime)(localDateOrdering.reverse).take(2)
+    val latestMessages = messages.sortBy(_.dateTime)(localDateOrdering.reverse)
 
-    LatestMessages(latestMessages.head, latestMessages(1))
+    val current  = latestMessages.head
+    val previous = latestMessages.lift(1)
+
+    LatestMessages(current, previous)
   }
 
   def fromMessages(messages: Seq[Message]): LatestMessages = {
-    val latestMessage = messages
+    val latestMessages = messages
       .sortBy(_.dateTime)(localDateOrdering.reverse)
       .take(2)
       .map(x => MessageMetaData(x.messageType, x.dateTime))
 
-    LatestMessages(latestMessage.head, latestMessage(1))
+    val current  = latestMessages.head
+    val previous = latestMessages.lift(1)
+
+    LatestMessages(current, previous)
   }
 
   implicit val format: OFormat[LatestMessages] = Json.format[LatestMessages]
