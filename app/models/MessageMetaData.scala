@@ -34,6 +34,12 @@ object MessageMetaData extends MongoDateTimeFormats {
         (__ \ "dateTime").read[LocalDateTime]
     )(MessageMetaData.apply _)
 
-  implicit val writes: OWrites[MessageMetaData] = Json.writes[MessageMetaData]
+  implicit val writes: OWrites[MessageMetaData] = OWrites {
+    messageMetaData =>
+      Json.obj(
+        "messageType" -> messageMetaData.messageType,
+        "dateTime"    -> messageMetaData.dateTime.toString
+      )
+  }
 
 }

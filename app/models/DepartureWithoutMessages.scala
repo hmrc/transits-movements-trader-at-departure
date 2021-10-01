@@ -41,7 +41,7 @@ case class DepartureWithoutMessages(
   notificationBox: Option[Box],
   nextMessageId: MessageId,
   nextMessageCorrelationId: Int,
-  latestMessage: LatestMessages
+  messagesMetaData: Seq[MessageMetaData]
 ) extends BaseDeparture {}
 
 object DepartureWithoutMessages {
@@ -59,7 +59,7 @@ object DepartureWithoutMessages {
       departure.notificationBox,
       departure.nextMessageId,
       departure.nextMessageCorrelationId,
-      LatestMessages.fromMessages(departure.messages.toList)
+      departure.messages.map(x => MessageMetaData(x.messageType, x.dateTime)).toList
     )
 
   implicit def formatsNonEmptyList[A](implicit listReads: Reads[List[A]], listWrites: Writes[List[A]]): Format[NonEmptyList[A]] =
@@ -84,7 +84,7 @@ object DepartureWithoutMessages {
         (__ \ "notificationBox").readNullable[Box] and
         (__ \ "nextMessageId").read[MessageId] and
         (__ \ "nextMessageCorrelationId").read[Int] and
-        (__ \ "messages").read[Seq[MessageMetaData]].map(LatestMessages.fromMessageMetaData)
+        (__ \ "messages").read[Seq[MessageMetaData]]
     )(DepartureWithoutMessages.apply _)
 
   val projection: JsObject = Json.obj(

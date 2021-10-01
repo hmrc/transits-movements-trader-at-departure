@@ -54,12 +54,19 @@ class DepartureWithoutMessagesSpec extends SpecBase with ModelGenerators with Mo
 
             val result = DepartureWithoutMessages.fromDeparture(departureWithDateTime)
 
-            val expectedMessageMetaData1 = MessageMetaData(message4.messageType, message4.dateTime)
+            val expectedMessageMetaData1 = MessageMetaData(message1.messageType, message1.dateTime)
             val expectedMessageMetaData2 = MessageMetaData(message2.messageType, message2.dateTime)
+            val expectedMessageMetaData3 = MessageMetaData(message3.messageType, message3.dateTime)
+            val expectedMessageMetaData4 = MessageMetaData(message4.messageType, message4.dateTime)
 
-            val expectedResult = LatestMessages(expectedMessageMetaData1, Some(expectedMessageMetaData2))
+            val expectedResult = Seq(
+              expectedMessageMetaData1,
+              expectedMessageMetaData2,
+              expectedMessageMetaData3,
+              expectedMessageMetaData4
+            )
 
-            result.latestMessage mustBe expectedResult
+            result.messagesMetaData mustBe expectedResult
         }
       }
     }
@@ -110,14 +117,15 @@ class DepartureWithoutMessagesSpec extends SpecBase with ModelGenerators with Mo
             )
           )
 
-          val expectedMessageMetaData1 = MessageMetaData(DepartureDeclaration, localDateTimeNow)
-          val expectedMessageMetaData2 = MessageMetaData(PositiveAcknowledgement, localDateTimeNow.minusHours(2))
+          val expectedMessageMetaData1 = MessageMetaData(PositiveAcknowledgement, localDateTimeNow.minusHours(2))
+          val expectedMessageMetaData2 = MessageMetaData(DepartureDeclaration, localDateTimeNow)
+          val expectedMessageMetaData3 = MessageMetaData(DeclarationRejected, localDateTimeNow.minusDays(5))
 
-          val expectedResult = LatestMessages(expectedMessageMetaData1, Some(expectedMessageMetaData2))
+          val expectedResult = Seq(expectedMessageMetaData1, expectedMessageMetaData2, expectedMessageMetaData3)
 
           val result = json.validate[DepartureWithoutMessages].asOpt.value
 
-          result.latestMessage mustBe expectedResult
+          result.messagesMetaData mustBe expectedResult
       }
     }
   }
