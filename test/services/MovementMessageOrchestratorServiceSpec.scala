@@ -21,12 +21,13 @@ import base.SpecBase
 import cats.data.EitherT
 import cats.data.NonEmptyList
 import com.kenshoo.play.metrics.Metrics
-import models.ChannelType.Web
 import models.ChannelType
+import models.ChannelType.Web
 import models.Departure
 import models.DepartureId
 import models.DepartureNotFound
 import models.DepartureStatus
+import models.ErrorState
 import models.MessageId
 import models.MessageSender
 import models.MessageStatus
@@ -37,9 +38,7 @@ import models.ReleaseForTransitResponse
 import models.SubmissionFailureExternal
 import models.SubmissionFailureInternal
 import models.SubmissionProcessingResult
-import models.ErrorState
 import models.SubmissionSuccess
-import models.TransitionError
 import models.XMLMRNError
 import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.{eq => eqTo}

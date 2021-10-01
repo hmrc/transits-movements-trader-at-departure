@@ -16,16 +16,54 @@
 
 package audit
 
+import cats.data.Ior
+import config.Constants
 import models.ChannelType
+import models.EORINumber
+import models.TURN
 import play.api.libs.json.JsObject
-import play.api.libs.json.OWrites
 import play.api.libs.json.Json
+import play.api.libs.json.OWrites
 
-case class AuditDetails(channel: ChannelType, customerId: String, json: JsObject, xml: String)
+sealed abstract class AuditDetails {
+  def channel: ChannelType
+  def customerId: String
+  def json: JsObject
+}
 
-object AuditDetails {
+case class AuthenticatedAuditDetails(channel: ChannelType, enrolmentId: Ior[TURN, EORINumber], json: JsObject) extends AuditDetails {
 
-  implicit val writes: OWrites[AuditDetails] = (details: AuditDetails) => {
+  def customerId: String =
+    enrolmentId.fold(
+      turn => turn.value,
+      eoriNumber => eoriNumber.value,
+      (_, eoriNumber) => eoriNumber.value
+    )
+
+  def enrolmentType: String =
+    enrolmentId.fold(
+      _ => Constants.LegacyEnrolmentKey,
+      _ => Constants.NewEnrolmentKey,
+      (_, _) => Constants.NewEnrolmentKey
+    )
+}
+
+object AuthenticatedAuditDetails {
+
+  implicit val writes: OWrites[AuthenticatedAuditDetails] = (details: AuthenticatedAuditDetails) => {
+    Json.obj(
+      "channel"       -> details.channel,
+      "customerId"    -> details.customerId,
+      "enrolmentType" -> details.enrolmentType
+    ) ++ details.json
+  }
+}
+
+case class UnauthenticatedAuditDetails(channel: ChannelType, customerId: String, json: JsObject) extends AuditDetails
+
+object UnauthenticatedAuditDetails {
+
+  implicit val writes: OWrites[UnauthenticatedAuditDetails] = (details: UnauthenticatedAuditDetails) => {
     Json.obj(
       "channel"    -> details.channel,
       "customerId" -> details.customerId

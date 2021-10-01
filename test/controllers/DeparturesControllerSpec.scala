@@ -19,6 +19,7 @@ package controllers
 import audit.AuditService
 import audit.AuditType
 import base.SpecBase
+import cats.data.Ior
 import cats.data.NonEmptyList
 import config.Constants
 import connectors.MessageConnector.EisSubmissionResult.ErrorInPayload
@@ -30,6 +31,9 @@ import models.ChannelType.Web
 import models.Departure
 import models.DepartureId
 import models.DepartureStatus
+import models.DepartureWithoutMessages
+import models.EORINumber
+import models.MessageId
 import models.MessageSender
 import models.MessageStatus.SubmissionPending
 import models.MessageType
@@ -66,8 +70,6 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 import scala.concurrent.Future
 import scala.xml.Utility.trim
-import models.MessageId
-import models.DepartureWithoutMessages
 
 class DeparturesControllerSpec
     extends SpecBase
@@ -176,8 +178,19 @@ class DeparturesControllerSpec
           val departureMessage: MessageWithStatus = captor.getValue.messages.head.asInstanceOf[MessageWithStatus]
           departureMessage.message.map(trim) mustEqual expectedMessage.message.map(trim)
 
-          verify(mockAuditService, times(1)).auditEvent(eqTo(AuditType.DepartureDeclarationSubmitted), eqTo(newDeparture.eoriNumber), any(), any())(any())
-          verify(mockAuditService, times(1)).auditEvent(eqTo(AuditType.MesSenMES3Added), eqTo(newDeparture.eoriNumber), any(), any())(any())
+          verify(mockAuditService, times(1)).auditEvent(
+            eqTo(AuditType.DepartureDeclarationSubmitted),
+            eqTo(Ior.right(EORINumber(newDeparture.eoriNumber))),
+            any(),
+            any()
+          )(any())
+
+          verify(mockAuditService, times(1)).auditEvent(
+            eqTo(AuditType.MesSenMES3Added),
+            eqTo(Ior.right(EORINumber(newDeparture.eoriNumber))),
+            any(),
+            any()
+          )(any())
         }
       }
 
@@ -225,8 +238,19 @@ class DeparturesControllerSpec
           val departureMessage: MessageWithStatus = captor.getValue.messages.head.asInstanceOf[MessageWithStatus]
           departureMessage.message.map(trim) mustEqual expectedMessage.message.map(trim)
 
-          verify(mockAuditService, times(1)).auditEvent(eqTo(AuditType.DepartureDeclarationSubmitted), eqTo(newDeparture.eoriNumber), any(), any())(any())
-          verify(mockAuditService, times(1)).auditEvent(eqTo(AuditType.MesSenMES3Added), eqTo(newDeparture.eoriNumber), any(), any())(any())
+          verify(mockAuditService, times(1)).auditEvent(
+            eqTo(AuditType.DepartureDeclarationSubmitted),
+            eqTo(Ior.right(EORINumber(newDeparture.eoriNumber))),
+            any(),
+            any()
+          )(any())
+
+          verify(mockAuditService, times(1)).auditEvent(
+            eqTo(AuditType.MesSenMES3Added),
+            eqTo(Ior.right(EORINumber(newDeparture.eoriNumber))),
+            any(),
+            any()
+          )(any())
         }
       }
 

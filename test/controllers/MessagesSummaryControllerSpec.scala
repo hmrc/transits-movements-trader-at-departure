@@ -16,13 +16,11 @@
 
 package controllers
 import base.SpecBase
-import controllers.actions.AuthenticatedGetDepartureWithMessagesForReadActionProvider
-import controllers.actions.FakeAuthenticatedGetDepartureWithMessagesForReadActionProvider
 import generators.ModelGenerators
 import models.Departure
 import models.MessageId
 import models.MessagesSummary
-import org.mockito.ArgumentMatchers.any
+import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito.when
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalatest.BeforeAndAfterEach
@@ -32,16 +30,19 @@ import play.api.inject.bind
 import play.api.libs.json.Json
 import play.api.test.FakeRequest
 import play.api.test.Helpers.GET
+import play.api.test.Helpers._
 import play.api.test.Helpers.contentAsJson
 import play.api.test.Helpers.route
 import play.api.test.Helpers.running
 import play.api.test.Helpers.status
-import play.api.test.Helpers._
+import repositories.DepartureRepository
 import services.MessageSummaryService
+
+import scala.concurrent.Future
 
 class MessagesSummaryControllerSpec extends SpecBase with ScalaCheckPropertyChecks with ModelGenerators with BeforeAndAfterEach with IntegrationPatience {
 
-  val departure: Departure = arbitrary[Departure].sample.value
+  val departure: Departure = arbitrary[Departure].sample.value.copy(eoriNumber = "eori")
   val departureId          = departure.departureId
 
   "MessagesSummaryControllerSpec" - {
@@ -49,20 +50,21 @@ class MessagesSummaryControllerSpec extends SpecBase with ScalaCheckPropertyChec
     "must return" - {
 
       "return an OK with the message summary when a departure exists" in {
-        val fake        = FakeAuthenticatedGetDepartureWithMessagesForReadActionProvider(departure)
-        val mockService = mock[MessageSummaryService]
+        val mockRepository = mock[DepartureRepository]
+        val mockService    = mock[MessageSummaryService]
 
         val declarationMessageId         = MessageId.fromMessageIdValue(1).value
         val declarationRejectedMessageId = MessageId.fromMessageIdValue(2).value
         val messagesSummary              = MessagesSummary(departure, declarationMessageId, Some(declarationRejectedMessageId))
 
         when(mockService.messagesSummary(any())).thenReturn(messagesSummary)
+        when(mockRepository.get(refEq(departureId), any())).thenReturn(Future.successful(Some(departure)))
 
         val app =
           baseApplicationBuilder
             .overrides(
-              bind[AuthenticatedGetDepartureWithMessagesForReadActionProvider].toInstance(fake),
-              bind[MessageSummaryService].toInstance(mockService)
+              bind[MessageSummaryService].toInstance(mockService),
+              bind[DepartureRepository].toInstance(mockRepository)
             )
             .build()
 

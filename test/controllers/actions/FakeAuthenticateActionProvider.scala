@@ -16,13 +16,15 @@
 
 package controllers.actions
 
+import cats.data.Ior
 import models.ChannelType.Web
+import models.EORINumber
 import models.request.AuthenticatedRequest
 import play.api.mvc._
 
 import javax.inject.Inject
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.ExecutionContext
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class FakeAuthenticateActionProvider @Inject()(defaultActionBuilder: DefaultActionBuilder, auth: FakeAuthenticateAction)() extends AuthenticateActionProvider {
@@ -33,7 +35,7 @@ class FakeAuthenticateActionProvider @Inject()(defaultActionBuilder: DefaultActi
 
 class FakeAuthenticateAction extends ActionRefiner[Request, AuthenticatedRequest] {
   override protected def refine[A](request: Request[A]): Future[Either[Result, AuthenticatedRequest[A]]] =
-    Future.successful(Right(AuthenticatedRequest(request, Web, "eori")))
+    Future.successful(Right(AuthenticatedRequest(request, Web, Ior.right(EORINumber("eori")))))
 
   override protected def executionContext: ExecutionContext = implicitly[ExecutionContext]
 }

@@ -32,6 +32,8 @@ import java.nio.charset.StandardCharsets
 import java.time.LocalDateTime
 
 import scala.xml.NodeSeq
+import models.request.AuthenticatedRequest
+import cats.data.Ior
 
 class DepartureMessageNotificationSpec extends SpecBase with ScalaCheckDrivenPropertyChecks with ModelGenerators with HttpVerbs {
 
@@ -46,9 +48,15 @@ class DepartureMessageNotificationSpec extends SpecBase with ScalaCheckDrivenPro
       val departure     = arbitraryDeparture.arbitrary.sample.value
       val messageSender = MessageSender(departure.departureId, departure.messages.last.messageCorrelationId)
 
-      val request = FakeRequest(POST, routes.NCTSMessageController.post(messageSender).url)
-        .withBody[NodeSeq](testBody)
-        .withHeaders(HeaderNames.CONTENT_LENGTH -> bodyLength.toString)
+      val request =
+        AuthenticatedRequest(
+          FakeRequest(POST, routes.NCTSMessageController.post(messageSender).url)
+            .withBody[NodeSeq](testBody)
+            .withHeaders(HeaderNames.CONTENT_LENGTH -> bodyLength.toString),
+          departure.channel,
+          Ior.right(EORINumber("eori"))
+        )
+
       val departureWithoutMessagesRequest = DepartureWithoutMessagesRequest(request, DepartureWithoutMessages.fromDeparture(departure), Api)
       val responseRequest                 = DepartureResponseRequest(departureWithoutMessagesRequest, response)
 
@@ -76,9 +84,15 @@ class DepartureMessageNotificationSpec extends SpecBase with ScalaCheckDrivenPro
       val departure     = arbitraryDeparture.arbitrary.sample.value
       val messageSender = MessageSender(departure.departureId, departure.messages.last.messageCorrelationId)
 
-      val request = FakeRequest(POST, routes.NCTSMessageController.post(messageSender).url)
-        .withBody[NodeSeq](testBody)
-        .withHeaders(HeaderNames.CONTENT_LENGTH -> "100001")
+      val request =
+        AuthenticatedRequest(
+          FakeRequest(POST, routes.NCTSMessageController.post(messageSender).url)
+            .withBody[NodeSeq](testBody)
+            .withHeaders(HeaderNames.CONTENT_LENGTH -> "100001"),
+          departure.channel,
+          Ior.right(EORINumber("eori"))
+        )
+
       val departureRequest = DepartureWithoutMessagesRequest(request, DepartureWithoutMessages.fromDeparture(departure), Api)
       val responseRequest  = DepartureResponseRequest(departureRequest, response)
 

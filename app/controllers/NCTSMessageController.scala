@@ -17,28 +17,23 @@
 package controllers
 
 import com.kenshoo.play.metrics.Metrics
-import controllers.actions.CheckMessageTypeActionProvider
-import controllers.actions.GetDepartureWithoutMessagesForWriteActionProvider
 import metrics.HasActionMetrics
 import models.DepartureAlreadyLocked
 import models.DepartureNotFound
 import models.ExternalError
+import models.InternalError
+import models.InternalException
 import models.MessageSender
 import models.SubmissionSuccess
-import models.InternalException
-import models.InternalError
 import play.api.Logging
 import play.api.mvc.Action
 import play.api.mvc.ControllerComponents
 import services.MovementMessageOrchestratorService
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
-import javax.inject.Inject
 
+import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 import scala.xml.NodeSeq
-import audit.AuditService
-import services.SaveMessageService
-import services.PushPullNotificationService
 
 class NCTSMessageController @Inject()(
   cc: ControllerComponents,

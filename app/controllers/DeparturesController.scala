@@ -73,7 +73,7 @@ class DeparturesController @Inject()(
           getBox(request.headers.get(Constants.XClientIdHeader)).flatMap {
             boxOpt =>
               departureService
-                .createDeparture(request.eoriNumber, request.body, request.channel, boxOpt)
+                .createDeparture(request.enrolmentId, request.body, request.channel, boxOpt)
                 .flatMap {
                   case Left(error) =>
                     logger.error(error.message)
@@ -89,8 +89,8 @@ class DeparturesController @Inject()(
                         case submissionFailureRejected: SubmissionProcessingResult.SubmissionFailureRejected =>
                           BadRequest(submissionFailureRejected.responseBody)
                         case SubmissionProcessingResult.SubmissionSuccess =>
-                          auditService.auditEvent(DepartureDeclarationSubmitted, request.eoriNumber, departure.messages.head, request.channel)
-                          auditService.auditEvent(MesSenMES3Added, request.eoriNumber, departure.messages.head, request.channel)
+                          auditService.auditEvent(DepartureDeclarationSubmitted, request.enrolmentId, departure.messages.head, request.channel)
+                          auditService.auditEvent(MesSenMES3Added, request.enrolmentId, departure.messages.head, request.channel)
                           Accepted(Json.toJson(boxOpt))
                             .withHeaders(
                               "Location" -> routes.DeparturesController.get(departure.departureId).url
@@ -122,7 +122,7 @@ class DeparturesController @Inject()(
       authenticate().async {
         implicit request =>
           departureRepository
-            .fetchAllDepartures(request.eoriNumber, request.channel, updatedSince, lrn, pageSize, page)
+            .fetchAllDepartures(request.enrolmentId, request.channel, updatedSince, lrn, pageSize, page)
             .map {
               responseDepartures =>
                 departuresCount.update(responseDepartures.retrievedDepartures)

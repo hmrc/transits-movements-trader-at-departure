@@ -107,7 +107,7 @@ class PDFRetrievalControllerISpec extends ApiSpecBase with JsonHelper {
           |     "key": "VatRegNoTURN",
           |     "value": "1234567"
           |   }],
-          |   "state": "Active"
+          |   "state": "Activated"
           | }]
           |}""".stripMargin.getBytes(),
         requestId = requestId
@@ -182,7 +182,7 @@ class PDFRetrievalControllerISpec extends ApiSpecBase with JsonHelper {
           |     "key": "VatRegNoTURN",
           |     "value": "1234567"
           |   }],
-          |   "state": "Active"
+          |   "state": "Activated"
           | }]
           |}""".stripMargin.getBytes(),
         requestId = requestId
@@ -248,7 +248,7 @@ class PDFRetrievalControllerISpec extends ApiSpecBase with JsonHelper {
           |     "key": "VatRegNoTURN",
           |     "value": "1234567"
           |   }],
-          |   "state": "Active"
+          |   "state": "Activated"
           | }]
           |}""".stripMargin.getBytes(),
         requestId = requestId
