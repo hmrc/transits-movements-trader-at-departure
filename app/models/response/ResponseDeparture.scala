@@ -36,7 +36,7 @@ case class ResponseDeparture(departureId: DepartureId,
                              status: DepartureStatus,
                              created: LocalDateTime,
                              updated: LocalDateTime,
-                             messageMetaData: Seq[MessageMetaData])
+                             messagesMetaData: Seq[MessageMetaData])
 
 object ResponseDeparture {
 
