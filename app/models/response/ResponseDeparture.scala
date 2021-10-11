@@ -19,6 +19,7 @@ package models.response
 import controllers.routes
 import models.Departure
 import models.DepartureId
+import models.DepartureStatus
 import models.DepartureWithoutMessages
 import models.MessageMetaData
 import models.MovementReferenceNumber
@@ -32,6 +33,7 @@ case class ResponseDeparture(departureId: DepartureId,
                              messagesLocation: String,
                              movementReferenceNumber: Option[MovementReferenceNumber],
                              referenceNumber: String,
+                             status: DepartureStatus,
                              created: LocalDateTime,
                              updated: LocalDateTime,
                              messagesMetaData: Seq[MessageMetaData])
@@ -45,6 +47,7 @@ object ResponseDeparture {
       routes.MessagesController.getMessages(departure.departureId).url,
       departure.movementReferenceNumber,
       departure.referenceNumber,
+      departure.status,
       departure.created,
       departure.lastUpdated,
       departure.messages.map(x => MessageMetaData(x.messageType, x.dateTime)).toList
@@ -57,6 +60,7 @@ object ResponseDeparture {
       routes.MessagesController.getMessages(departureWithoutMessages.departureId).url,
       departureWithoutMessages.movementReferenceNumber,
       departureWithoutMessages.referenceNumber,
+      departureWithoutMessages.status,
       departureWithoutMessages.created,
       departureWithoutMessages.lastUpdated,
       departureWithoutMessages.messagesMetaData
