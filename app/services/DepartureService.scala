@@ -25,14 +25,16 @@ import models.ParseError.EmptyNodeSeq
 import models._
 import repositories.DepartureIdRepository
 import utils.XMLTransformer
-
+import utils.XmlToJsonConverter
 import java.time.Clock
 import java.time.LocalDateTime
+
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.xml.NodeSeq
 
-class DepartureService @Inject()(departureIdRepository: DepartureIdRepository)(implicit clock: Clock, ec: ExecutionContext) {
+class DepartureService @Inject()(departureIdRepository: DepartureIdRepository, xmlToJsonConverter: XmlToJsonConverter)(implicit clock: Clock,
+                                                                                                                       ec: ExecutionContext) {
   import XMLTransformer._
   import XmlMessageParser._
 
@@ -44,7 +46,7 @@ class DepartureService @Inject()(departureIdRepository: DepartureIdRepository)(i
       _          <- correctRootNodeR(messageType)
       dateTime   <- dateTimeOfPrepR
       xmlMessage <- updateMesSenMES3(departureId, messageCorrelationId)
-    } yield MessageWithStatus(messageId, dateTime, messageType, xmlMessage, SubmissionPending, messageCorrelationId)
+    } yield MessageWithStatus(messageId, dateTime, messageType, xmlMessage, SubmissionPending, messageCorrelationId)(xmlToJsonConverter)
 
   def createDeparture(enrolmentId: Ior[TURN, EORINumber], nodeSeq: NodeSeq, channelType: ChannelType, boxOpt: Option[Box]): Future[ParseHandler[Departure]] =
     departureIdRepository
@@ -82,7 +84,7 @@ class DepartureService @Inject()(departureIdRepository: DepartureIdRepository)(i
       _          <- correctRootNodeR(messageType)
       dateTime   <- dateTimeOfPrepR
       xmlMessage <- ReaderT[ParseHandler, NodeSeq, NodeSeq](nodeSeqToEither)
-    } yield MessageWithoutStatus(messageId, dateTime, messageType, xmlMessage, messageCorrelationId)
+    } yield MessageWithoutStatus(messageId, dateTime, messageType, xmlMessage, messageCorrelationId)(xmlToJsonConverter)
 
   private[this] def nodeSeqToEither(xml: NodeSeq): ParseHandler[NodeSeq] =
     if (xml != null) {

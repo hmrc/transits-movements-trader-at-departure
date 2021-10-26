@@ -16,6 +16,8 @@
 
 package utils
 
+import com.google.inject.Inject
+import config.AppConfig
 import org.json.XML
 import play.api.Logging
 import play.api.libs.json.JsObject
@@ -26,12 +28,19 @@ import scala.util.Success
 import scala.util.Try
 import scala.xml.NodeSeq
 
-trait XmlToJson extends Logging {
-  protected def toJson(xml: NodeSeq): JsObject =
-    Try(Json.parse(XML.toJSONObject(xml.toString).toString).as[JsObject]) match {
-      case Success(data) => data
-      case Failure(error) =>
-        logger.error(s"Failed to convert xml to json with error: ${error.getMessage}")
-        Json.obj()
-    }
+trait XmlToJsonConverter {
+  def toJson(xml: NodeSeq): JsObject
+}
+
+class ConfiguredXmlToJsonConverter @Inject()(appConfig: AppConfig) extends Logging with XmlToJsonConverter {
+
+  def toJson(xml: NodeSeq): JsObject =
+    if (appConfig.xmlToJson) {
+      Try(Json.parse(XML.toJSONObject(xml.toString).toString).as[JsObject]) match {
+        case Success(data) => data
+        case Failure(error) =>
+          logger.error(s"Failed to convert xml to json with error: ${error.getMessage}")
+          Json.obj()
+      }
+    } else Json.obj()
 }

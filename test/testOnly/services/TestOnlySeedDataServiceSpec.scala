@@ -34,7 +34,7 @@ class TestOnlySeedDataServiceSpec extends SpecBase with ScalaCheckDrivenProperty
   implicit def dontShrink[A]: Shrink[A] = Shrink.shrinkAny
 
   val testClock               = Clock.fixed(Instant.now(), ZoneId.systemDefault)
-  val testDataGenerator       = new TestDataGenerator(testClock)
+  val testDataGenerator       = new TestDataGenerator(testClock, emptyConverter)
   val testOnlySeedDataService = new TestOnlySeedDataService(testDataGenerator)
 
   "seedDepartures" - {

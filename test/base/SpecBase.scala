@@ -36,13 +36,19 @@ import uk.gov.hmrc.http.HeaderCarrier
 import scala.xml.Utility
 import scala.xml.XML
 import com.kenshoo.play.metrics.Metrics
+import testOnly.utils.ConvertingXmlToJsonConverter
+import testOnly.utils.NoJsonXmlToJsonConverter
 import utils.TestMetrics
+import utils.XmlToJsonConverter
 
 trait SpecBase extends AnyFreeSpec with Matchers with MockitoSugar with ScalaFutures with OptionValues with EitherValues {
 
   implicit val hc: HeaderCarrier = HeaderCarrier()
 
   def fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("", "")
+
+  val emptyConverter = new NoJsonXmlToJsonConverter
+  val converter      = new ConvertingXmlToJsonConverter
 
   protected def baseApplicationBuilder: GuiceApplicationBuilder =
     new GuiceApplicationBuilder()
@@ -51,7 +57,8 @@ trait SpecBase extends AnyFreeSpec with Matchers with MockitoSugar with ScalaFut
       )
       .overrides(
         bind[AuthenticateActionProvider].to[FakeAuthenticateActionProvider],
-        bind[Metrics].toInstance(new TestMetrics)
+        bind[Metrics].toInstance(new TestMetrics),
+        bind[XmlToJsonConverter].to[NoJsonXmlToJsonConverter]
       )
 
   implicit val messageWithStatusEquality: Equality[MessageWithStatus] = (a: MessageWithStatus, b: Any) =>

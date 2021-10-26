@@ -20,7 +20,7 @@ import java.time.LocalDateTime
 
 import play.api.libs.json._
 import utils.NodeSeqFormat
-import utils.XmlToJson
+import utils.XmlToJsonConverter
 
 import scala.xml.NodeSeq
 import play.api.libs.functional.syntax._
@@ -80,7 +80,7 @@ object Message extends NodeSeqFormat with MongoDateTimeFormats {
 
 }
 
-object MessageWithStatus extends NodeSeqFormat with MongoDateTimeFormats with XmlToJson {
+object MessageWithStatus extends NodeSeqFormat with MongoDateTimeFormats {
 
   implicit val readsMessagWithStatus: Reads[MessageWithStatus] =
     (
@@ -103,11 +103,11 @@ object MessageWithStatus extends NodeSeqFormat with MongoDateTimeFormats with Xm
     message: NodeSeq,
     status: MessageStatus,
     messageCorrelationId: Int
-  ): MessageWithStatus =
-    MessageWithStatus(messageId, dateTime, messageType, message, status, messageCorrelationId, toJson(message))
+  )(xmlToJson: XmlToJsonConverter): MessageWithStatus =
+    MessageWithStatus(messageId, dateTime, messageType, message, status, messageCorrelationId, xmlToJson.toJson(message))
 }
 
-object MessageWithoutStatus extends NodeSeqFormat with MongoDateTimeFormats with XmlToJson {
+object MessageWithoutStatus extends NodeSeqFormat with MongoDateTimeFormats {
 
   implicit val readsMessagWithoutStatus: Reads[MessageWithoutStatus] =
     (
@@ -122,7 +122,8 @@ object MessageWithoutStatus extends NodeSeqFormat with MongoDateTimeFormats with
   implicit val writesMessageWithoutStatus: OWrites[MessageWithoutStatus] =
     Json.writes[MessageWithoutStatus]
 
-  def apply(messageId: MessageId, dateTime: LocalDateTime, messageType: MessageType, message: NodeSeq, messageCorrelationId: Int): MessageWithoutStatus =
-    MessageWithoutStatus(messageId, dateTime, messageType, message, messageCorrelationId, toJson(message))
+  def apply(messageId: MessageId, dateTime: LocalDateTime, messageType: MessageType, message: NodeSeq, messageCorrelationId: Int)(
+    xmlToJson: XmlToJsonConverter): MessageWithoutStatus =
+    MessageWithoutStatus(messageId, dateTime, messageType, message, messageCorrelationId, xmlToJson.toJson(message))
 
 }
