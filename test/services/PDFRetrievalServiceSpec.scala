@@ -16,6 +16,7 @@
 
 package services
 
+import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import base.SpecBase
 import cats.data.NonEmptyList
@@ -27,6 +28,7 @@ import models.DepartureStatus
 import models.MessageId
 import models.MessageType
 import models.MessageWithoutStatus
+import models.PdfDocument
 import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.{eq => eqTo}
 import org.mockito.Mockito.reset
@@ -87,14 +89,11 @@ class PDFRetrievalServiceSpec extends SpecBase with JsonHelper with IntegrationP
                                      convertXmlToJson(<blank2></blank2>.toString())))
             )
 
-          val headers = Map("Content-Disposition" -> Seq("value"), "Content-Type" -> Seq("value"), "OtherHeader" -> Seq("value"))
+          val pdfDocument = PdfDocument(Source.single(ByteString("Hello".getBytes())), None, Some("value"), Some("value"))
 
-          when(mockManageDocumentsConnector.getTadPDF(eqTo(<blank2></blank2>))(any()))
-            .thenReturn(Future.successful(Right((ByteString("Hello".getBytes()), headers))))
+          when(mockManageDocumentsConnector.getTadPDF(eqTo(<blank2></blank2>))(any())).thenReturn(Future.successful(Right(pdfDocument)))
 
-          val expectedHeaders = Seq(("Content-Disposition", "value"), ("Content-Type", "value"))
-
-          service.getAccompanyingDocumentPDF(departure).futureValue mustBe Right((ByteString("Hello".getBytes()), expectedHeaders))
+          service.getAccompanyingDocumentPDF(departure).futureValue mustBe Right(pdfDocument)
 
           verify(mockManageDocumentsConnector, times(0)).getTsadPDF(any())(any())
           verify(mockManageDocumentsConnector, times(1)).getTadPDF(eqTo(<blank2></blank2>))(any())
@@ -112,14 +111,11 @@ class PDFRetrievalServiceSpec extends SpecBase with JsonHelper with IntegrationP
                                      convertXmlToJson(<blank2></blank2>.toString())))
             )
 
-          val headers = Map("Content-Disposition" -> Seq("value"), "Content-Type" -> Seq("value"), "OtherHeader" -> Seq("value"))
+          val pdfDocument = PdfDocument(Source.single(ByteString("Hello".getBytes())), None, Some("value"), Some("value"))
 
-          when(mockManageDocumentsConnector.getTadPDF(eqTo(safetyXML(0)))(any()))
-            .thenReturn(Future.successful(Right((ByteString("Hello".getBytes()), headers))))
+          when(mockManageDocumentsConnector.getTadPDF(eqTo(safetyXML(0)))(any())).thenReturn(Future.successful(Right(pdfDocument)))
 
-          val expectedHeaders = Seq(("Content-Disposition", "value"), ("Content-Type", "value"))
-
-          service.getAccompanyingDocumentPDF(departure).futureValue mustBe Right((ByteString("Hello".getBytes()), expectedHeaders))
+          service.getAccompanyingDocumentPDF(departure).futureValue mustBe Right(pdfDocument)
 
           verify(mockManageDocumentsConnector, times(0)).getTsadPDF(any())(any())
           verify(mockManageDocumentsConnector, times(1)).getTadPDF(eqTo(safetyXML(0)))(any())
@@ -184,14 +180,11 @@ class PDFRetrievalServiceSpec extends SpecBase with JsonHelper with IntegrationP
           when(mockMessageRetrievalService.getReleaseForTransitMessage(eqTo(departure)))
             .thenReturn(Some(MessageWithoutStatus(MessageId(2), LocalDateTime.now, MessageType.ReleaseForTransit, xml, 2, convertXmlToJson(xml.toString()))))
 
-          val headers = Map("Content-Disposition" -> Seq("value"), "Content-Type" -> Seq("value"), "OtherHeader" -> Seq("value"))
+          val pdfDocument = PdfDocument(Source.single(ByteString("Hello".getBytes())), Some(5L), Some("value"), Some("value"))
 
-          when(mockManageDocumentsConnector.getTsadPDF(eqTo(xml))(any()))
-            .thenReturn(Future.successful(Right((ByteString("Hello".getBytes()), headers))))
+          when(mockManageDocumentsConnector.getTsadPDF(eqTo(xml))(any())).thenReturn(Future.successful(Right(pdfDocument)))
 
-          val expectedHeaders = Seq(("Content-Disposition", "value"), ("Content-Type", "value"))
-
-          service.getAccompanyingDocumentPDF(departure).futureValue mustBe Right((ByteString("Hello".getBytes()), expectedHeaders))
+          service.getAccompanyingDocumentPDF(departure).futureValue mustBe Right(pdfDocument)
 
           verify(mockManageDocumentsConnector, times(1))
             .getTsadPDF(eqTo(xml))(any())

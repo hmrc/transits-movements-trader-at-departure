@@ -20,6 +20,8 @@ import com.kenshoo.play.metrics.Metrics
 import controllers.actions.AuthenticatedGetDepartureWithMessagesForReadActionProvider
 import metrics.HasActionMetrics
 import models.DepartureId
+import play.api.Logging
+import play.api.http.HeaderNames
 import play.api.mvc.Action
 import play.api.mvc.AnyContent
 import play.api.mvc.ControllerComponents
@@ -27,9 +29,8 @@ import services.IncorrectStateError
 import services.PDFRetrievalService
 import services.UnexpectedError
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
-import javax.inject.Inject
-import play.api.Logging
 
+import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 
 class PDFRetrievalController @Inject()(
@@ -47,7 +48,9 @@ class PDFRetrievalController @Inject()(
       authenticateForRead(departureId).async {
         implicit request =>
           pdfGenerationService.getAccompanyingDocumentPDF(request.departure).map {
-            case Right((pdf, headers)) => Ok(pdf).withHeaders(headers: _*)
+            case Right(pdf) =>
+              val responseHeaders = pdf.contentDisposition.map(HeaderNames.CONTENT_DISPOSITION -> _).toList
+              Ok.streamed(pdf.dataSource, pdf.contentLength, pdf.contentType).withHeaders(responseHeaders: _*)
             case Left(UnexpectedError) =>
               logger.warn(s"[getAccompanyingDocument] returning $BAD_GATEWAY due to an unexpected error in getting the PDF")
               BadGateway

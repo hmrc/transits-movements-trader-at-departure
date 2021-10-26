@@ -16,7 +16,6 @@
 
 package connectors
 
-import akka.util.ByteString
 import com.github.tomakehurst.wiremock.client.WireMock._
 import generators.ModelGenerators
 import org.scalacheck.Gen
@@ -35,6 +34,7 @@ import uk.gov.hmrc.http.RequestId
 
 import scala.concurrent.Future
 import scala.xml.Elem
+import models.PdfDocument
 
 class ManageDocumentsConnectorSpec
     extends AnyFreeSpec
@@ -86,7 +86,7 @@ class ManageDocumentsConnectorSpec
         running(app) {
           val connector = app.injector.instanceOf[ManageDocumentsConnector]
 
-          val result: Future[Either[TADErrorResponse, (ByteString, Map[String, Seq[String]])]] = connector.getTadPDF(releasedForTransitXml)
+          val result: Future[Either[TADErrorResponse, PdfDocument]] = connector.getTadPDF(releasedForTransitXml)
           result.futureValue.isRight mustBe true
         }
       }
@@ -113,7 +113,7 @@ class ManageDocumentsConnectorSpec
         running(app) {
           val connector = app.injector.instanceOf[ManageDocumentsConnector]
 
-          val result: Future[Either[TADErrorResponse, (ByteString, Map[String, Seq[String]])]] = connector.getTadPDF(releasedForTransitXml)
+          val result: Future[Either[TADErrorResponse, PdfDocument]] = connector.getTadPDF(releasedForTransitXml)
           result.futureValue mustBe Left(UnexpectedResponse(genErrorResponse))
         }
       }
@@ -142,7 +142,7 @@ class ManageDocumentsConnectorSpec
         running(app) {
           val connector = app.injector.instanceOf[ManageDocumentsConnector]
 
-          val result: Future[Either[TADErrorResponse, (ByteString, Map[String, Seq[String]])]] = connector.getTsadPDF(releasedForTransitXml)
+          val result: Future[Either[TADErrorResponse, PdfDocument]] = connector.getTsadPDF(releasedForTransitXml)
           result.futureValue.isRight mustBe true
         }
       }
@@ -169,7 +169,7 @@ class ManageDocumentsConnectorSpec
         running(app) {
           val connector = app.injector.instanceOf[ManageDocumentsConnector]
 
-          val result: Future[Either[TADErrorResponse, (ByteString, Map[String, Seq[String]])]] = connector.getTsadPDF(releasedForTransitXml)
+          val result: Future[Either[TADErrorResponse, PdfDocument]] = connector.getTsadPDF(releasedForTransitXml)
           result.futureValue mustBe Left(UnexpectedResponse(genErrorResponse))
         }
       }

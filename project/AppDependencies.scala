@@ -30,6 +30,7 @@ object AppDependencies {
     "org.typelevel"          %% "cats-laws"            % catsVersion,
     "org.typelevel"          %% "discipline-core"      % "1.1.5",
     "org.typelevel"          %% "discipline-scalatest" % "2.1.5",
-    "com.vladsch.flexmark"    % "flexmark-all"         % "0.36.8"
+    "com.vladsch.flexmark"    % "flexmark-all"         % "0.36.8",
+    "com.typesafe.akka"      %% "akka-stream-testkit"  % "2.5.31"
   ).map(_ % "test, it")
 }
