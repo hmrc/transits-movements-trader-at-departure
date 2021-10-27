@@ -16,11 +16,11 @@
 
 package connectors
 
-import akka.util.ByteString
 import com.kenshoo.play.metrics.Metrics
 import config.AppConfig
 import config.Constants
 import metrics.HasMetrics
+import models.PdfDocument
 import play.api.Logging
 import play.api.http.ContentTypes
 import play.api.http.HeaderNames
@@ -40,7 +40,7 @@ class ManageDocumentsConnector @Inject()(
     extends Logging
     with HasMetrics {
 
-  def getTadPDF(ie29Message: NodeSeq)(implicit hc: HeaderCarrier): Future[Either[TADErrorResponse, (ByteString, Map[String, Seq[String]])]] =
+  def getTadPDF(ie29Message: NodeSeq)(implicit hc: HeaderCarrier): Future[Either[TADErrorResponse, PdfDocument]] =
     withMetricsTimerAsync("get-tad-pdf") {
       timer =>
         val serviceUrl = s"${config.manageDocumentsUrl}/transit-accompanying-document"
@@ -57,7 +57,14 @@ class ManageDocumentsConnector @Inject()(
             response =>
               if (response.status == 200) {
                 timer.completeWithSuccess()
-                Right((response.bodyAsBytes, response.headers))
+                Right(
+                  PdfDocument(
+                    response.bodyAsSource,
+                    response.header(HeaderNames.CONTENT_LENGTH).map(_.toLong),
+                    response.header(HeaderNames.CONTENT_TYPE),
+                    response.header(HeaderNames.CONTENT_DISPOSITION)
+                  )
+                )
               } else {
                 logger.warn(s"[getTADPdf] returned an unexpected status (${response.status}) while trying to retrieve the TAD")
                 timer.completeWithFailure()
@@ -66,7 +73,7 @@ class ManageDocumentsConnector @Inject()(
           )
     }
 
-  def getTsadPDF(ie29Message: NodeSeq)(implicit hc: HeaderCarrier): Future[Either[TADErrorResponse, (ByteString, Map[String, Seq[String]])]] =
+  def getTsadPDF(ie29Message: NodeSeq)(implicit hc: HeaderCarrier): Future[Either[TADErrorResponse, PdfDocument]] =
     withMetricsTimerAsync("get-tsad-pdf") {
       timer =>
         val serviceUrl = s"${config.manageDocumentsUrl}/transit-security-accompanying-document"
@@ -83,7 +90,14 @@ class ManageDocumentsConnector @Inject()(
             response =>
               if (response.status == 200) {
                 timer.completeWithSuccess()
-                Right((response.bodyAsBytes, response.headers))
+                Right(
+                  PdfDocument(
+                    response.bodyAsSource,
+                    response.header(HeaderNames.CONTENT_LENGTH).map(_.toLong),
+                    response.header(HeaderNames.CONTENT_TYPE),
+                    response.header(HeaderNames.CONTENT_DISPOSITION)
+                  )
+                )
               } else {
                 logger.warn(s"[getTsadPDF] returned an unexpected status (${response.status}) while trying to retrieve the TAD")
                 timer.completeWithFailure()

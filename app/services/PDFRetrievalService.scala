@@ -16,20 +16,18 @@
 
 package services
 
-import akka.util.ByteString
+import cats.data.EitherT
 import connectors.ManageDocumentsConnector
-import connectors.TADErrorResponse
-import connectors.UnexpectedResponse
-import controllers.Assets.CONTENT_DISPOSITION
-import controllers.Assets.CONTENT_TYPE
 import models.Departure
-import javax.inject.Inject
+import models.PdfDocument
 import play.api.Logging
+import uk.gov.hmrc.http.HeaderCarrier
 
+import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
+import scala.util.control.NonFatal
 import scala.xml.NodeSeq
-import uk.gov.hmrc.http.HeaderCarrier
 
 class PDFRetrievalService @Inject()(
   manageDocumentsConnector: ManageDocumentsConnector,
@@ -37,36 +35,27 @@ class PDFRetrievalService @Inject()(
 )(implicit val ec: ExecutionContext)
     extends Logging {
 
-  private def responseHandler(functionName: String)(f: => Future[Either[TADErrorResponse, (ByteString, Map[String, Seq[String]])]])
-    : Future[Either[PDFGenerationResponse, (ByteString, Seq[(String, String)])]] =
-    f.map {
-        case Right(response) => {
-
-          val contentDisposition = response._2.get(CONTENT_DISPOSITION).map(value => Seq((CONTENT_DISPOSITION, value.head))).getOrElse(Seq.empty)
-          val contentType        = response._2.get(CONTENT_TYPE).map(value => Seq((CONTENT_TYPE, value.head))).getOrElse(Seq.empty)
-
-          Right((response._1, contentDisposition ++ contentType))
-        }
-        case Left(UnexpectedResponse(_)) => Left(UnexpectedError)
-      }
-      .recover {
-        case e =>
-          logger.error(s"[getAccompanyingDocumentPDF][$functionName] an unexpected exception happened", e)
-          Left(UnexpectedError)
-      }
-
   private def messageIsSafety(message: NodeSeq): Boolean = (message \ "HEAHEA" \ "SecHEA358").headOption.exists(_.text == "1")
 
-  def getAccompanyingDocumentPDF(departure: Departure)(implicit hc: HeaderCarrier): Future[Either[PDFGenerationResponse, (ByteString, Seq[(String, String)])]] =
-    messageRetrievalService.getReleaseForTransitMessage(departure) match {
+  def getAccompanyingDocumentPDF(departure: Departure)(implicit hc: HeaderCarrier): Future[Either[PDFGenerationResponse, PdfDocument]] = {
+    val pdfResponse = messageRetrievalService.getReleaseForTransitMessage(departure) match {
       case Some(ie29Message) if messageIsSafety(ie29Message.message) =>
-        responseHandler("TSAD")(manageDocumentsConnector.getTsadPDF(ie29Message.message))
+        val pdfResponse = EitherT(manageDocumentsConnector.getTsadPDF(ie29Message.message))
+        pdfResponse.leftMap(_ => UnexpectedError).value
       case Some(ie29Message) =>
-        responseHandler("TAD")(manageDocumentsConnector.getTadPDF(ie29Message.message))
+        val pdfResponse = EitherT(manageDocumentsConnector.getTadPDF(ie29Message.message))
+        pdfResponse.leftMap(_ => UnexpectedError).value
       case _ =>
         logger.warn("[getAccompanyingDocumentPDF] no releaseForTransitMessageId or Departure found")
         Future.successful(Left(IncorrectStateError))
     }
+
+    pdfResponse.recover {
+      case NonFatal(e) =>
+        logger.error("[getAccompanyingDocumentPDF] an unexpected exception happened", e)
+        Left(UnexpectedError)
+    }
+  }
 }
 
 sealed trait PDFGenerationResponse

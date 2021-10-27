@@ -16,16 +16,21 @@
 
 package controllers
 
+import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import base.SpecBase
+import cats.data.Ior
 import controllers.actions.AuthenticatedGetDepartureWithMessagesForReadActionProvider
 import generators.ModelGenerators
 import models.ChannelType.Web
 import models.Departure
 import models.DepartureId
+import models.EORINumber
+import models.PdfDocument
+import models.request.AuthenticatedRequest
 import models.request.DepartureWithMessagesRequest
-import org.mockito.ArgumentMatchers.{eq => eqTo}
 import org.mockito.ArgumentMatchers.any
+import org.mockito.ArgumentMatchers.{eq => eqTo}
 import org.mockito.Mockito.when
 import org.mockito.invocation.InvocationOnMock
 import org.scalacheck.Arbitrary.arbitrary
@@ -41,15 +46,19 @@ import play.api.test.Helpers.stubControllerComponents
 import services.IncorrectStateError
 import services.PDFRetrievalService
 import services.UnexpectedError
+import utils.TestMetrics
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import utils.TestMetrics
-import models.request.AuthenticatedRequest
-import cats.data.Ior
-import models.EORINumber
+import akka.actor.ActorSystem
+import org.scalatest.BeforeAndAfterAll
+import akka.testkit.TestKit
 
-class PDFRetrievalControllerSpec extends SpecBase with ScalaCheckPropertyChecks with ModelGenerators with BeforeAndAfterEach {
+class PDFRetrievalControllerSpec extends SpecBase with ScalaCheckPropertyChecks with ModelGenerators with BeforeAndAfterEach with BeforeAndAfterAll {
+  implicit val system = ActorSystem(suiteName)
+
+  override protected def afterAll(): Unit =
+    TestKit.shutdownActorSystem(system)
 
   class Setup(departureId: DepartureId) {
 
@@ -81,7 +90,7 @@ class PDFRetrievalControllerSpec extends SpecBase with ScalaCheckPropertyChecks 
 
       "should return a 200 if there is data found" in new Setup(DepartureId(23)) {
         when(mockPDFGenerationService.getAccompanyingDocumentPDF(eqTo(testDeparture))(any()))
-          .thenReturn(Future.successful(Right((ByteString("Hello".getBytes()), Seq(("key", "value"))))))
+          .thenReturn(Future.successful(Right(PdfDocument(Source.single(ByteString("Hello".getBytes())), None, None, None))))
 
         val result: Future[Result] = controller.getAccompanyingDocument(DepartureId(23)).apply(fakeRequest)
 
