@@ -162,7 +162,7 @@ class DeparturesControllerSpec
         running(application) {
 
           val request =
-            FakeRequest(POST, routes.DeparturesController.post().url)
+            FakeRequest(POST, routes.DeparturesController.post.url)
               .withHeaders("channel" -> newDeparture.channel.toString, Constants.XClientIdHeader -> testClientId)
               .withXmlBody(requestXmlBody.map(trim))
 
@@ -223,7 +223,7 @@ class DeparturesControllerSpec
         running(application) {
 
           val request =
-            FakeRequest(POST, routes.DeparturesController.post().url)
+            FakeRequest(POST, routes.DeparturesController.post.url)
               .withHeaders("channel" -> newDeparture.channel.toString, Constants.XClientIdHeader -> testClientId)
               .withXmlBody(requestXmlBody.map(trim))
 
@@ -270,7 +270,7 @@ class DeparturesControllerSpec
 
         running(application) {
 
-          val request = FakeRequest(POST, routes.DeparturesController.post().url)
+          val request = FakeRequest(POST, routes.DeparturesController.post.url)
             .withHeaders("channel" -> Web.toString)
             .withXmlBody(requestXmlBody)
 
@@ -302,7 +302,7 @@ class DeparturesControllerSpec
 
         running(application) {
 
-          val request = FakeRequest(POST, routes.DeparturesController.post().url)
+          val request = FakeRequest(POST, routes.DeparturesController.post.url)
             .withHeaders("channel" -> Web.toString)
             .withXmlBody(requestXmlBody)
 
@@ -335,7 +335,7 @@ class DeparturesControllerSpec
 
         running(application) {
 
-          val request = FakeRequest(POST, routes.DeparturesController.post().url)
+          val request = FakeRequest(POST, routes.DeparturesController.post.url)
             .withHeaders("channel" -> Web.toString)
             .withXmlBody(requestXmlBody)
 
@@ -368,7 +368,7 @@ class DeparturesControllerSpec
           val requestXmlBody =
             <CC015B></CC015B>
 
-          val request = FakeRequest(POST, routes.DeparturesController.post().url)
+          val request = FakeRequest(POST, routes.DeparturesController.post.url)
             .withHeaders("channel" -> Web.toString)
             .withXmlBody(requestXmlBody)
 
@@ -401,7 +401,7 @@ class DeparturesControllerSpec
 
         running(application) {
 
-          val request = FakeRequest(POST, routes.DeparturesController.post().url)
+          val request = FakeRequest(POST, routes.DeparturesController.post.url)
             .withHeaders("channel" -> Web.toString)
             .withXmlBody(requestXmlBody)
 
@@ -430,7 +430,7 @@ class DeparturesControllerSpec
         running(application) {
           val requestXmlBody = <InvalidRootNode></InvalidRootNode>
 
-          val request = FakeRequest(POST, routes.DeparturesController.post().url)
+          val request = FakeRequest(POST, routes.DeparturesController.post.url)
             .withHeaders("channel" -> Web.toString)
             .withXmlBody(requestXmlBody)
 
@@ -463,7 +463,7 @@ class DeparturesControllerSpec
 
         running(application) {
 
-          val request = FakeRequest(POST, routes.DeparturesController.post().url)
+          val request = FakeRequest(POST, routes.DeparturesController.post.url)
             .withHeaders("channel" -> Web.toString)
             .withXmlBody(requestXmlBody)
 

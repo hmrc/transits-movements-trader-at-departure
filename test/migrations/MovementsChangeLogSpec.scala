@@ -31,10 +31,11 @@ import play.modules.reactivemongo.ReactiveMongoApi
 import reactivemongo.play.json.collection.Helpers.idWrites
 import reactivemongo.play.json.collection.JSONCollection
 import repositories.DepartureRepository
-
 import java.time.LocalDateTime
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.Random
+import scala.xml.NodeSeq
 
 class MovementsChangeLogSpec extends SpecBase with IntegrationPatience with BeforeAndAfterAll with GuiceOneAppPerSuite {
 
@@ -81,20 +82,20 @@ class MovementsChangeLogSpec extends SpecBase with IntegrationPatience with Befo
                 Json.obj(
                   "dateTime"             -> LocalDateTime.of(2021, 7, 15, 12, 12),
                   "messageType"          -> MessageType.DepartureDeclaration.toString,
-                  "message"              -> <CC015B></CC015B>,
+                  "message"              -> NodeSeq.fromSeq(Seq(<CC015B></CC015B>)),
                   "status"               -> MessageStatus.SubmissionSucceeded.toString,
                   "messageCorrelationId" -> 1
                 ),
                 Json.obj(
                   "dateTime"             -> LocalDateTime.of(2021, 7, 15, 12, 12),
                   "messageType"          -> MessageType.PositiveAcknowledgement.toString,
-                  "message"              -> <CC928A></CC928A>,
+                  "message"              -> NodeSeq.fromSeq(Seq(<CC928A></CC928A>)),
                   "messageCorrelationId" -> 1
                 ),
                 Json.obj(
                   "dateTime"             -> LocalDateTime.of(2021, 7, 15, 12, 13),
                   "messageType"          -> MessageType.MrnAllocated.toString,
-                  "message"              -> <CC028A></CC028A>,
+                  "message"              -> NodeSeq.fromSeq(Seq(<CC028A></CC028A>)),
                   "messageCorrelationId" -> 1
                 )
               )
