@@ -16,7 +16,7 @@
 
 package controllers.actions
 
-import audit.AuditService
+import audit.{AuditService, AuthenticationDetails, UnauthenticatedAuditDetails}
 import audit.AuditType.SuccessfulAuthTracking
 import cats.data.Ior
 import com.kenshoo.play.metrics.Metrics
@@ -106,10 +106,13 @@ private[actions] class AuthenticateAction @Inject()(override val authConnector: 
       _ => "Modern",
       (_, modern) => modern.value
     )
-    val message = s"Auth Successful: $channel:$enrolmentType"
 
+    val message = s"Auth Successful: $channel:$enrolmentType"
     logger.info(message)
-    auditService.simpleAudit(SuccessfulAuthTracking, message)
+
+    val details = AuthenticationDetails(channel, enrolmentType)
+    auditService.authAudit(SuccessfulAuthTracking, details)
+
     counter(s"auth-$channel-$enrolmentType")
   }
 }

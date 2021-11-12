@@ -24,15 +24,13 @@ import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import utils.MessageTranslation
 import utils.XmlToJson
 import javax.inject.Inject
-import play.api.libs.json.{JsString, Json}
 
 import scala.concurrent.ExecutionContext
 import scala.xml.NodeSeq
 
 class AuditService @Inject()(auditConnector: AuditConnector, messageTranslator: MessageTranslation)(implicit ec: ExecutionContext) extends XmlToJson {
 
-  def simpleAudit(auditType: AuditType, message: String)(implicit hc: HeaderCarrier): Unit = {
-    val details = Json.obj("message" -> JsString(message))
+  def authAudit(auditType: AuditType, details: AuthenticationDetails)(implicit hc: HeaderCarrier): Unit = {
     auditConnector.sendExplicitAudit(auditType.toString, details)
   }
 
