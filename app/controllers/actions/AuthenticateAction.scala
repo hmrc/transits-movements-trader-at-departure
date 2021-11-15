@@ -16,12 +16,16 @@
 
 package controllers.actions
 
-import audit.{AuditService, AuthenticationDetails, UnauthenticatedAuditDetails}
+import audit.AuditService
+import audit.AuthenticationDetails
+import audit.UnauthenticatedAuditDetails
 import audit.AuditType.SuccessfulAuthTracking
 import cats.data.Ior
 import com.kenshoo.play.metrics.Metrics
 import config.Constants._
-import models.{ChannelType, EORINumber, TURN}
+import models.ChannelType
+import models.EORINumber
+import models.TURN
 import models.request.AuthenticatedRequest
 import play.api.Logging
 import play.api.mvc.ActionRefiner
@@ -40,7 +44,8 @@ import metrics.HasMetrics
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
-private[actions] class AuthenticateAction @Inject()(override val authConnector: AuthConnector, val metrics: Metrics, auditService: AuditService)(implicit val executionContext: ExecutionContext, val headerCarrier: HeaderCarrier)
+private[actions] class AuthenticateAction @Inject()(override val authConnector: AuthConnector, val metrics: Metrics, auditService: AuditService)(
+  implicit val executionContext: ExecutionContext)
     extends ActionRefiner[Request, AuthenticatedRequest]
     with AuthorisedFunctions
     with Logging
@@ -80,10 +85,11 @@ private[actions] class AuthenticateAction @Inject()(override val authConnector: 
             Ior
               .fromOptions(legacyEnrolmentId, newEnrolmentId)
               .map {
-                enrolmentId => {
-                  track(channel, enrolmentId)
-                  Future.successful(Right(AuthenticatedRequest(request, channel, enrolmentId)))
-                }
+                enrolmentId =>
+                  {
+                    track(channel, enrolmentId)
+                    Future.successful(Right(AuthenticatedRequest(request, channel, enrolmentId)))
+                  }
               }
               .getOrElse {
                 Future.failed(InsufficientEnrolments(s"Unable to retrieve enrolment for either $NewEnrolmentKey or $LegacyEnrolmentKey"))
@@ -99,7 +105,7 @@ private[actions] class AuthenticateAction @Inject()(override val authConnector: 
       Left(Unauthorized)
   }
 
-  private def track(channel: ChannelType, enrolmentId: Ior[TURN, EORINumber]) = {
+  private def track(channel: ChannelType, enrolmentId: Ior[TURN, EORINumber])(implicit hc: HeaderCarrier) = {
 
     val enrolmentType = enrolmentId.fold(
       _ => "Legacy",
@@ -113,6 +119,6 @@ private[actions] class AuthenticateAction @Inject()(override val authConnector: 
     val details = AuthenticationDetails(channel, enrolmentType)
     auditService.authAudit(SuccessfulAuthTracking, details)
 
-    counter(s"auth-$channel-$enrolmentType")
+    counter(s"auth-$channel-$enrolmentType").inc()
   }
 }

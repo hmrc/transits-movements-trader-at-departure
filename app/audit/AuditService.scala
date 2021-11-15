@@ -30,9 +30,8 @@ import scala.xml.NodeSeq
 
 class AuditService @Inject()(auditConnector: AuditConnector, messageTranslator: MessageTranslation)(implicit ec: ExecutionContext) extends XmlToJson {
 
-  def authAudit(auditType: AuditType, details: AuthenticationDetails)(implicit hc: HeaderCarrier): Unit = {
+  def authAudit(auditType: AuditType, details: AuthenticationDetails)(implicit hc: HeaderCarrier): Unit =
     auditConnector.sendExplicitAudit(auditType.toString, details)
-  }
 
   def auditEvent(auditType: AuditType, customerId: Ior[TURN, EORINumber], message: Message, channel: ChannelType)(implicit hc: HeaderCarrier): Unit = {
     val details = AuthenticatedAuditDetails(channel, customerId, messageTranslator.translate(message.messageJson))

@@ -19,9 +19,10 @@ package audit
 import audit.AuditType._
 import base.SpecBase
 import cats.data.Ior
+import config.Constants
 import generators.ModelGenerators
 import models.CancellationDecisionResponse
-import models.ChannelType.Api
+import models.ChannelType
 import models.ControlDecisionNotificationResponse
 import models.Departure
 import models.DepartureRejectedResponse
@@ -34,6 +35,7 @@ import models.PositiveAcknowledgementResponse
 import models.ReleaseForTransitResponse
 import models.WriteOffNotificationResponse
 import models.XMLSubmissionNegativeAcknowledgementResponse
+import models.ChannelType.Api
 import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.{eq => eqTo}
 import org.mockito.Mockito.reset
@@ -119,6 +121,25 @@ class AuditServiceSpec extends SpecBase with ScalaCheckPropertyChecks with Befor
             verify(mockAuditConnector, times(1)).sendExplicitAudit(eqTo(nctsAuditResponse(response).toString()), any[AuditDetails]())(any(), any(), any())
             reset(mockAuditConnector)
           }
+      }
+    }
+
+    "must audit auth events" in {
+
+      forAll(Gen.oneOf(ChannelType.values), Gen.oneOf(Seq(Constants.LegacyEnrolmentIdKey, Constants.NewEnrolmentIdKey))) {
+        (channel, enrolmentType) =>
+          val application = baseApplicationBuilder
+            .overrides(bind[AuditConnector].toInstance(mockAuditConnector))
+            .build()
+
+          running(application) {
+            val auditService = application.injector.instanceOf[AuditService]
+            val details      = AuthenticationDetails(channel, enrolmentType)
+            auditService.authAudit(SuccessfulAuthTracking, details)
+
+            verify(mockAuditConnector, times(1)).sendExplicitAudit(eqTo(SuccessfulAuthTracking.toString), eq(details))(any(), any(), any())
+          }
+
       }
     }
   }

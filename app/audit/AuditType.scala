@@ -22,7 +22,7 @@ sealed trait AuditType {}
 
 object AuditType extends Enumerable.Implicits {
 
-  case object SuccessfulAuthTracking                extends AuditType
+  case object SuccessfulAuthTracking extends AuditType
 
   // User
   case object DepartureDeclarationSubmitted         extends AuditType
