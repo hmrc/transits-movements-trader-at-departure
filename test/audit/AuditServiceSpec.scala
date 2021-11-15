@@ -137,7 +137,8 @@ class AuditServiceSpec extends SpecBase with ScalaCheckPropertyChecks with Befor
             val details      = AuthenticationDetails(channel, enrolmentType)
             auditService.authAudit(SuccessfulAuthTracking, details)
 
-            verify(mockAuditConnector, times(1)).sendExplicitAudit(eqTo(SuccessfulAuthTracking.toString), eq(details))(any(), any(), any())
+            verify(mockAuditConnector, times(1)).sendExplicitAudit(eqTo(SuccessfulAuthTracking.toString), eqTo(details))(any(), any(), any())
+            reset(mockAuditConnector)
           }
 
       }
