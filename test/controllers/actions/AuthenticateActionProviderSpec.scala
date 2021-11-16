@@ -16,6 +16,9 @@
 
 package controllers.actions
 
+import audit.AuditService
+import audit.AuthenticationDetails
+import audit.AuditType.SuccessfulAuthTracking
 import models.ChannelType.Web
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
@@ -36,6 +39,8 @@ import uk.gov.hmrc.auth.core.Enrolment
 import uk.gov.hmrc.auth.core.EnrolmentIdentifier
 import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.auth.core.MissingBearerToken
+import org.mockito.ArgumentMatchers.any
+import org.mockito.ArgumentMatchers.{eq => eqTo}
 
 import scala.concurrent.Future
 
@@ -94,6 +99,9 @@ class AuthenticateActionProviderSpec extends AnyFreeSpec with Matchers with Mock
       state = "Activated"
     )
 
+  val mockAuditService = mock[AuditService]
+  when(mockAuditService.authAudit(any(), any())(any())).thenReturn(())
+
   "authenticate" - {
 
     "when a user has valid enrolments" - {
@@ -122,6 +130,7 @@ class AuthenticateActionProviderSpec extends AnyFreeSpec with Matchers with Mock
 
         status(result) mustEqual OK
         contentAsString(result) mustEqual eoriNumber
+        verify(mockAuditService, times(1)).authAudit(eqTo(SuccessfulAuthTracking), eqTo(AuthenticationDetails(Web, newEnrolment.toString)))(any())
       }
 
       "must pass on the user's TURN" in {
@@ -144,6 +153,8 @@ class AuthenticateActionProviderSpec extends AnyFreeSpec with Matchers with Mock
 
         status(result) mustEqual OK
         contentAsString(result) mustEqual turn
+        verify(mockAuditService, times(1)).authAudit(eqTo(SuccessfulAuthTracking), eqTo(AuthenticationDetails(Web, turn)))(any())
+
       }
 
       "must pick user's EORI over their TURN if both enrolments are present" in {
@@ -166,6 +177,7 @@ class AuthenticateActionProviderSpec extends AnyFreeSpec with Matchers with Mock
 
         status(result) mustEqual OK
         contentAsString(result) mustEqual eoriNumber
+        verify(mockAuditService, times(1)).authAudit(eqTo(SuccessfulAuthTracking), eqTo(AuthenticationDetails(Web, newEnrolment.toString)))(any())
       }
 
     }
