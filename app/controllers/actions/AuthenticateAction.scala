@@ -110,7 +110,7 @@ private[actions] class AuthenticateAction @Inject()(override val authConnector: 
     val enrolmentType = enrolmentId.fold(
       _ => "Legacy",
       _ => "Modern",
-      (_, modern) => modern.value
+      (_, _) => "Modern"
     )
 
     val message = s"Auth Successful: $channel:$enrolmentType"
