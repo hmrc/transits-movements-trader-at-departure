@@ -31,8 +31,10 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.concurrent.Promise
 
+trait MigrationRunner
+
 @Singleton
-class MigrationRunner @Inject()(config: Configuration)(implicit ec: ExecutionContext) extends Logging {
+class MigrationRunnerImpl @Inject()(config: Configuration)(implicit ec: ExecutionContext) extends MigrationRunner with Logging {
 
   private lazy val migrationsCompletedPromise = Promise[StandaloneMigrationSuccessEvent]()
   lazy val migrationsCompleted                = migrationsCompletedPromise.future

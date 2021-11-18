@@ -17,6 +17,8 @@
 package controllers.actions
 
 import generators.ModelGenerators
+import migrations.FakeMigrationRunner
+import migrations.MigrationRunner
 import models.DepartureId
 import models.DepartureWithoutMessages
 import org.mockito.ArgumentMatchers.{eq => eqTo, _}
@@ -110,7 +112,8 @@ class AuthenticateGetDepartureWithoutMessagesForReadActionProviderSpec
         val application = applicationBuilder
           .overrides(
             bind[DepartureRepository].toInstance(mockDepartureRepository),
-            bind[AuthConnector].toInstance(mockAuthConnector)
+            bind[AuthConnector].toInstance(mockAuthConnector),
+            bind[MigrationRunner].to[FakeMigrationRunner]
           )
 
         val actionProvider = application.injector().instanceOf[AuthenticatedGetDepartureWithoutMessagesForReadActionProvider]
@@ -136,7 +139,8 @@ class AuthenticateGetDepartureWithoutMessagesForReadActionProviderSpec
         val application = applicationBuilder
           .overrides(
             bind[DepartureRepository].toInstance(mockDepartureRepository),
-            bind[AuthConnector].toInstance(mockAuthConnector)
+            bind[AuthConnector].toInstance(mockAuthConnector),
+            bind[MigrationRunner].to[FakeMigrationRunner]
           )
 
         val actionProvider = application.injector().instanceOf[AuthenticatedGetDepartureWithoutMessagesForReadActionProvider]
@@ -161,7 +165,8 @@ class AuthenticateGetDepartureWithoutMessagesForReadActionProviderSpec
         val application = applicationBuilder
           .overrides(
             bind[DepartureRepository].toInstance(mockDepartureRepository),
-            bind[AuthConnector].toInstance(mockAuthConnector)
+            bind[AuthConnector].toInstance(mockAuthConnector),
+            bind[MigrationRunner].to[FakeMigrationRunner]
           )
 
         val actionProvider = application.injector().instanceOf[AuthenticatedGetDepartureWithoutMessagesForReadActionProvider]
@@ -186,7 +191,8 @@ class AuthenticateGetDepartureWithoutMessagesForReadActionProviderSpec
         val application = applicationBuilder
           .overrides(
             bind[DepartureRepository].toInstance(mockDepartureRepository),
-            bind[AuthConnector].toInstance(mockAuthConnector)
+            bind[AuthConnector].toInstance(mockAuthConnector),
+            bind[MigrationRunner].to[FakeMigrationRunner]
           )
           .build()
 
@@ -218,7 +224,8 @@ class AuthenticateGetDepartureWithoutMessagesForReadActionProviderSpec
         val application = applicationBuilder
           .overrides(
             bind[DepartureRepository].toInstance(mockDepartureRepository),
-            bind[AuthConnector].toInstance(mockAuthConnector)
+            bind[AuthConnector].toInstance(mockAuthConnector),
+            bind[MigrationRunner].to[FakeMigrationRunner]
           )
           .build()
 
@@ -247,7 +254,8 @@ class AuthenticateGetDepartureWithoutMessagesForReadActionProviderSpec
         val application = applicationBuilder
           .overrides(
             bind[DepartureRepository].toInstance(mockDepartureRepository),
-            bind[AuthConnector].toInstance(mockAuthConnector)
+            bind[AuthConnector].toInstance(mockAuthConnector),
+            bind[MigrationRunner].to[FakeMigrationRunner]
           )
 
         val actionProvider = application.injector().instanceOf[AuthenticatedGetDepartureWithoutMessagesForReadActionProvider]
@@ -288,7 +296,8 @@ class AuthenticateGetDepartureWithoutMessagesForReadActionProviderSpec
 
         val application = applicationBuilder
           .overrides(
-            bind[AuthConnector].toInstance(mockAuthConnector)
+            bind[AuthConnector].toInstance(mockAuthConnector),
+            bind[MigrationRunner].to[FakeMigrationRunner]
           )
 
         val actionProvider = application.injector().instanceOf[AuthenticatedGetDepartureWithoutMessagesForReadActionProvider]
@@ -340,7 +349,8 @@ class AuthenticateGetDepartureWithoutMessagesForReadActionProviderSpec
 
         val application = applicationBuilder
           .overrides(
-            bind[AuthConnector].toInstance(mockAuthConnector)
+            bind[AuthConnector].toInstance(mockAuthConnector),
+            bind[MigrationRunner].to[FakeMigrationRunner]
           )
           .build()
 
@@ -396,7 +406,8 @@ class AuthenticateGetDepartureWithoutMessagesForReadActionProviderSpec
 
         val application = applicationBuilder
           .overrides(
-            bind[AuthConnector].toInstance(mockAuthConnector)
+            bind[AuthConnector].toInstance(mockAuthConnector),
+            bind[MigrationRunner].to[FakeMigrationRunner]
           )
           .build()
 

@@ -17,6 +17,8 @@
 package controllers.actions
 
 import generators.ModelGenerators
+import migrations.FakeMigrationRunner
+import migrations.MigrationRunner
 import models.ChannelType.Api
 import models.ChannelType.Web
 import models.DepartureId
@@ -118,7 +120,8 @@ class AuthenticatedGetDepartureWithoutMessagesForWriteActionProviderSpec
           .overrides(
             bind[DepartureRepository].toInstance(mockDepartureRepository),
             bind[AuthConnector].toInstance(mockAuthConnector),
-            bind[LockRepository].toInstance(mockLockRepository)
+            bind[LockRepository].toInstance(mockLockRepository),
+            bind[MigrationRunner].to[FakeMigrationRunner]
           )
           .build()
 
@@ -153,7 +156,8 @@ class AuthenticatedGetDepartureWithoutMessagesForWriteActionProviderSpec
           .overrides(
             bind[DepartureRepository].toInstance(mockDepartureRepository),
             bind[AuthConnector].toInstance(mockAuthConnector),
-            bind[LockRepository].toInstance(mockLockRepository)
+            bind[LockRepository].toInstance(mockLockRepository),
+            bind[MigrationRunner].to[FakeMigrationRunner]
           )
           .build()
 
@@ -187,7 +191,8 @@ class AuthenticatedGetDepartureWithoutMessagesForWriteActionProviderSpec
           .overrides(
             bind[DepartureRepository].toInstance(mockDepartureRepository),
             bind[AuthConnector].toInstance(mockAuthConnector),
-            bind[LockRepository].toInstance(mockLockRepository)
+            bind[LockRepository].toInstance(mockLockRepository),
+            bind[MigrationRunner].to[FakeMigrationRunner]
           )
           .build()
 
@@ -209,15 +214,20 @@ class AuthenticatedGetDepartureWithoutMessagesForWriteActionProviderSpec
 
         val mockAuthConnector: AuthConnector = mock[AuthConnector]
         val mockDepartureRepository          = mock[DepartureRepository]
+        val mockLockRepository               = mock[LockRepository]
 
         when(mockAuthConnector.authorise[Enrolments](any(), any())(any(), any()))
           .thenReturn(Future.successful(validEnrolments))
         when(mockDepartureRepository.getWithoutMessages(any(), eqTo(Api))) thenReturn Future.successful(None)
+        when(mockLockRepository.lock(any())) thenReturn Future.successful(true)
+        when(mockLockRepository.unlock(any())) thenReturn Future.successful(())
 
         val application = applicationBuilder
           .overrides(
             bind[DepartureRepository].toInstance(mockDepartureRepository),
-            bind[AuthConnector].toInstance(mockAuthConnector)
+            bind[AuthConnector].toInstance(mockAuthConnector),
+            bind[LockRepository].toInstance(mockLockRepository),
+            bind[MigrationRunner].to[FakeMigrationRunner]
           )
           .build()
 
@@ -237,15 +247,20 @@ class AuthenticatedGetDepartureWithoutMessagesForWriteActionProviderSpec
 
         val mockAuthConnector: AuthConnector = mock[AuthConnector]
         val mockDepartureRepository          = mock[DepartureRepository]
+        val mockLockRepository               = mock[LockRepository]
 
         when(mockAuthConnector.authorise[Enrolments](any(), any())(any(), any()))
           .thenReturn(Future.successful(validEnrolments))
         when(mockDepartureRepository.getWithoutMessages(any(), eqTo(Api))) thenReturn Future.successful(Some(departure))
+        when(mockLockRepository.lock(any())) thenReturn Future.successful(true)
+        when(mockLockRepository.unlock(any())) thenReturn Future.successful(())
 
         val application = applicationBuilder
           .overrides(
             bind[DepartureRepository].toInstance(mockDepartureRepository),
-            bind[AuthConnector].toInstance(mockAuthConnector)
+            bind[AuthConnector].toInstance(mockAuthConnector),
+            bind[LockRepository].toInstance(mockLockRepository),
+            bind[MigrationRunner].to[FakeMigrationRunner]
           )
           .build()
 
@@ -277,7 +292,8 @@ class AuthenticatedGetDepartureWithoutMessagesForWriteActionProviderSpec
           .overrides(
             bind[DepartureRepository].toInstance(mockDepartureRepository),
             bind[AuthConnector].toInstance(mockAuthConnector),
-            bind[LockRepository].toInstance(mockLockRepository)
+            bind[LockRepository].toInstance(mockLockRepository),
+            bind[MigrationRunner].to[FakeMigrationRunner]
           )
           .build()
 
@@ -325,7 +341,8 @@ class AuthenticatedGetDepartureWithoutMessagesForWriteActionProviderSpec
         val application = applicationBuilder
           .overrides(
             bind[AuthConnector].toInstance(mockAuthConnector),
-            bind[LockRepository].toInstance(mockLockRepository)
+            bind[LockRepository].toInstance(mockLockRepository),
+            bind[MigrationRunner].to[FakeMigrationRunner]
           )
           .build()
 
@@ -354,7 +371,8 @@ class AuthenticatedGetDepartureWithoutMessagesForWriteActionProviderSpec
 
         val application = applicationBuilder
           .overrides(
-            bind[LockRepository].toInstance(mockLockRepository)
+            bind[LockRepository].toInstance(mockLockRepository),
+            bind[MigrationRunner].to[FakeMigrationRunner]
           )
           .build()
 
@@ -402,14 +420,19 @@ class AuthenticatedGetDepartureWithoutMessagesForWriteActionProviderSpec
 
         val departureId = arbitrary[DepartureId].sample.value
 
-        val mockAuthConnector = mock[AuthConnector]
+        val mockAuthConnector  = mock[AuthConnector]
+        val mockLockRepository = mock[LockRepository]
 
         when(mockAuthConnector.authorise[Enrolments](any(), any())(any(), any()))
           .thenReturn(Future.successful(validEnrolments))
+        when(mockLockRepository.lock(any())) thenReturn Future.successful(true)
+        when(mockLockRepository.unlock(any())) thenReturn Future.successful(())
 
         val application = applicationBuilder
           .overrides(
-            bind[AuthConnector].toInstance(mockAuthConnector)
+            bind[LockRepository].toInstance(mockLockRepository),
+            bind[AuthConnector].toInstance(mockAuthConnector),
+            bind[MigrationRunner].to[FakeMigrationRunner]
           )
           .build()
 
@@ -458,14 +481,19 @@ class AuthenticatedGetDepartureWithoutMessagesForWriteActionProviderSpec
 
         val departureId = arbitrary[DepartureId].sample.value
 
-        val mockAuthConnector = mock[AuthConnector]
+        val mockAuthConnector  = mock[AuthConnector]
+        val mockLockRepository = mock[LockRepository]
 
         when(mockAuthConnector.authorise[Enrolments](any(), any())(any(), any()))
           .thenReturn(Future.successful(validEnrolments))
+        when(mockLockRepository.lock(any())) thenReturn Future.successful(true)
+        when(mockLockRepository.unlock(any())) thenReturn Future.successful(())
 
         val application = applicationBuilder
           .overrides(
-            bind[AuthConnector].toInstance(mockAuthConnector)
+            bind[LockRepository].toInstance(mockLockRepository),
+            bind[AuthConnector].toInstance(mockAuthConnector),
+            bind[MigrationRunner].to[FakeMigrationRunner]
           )
           .build()
 

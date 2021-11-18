@@ -109,7 +109,7 @@ class MovementsChangeLogSpec extends SpecBase with IntegrationPatience with Befo
     "addMessageIdToMessages" - {
       "should add message ID to messages in the departures collection" in {
         val repo   = app.injector.instanceOf[DepartureRepository]
-        val runner = app.injector.instanceOf[MigrationRunner]
+        val runner = app.injector.instanceOf[MigrationRunnerImpl]
 
         runner.runMigrations().futureValue
 
