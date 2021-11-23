@@ -18,6 +18,7 @@ package services
 
 import cats.data.ReaderT
 import cats.implicits._
+import models.DepartureOffice
 import models.MessageType
 import models.MovementReferenceNumber
 import models.ParseError
@@ -95,5 +96,12 @@ object XmlMessageParser {
       (xml \ "HEAHEA" \ "DocNumHEA5").text match {
         case mrnString if mrnString.nonEmpty => Right(MovementReferenceNumber(mrnString))
         case _                               => Left(EmptyMovementReferenceNumber("The element 'DocNumHEA5' must contain a value."))
+    })
+
+  val departureOfficeR: ReaderT[ParseHandler, NodeSeq, DepartureOffice] =
+    ReaderT[ParseHandler, NodeSeq, DepartureOffice](xml =>
+      (xml \ "CUSOFFDEPEPT").text match {
+        case depOffice if depOffice.nonEmpty => Right(DepartureOffice(depOffice))
+        case _                               => Left(EmptyOfficeOfDeparture("The element 'CUSOFFDEPEPT' must contain a value."))
     })
 }

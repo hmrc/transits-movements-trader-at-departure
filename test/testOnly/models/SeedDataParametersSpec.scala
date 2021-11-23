@@ -41,7 +41,7 @@ class SeedDataParametersSpec extends SpecBase with ScalaCheckDrivenPropertyCheck
             number =>
               val startEori = SeedEori("ZZ", 11, 12)
 
-              val seedDataParameters = SeedDataParameters(number, 2, DepartureId(0), Some(startEori), Some(ChannelType.Web))
+              val seedDataParameters = SeedDataParameters(number, 2, DepartureId(0), Some(startEori), departureOffice = None, Some(ChannelType.Web))
 
               val result = seedDataParameters.seedData.map(_._2).toSet
 
@@ -52,7 +52,7 @@ class SeedDataParametersSpec extends SpecBase with ScalaCheckDrivenPropertyCheck
         "the values of the eori must be increasing from the start value provided" in {
           val startEori = SeedEori("ZZ", 11, 12)
 
-          val seedDataParameters = SeedDataParameters(2, 2, DepartureId(0), Some(startEori), Some(ChannelType.Web))
+          val seedDataParameters = SeedDataParameters(2, 2, DepartureId(0), Some(startEori), departureOffice = None, Some(ChannelType.Web))
 
           val result = seedDataParameters.seedData.map(_._2).toList
 
@@ -63,7 +63,7 @@ class SeedDataParametersSpec extends SpecBase with ScalaCheckDrivenPropertyCheck
           "when there is a start eori specified" in {
             val startEori = SeedEori("ZZ", 11, 12)
 
-            val seedDataParameters = SeedDataParameters(3, 2, DepartureId(0), Some(startEori), Some(ChannelType.Web))
+            val seedDataParameters = SeedDataParameters(3, 2, DepartureId(0), Some(startEori), departureOffice = None, Some(ChannelType.Web))
 
             val result = seedDataParameters.seedData.map(_._2).toList
 
@@ -72,7 +72,7 @@ class SeedDataParametersSpec extends SpecBase with ScalaCheckDrivenPropertyCheck
 
           "when no start eori is specified" in {
 
-            val seedDataParameters = SeedDataParameters(3, 2, DepartureId(0), None, None)
+            val seedDataParameters = SeedDataParameters(3, 2, DepartureId(0), None, departureOffice = None, None)
 
             val result = seedDataParameters.seedData.map(_._2).toList
 
@@ -86,7 +86,7 @@ class SeedDataParametersSpec extends SpecBase with ScalaCheckDrivenPropertyCheck
         "there must be the same number as the configure number of movements" in {
           forAll(Gen.chooseNum(1, 100)) {
             number =>
-              val seedDataParameters = SeedDataParameters(number, 2, DepartureId(0), None, None)
+              val seedDataParameters = SeedDataParameters(number, 2, DepartureId(0), None, departureOffice = None, None)
 
               val result = seedDataParameters.seedData.map(_._1).toSet
 
@@ -95,7 +95,7 @@ class SeedDataParametersSpec extends SpecBase with ScalaCheckDrivenPropertyCheck
         }
 
         "the values of the DepartureId must be increasing from the start value provided" in {
-          val seedDataParameters = SeedDataParameters(2, 2, DepartureId(0), None, None)
+          val seedDataParameters = SeedDataParameters(2, 2, DepartureId(0), None, departureOffice = None, None)
 
           val result = seedDataParameters.seedData.map(_._2).toList
 
@@ -104,7 +104,7 @@ class SeedDataParametersSpec extends SpecBase with ScalaCheckDrivenPropertyCheck
 
         "the values of the DepartureId must have a difference of 1" in {
 
-          val seedDataParameters = SeedDataParameters(3, 2, DepartureId(101), None, None)
+          val seedDataParameters = SeedDataParameters(3, 2, DepartureId(101), None, departureOffice = None, None)
 
           val result = seedDataParameters.seedData.map(_._1).toList
 
@@ -124,7 +124,7 @@ class SeedDataParametersSpec extends SpecBase with ScalaCheckDrivenPropertyCheck
       "movement values" - {
         "repeat for each EORI according to the number of movements per user" in {
           val movementsPerUser   = 3
-          val seedDataParameters = SeedDataParameters(2, movementsPerUser, DepartureId(0), None, None)
+          val seedDataParameters = SeedDataParameters(2, movementsPerUser, DepartureId(0), None, departureOffice = None, None)
 
           val result = seedDataParameters.seedData.map(x => x._2).toList
 

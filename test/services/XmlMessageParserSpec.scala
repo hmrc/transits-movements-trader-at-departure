@@ -19,8 +19,8 @@ package services
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
-
 import base.SpecBase
+import models.DepartureOffice
 import models.MessageType
 import models.MovementReferenceNumber
 import models.ParseError.LocalDateParseFailure
@@ -119,6 +119,7 @@ class XmlMessageParserSpec extends SpecBase with EitherValues {
     }
 
   }
+
   "correctRootNodeR" - {
     "returns Right if the root node is as expected" in {
 
@@ -231,6 +232,30 @@ class XmlMessageParserSpec extends SpecBase with EitherValues {
         </CC007A>
 
       val result = XmlMessageParser.mrnR(movement)
+      result.isLeft mustBe true
+    }
+
+  }
+
+  "departureOfficeR" - {
+    "returns the office of departure from the CC015B node" in {
+      val departureOffice = DepartureOffice("GB000060")
+
+      val movement =
+        <CC015B>
+            <CUSOFFDEPEPT>GB000060</CUSOFFDEPEPT>
+        </CC015B>
+
+      XmlMessageParser.departureOfficeR(movement) mustEqual Right(departureOffice)
+
+    }
+
+    "returns Left if CUSOFFDEPEPT node is missing" in {
+      val movement =
+        <CC015B>
+        </CC015B>
+
+      val result = XmlMessageParser.departureOfficeR(movement)
       result.isLeft mustBe true
     }
 

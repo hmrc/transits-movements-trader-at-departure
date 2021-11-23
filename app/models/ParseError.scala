@@ -25,6 +25,7 @@ object ParseError {
   case class LocalTimeParseFailure(message: String)        extends ParseError
   case class InvalidRootNode(message: String)              extends ParseError
   case class EmptyMovementReferenceNumber(message: String) extends ParseError
+  case class EmptyOfficeOfDeparture(message: String)       extends ParseError
   case class EmptyLocalReferenceNumber(message: String)    extends ParseError
   case class EmptyNodeSeq(message: String)                 extends ParseError
 }

@@ -20,6 +20,7 @@ import base.SpecBase
 import cats.syntax.all._
 import models.ChannelType
 import models.DepartureId
+import models.DepartureOffice
 import models.DepartureStatus
 import models.MessageStatus
 import models.MessageType
@@ -70,6 +71,7 @@ class MovementsChangeLogSpec extends SpecBase with IntegrationPatience with Befo
           yield
             Json.obj(
               "_id"                      -> id.index,
+              "departureOffice"          -> DepartureOffice("000060"),
               "channel"                  -> ChannelType.Web.toString,
               "eoriNumber"               -> eori,
               "referenceNumber"          -> Random.alphanumeric.take(20).mkString,

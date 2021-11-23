@@ -52,13 +52,15 @@ class DepartureService @Inject()(departureIdRepository: DepartureIdRepository)(i
       .map {
         departureId =>
           (for {
-            _         <- correctRootNodeR(MessageType.DepartureDeclaration)
-            dateTime  <- dateTimeOfPrepR
-            reference <- referenceR
-            message   <- makeMessageWithStatus(departureId, MessageId(1), 1, MessageType.DepartureDeclaration)
+            _               <- correctRootNodeR(MessageType.DepartureDeclaration)
+            dateTime        <- dateTimeOfPrepR
+            departureOffice <- departureOfficeR
+            reference       <- referenceR
+            message         <- makeMessageWithStatus(departureId, MessageId(1), 1, MessageType.DepartureDeclaration)
           } yield
             Departure(
               departureId,
+              Some(departureOffice),
               channelType,
               // Prefer to use EORI number
               enrolmentId.fold(

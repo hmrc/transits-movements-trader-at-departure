@@ -205,7 +205,7 @@ class DepartureRepositorySpec
       "must return None when a departure exists, but with a different channel type" in {
         database.flatMap(_.drop()).futureValue
 
-        val departure = arbitrary[Departure].sample.value copy (departureId = DepartureId(1), Api)
+        val departure = arbitrary[Departure].sample.value copy (departureId = DepartureId(1), channel = Api)
 
         service.insert(departure).futureValue
         val result = service.get(DepartureId(1), Web)
@@ -249,7 +249,7 @@ class DepartureRepositorySpec
       "must return None when a departure exists, but with a different channel type" in {
         database.flatMap(_.drop()).futureValue
 
-        val departure = arbitrary[Departure].sample.value copy (departureId = DepartureId(1), Api)
+        val departure = arbitrary[Departure].sample.value copy (departureId = DepartureId(1), channel = Api)
 
         service.insert(departure).futureValue
         val result = service.get(DepartureId(1), Web)
@@ -293,7 +293,7 @@ class DepartureRepositorySpec
       "must return None when a departure exists, but with a different channel type" in {
         database.flatMap(_.drop()).futureValue
 
-        val departure = arbitrary[Departure].sample.value copy (departureId = DepartureId(1), Api)
+        val departure = arbitrary[Departure].sample.value copy (departureId = DepartureId(1), channel = Api)
 
         service.insert(departure).futureValue
         val result = service.get(DepartureId(1), Web)

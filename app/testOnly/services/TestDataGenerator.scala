@@ -20,11 +20,12 @@ import cats.data.NonEmptyList
 import models.ChannelType
 import models.Departure
 import models.DepartureId
-import models.DepartureStatus.DepartureSubmitted
+import models.DepartureOffice
 import models.MessageId
 import models.MessageStatus
-import models.MessageType.DepartureDeclaration
 import models.MessageWithStatus
+import models.DepartureStatus.DepartureSubmitted
+import models.MessageType.DepartureDeclaration
 import testOnly.models.SeedEori
 
 import java.time.Clock
@@ -36,7 +37,7 @@ import scala.xml.XML
 
 private[services] class TestDataGenerator @Inject()(clock: Clock) {
 
-  def departureMovement(eori: SeedEori, departureId: DepartureId, channelType: ChannelType): Departure = {
+  def departureMovement(eori: SeedEori, departureId: DepartureId, departureOffice: Option[DepartureOffice], channelType: ChannelType): Departure = {
 
     val dateTime = LocalDateTime.now(clock)
 
@@ -48,6 +49,7 @@ private[services] class TestDataGenerator @Inject()(clock: Clock) {
 
     Departure(
       departureId,
+      departureOffice,
       channelType,
       eori.format,
       None,

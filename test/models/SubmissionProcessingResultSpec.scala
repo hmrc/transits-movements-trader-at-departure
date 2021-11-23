@@ -62,7 +62,8 @@ class SubmissionProcessingResultSpec extends SpecBase with ScalaCheckDrivenPrope
         )
       ),
       nextMessageCorrelationId = 2,
-      notificationBox = None
+      notificationBox = None,
+      departureOffice = None
     )
 
     "must convert from SubmissionProcessingResult.SubmissionFailureInternal to Left(SubmissionFailureInternal)" in {

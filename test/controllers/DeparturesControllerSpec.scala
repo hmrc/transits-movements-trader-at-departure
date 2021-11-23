@@ -91,6 +91,7 @@ class DeparturesControllerSpec
       <SynVerNumMES2>123</SynVerNumMES2>
       <DatOfPreMES9>{Format.dateFormatted(localDate)}</DatOfPreMES9>
       <TimOfPreMES10>{Format.timeFormatted(localTime)}</TimOfPreMES10>
+      <CUSOFFDEPEPT>GB000060</CUSOFFDEPEPT>
       <HEAHEA>
         <RefNumHEA4>{mrn.value}</RefNumHEA4>
       </HEAHEA>
@@ -102,6 +103,7 @@ class DeparturesControllerSpec
       <MesSenMES3>{MessageSender(departureId, messageCorrelationId).toString}</MesSenMES3>
       <DatOfPreMES9>{Format.dateFormatted(localDate)}</DatOfPreMES9>
       <TimOfPreMES10>{Format.timeFormatted(localTime)}</TimOfPreMES10>
+      <CUSOFFDEPEPT>GB000060</CUSOFFDEPEPT>
       <HEAHEA>
         <RefNumHEA4>{mrn.value}</RefNumHEA4>
       </HEAHEA>
@@ -128,7 +130,8 @@ class DeparturesControllerSpec
     nextMessageCorrelationId = movementMessage(1).messageCorrelationId + 1,
     messages = NonEmptyList.one(movementMessage(1)),
     referenceNumber = "referenceNumber",
-    notificationBox = None
+    notificationBox = None,
+    departureOffice = None
   )
 
   "/POST" - {

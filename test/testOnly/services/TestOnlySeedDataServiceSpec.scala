@@ -44,7 +44,7 @@ class TestOnlySeedDataServiceSpec extends SpecBase with ScalaCheckDrivenProperty
       val seedEori  = SeedEori("ZZ", 1, 12)
       val seedEori1 = SeedEori("ZZ", 2, 12)
 
-      val seedDataParameters = SeedDataParameters(2, 2, DepartureId(0), None, None)
+      val seedDataParameters = SeedDataParameters(2, 2, DepartureId(0), None, departureOffice = None, None)
 
       val expectedResult = Seq(
         (DepartureId(0), seedEori.format),
@@ -64,7 +64,7 @@ class TestOnlySeedDataServiceSpec extends SpecBase with ScalaCheckDrivenProperty
 
     "returns an iterator of departures with dynamic xml" in {
 
-      val seedDataParameters = SeedDataParameters(2, 2, DepartureId(0), None, None)
+      val seedDataParameters = SeedDataParameters(2, 2, DepartureId(0), None, departureOffice = None, None)
 
       val expectedEori1 = SeedEori("ZZ", 1, 12)
       val expectedEori2 = SeedEori("ZZ", 2, 12)
@@ -88,7 +88,7 @@ class TestOnlySeedDataServiceSpec extends SpecBase with ScalaCheckDrivenProperty
 
       forAll(genInt, genInt) {
         (eoriCount, mrnCount) =>
-          val seedDataParameters = SeedDataParameters(eoriCount, mrnCount, DepartureId(0), None, None)
+          val seedDataParameters = SeedDataParameters(eoriCount, mrnCount, DepartureId(0), None, departureOffice = None, None)
 
           val iterator = testOnlySeedDataService.seedDepartures(seedDataParameters)
 

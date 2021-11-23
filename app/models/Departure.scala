@@ -25,6 +25,8 @@ import java.time.LocalDateTime
 trait BaseDeparture {
   def departureId: DepartureId
 
+  def departureOffice: Option[DepartureOffice]
+
   def channel: ChannelType
 
   def eoriNumber: String
@@ -44,6 +46,7 @@ trait BaseDeparture {
 
 case class Departure(
   departureId: DepartureId,
+  departureOffice: Option[DepartureOffice],
   channel: ChannelType,
   eoriNumber: String,
   movementReferenceNumber: Option[MovementReferenceNumber],
@@ -74,6 +77,7 @@ object Departure {
   implicit val readsDeparture: Reads[Departure] =
     (
       (__ \ "_id").read[DepartureId] and
+        (__ \ "departureOffice").readNullable[DepartureOffice] and
         (__ \ "channel").read[ChannelType] and
         (__ \ "eoriNumber").read[String] and
         (__ \ "movementReferenceNumber").readNullable[MovementReferenceNumber] and
@@ -91,6 +95,7 @@ object Departure {
   implicit def writesDeparture(implicit write: Writes[LocalDateTime]): OWrites[Departure] =
     (
       (__ \ "_id").write[DepartureId] and
+        (__ \ "departureOffice").writeNullable[DepartureOffice] and
         (__ \ "channel").write[ChannelType] and
         (__ \ "eoriNumber").write[String] and
         (__ \ "movementReferenceNumber").writeNullable[MovementReferenceNumber] and

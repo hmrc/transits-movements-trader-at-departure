@@ -58,6 +58,7 @@ class PDFRetrievalServiceSpec extends SpecBase with JsonHelper with IntegrationP
   "PDFRetrievalService" - {
     val departure = Departure(
       DepartureId(1),
+      departureOffice = None,
       ChannelType.Web,
       "AB123456C",
       None,

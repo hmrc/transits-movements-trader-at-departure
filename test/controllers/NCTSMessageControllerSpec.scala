@@ -65,7 +65,8 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
         )
       ),
       nextMessageCorrelationId = 2,
-      notificationBox = None
+      notificationBox = None,
+      departureOffice = None
     )
 
     protected val requestMrnAllocatedBody =

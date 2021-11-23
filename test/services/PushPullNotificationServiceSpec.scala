@@ -192,7 +192,8 @@ class PushPullNotificationServiceSpec extends SpecBase with BeforeAndAfterEach w
           )
         ),
         nextMessageCorrelationId = 2,
-        notificationBox = None
+        notificationBox = None,
+        departureOffice = None
       )
 
       "should return a unit value when connector call succeeds" in {

@@ -31,6 +31,7 @@ import play.api.libs.functional.syntax._
 
 case class DepartureWithoutMessages(
   departureId: DepartureId,
+  departureOffice: Option[DepartureOffice],
   channel: ChannelType,
   eoriNumber: String,
   movementReferenceNumber: Option[MovementReferenceNumber],
@@ -49,6 +50,7 @@ object DepartureWithoutMessages {
   def fromDeparture(departure: Departure) =
     DepartureWithoutMessages(
       departure.departureId,
+      departure.departureOffice,
       departure.channel,
       departure.eoriNumber,
       departure.movementReferenceNumber,
@@ -72,6 +74,7 @@ object DepartureWithoutMessages {
   implicit val readsDeparture: Reads[DepartureWithoutMessages] =
     (
       (__ \ "_id").read[DepartureId] and
+        (__ \ "departureOffice").readNullable[DepartureOffice] and
         (__ \ "channel").read[ChannelType] and
         (__ \ "eoriNumber").read[String] and
         (__ \ "movementReferenceNumber").readNullable[MovementReferenceNumber] and
@@ -89,6 +92,7 @@ object DepartureWithoutMessages {
 
   val projection: JsObject = Json.obj(
     "_id"                      -> 1,
+    "departureOffice"          -> 1,
     "channel"                  -> 1,
     "eoriNumber"               -> 1,
     "movementReferenceNumber"  -> 1,

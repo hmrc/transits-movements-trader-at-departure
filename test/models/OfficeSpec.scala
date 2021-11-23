@@ -14,20 +14,22 @@
  * limitations under the License.
  */
 
-package testOnly.services
+package models
 
-import models.Departure
-import testOnly.models.SeedDataParameters
+import org.scalatest.freespec.AnyFreeSpec
+import org.scalatest.matchers.must.Matchers
 
-import javax.inject.Inject
+class OfficeSpec extends AnyFreeSpec with Matchers {
 
-private[testOnly] class TestOnlySeedDataService @Inject()(testDataGenerator: TestDataGenerator) {
-
-  def seedDepartures(seedDataParameters: SeedDataParameters): Iterator[Departure] =
-    seedDataParameters.seedData
-      .map {
-        case (id, eori) =>
-          testDataGenerator.departureMovement(eori, id, seedDataParameters.departureOfficeType, seedDataParameters.channelType)
+  "Office" - {
+    "isGB" - {
+      "must return true when the office starts with GB" in {
+        DepartureOffice("GB123456").isGB mustBe true
       }
 
+      "must return false when the office doesn't start with GB" in {
+        DepartureOffice("XI123").isGB mustBe false
+      }
+    }
+  }
 }

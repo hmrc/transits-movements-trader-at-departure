@@ -63,23 +63,25 @@ class DepartureServiceSpec extends SpecBase with JsonHelper with IntegrationPati
 
       val inputMovement =
         <CC015B>
-        <SynVerNumMES2>123</SynVerNumMES2>
-        <DatOfPreMES9>{Format.dateFormatted(dateOfPrep)}</DatOfPreMES9>
-        <TimOfPreMES10>{Format.timeFormatted(timeOfPrep)}</TimOfPreMES10>
-        <HEAHEA>
-          <RefNumHEA4>{ref}</RefNumHEA4>
-        </HEAHEA>
-      </CC015B>
+          <SynVerNumMES2>123</SynVerNumMES2>
+          <DatOfPreMES9>{Format.dateFormatted(dateOfPrep)}</DatOfPreMES9>
+          <TimOfPreMES10>{Format.timeFormatted(timeOfPrep)}</TimOfPreMES10>
+          <CUSOFFDEPEPT>GB000060</CUSOFFDEPEPT>
+          <HEAHEA>
+            <RefNumHEA4>{ref}</RefNumHEA4>
+          </HEAHEA>
+        </CC015B>
 
       val savedMovement =
         <CC015B>
-        <SynVerNumMES2>123</SynVerNumMES2><MesSenMES3>{MessageSender(id, 1).toString}</MesSenMES3>
-        <DatOfPreMES9>{Format.dateFormatted(dateOfPrep)}</DatOfPreMES9>
-        <TimOfPreMES10>{Format.timeFormatted(timeOfPrep)}</TimOfPreMES10>
-        <HEAHEA>
-          <RefNumHEA4>{ref}</RefNumHEA4>
-        </HEAHEA>
-      </CC015B>
+          <SynVerNumMES2>123</SynVerNumMES2><MesSenMES3>{MessageSender(id, 1).toString}</MesSenMES3>
+          <DatOfPreMES9>{Format.dateFormatted(dateOfPrep)}</DatOfPreMES9>
+          <TimOfPreMES10>{Format.timeFormatted(timeOfPrep)}</TimOfPreMES10>
+          <CUSOFFDEPEPT>GB000060</CUSOFFDEPEPT>
+          <HEAHEA>
+            <RefNumHEA4>{ref}</RefNumHEA4>
+          </HEAHEA>
+        </CC015B>
 
       val expectedDeparture = Departure(
         departureId = id,
@@ -102,7 +104,8 @@ class DepartureServiceSpec extends SpecBase with JsonHelper with IntegrationPati
           )
         ),
         nextMessageCorrelationId = 2,
-        notificationBox = None
+        notificationBox = None,
+        departureOffice = Some(DepartureOffice("GB000060"))
       )
 
       val result = service.createDeparture(Ior.right(EORINumber(eori)), inputMovement, Api, None).futureValue

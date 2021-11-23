@@ -74,7 +74,8 @@ class DepartureRetrievalServiceSpec extends SpecBase {
         )
       ),
       nextMessageCorrelationId = 2,
-      notificationBox = None
+      notificationBox = None,
+      departureOffice = None
     )
   }
 

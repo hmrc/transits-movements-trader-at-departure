@@ -18,6 +18,7 @@ package testOnly.models
 
 import models.ChannelType
 import models.DepartureId
+import models.DepartureOffice
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
@@ -26,6 +27,7 @@ private[testOnly] class SeedDataParameters(
   val movementsPerUser: Int,
   val startDepartureId: DepartureId,
   firstEoriValue: Option[SeedEori] = None,
+  departureOffice: Option[DepartureOffice],
   channel: Option[ChannelType]
 ) {
 
@@ -39,6 +41,8 @@ private[testOnly] class SeedDataParameters(
   val numberOfMovements: Int = numberOfUsers * movementsPerUser
 
   val channelType: ChannelType = channel.getOrElse(ChannelType.Web)
+
+  val departureOfficeType: Option[DepartureOffice] = departureOffice
 
   private val departureIdIterator: Iterator[DepartureId] =
     (startDepartureId.index to (startDepartureId.index + numberOfMovements)).iterator
@@ -64,8 +68,9 @@ object SeedDataParameters {
             movementsPerUser: Int,
             startDepartureId: DepartureId,
             firstEoriValue: Option[SeedEori],
+            departureOffice: Option[DepartureOffice],
             channel: Option[ChannelType]): SeedDataParameters =
-    new SeedDataParameters(numberOfUsers, movementsPerUser, startDepartureId, firstEoriValue, channel)
+    new SeedDataParameters(numberOfUsers, movementsPerUser, startDepartureId, firstEoriValue, departureOffice, channel)
 
   implicit val reads: Reads[SeedDataParameters] =
     (
@@ -73,6 +78,7 @@ object SeedDataParameters {
         (__ \ "movementsPerUser").read[Int] and
         (__ \ "startDepartureId").read[DepartureId] and
         (__ \ "startEori").readNullable[SeedEori] and
+        (__ \ "departureOffice").readNullable[DepartureOffice] and
         (__ \ "channel").readNullable[ChannelType]
     )(SeedDataParameters.apply _)
 }

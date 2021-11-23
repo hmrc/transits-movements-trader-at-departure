@@ -18,15 +18,7 @@ package api
 
 import api.helpers.ApiSpecBase
 import cats.data.NonEmptyList
-import models.ChannelType
-import models.Departure
-import models.DepartureId
-import models.DepartureStatus
-import models.MessageId
-import models.MessageStatus
-import models.MessageType
-import models.MessageWithStatus
-import models.MessageWithoutStatus
+import models.{ChannelType, Departure, DepartureId, DepartureOffice, DepartureStatus, MessageId, MessageStatus, MessageType, MessageWithStatus, MessageWithoutStatus}
 import play.api.Application
 import play.api.http.ContentTypes
 import play.api.http.HeaderNames
@@ -66,6 +58,7 @@ class PDFRetrievalControllerISpec extends ApiSpecBase with JsonHelper {
 
       val departure: Departure = Departure(
         DepartureId(12),
+        Some(DepartureOffice("GB000060")),
         ChannelType.Web,
         "1234567",
         None,
@@ -141,6 +134,7 @@ class PDFRetrievalControllerISpec extends ApiSpecBase with JsonHelper {
 
       val departure: Departure = Departure(
         DepartureId(12),
+        Some(DepartureOffice("GB000060")),
         ChannelType.Web,
         "1234567",
         None,
@@ -216,6 +210,7 @@ class PDFRetrievalControllerISpec extends ApiSpecBase with JsonHelper {
 
       val departure: Departure = Departure(
         DepartureId(12),
+        Some(DepartureOffice("GB000060")),
         ChannelType.Web,
         "1234567",
         None,

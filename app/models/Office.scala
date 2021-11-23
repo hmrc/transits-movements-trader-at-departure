@@ -14,20 +14,26 @@
  * limitations under the License.
  */
 
-package testOnly.services
+package models
 
-import models.Departure
-import testOnly.models.SeedDataParameters
+import play.api.libs.json.JsString
+import play.api.libs.json.Reads
+import play.api.libs.json.Writes
+import play.api.libs.json.__
 
-import javax.inject.Inject
+sealed abstract class Office {
+  def value: String
+  def isGB: Boolean = value.startsWith("GB")
+}
 
-private[testOnly] class TestOnlySeedDataService @Inject()(testDataGenerator: TestDataGenerator) {
+final case class DepartureOffice(value: String) extends Office
 
-  def seedDepartures(seedDataParameters: SeedDataParameters): Iterator[Departure] =
-    seedDataParameters.seedData
-      .map {
-        case (id, eori) =>
-          testDataGenerator.departureMovement(eori, id, seedDataParameters.departureOfficeType, seedDataParameters.channelType)
-      }
+object DepartureOffice {
 
+  implicit lazy val reads: Reads[DepartureOffice] = __.read[String].map(DepartureOffice.apply)
+
+  implicit lazy val writes: Writes[DepartureOffice] = Writes {
+    departureOffice =>
+      JsString(departureOffice.value)
+  }
 }

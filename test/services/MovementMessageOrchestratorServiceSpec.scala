@@ -80,6 +80,7 @@ class MovementMessageOrchestratorServiceSpec extends SpecBase {
 
     protected val initialDeparture: Departure = Departure(
       departureId = DepartureId(1),
+      departureOffice = None,
       channel = Web,
       movementReferenceNumber = None,
       referenceNumber = "SomeREf",

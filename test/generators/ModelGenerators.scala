@@ -83,6 +83,13 @@ trait ModelGenerators extends BaseGenerators with JavaTimeGenerators with JsonHe
       Gen.oneOf(MessageStatus.values)
     }
 
+  implicit lazy val arbitraryDepartureOffice: Arbitrary[DepartureOffice] =
+    Arbitrary {
+      for {
+        id <- intWithMaxLength(9)
+      } yield DepartureOffice(s"GB$id")
+    }
+
   implicit lazy val arbitraryDepartureId: Arbitrary[DepartureId] =
     Arbitrary {
       for {
@@ -157,6 +164,7 @@ trait ModelGenerators extends BaseGenerators with JavaTimeGenerators with JsonHe
     Arbitrary {
       for {
         id              <- arbitrary[DepartureId]
+        departureOffice <- arbitrary[DepartureOffice]
         channel         <- arbitrary[ChannelType]
         eN              <- arbitrary[String]
         mrn             <- arbitrary[MovementReferenceNumber]
@@ -166,7 +174,8 @@ trait ModelGenerators extends BaseGenerators with JavaTimeGenerators with JsonHe
         lastUpdated     <- arbitrary[LocalDateTime]
         messages        <- nonEmptyListOfMaxLength[MessageWithStatus](2)
         notificationBox <- arbitrary[Option[Box]]
-      } yield models.Departure(id, channel, eN, Some(mrn), rN, status, created, lastUpdated, messages.length + 1, messages, notificationBox)
+      } yield
+        models.Departure(id, Some(departureOffice), channel, eN, Some(mrn), rN, status, created, lastUpdated, messages.length + 1, messages, notificationBox)
     }
 
   implicit lazy val arbitraryDepartureWithoutMessages: Arbitrary[DepartureWithoutMessages] =

@@ -129,6 +129,7 @@ class MessagesControllerSpec
   } yield
     departure.copy(
       departureId,
+      departureOffice = None,
       Api,
       "eori",
       Some(mrn),
