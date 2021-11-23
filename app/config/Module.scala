@@ -16,14 +16,14 @@
 
 package config
 
-import java.time.Clock
-
 import com.google.inject.AbstractModule
 import controllers.actions._
 import repositories.DepartureIdRepository
 import repositories.DepartureRepository
 import migrations.MigrationRunner
+import utils.ConfiguredXmlToJsonConverter
 import utils.MessageTranslation
+import utils.XmlToJsonConverter
 import java.time.Clock
 
 class Module extends AbstractModule {
@@ -38,6 +38,7 @@ class Module extends AbstractModule {
     bind(classOf[MessageTranslation]).asEagerSingleton()
     bind(classOf[Clock]).toInstance(Clock.systemUTC)
     bind(classOf[MigrationRunner]).asEagerSingleton()
+    bind(classOf[XmlToJsonConverter]).to(classOf[ConfiguredXmlToJsonConverter])
   }
 
 }
