@@ -41,13 +41,13 @@ class PushPullNotificationService @Inject()(connector: PushPullNotificationConne
       .getBox(clientId)
       .map {
         case Left(UpstreamErrorResponse(message, statusCode, _, _)) =>
-          if (statusCode != NOT_FOUND) logger.warn(s"Error $statusCode received while fetching notification box: $message")
+          if (statusCode != NOT_FOUND) logger.warn(s"Unable to retrieve box id from PPNS. Response from PPNS: Error $statusCode $message")
           None
         case Right(box) => Some(box)
       }
       .recover {
         case NonFatal(e) =>
-          logger.error(s"Error while fetching notification box", e)
+          logger.error("Unable to retrieve box id from PPNS", e)
           None
       }
 
@@ -56,13 +56,13 @@ class PushPullNotificationService @Inject()(connector: PushPullNotificationConne
       .postNotification(boxId, notification)
       .map {
         case Left(UpstreamErrorResponse(message, statusCode, _, _)) =>
-          logger.warn(s"Error $statusCode received while sending notification for boxId $boxId: $message")
+          logger.warn(s"Unable to post message to PPNS. Response from PPNS: Error $statusCode $message")
         case Right(_) => ()
 
       }
       .recover {
         case NonFatal(e) =>
-          logger.error(s"Error while sending push notification", e)
+          logger.error("Unable to post message to PPNS", e)
       }
 
   def sendPushNotificationIfBoxExists(
