@@ -17,7 +17,7 @@
 package repositories
 
 import com.typesafe.config.ConfigFactory
-import migrations.MigrationRunner
+import migrations.MigrationRunnerImpl
 import org.scalatest._
 import org.scalatest.concurrent._
 import org.scalatest.time.{Seconds, Span}
@@ -48,7 +48,7 @@ trait MongoSuite extends ScalaFutures {
 
     val departureRepository = app.injector.instanceOf[DepartureRepository]
     val lockRepository = app.injector.instanceOf[LockRepository]
-    val migrationRunner = app.injector.instanceOf[MigrationRunner]
+    val migrationRunner = app.injector.instanceOf[MigrationRunnerImpl]
 
     val services = Seq(departureRepository.started, lockRepository.started, migrationRunner.migrationsCompleted)
 

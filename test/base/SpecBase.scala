@@ -36,6 +36,8 @@ import uk.gov.hmrc.http.HeaderCarrier
 import scala.xml.Utility
 import scala.xml.XML
 import com.kenshoo.play.metrics.Metrics
+import migrations.MigrationRunner
+import migrations.FakeMigrationRunner
 import utils.TestMetrics
 
 trait SpecBase extends AnyFreeSpec with Matchers with MockitoSugar with ScalaFutures with OptionValues with EitherValues {
@@ -51,7 +53,8 @@ trait SpecBase extends AnyFreeSpec with Matchers with MockitoSugar with ScalaFut
       )
       .overrides(
         bind[AuthenticateActionProvider].to[FakeAuthenticateActionProvider],
-        bind[Metrics].toInstance(new TestMetrics)
+        bind[Metrics].toInstance(new TestMetrics),
+        bind[MigrationRunner].to[FakeMigrationRunner]
       )
 
   implicit val messageWithStatusEquality: Equality[MessageWithStatus] = (a: MessageWithStatus, b: Any) =>

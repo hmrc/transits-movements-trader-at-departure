@@ -23,6 +23,7 @@ import controllers.actions._
 import repositories.DepartureIdRepository
 import repositories.DepartureRepository
 import migrations.MigrationRunner
+import migrations.MigrationRunnerImpl
 import utils.MessageTranslation
 import java.time.Clock
 
@@ -37,7 +38,7 @@ class Module extends AbstractModule {
     bind(classOf[AuthenticatedGetDepartureWithoutMessagesForReadActionProvider]).to(classOf[AuthenticatedGetDepartureWithoutMessagesForReadActionProviderImpl])
     bind(classOf[MessageTranslation]).asEagerSingleton()
     bind(classOf[Clock]).toInstance(Clock.systemUTC)
-    bind(classOf[MigrationRunner]).asEagerSingleton()
+    bind(classOf[MigrationRunner]).to(classOf[MigrationRunnerImpl]).asEagerSingleton()
   }
 
 }
