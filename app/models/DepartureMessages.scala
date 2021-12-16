@@ -16,19 +16,18 @@
 
 package models
 
+import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
-case class EORINumber(value: String) extends AnyVal
+case class DepartureMessages(departureId: DepartureId, eoriNumber: EORINumber, messages: List[Message])
 
-object EORINumber {
+object DepartureMessages {
 
-  implicit val format: Format[EORINumber] = new Format[EORINumber] {
-    override def reads(json: JsValue): JsResult[EORINumber] = json match {
-      case JsString(eori) => JsSuccess(EORINumber(eori))
-      case e              => JsError(s"Error in deserialization of Json value to an EORINumber, expected JsString got ${e.getClass}")
-    }
-
-    override def writes(eoriNumber: EORINumber): JsString = JsString(eoriNumber.value)
-  }
+  implicit val read: Reads[DepartureMessages] =
+    (
+      (__ \ "_id").read[DepartureId] and
+        (__ \ "eoriNumber").read[EORINumber] and
+        (__ \ "messages").read[List[Message]]
+    )(DepartureMessages.apply _)
 
 }

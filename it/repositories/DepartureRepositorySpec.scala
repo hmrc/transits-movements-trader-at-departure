@@ -56,6 +56,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.reflect.ClassTag
 import scala.util.Failure
 import scala.util.Success
+import scala.xml.NodeSeq
 
 class DepartureRepositorySpec
     extends AnyFreeSpec
@@ -171,6 +172,123 @@ class DepartureRepositorySpec
             r.isDefined mustBe false
         }
       }
+    }
+
+
+    "getMessagesOfType(arrivalId: ArrivalId, channelFilter: ChannelType, messageTypes: List[MessageType])" - {
+        
+      val mType = MessageType.ReleaseForTransit
+
+      val node = NodeSeq.fromSeq(Seq(<CC029B>m</CC029B>))
+
+      val message = MessageWithStatus(
+          MessageId(1),
+          LocalDateTime.now(),
+          MessageType.ReleaseForTransit,
+          node,
+          MessageStatus.SubmissionSucceeded,
+          1
+        )
+
+      val otherMessage = MessageWithStatus(
+          MessageId(2),
+          LocalDateTime.now(),
+          MessageType.NoReleaseForTransit,
+          node,
+          MessageStatus.SubmissionSucceeded,
+          2
+        )
+
+      "must get the appropriate messages when they exist and has the right channel type" in {
+        database.flatMap(_.drop()).futureValue
+        val departure = arbitrary[Departure].sample.value copy (messages = NonEmptyList[Message](message, List.empty))
+
+        service.insert(departure).futureValue
+
+        // We copy the message node because the returned node isn't equal, even though it's 
+        // identical for our purposes. As it's not what we are really testing, we just copy the
+        // original message across so it doesn't fail the equality check
+        val result = service.getMessagesOfType(departure.departureId, departure.channel, List(mType))
+          .map(opt => opt.map(ar => ar.messages.asInstanceOf[List[MessageWithStatus]].map(x => x copy (message = node))))
+
+        whenReady(result) {
+          r =>  
+            r mustBe defined
+            r.get must contain theSameElementsAs List(message)
+        }
+      }
+
+      "must only return the appropriate messages when an arrival is matched" in {
+        database.flatMap(_.drop()).futureValue
+        val departure = arbitrary[Departure].sample.value copy (messages = NonEmptyList[Message](message, List(otherMessage)))
+
+        service.insert(departure).futureValue
+
+        // As in the previous test.
+        val result = service.getMessagesOfType(departure.departureId, departure.channel, List(mType))
+          .map(opt => opt.map(ar => ar.messages.asInstanceOf[List[MessageWithStatus]].map(x => x copy (message = node))))
+
+        whenReady(result) {
+          r =>
+            r mustBe defined
+            r.get must contain theSameElementsAs List(message)
+        }
+      }
+
+      "must return an empty list when an arrival exists but no messages match" in {
+        database.flatMap(_.drop()).futureValue
+
+        val departure = arbitrary[Departure].sample.value copy (departureId = DepartureId(1), messages = NonEmptyList[Message](otherMessage, List.empty))
+
+        service.insert(departure).futureValue
+        val result = service.getMessagesOfType(DepartureId(1), departure.channel, List(mType))
+
+        whenReady(result) {
+          r => 
+            r mustBe defined
+            r.get.messages mustEqual List()
+        }
+      }
+
+      "must return None when an arrival does not exist" in {
+        database.flatMap(_.drop()).futureValue
+        val departure = arbitrary[Departure].sample.value copy (departureId = DepartureId(1))
+
+        service.insert(departure).futureValue
+        val result = service.getMessagesOfType(DepartureId(2), departure.channel, List(mType))
+
+        whenReady(result) {
+          r => 
+            r must not be defined
+        }
+      }
+
+      "must return an empty list when an arrival exists but without any of the message type" in {
+        database.flatMap(_.drop()).futureValue
+        val departure = arbitrary[Departure].sample.value copy (departureId = DepartureId(1))
+
+        service.insert(departure).futureValue
+        val result = service.getMessagesOfType(DepartureId(2), departure.channel, List(mType))
+
+        whenReady(result) {
+          r =>
+            r mustBe empty
+        } 
+      }
+
+      "must return None when an arrival does exist but with the wrong channel type" in {
+        database.flatMap(_.drop()).futureValue
+        val departure = arbitrary[Departure].sample.value copy (channel = ChannelType.Api)
+
+        service.insert(departure).futureValue
+        val result = service.getMessagesOfType(departure.departureId, ChannelType.Web, List(mType))
+
+        whenReady(result) {
+          r => 
+            r must not be defined
+        }
+      }
+
     }
 
     "get(departureId: DepartureId, channelFilter: ChannelType)" - {
