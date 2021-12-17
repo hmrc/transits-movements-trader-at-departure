@@ -20,8 +20,6 @@ import java.io.File
 
 import base.SpecBase
 import config.AppConfig
-import org.scalatest.freespec.AnyFreeSpec
-import org.scalatest.matchers.must.Matchers
 import play.api.Configuration
 import play.api.Environment
 import play.api.Mode

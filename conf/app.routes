@@ -2,6 +2,7 @@
 
 POST       /movements/departures                                                controllers.DeparturesController.post
 GET        /movements/departures                                                controllers.DeparturesController.getDepartures(updatedSince: Option[OffsetDateTime] ?= None, lrn: Option[String] ?= None, pageSize: Option[Int] ?= None, page: Option[Int] ?= None)
+GET        /movements/departure-summaries                                       controllers.DeparturesController.getDepartureSummaries(updatedSince: Option[OffsetDateTime] ?= None, lrn: Option[String] ?= None, pageSize: Option[Int] ?= None, page: Option[Int] ?= None)
 
 GET        /movements/departures/:departureId                                   controllers.DeparturesController.get(departureId: DepartureId)
 

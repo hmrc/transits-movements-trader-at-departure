@@ -135,4 +135,26 @@ class DeparturesController @Inject()(
             }
       }
     }
+
+  def getDepartureSummaries(updatedSince: Option[OffsetDateTime],
+                            lrn: Option[String],
+                            pageSize: Option[Int] = None,
+                            page: Option[Int] = None): Action[AnyContent] =
+    withMetricsTimerAction("get-all-departures") {
+      authenticate().async {
+        implicit request =>
+          departureRepository
+            .fetchAllDepartures(request.enrolmentId, request.channel, updatedSince, lrn, pageSize, page)
+            .map {
+              responseDepartures =>
+                departuresCount.update(responseDepartures.retrievedDepartures)
+                Ok(Json.toJsObject(responseDepartures))
+            }
+            .recover {
+              case e =>
+                logger.error(s"Failed to create departure", e)
+                InternalServerError
+            }
+      }
+    }
 }

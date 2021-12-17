@@ -18,7 +18,6 @@ package controllers.actions
 
 import audit.AuditService
 import audit.AuthenticationDetails
-import audit.UnauthenticatedAuditDetails
 import audit.AuditType.SuccessfulAuthTracking
 import cats.data.Ior
 import com.kenshoo.play.metrics.Metrics
