@@ -44,6 +44,8 @@ import models.SubmissionProcessingResult.SubmissionFailureExternal
 import models.SubmissionProcessingResult.SubmissionFailureInternal
 import models.SubmissionProcessingResult.SubmissionFailureRejected
 import models.response.ResponseDeparture
+import models.response.ResponseDepartureSummaries
+import models.response.ResponseDepartureSummary
 import models.response.ResponseDepartures
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
@@ -64,10 +66,10 @@ import services.PushPullNotificationService
 import services.SubmitMessageService
 import utils.Format
 import utils.JsonHelper
-
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
+
 import scala.concurrent.Future
 import scala.xml.Utility.trim
 
@@ -565,7 +567,8 @@ class DeparturesControllerSpec
       val responseDeparture  = ResponseDeparture.build(departure)
       val responseDepartures = ResponseDepartures(Seq(responseDeparture), 1, 1, 1)
 
-      when(mockDepartureRepository.fetchAllDepartures(any(), any(), any(), any(), any(), any())).thenReturn(Future.successful(responseDepartures))
+      when(mockDepartureRepository.fetchAllDepartures(any(), any(), any(), any(), any(), any()))
+        .thenReturn(Future.successful(responseDepartures))
 
       val application = baseApplicationBuilder
         .overrides(bind[DepartureRepository].toInstance(mockDepartureRepository))
@@ -584,11 +587,12 @@ class DeparturesControllerSpec
     "must return all departure summaries from database" in {
       val mockDepartureRepository = mock[DepartureRepository]
 
-      val departure          = Arbitrary.arbitrary[Departure].sample.value.copy(eoriNumber = "eori")
-      val responseDeparture  = ResponseDeparture.build(departure)
-      val responseDepartures = ResponseDepartures(Seq(responseDeparture), 1, 1, 1)
+      val departure                = Arbitrary.arbitrary[Departure].sample.value.copy(eoriNumber = "eori")
+      val responseDepartureSummary = ResponseDepartureSummary.build(departure)
+      val responseDepartures       = ResponseDepartureSummaries(Seq(responseDepartureSummary), 1, 1, 1)
 
-      when(mockDepartureRepository.fetchAllDepartures(any(), any(), any(), any(), any(), any())).thenReturn(Future.successful(responseDepartures))
+      when(mockDepartureRepository.fetchAllDepartureSummaries(any(), any(), any(), any(), any(), any()))
+        .thenReturn(Future.successful(responseDepartures))
 
       val application = baseApplicationBuilder
         .overrides(bind[DepartureRepository].toInstance(mockDepartureRepository))
@@ -608,7 +612,8 @@ class DeparturesControllerSpec
       val emptyResponse           = ResponseDepartures(Seq.empty, 0, 0, 0)
       val mockDepartureRepository = mock[DepartureRepository]
 
-      when(mockDepartureRepository.fetchAllDepartures(any(), any(), any(), any(), any(), any())).thenReturn(Future.successful(emptyResponse))
+      when(mockDepartureRepository.fetchAllDepartures(any(), any(), any(), any(), any(), any()))
+        .thenReturn(Future.successful(emptyResponse))
 
       val application = baseApplicationBuilder
         .overrides(bind[DepartureRepository].toInstance(mockDepartureRepository))
@@ -626,7 +631,8 @@ class DeparturesControllerSpec
     "must return INTERNAL_SERVER_ERROR when we cannot retrieve departures" in {
       val mockDepartureRepository = mock[DepartureRepository]
 
-      when(mockDepartureRepository.fetchAllDepartures(any(), any(), any(), any(), any(), any())).thenReturn(Future.failed(new Exception))
+      when(mockDepartureRepository.fetchAllDepartures(any(), any(), any(), any(), any(), any()))
+        .thenReturn(Future.failed(new Exception))
 
       val application = baseApplicationBuilder
         .overrides(bind[DepartureRepository].toInstance(mockDepartureRepository))

@@ -20,14 +20,14 @@ import models.DepartureWithoutMessages
 import play.api.libs.json.Json
 import play.api.libs.json.OWrites
 
-case class ResponseDepartures(departures: Seq[ResponseDeparture], retrievedDepartures: Int, totalDepartures: Int, totalMatched: Int)
+case class ResponseDepartureSummaries(departureSummaries: Seq[ResponseDepartureSummary], retrievedDepartures: Int, totalDepartures: Int, totalMatched: Int)
 
-object ResponseDepartures {
-  implicit val writes: OWrites[ResponseDepartures] = Json.writes[ResponseDepartures]
+object ResponseDepartureSummaries {
+  implicit val writes: OWrites[ResponseDepartureSummaries] = Json.writes[ResponseDepartureSummaries]
 
-  def build(results: Seq[DepartureWithoutMessages], totalDepartures: Int, totalMatched: Int): ResponseDepartures =
-    ResponseDepartures(
-      results.map(ResponseDeparture.build),
+  def build(results: Seq[DepartureWithoutMessages], totalDepartures: Int, totalMatched: Int): ResponseDepartureSummaries =
+    ResponseDepartureSummaries(
+      results.map(ResponseDepartureSummary.build),
       results.length,
       totalDepartures = totalDepartures,
       totalMatched = totalMatched

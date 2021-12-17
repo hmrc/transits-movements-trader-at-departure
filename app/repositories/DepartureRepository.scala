@@ -22,8 +22,6 @@ import com.kenshoo.play.metrics.Metrics
 import config.AppConfig
 import metrics.HasMetrics
 import models._
-import models.response.ResponseDeparture
-import models.response.ResponseDepartures
 import play.api.Configuration
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
@@ -38,11 +36,14 @@ import reactivemongo.api.indexes.IndexType
 import reactivemongo.play.json.collection.Helpers.idWrites
 import reactivemongo.play.json.collection.JSONCollection
 import utils.IndexUtils
-
 import java.time.Clock
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
+
 import javax.inject.Inject
+import models.response.ResponseDepartureSummaries
+import models.response.ResponseDepartures
+
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.util.Failure
@@ -425,8 +426,29 @@ class DepartureRepository @Inject()(
     updatedSince: Option[OffsetDateTime],
     lrn: Option[String] = None,
     pageSize: Option[Int] = None,
-    page: Option[Int] = None
+    page: Option[Int] = None,
   ): Future[ResponseDepartures] =
+    fetchAll(enrolmentId, channelFilter, updatedSince, lrn, pageSize, page, ResponseDepartures.build)
+
+  def fetchAllDepartureSummaries(
+    enrolmentId: Ior[TURN, EORINumber],
+    channelFilter: ChannelType,
+    updatedSince: Option[OffsetDateTime],
+    lrn: Option[String] = None,
+    pageSize: Option[Int] = None,
+    page: Option[Int] = None,
+  ): Future[ResponseDepartureSummaries] =
+    fetchAll(enrolmentId, channelFilter, updatedSince, lrn, pageSize, page, ResponseDepartureSummaries.build)
+
+  private def fetchAll[T](
+    enrolmentId: Ior[TURN, EORINumber],
+    channelFilter: ChannelType,
+    updatedSince: Option[OffsetDateTime],
+    lrn: Option[String],
+    pageSize: Option[Int],
+    page: Option[Int],
+    convert: (Seq[DepartureWithoutMessages], Int, Int) => T
+  ): Future[T] =
     withMetricsTimerAsync("mongo-get-departures-for-eori") {
       _ =>
         val enrolmentIds = enrolmentId.fold(
@@ -497,12 +519,8 @@ class DepartureRepository @Inject()(
 
             (fetchResults, fetchCount, fetchMatchCount).mapN {
               case (results, count, matchCount) =>
-                ResponseDepartures(
-                  results.map(ResponseDeparture.build),
-                  results.length,
-                  totalDepartures = count,
-                  totalMatched = matchCount
-                )
+                convert(results, count, matchCount)
+
             }
         }
     }

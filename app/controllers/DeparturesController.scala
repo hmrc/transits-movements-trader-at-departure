@@ -33,9 +33,10 @@ import repositories.DepartureRepository
 import services._
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
-
 import java.time.OffsetDateTime
+
 import javax.inject.Inject
+
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.xml.NodeSeq
@@ -140,11 +141,11 @@ class DeparturesController @Inject()(
                             lrn: Option[String],
                             pageSize: Option[Int] = None,
                             page: Option[Int] = None): Action[AnyContent] =
-    withMetricsTimerAction("get-all-departures") {
+    withMetricsTimerAction("get-all-departure-summaries") {
       authenticate().async {
         implicit request =>
           departureRepository
-            .fetchAllDepartures(request.enrolmentId, request.channel, updatedSince, lrn, pageSize, page)
+            .fetchAllDepartureSummaries(request.enrolmentId, request.channel, updatedSince, lrn, pageSize, page)
             .map {
               responseDepartures =>
                 departuresCount.update(responseDepartures.retrievedDepartures)
