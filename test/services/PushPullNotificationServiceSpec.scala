@@ -26,7 +26,6 @@ import models.BoxId
 import models.Departure
 import models.DepartureId
 import models.DepartureMessageNotification
-import models.DepartureStatus
 import models.MessageId
 import models.MessageStatus
 import models.MessageType

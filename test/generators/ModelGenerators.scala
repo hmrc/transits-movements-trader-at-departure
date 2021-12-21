@@ -53,28 +53,17 @@ trait ModelGenerators extends BaseGenerators with JavaTimeGenerators with JsonHe
       } yield MessageStatusUpdate(messageId, messageStatus)
     }
 
-  implicit val arbitraryDepartureStatusUpdate: Arbitrary[DepartureStatusUpdate] = Arbitrary(arbitrary[DepartureStatus].map(DepartureStatusUpdate(_)))
-
-  implicit val arbitraryCompoundStatusUpdate: Arbitrary[CompoundStatusUpdate] = Arbitrary {
-    for {
-      departureStatusUpdate <- arbitrary[DepartureStatusUpdate]
-      messageStatusUpdate   <- arbitrary[MessageStatusUpdate]
-    } yield CompoundStatusUpdate(departureStatusUpdate, messageStatusUpdate)
-  }
-
   val departureUpdateTypeGenerator: Gen[Gen[DepartureUpdate]] =
     Gen.oneOf[Gen[DepartureUpdate]](
       arbitrary[MessageStatusUpdate],
-      arbitrary[DepartureStatusUpdate],
-      arbitrary[CompoundStatusUpdate]
+      arbitrary[MessageStatusUpdate]
     )
 
   implicit val arbitraryDepartureUpdate: Arbitrary[DepartureUpdate] =
     Arbitrary(
       Gen.oneOf[DepartureUpdate](
         arbitrary[MessageStatusUpdate],
-        arbitrary[DepartureStatusUpdate],
-        arbitrary[CompoundStatusUpdate]
+        arbitrary[MessageStatusUpdate]
       )
     )
 

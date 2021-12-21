@@ -75,17 +75,6 @@ class DepartureUpdateSpec
     }
 
     "DepartureModifier for any combination of DepartureUpdate is the same as the individual DepartureModifier combined" - {
-      "when combined with an DepartureStatusUpdate" in {
-        forAll(arbitrary[DepartureUpdate], arbitrary[DepartureStatusUpdate]) {
-          (lhs, rhs) =>
-            val result = Semigroup[DepartureUpdate].combine(lhs, rhs)
-
-            val expectedValue = DepartureModifier.toJson(lhs) deepMerge DepartureModifier.toJson(rhs)
-
-            DepartureModifier.toJson(result) mustEqual expectedValue
-
-        }
-      }
 
       "when combined with an update that updates a message" in {
         def removeMessageUpdate(json: JsObject): JsObject = {
@@ -99,7 +88,7 @@ class DepartureUpdateSpec
 
         val updatesWithMessage = Gen.oneOf(
           arbitrary[MessageStatusUpdate],
-          arbitrary[CompoundStatusUpdate]
+          arbitrary[MessageStatusUpdate]
         )
 
         forAll(arbitrary[DepartureUpdate], updatesWithMessage) {
@@ -130,39 +119,6 @@ class DepartureUpdateSpec
           )
 
           DepartureModifier.toJson(messageStatusUpdate) mustEqual expectedUpdateJson
-      }
-    }
-  }
-
-  "DepartureStatusUpdate" - {
-    "DepartureModifier returns modify object that would set the status" in {
-      forAll(arbitrary[DepartureStatusUpdate]) {
-        departureStatusUpdate =>
-          val expectedUpdateJson = Json.obj(
-            "$set" -> Json.obj(
-              "status"      -> departureStatusUpdate.departureStatus,
-              "lastUpdated" -> LocalDateTime.now(clock)
-            )
-          )
-
-          DepartureModifier.toJson(departureStatusUpdate) mustEqual expectedUpdateJson
-      }
-    }
-  }
-
-  "CompoundStatusUpdate" - {
-    "DepartureModifier returns modify object that would set the status and the message status" in {
-      forAll(arbitrary[CompoundStatusUpdate]) {
-        compoundStatusUpdate =>
-          val expectedUpdateJson = Json.obj(
-            "$set" -> Json.obj(
-              "status"                                                                       -> compoundStatusUpdate.departureStatusUpdate.departureStatus,
-              s"messages.${compoundStatusUpdate.messageStatusUpdate.messageId.index}.status" -> compoundStatusUpdate.messageStatusUpdate.messageStatus,
-              "lastUpdated"                                                                  -> LocalDateTime.now(clock)
-            )
-          )
-
-          DepartureModifier.toJson(compoundStatusUpdate) mustEqual expectedUpdateJson
       }
     }
   }

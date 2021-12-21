@@ -37,7 +37,7 @@ import scala.util.Try
 class SubmitMessageService @Inject()(departureRepository: DepartureRepository, messageConnector: MessageConnector)(implicit clock: Clock, ec: ExecutionContext)
     extends Logging {
 
-  def submitMessage(departureId: DepartureId, message: MessageWithStatus, departureStatus: DepartureStatus, channelType: ChannelType)(
+  def submitMessage(departureId: DepartureId, message: MessageWithStatus, channelType: ChannelType)(
     implicit hc: HeaderCarrier): Future[SubmissionProcessingResult] =
     departureRepository.addNewMessage(departureId, message) flatMap {
       case Failure(_) =>
@@ -52,7 +52,7 @@ class SubmitMessageService @Inject()(departureRepository: DepartureRepository, m
                 case EisSubmissionSuccessful =>
                   val newStatus = message.status.transition(submissionResult)
 
-                  updateDepartureAndMessage(departureId, message.messageId, departureStatus, newStatus)
+                  updateDepartureAndMessage(departureId, message.messageId, newStatus)
                     .map(_ => SubmissionProcessingResult.SubmissionSuccess)
                     .recover({
                       case _ =>
@@ -162,11 +162,10 @@ class SubmitMessageService @Inject()(departureRepository: DepartureRepository, m
   private def updateDepartureAndMessage(
     departureId: DepartureId,
     messageId: MessageId,
-    departureState: DepartureStatus = DepartureStatus.DepartureSubmitted,
     messageState: MessageStatus = MessageStatus.SubmissionSucceeded
   ): Future[Try[Unit]] = {
     val selector = DepartureIdSelector(departureId)
-    val modifier = CompoundStatusUpdate(DepartureStatusUpdate(departureState), MessageStatusUpdate(messageId, messageState))
+    val modifier = MessageStatusUpdate(messageId, messageState)
 
     departureRepository.updateDeparture(selector, modifier)
   }

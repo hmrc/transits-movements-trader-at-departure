@@ -28,23 +28,11 @@ sealed trait DepartureUpdate
 object DepartureUpdate {
 
   implicit val departureUpdateSemigroup: Semigroup[DepartureUpdate] = {
-    case (_: DepartureStatusUpdate, x: DepartureStatusUpdate) => x
-    case (a: DepartureStatusUpdate, m: MessageStatusUpdate)   => CompoundStatusUpdate(a, m)
-    case (_: DepartureStatusUpdate, c: CompoundStatusUpdate)  => c
-
-    case (_: MessageStatusUpdate, x: MessageStatusUpdate)   => x
-    case (m: MessageStatusUpdate, a: DepartureStatusUpdate) => CompoundStatusUpdate(a, m)
-    case (_: MessageStatusUpdate, c: CompoundStatusUpdate)  => c
-
-    case (_: CompoundStatusUpdate, x: CompoundStatusUpdate)  => x
-    case (c: CompoundStatusUpdate, a: DepartureStatusUpdate) => c.copy(departureStatusUpdate = a)
-    case (c: CompoundStatusUpdate, m: MessageStatusUpdate)   => c.copy(messageStatusUpdate = m)
+    case (_: MessageStatusUpdate, x: MessageStatusUpdate) => x
   }
 
   implicit def departureUpdateDepartureModifier(implicit clock: Clock): DepartureModifier[DepartureUpdate] = {
-    case x: MessageStatusUpdate   => DepartureModifier.toJson(x)
-    case x: DepartureStatusUpdate => DepartureModifier.toJson(x)
-    case x: CompoundStatusUpdate  => DepartureModifier.toJson(x)
+    case x: MessageStatusUpdate => DepartureModifier.toJson(x)
   }
 }
 
@@ -63,26 +51,4 @@ object MessageStatusUpdate extends MongoDateTimeFormats {
             )
       )
     )
-}
-
-final case class DepartureStatusUpdate(departureStatus: DepartureStatus) extends DepartureUpdate
-
-object DepartureStatusUpdate extends MongoDateTimeFormats {
-
-  implicit def departureStatusUpdate(implicit clock: Clock, writes: Writes[DepartureStatus]): DepartureModifier[DepartureStatusUpdate] =
-    value =>
-      Json.obj(
-        "$set" -> Json.obj(
-          "status"      -> value.departureStatus,
-          "lastUpdated" -> Json.toJson(LocalDateTime.now(clock))
-        )
-    )
-}
-
-final case class CompoundStatusUpdate(departureStatusUpdate: DepartureStatusUpdate, messageStatusUpdate: MessageStatusUpdate) extends DepartureUpdate
-
-object CompoundStatusUpdate {
-
-  implicit def departureUpdate(implicit clock: Clock): DepartureModifier[CompoundStatusUpdate] =
-    csu => DepartureModifier.toJson(csu.departureStatusUpdate) deepMerge DepartureModifier.toJson(csu.messageStatusUpdate)
 }

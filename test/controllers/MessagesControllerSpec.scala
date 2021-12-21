@@ -154,7 +154,7 @@ class MessagesControllerSpec
       when(mockDepartureRepository.getWithoutMessages(any(), any()))
         .thenReturn(Future.successful(Some(DepartureWithoutMessages.fromDeparture(departure))))
 
-      when(mockSubmitMessageService.submitMessage(any(), any(), eqTo(DepartureStatus.DeclarationCancellationRequest), any())(any()))
+      when(mockSubmitMessageService.submitMessage(any(), any(), any())(any()))
         .thenReturn(Future.successful(SubmissionProcessingResult.SubmissionSuccess))
 
       val application = baseApplicationBuilder
@@ -180,7 +180,6 @@ class MessagesControllerSpec
         verify(mockSubmitMessageService, times(1)).submitMessage(
           eqTo(departure.departureId),
           any(),
-          eqTo(DepartureStatus.DeclarationCancellationRequest),
           any()
         )(any())
 
@@ -231,7 +230,7 @@ class MessagesControllerSpec
       when(mockLockRepository.unlock(any())).thenReturn(Future.successful(()))
       when(mockDepartureRepository.getWithoutMessages(any(), any())).thenReturn(Future.successful(Some(DepartureWithoutMessages.fromDeparture(departure))))
 
-      when(mockSubmitMessageService.submitMessage(any(), any(), any(), any())(any()))
+      when(mockSubmitMessageService.submitMessage(any(), any(), any())(any()))
         .thenReturn(Future.successful(SubmissionProcessingResult.SubmissionFailureInternal))
 
       val application = baseApplicationBuilder
@@ -325,7 +324,7 @@ class MessagesControllerSpec
       when(mockLockRepository.unlock(any())).thenReturn(Future.successful(()))
       when(mockDepartureRepository.getWithoutMessages(any(), any())).thenReturn(Future.successful(Some(DepartureWithoutMessages.fromDeparture(departure))))
 
-      when(mockSubmitMessageService.submitMessage(any(), any(), any(), any())(any()))
+      when(mockSubmitMessageService.submitMessage(any(), any(), any())(any()))
         .thenReturn(Future.successful(SubmissionProcessingResult.SubmissionFailureExternal))
 
       val application = baseApplicationBuilder
@@ -357,7 +356,7 @@ class MessagesControllerSpec
       when(mockLockRepository.unlock(any())).thenReturn(Future.successful(()))
       when(mockDepartureRepository.getWithoutMessages(any(), any())).thenReturn(Future.successful(Some(DepartureWithoutMessages.fromDeparture(departure))))
 
-      when(mockSubmitMessageService.submitMessage(any(), any(), any(), any())(any()))
+      when(mockSubmitMessageService.submitMessage(any(), any(), any())(any()))
         .thenReturn(Future.successful(SubmissionProcessingResult.SubmissionFailureRejected(ErrorInPayload.responseBody)))
 
       val application = baseApplicationBuilder
@@ -389,7 +388,7 @@ class MessagesControllerSpec
       when(mockLockRepository.unlock(any())).thenReturn(Future.successful(()))
       when(mockDepartureRepository.getWithoutMessages(any(), any())).thenReturn(Future.successful(Some(DepartureWithoutMessages.fromDeparture(departure))))
 
-      when(mockSubmitMessageService.submitMessage(any(), any(), any(), any())(any()))
+      when(mockSubmitMessageService.submitMessage(any(), any(), any())(any()))
         .thenReturn(Future.successful(SubmissionProcessingResult.SubmissionFailureInternal))
 
       val application = baseApplicationBuilder
