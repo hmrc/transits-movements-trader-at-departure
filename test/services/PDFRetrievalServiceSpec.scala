@@ -24,7 +24,6 @@ import connectors.ManageDocumentsConnector
 import models.ChannelType
 import models.Departure
 import models.DepartureId
-import models.DepartureStatus
 import models.MessageId
 import models.MessageType
 import models.MessageWithoutStatus

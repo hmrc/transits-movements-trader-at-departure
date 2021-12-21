@@ -26,7 +26,6 @@ import models.ChannelType.Web
 import models.Departure
 import models.DepartureId
 import models.DepartureNotFound
-import models.DepartureStatus
 import models.ErrorState
 import models.MessageId
 import models.MessageSender
