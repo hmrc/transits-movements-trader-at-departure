@@ -509,8 +509,20 @@ class DepartureRepositorySpec
       "must return a Failure if the selector does not match any documents" in {
         database.flatMap(_.drop()).futureValue
 
+        val messages = NonEmptyList.one(
+          MessageWithStatus(
+            MessageId(1),
+            LocalDateTime.of(2021, 2, 2, 2, 2),
+            MessageType.MrnAllocated,
+            <CC015></CC015>,
+            MessageStatus.SubmissionPending,
+            1,
+            Json.obj("CC029" -> Json.obj())
+          )
+        )
+
         val departureStatus = DepartureStatusUpdate(Initialized)
-        val departure       = departureWithOneMessage.sample.value copy (departureId = DepartureId(1), status = MrnAllocated)
+        val departure       = departureWithOneMessage.sample.value copy (departureId = DepartureId(1), messages = messages)
         val selector        = DepartureIdSelector(DepartureId(2))
 
         service.insert(departure).futureValue

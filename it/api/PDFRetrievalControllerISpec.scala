@@ -21,7 +21,6 @@ import cats.data.NonEmptyList
 import models.ChannelType
 import models.Departure
 import models.DepartureId
-import models.DepartureStatus
 import models.MessageId
 import models.MessageStatus
 import models.MessageType
