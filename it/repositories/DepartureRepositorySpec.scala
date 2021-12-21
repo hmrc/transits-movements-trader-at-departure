@@ -23,9 +23,6 @@ import config.AppConfig
 import generators.ModelGenerators
 import models.ChannelType.Api
 import models.ChannelType.Web
-import models.DepartureStatus.Initialized
-import models.DepartureStatus.MrnAllocated
-import models.DepartureStatus.PositiveAcknowledgement
 import models.MessageStatus.SubmissionPending
 import models.MessageStatus.SubmissionSucceeded
 import models._
@@ -474,65 +471,6 @@ class DepartureRepositorySpec
           r =>
             r mustBe a[Failure[_]]
         }
-      }
-    }
-
-    "updateDeparture" - {
-      "must update the departure and return a Success Unit when successful" in {
-        database.flatMap(_.drop()).futureValue
-
-        val messages = NonEmptyList.one(
-          MessageWithStatus(
-            MessageId(1),
-            LocalDateTime.of(2021, 2, 2, 2, 2),
-            MessageType.PositiveAcknowledgement,
-            <CC015></CC015>,
-            MessageStatus.SubmissionPending,
-            1,
-            Json.obj("CC029" -> Json.obj())
-          )
-        )
-
-        val departureStatus = DepartureStatusUpdate(Initialized)
-        val departure       = departureWithOneMessage.sample.value.copy(messages = messages)
-        val selector        = DepartureIdSelector(departure.departureId)
-
-        service.insert(departure).futureValue
-
-        service.updateDeparture(selector, departureStatus).futureValue
-
-        val updatedDeparture = service.get(departure.departureId, departure.channel).futureValue.value
-
-        updatedDeparture.status mustEqual departureStatus.departureStatus
-      }
-
-      "must return a Failure if the selector does not match any documents" in {
-        database.flatMap(_.drop()).futureValue
-
-        val messages = NonEmptyList.one(
-          MessageWithStatus(
-            MessageId(1),
-            LocalDateTime.of(2021, 2, 2, 2, 2),
-            MessageType.MrnAllocated,
-            <CC015></CC015>,
-            MessageStatus.SubmissionPending,
-            1,
-            Json.obj("CC029" -> Json.obj())
-          )
-        )
-
-        val departureStatus = DepartureStatusUpdate(Initialized)
-        val departure       = departureWithOneMessage.sample.value copy (departureId = DepartureId(1), messages = messages)
-        val selector        = DepartureIdSelector(DepartureId(2))
-
-        service.insert(departure).futureValue
-
-        val result = service.updateDeparture(selector, departureStatus).futureValue
-
-        val updatedDeparture = service.get(departure.departureId, departure.channel).futureValue.value
-
-        result mustBe a[Failure[_]]
-        updatedDeparture.status must not be departureStatus.departureStatus
       }
     }
 
