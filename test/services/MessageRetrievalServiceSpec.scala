@@ -22,7 +22,6 @@ import cats.data.Reader
 import models.ChannelType
 import models.Departure
 import models.DepartureId
-import models.DepartureStatus
 import models.Message
 import models.MessageId
 import models.MessageType
