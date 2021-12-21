@@ -79,13 +79,13 @@ trait SpecBase extends AnyFreeSpec with Matchers with MockitoSugar with ScalaFut
 
         val normalisedMessagesA = unAppliedA._10.map {
           y =>
-            Utility.trim(XML.loadString(y.message.toString()))
+            Utility.trim(XML.loadString(y.toString()))
         }
         val normalisedA = unAppliedA.copy(_10 = normalisedMessagesA)
 
         val normalisedMessagesX = unAppliedX._10.map {
           z =>
-            Utility.trim(XML.loadString(z.message.toString()))
+            Utility.trim(XML.loadString(z.toString()))
         }
         val normalisedX = unAppliedX.copy(_10 = normalisedMessagesX)
 

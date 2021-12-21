@@ -47,7 +47,6 @@ class SubmissionProcessingResultSpec extends SpecBase with ScalaCheckDrivenPrope
       movementReferenceNumber = None,
       referenceNumber = "SomeREf",
       eoriNumber = "AB123456",
-      status = DepartureStatus.DepartureSubmitted,
       created = LocalDateTime.of(2021, 2, 2, 2, 2),
       lastUpdated = LocalDateTime.of(2021, 2, 2, 4, 2),
       messages = NonEmptyList.one(

@@ -95,7 +95,6 @@ class SubmitMessageServiceSpec extends SpecBase with JsonHelper with ScalaCheckD
   } yield {
     departure.copy(
       eoriNumber = "eori",
-      status = DepartureStatus.DepartureSubmitted,
       messages = NonEmptyList.one(movementMessage),
       nextMessageCorrelationId = movementMessage.messageCorrelationId
     )

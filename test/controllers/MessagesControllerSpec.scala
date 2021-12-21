@@ -133,7 +133,6 @@ class MessagesControllerSpec
       "eori",
       Some(mrn),
       "ref",
-      DepartureStatus.MrnAllocated,
       localDateTime,
       localDateTime,
       message.messageCorrelationId,

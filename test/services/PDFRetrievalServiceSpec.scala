@@ -62,7 +62,6 @@ class PDFRetrievalServiceSpec extends SpecBase with JsonHelper with IntegrationP
       "AB123456C",
       None,
       "SomeReference",
-      DepartureStatus.ReleaseForTransit,
       LocalDateTime.now(),
       LocalDateTime.now(),
       2,

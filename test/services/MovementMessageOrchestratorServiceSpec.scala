@@ -84,7 +84,6 @@ class MovementMessageOrchestratorServiceSpec extends SpecBase {
       movementReferenceNumber = None,
       referenceNumber = "SomeREf",
       eoriNumber = "AB123456",
-      status = DepartureStatus.DepartureSubmitted,
       created = LocalDateTime.of(2021, 2, 2, 2, 2),
       lastUpdated = LocalDateTime.of(2021, 2, 2, 4, 2),
       messages = NonEmptyList.one(
@@ -140,7 +139,19 @@ class MovementMessageOrchestratorServiceSpec extends SpecBase {
         </CC029>)
         .withHeaders("X-Message-Type" -> "IE029")
 
-      val departure: Departure = initialDeparture.copy(status = DepartureStatus.MrnAllocated)
+      val mrnAllocatesMessage = NonEmptyList.one(
+        MessageWithStatus(
+          MessageId(1),
+          LocalDateTime.of(2021, 2, 2, 2, 2),
+          MessageType.MrnAllocated,
+          <CC015></CC015>,
+          MessageStatus.SubmissionPending,
+          1,
+          Json.obj("CC029" -> Json.obj())
+        )
+      )
+
+      val departure: Departure = initialDeparture.copy(messages = mrnAllocatesMessage)
 
       when(mockGetDepartureService.getDepartureAndAuditDeletedDepartures(any(), any(), any())(any()))
         .thenReturn(EitherT[Future, ErrorState, Departure](Future.successful(Right[ErrorState, Departure](departure))))
@@ -192,7 +203,19 @@ class MovementMessageOrchestratorServiceSpec extends SpecBase {
         </CC029>)
         .withHeaders("X-Message-Type" -> "IE029")
 
-      val departure: Departure = initialDeparture.copy(status = DepartureStatus.MrnAllocated)
+      val mrnAllocatesMessage = NonEmptyList.one(
+        MessageWithStatus(
+          MessageId(1),
+          LocalDateTime.of(2021, 2, 2, 2, 2),
+          MessageType.MrnAllocated,
+          <CC015></CC015>,
+          MessageStatus.SubmissionPending,
+          1,
+          Json.obj("CC029" -> Json.obj())
+        )
+      )
+
+      val departure: Departure = initialDeparture.copy(messages = mrnAllocatesMessage)
 
       when(mockGetDepartureService.getDepartureAndAuditDeletedDepartures(any(), any(), any())(any()))
         .thenReturn(EitherT[Future, ErrorState, Departure](Future.successful(Right[ErrorState, Departure](departure))))
@@ -219,7 +242,19 @@ class MovementMessageOrchestratorServiceSpec extends SpecBase {
         </CC029>)
         .withHeaders("X-Message-Type" -> "IE029")
 
-      val departure: Departure = initialDeparture.copy(status = DepartureStatus.MrnAllocated)
+      val mrnAllocatesMessage = NonEmptyList.one(
+        MessageWithStatus(
+          MessageId(1),
+          LocalDateTime.of(2021, 2, 2, 2, 2),
+          MessageType.MrnAllocated,
+          <CC015></CC015>,
+          MessageStatus.SubmissionPending,
+          1,
+          Json.obj("CC029" -> Json.obj())
+        )
+      )
+
+      val departure: Departure = initialDeparture.copy(messages = mrnAllocatesMessage)
 
       when(mockGetDepartureService.getDepartureAndAuditDeletedDepartures(any(), any(), any())(any()))
         .thenReturn(EitherT[Future, ErrorState, Departure](Future.successful(Right[ErrorState, Departure](departure))))

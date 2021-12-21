@@ -19,8 +19,9 @@ package models
 import cats.data._
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
-
 import java.time.LocalDateTime
+
+import utils.MessageTypeUtils
 
 trait BaseDeparture {
   def departureId: DepartureId
@@ -32,8 +33,6 @@ trait BaseDeparture {
   def movementReferenceNumber: Option[MovementReferenceNumber]
 
   def referenceNumber: String
-
-  def status: DepartureStatus
 
   def created: LocalDateTime
 
@@ -48,7 +47,6 @@ case class Departure(
   eoriNumber: String,
   movementReferenceNumber: Option[MovementReferenceNumber],
   referenceNumber: String,
-  status: DepartureStatus,
   created: LocalDateTime,
   lastUpdated: LocalDateTime,
   nextMessageCorrelationId: Int,
@@ -60,6 +58,9 @@ case class Departure(
 
   def messagesWithId: NonEmptyList[(Message, MessageId)] =
     messages.map(msg => msg -> msg.messageId)
+
+  val status: DepartureStatus         = MessageTypeUtils.currentDepartureStatus(messages.toList)
+  val previousStatus: DepartureStatus = MessageTypeUtils.previousDepartureStatus(messages.toList, status)
 }
 
 object Departure {
@@ -78,7 +79,6 @@ object Departure {
         (__ \ "eoriNumber").read[String] and
         (__ \ "movementReferenceNumber").readNullable[MovementReferenceNumber] and
         (__ \ "referenceNumber").read[String] and
-        (__ \ "status").read[DepartureStatus] and
         (__ \ "created").read(MongoDateTimeFormats.localDateTimeRead) and
         (__ \ "lastUpdated")
           .read(MongoDateTimeFormats.localDateTimeRead)
@@ -95,7 +95,6 @@ object Departure {
         (__ \ "eoriNumber").write[String] and
         (__ \ "movementReferenceNumber").writeNullable[MovementReferenceNumber] and
         (__ \ "referenceNumber").write[String] and
-        (__ \ "status").write[DepartureStatus] and
         (__ \ "created").write(write) and
         (__ \ "lastUpdated").write(write) and
         (__ \ "nextMessageCorrelationId").write[Int] and

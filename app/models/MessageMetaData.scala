@@ -24,7 +24,7 @@ import play.api.libs.json.__
 
 import java.time.LocalDateTime
 
-case class MessageMetaData(messageType: MessageType, dateTime: LocalDateTime)
+case class MessageMetaData(messageType: MessageType, dateTime: LocalDateTime) extends MessageTypeWithTime
 
 object MessageMetaData extends MongoDateTimeFormats {
 

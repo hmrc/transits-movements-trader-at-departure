@@ -161,12 +161,11 @@ trait ModelGenerators extends BaseGenerators with JavaTimeGenerators with JsonHe
         eN              <- arbitrary[String]
         mrn             <- arbitrary[MovementReferenceNumber]
         rN              <- arbitrary[String]
-        status          <- arbitrary[DepartureStatus]
         created         <- arbitrary[LocalDateTime]
         lastUpdated     <- arbitrary[LocalDateTime]
         messages        <- nonEmptyListOfMaxLength[MessageWithStatus](2)
         notificationBox <- arbitrary[Option[Box]]
-      } yield models.Departure(id, channel, eN, Some(mrn), rN, status, created, lastUpdated, messages.length + 1, messages, notificationBox)
+      } yield models.Departure(id, channel, eN, Some(mrn), rN, created, lastUpdated, messages.length + 1, messages, notificationBox)
     }
 
   implicit lazy val arbitraryDepartureWithoutMessages: Arbitrary[DepartureWithoutMessages] =
