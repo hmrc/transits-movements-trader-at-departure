@@ -374,7 +374,18 @@ class DepartureRepositorySpec
       "must add a message, update the timestamp and increment nextCorrelationId" in {
         database.flatMap(_.drop()).futureValue
 
-        val departure = arbitrary[Departure].sample.value.copy(status = DepartureStatus.DepartureSubmitted)
+        val declarationMessages = NonEmptyList.one(
+          MessageWithStatus(
+            MessageId(1),
+            LocalDateTime.of(2021, 2, 2, 2, 2),
+            MessageType.DepartureDeclaration,
+            <CC015></CC015>,
+            MessageStatus.SubmissionPending,
+            1,
+            Json.obj("CC029" -> Json.obj())
+          )
+        )
+        val departure = arbitrary[Departure].sample.value.copy(messages = declarationMessages)
 
         val dateOfPrep = LocalDate.now(clock)
         val timeOfPrep = LocalTime.of(1, 1)
@@ -422,7 +433,18 @@ class DepartureRepositorySpec
       "must fail if the departure cannot be found" in {
         database.flatMap(_.drop()).futureValue
 
-        val departure = arbitrary[Departure].sample.value copy (status = DepartureStatus.DepartureSubmitted, departureId = DepartureId(1))
+        val messages = NonEmptyList.one(
+          MessageWithStatus(
+            MessageId(1),
+            LocalDateTime.of(2021, 2, 2, 2, 2),
+            MessageType.DepartureDeclaration,
+            <CC015></CC015>,
+            MessageStatus.SubmissionPending,
+            1,
+            Json.obj("CC029" -> Json.obj())
+          )
+        )
+        val departure = arbitrary[Departure].sample.value copy (messages = messages, departureId = DepartureId(1))
 
         val dateOfPrep = LocalDate.now(clock)
         val timeOfPrep = LocalTime.of(1, 1)
@@ -459,8 +481,20 @@ class DepartureRepositorySpec
       "must update the departure and return a Success Unit when successful" in {
         database.flatMap(_.drop()).futureValue
 
+        val messages = NonEmptyList.one(
+          MessageWithStatus(
+            MessageId(1),
+            LocalDateTime.of(2021, 2, 2, 2, 2),
+            MessageType.PositiveAcknowledgement,
+            <CC015></CC015>,
+            MessageStatus.SubmissionPending,
+            1,
+            Json.obj("CC029" -> Json.obj())
+          )
+        )
+
         val departureStatus = DepartureStatusUpdate(Initialized)
-        val departure       = departureWithOneMessage.sample.value.copy(status = PositiveAcknowledgement)
+        val departure       = departureWithOneMessage.sample.value.copy(messages = messages)
         val selector        = DepartureIdSelector(departure.departureId)
 
         service.insert(departure).futureValue
@@ -537,7 +571,19 @@ class DepartureRepositorySpec
       "must fail if the departure cannot be found" in {
         database.flatMap(_.drop()).futureValue
 
-        val departure = arbitrary[Departure].sample.value copy (status = DepartureStatus.DepartureSubmitted, departureId = DepartureId(1))
+        val messages = NonEmptyList.one(
+          MessageWithStatus(
+            MessageId(1),
+            LocalDateTime.of(2021, 2, 2, 2, 2),
+            MessageType.DepartureDeclaration,
+            <CC015></CC015>,
+            MessageStatus.SubmissionPending,
+            1,
+            Json.obj("CC029" -> Json.obj())
+          )
+        )
+
+        val departure = arbitrary[Departure].sample.value copy (messages = messages, departureId = DepartureId(1))
 
         val dateOfPrep = LocalDate.now(clock)
         val timeOfPrep = LocalTime.of(1, 1)
@@ -622,7 +668,18 @@ class DepartureRepositorySpec
       "must fail if the departure cannot be found" in {
         database.flatMap(_.drop()).futureValue
 
-        val departure = arbitrary[Departure].sample.value copy (status = DepartureStatus.DepartureSubmitted, departureId = DepartureId(1))
+        val messages = NonEmptyList.one(
+          MessageWithStatus(
+            MessageId(1),
+            LocalDateTime.of(2021, 2, 2, 2, 2),
+            MessageType.DepartureDeclaration,
+            <CC015></CC015>,
+            MessageStatus.SubmissionPending,
+            1,
+            Json.obj("CC029" -> Json.obj())
+          )
+        )
+        val departure = arbitrary[Departure].sample.value copy (messages = messages, departureId = DepartureId(1))
 
         val mrn        = "mrn"
         val dateOfPrep = LocalDate.now(clock)
