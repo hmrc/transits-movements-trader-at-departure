@@ -18,18 +18,9 @@ package models
 
 import base.SpecBase
 import generators.ModelGenerators
-import models.MessageType.CancellationDecision
-import models.MessageType.ControlDecisionNotification
-import models.MessageType.DeclarationCancellationRequest
-import models.MessageType.DeclarationRejected
-import models.MessageType.DepartureDeclaration
-import models.MessageType.GuaranteeNotValid
-import models.MessageType.MrnAllocated
-import models.MessageType.NoReleaseForTransit
-import models.MessageType.PositiveAcknowledgement
-import models.MessageType.ReleaseForTransit
-import models.MessageType.WriteOffNotification
+import models.MessageType._
 import org.scalacheck.Arbitrary.arbitrary
+import org.scalacheck.Gen
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.libs.json._
 
@@ -134,4 +125,401 @@ class MessageTypeSpec extends SpecBase with ScalaCheckDrivenPropertyChecks with 
     }
   }
 
+  "ordering" - {
+    "comparing to DepartureDeclaration" - {
+      "all status must have greater order" in {
+
+        MessageTypeesExcluding(DepartureDeclaration).foreach {
+          status =>
+            val result = Ordering[MessageType].max(DepartureDeclaration, status)
+
+            result mustBe status
+        }
+      }
+    }
+
+    "comparing to DeclarationRejected" - {
+      "all status must have greater order except for DepartureDeclaration" in {
+
+        MessageTypeesExcluding(DeclarationRejected, DepartureDeclaration, PositiveAcknowledgement).foreach {
+          status =>
+            val result = Ordering[MessageType].max(DeclarationRejected, status)
+
+            result mustBe status
+        }
+      }
+
+      "then it should have great order than PositiveAcknowledgement" in {
+        val result = Ordering[MessageType].max(DeclarationRejected, PositiveAcknowledgement)
+
+        result mustBe DeclarationRejected
+      }
+    }
+
+    "comparing to PositiveAcknowledgement" - {
+      "all status must have greater order except for DepartureDeclaration" in {
+
+        MessageTypeesExcluding(PositiveAcknowledgement, DepartureDeclaration).foreach {
+          status =>
+            val result = Ordering[MessageType].max(PositiveAcknowledgement, status)
+
+            result mustBe status
+        }
+      }
+    }
+
+    "comparing to MrnAllocated" - {
+      val lesserOrderValues = Seq(
+        DepartureDeclaration,
+        PositiveAcknowledgement,
+        DeclarationRejected
+      )
+
+      val greaterOrderValues = Seq(
+        ControlDecisionNotification,
+        NoReleaseForTransit,
+        ReleaseForTransit,
+        DeclarationCancellationRequest,
+        CancellationDecision,
+        WriteOffNotification,
+        GuaranteeNotValid,
+        XMLSubmissionNegativeAcknowledgement
+      )
+
+      "is greater order than DepartureDeclaration, PositiveAcknowledgement, DeclarationRejected" in {
+
+        forAll(Gen.oneOf(lesserOrderValues)) {
+          status =>
+            val result = Ordering[MessageType].max(MrnAllocated, status)
+
+            result mustBe MrnAllocated
+        }
+      }
+
+      "in lesser order than any other status" in {
+
+        forAll(Gen.oneOf(greaterOrderValues)) {
+          status =>
+            val result = Ordering[MessageType].max(MrnAllocated, status)
+
+            result mustBe status
+        }
+      }
+    }
+
+    "comparing to ControlDecision" - {
+
+      val lesserOrderValues = Seq(
+        DepartureDeclaration,
+        PositiveAcknowledgement,
+        DeclarationRejected,
+        MrnAllocated,
+        GuaranteeNotValid
+      )
+
+      val greaterOrderValues = Seq(
+        ControlDecisionNotification,
+        ReleaseForTransit,
+        DeclarationCancellationRequest,
+        CancellationDecision,
+        WriteOffNotification,
+        XMLSubmissionNegativeAcknowledgement
+      )
+
+      "is greater order than DepartureDeclaration, PositiveAcknowledgement, DeclarationRejected, MrnAllocated, GuaranteeNotValid" in {
+
+        forAll(Gen.oneOf(lesserOrderValues)) {
+          status =>
+            val result = Ordering[MessageType].max(ControlDecisionNotification, status)
+
+            result mustBe ControlDecisionNotification
+        }
+      }
+
+      "in lesser order than any other status" in {
+
+        forAll(Gen.oneOf(greaterOrderValues)) {
+          status =>
+            val result = Ordering[MessageType].max(ControlDecisionNotification, status)
+
+            result mustBe status
+        }
+      }
+    }
+
+    "comparing to GuaranteeNotValid" - {
+
+      val lesserOrderValues = Seq(
+        DepartureDeclaration,
+        PositiveAcknowledgement,
+        DeclarationRejected,
+        MrnAllocated
+      )
+
+      val greaterOrderValues = Seq(
+        ControlDecisionNotification,
+        ReleaseForTransit,
+        DeclarationCancellationRequest,
+        CancellationDecision,
+        WriteOffNotification,
+        GuaranteeNotValid,
+        XMLSubmissionNegativeAcknowledgement
+      )
+
+      "is greater order than DepartureDeclaration, PositiveAcknowledgement, DeclarationRejected, MrnAllocated" in {
+
+        forAll(Gen.oneOf(lesserOrderValues)) {
+          status =>
+            val result = Ordering[MessageType].max(GuaranteeNotValid, status)
+
+            result mustBe GuaranteeNotValid
+        }
+      }
+
+      "in lesser order than any other status" in {
+
+        forAll(Gen.oneOf(greaterOrderValues)) {
+          status =>
+            val result = Ordering[MessageType].max(GuaranteeNotValid, status)
+
+            result mustBe status
+        }
+      }
+    }
+
+    "comparing to NoReleaseForTransit" - {
+      val lesserOrderValues = Seq(
+        DepartureDeclaration,
+        PositiveAcknowledgement,
+        DeclarationRejected,
+        MrnAllocated,
+        ControlDecisionNotification,
+        GuaranteeNotValid
+      )
+
+      val greaterOrderValues = Seq(
+        ReleaseForTransit,
+        DeclarationCancellationRequest,
+        CancellationDecision,
+        WriteOffNotification,
+        XMLSubmissionNegativeAcknowledgement
+      )
+
+      "is greater order than DepartureDeclaration, PositiveAcknowledgement, DeclarationRejected, MrnAllocated, ControlDecision, GuaranteeNotValid" in {
+
+        forAll(Gen.oneOf(lesserOrderValues)) {
+          status =>
+            val result = Ordering[MessageType].max(NoReleaseForTransit, status)
+
+            result mustBe NoReleaseForTransit
+        }
+      }
+
+      "in lesser order than any other status" in {
+
+        forAll(Gen.oneOf(greaterOrderValues)) {
+          status =>
+            val result = Ordering[MessageType].max(NoReleaseForTransit, status)
+
+            result mustBe status
+        }
+      }
+    }
+
+    "comparing to ReleaseForTransit" - {
+      val lesserOrderValues = Seq(
+        DepartureDeclaration,
+        PositiveAcknowledgement,
+        DeclarationRejected,
+        MrnAllocated,
+        NoReleaseForTransit,
+        ControlDecisionNotification,
+        GuaranteeNotValid
+      )
+
+      val greaterOrderValues = Seq(
+        ReleaseForTransit,
+        DeclarationCancellationRequest,
+        CancellationDecision,
+        WriteOffNotification,
+        XMLSubmissionNegativeAcknowledgement
+      )
+
+      "is greater order than DepartureDeclaration, PositiveAcknowledgement, DeclarationRejected, MrnAllocated, NoReleaseForTransit, Control Decision, GuaranteeNotValid" in {
+
+        forAll(Gen.oneOf(lesserOrderValues)) {
+          status =>
+            val result = Ordering[MessageType].max(ReleaseForTransit, status)
+
+            result mustBe ReleaseForTransit
+        }
+      }
+
+      "in lesser order than any other status" in {
+
+        forAll(Gen.oneOf(greaterOrderValues)) {
+          status =>
+            val result = Ordering[MessageType].max(ReleaseForTransit, status)
+
+            result mustBe status
+        }
+      }
+    }
+
+    "comparing to DeclarationCancellationRequest" - {
+      val lesserOrderValues = Seq(
+        DepartureDeclaration,
+        PositiveAcknowledgement,
+        DeclarationRejected,
+        MrnAllocated,
+        NoReleaseForTransit,
+        ControlDecisionNotification,
+        GuaranteeNotValid,
+        ReleaseForTransit
+      )
+
+      val greaterOrderValues = Seq(
+        DeclarationCancellationRequest,
+        CancellationDecision,
+        XMLSubmissionNegativeAcknowledgement
+      )
+
+      "is greater order than " +
+        "DepartureDeclaration, " +
+        "PositiveAcknowledgement, " +
+        "DeclarationRejected, " +
+        "MrnAllocated, " +
+        "NoReleaseForTransit, " +
+        "Control Decision, " +
+        "GuaranteeNotValid, " +
+        "ReleaseForTransit, " +
+        "WriteOffNotification" in {
+
+        forAll(Gen.oneOf(lesserOrderValues)) {
+          status =>
+            val result = Ordering[MessageType].max(DeclarationCancellationRequest, status)
+
+            result mustBe DeclarationCancellationRequest
+        }
+      }
+
+      "in lesser order than any other status" in {
+
+        forAll(Gen.oneOf(greaterOrderValues)) {
+          status =>
+            val result = Ordering[MessageType].max(DeclarationCancellationRequest, status)
+
+            result mustBe status
+        }
+      }
+    }
+
+    "comparing to CancellationDecision" - {
+      val lesserOrderValues = Seq(
+        DepartureDeclaration,
+        PositiveAcknowledgement,
+        DeclarationRejected,
+        MrnAllocated,
+        NoReleaseForTransit,
+        ControlDecisionNotification,
+        GuaranteeNotValid,
+        ReleaseForTransit,
+        DeclarationCancellationRequest
+      )
+
+      val greaterOrderValues = Seq(
+        CancellationDecision,
+        XMLSubmissionNegativeAcknowledgement
+      )
+
+      "is greater order than " +
+        "DepartureDeclaration, " +
+        "PositiveAcknowledgement, " +
+        "DeclarationRejected, " +
+        "MrnAllocated, " +
+        "NoReleaseForTransit, " +
+        "Control Decision, " +
+        "GuaranteeNotValid, " +
+        "ReleaseForTransit, " +
+        "WriteOffNotification ," +
+        "DeclarationCancellationRequest" in {
+
+        forAll(Gen.oneOf(lesserOrderValues)) {
+          status =>
+            val result = Ordering[MessageType].max(CancellationDecision, status)
+
+            result mustBe CancellationDecision
+        }
+      }
+
+      "in lesser order than any other status" in {
+
+        forAll(Gen.oneOf(greaterOrderValues)) {
+          status =>
+            val result = Ordering[MessageType].max(CancellationDecision, status)
+
+            result mustBe status
+        }
+      }
+    }
+
+    "comparing to XMLSubmissionNegativeAcknowledgement" - {
+      val lesserOrderValues = Seq(
+        DepartureDeclaration,
+        DeclarationCancellationRequest
+      )
+
+      val greaterOrderValues = Seq(
+        PositiveAcknowledgement,
+        DeclarationRejected,
+        MrnAllocated,
+        NoReleaseForTransit,
+        ControlDecisionNotification,
+        GuaranteeNotValid,
+        ReleaseForTransit,
+        CancellationDecision,
+        XMLSubmissionNegativeAcknowledgement
+      )
+
+      "is greater order than " +
+        "DepartureDeclaration, " +
+        "DeclarationCancellationRequest" in {
+
+        forAll(Gen.oneOf(lesserOrderValues)) {
+          status =>
+            val result = Ordering[MessageType].max(XMLSubmissionNegativeAcknowledgement, status)
+
+            result mustBe XMLSubmissionNegativeAcknowledgement
+        }
+      }
+
+      "in lesser order than any other status" in {
+
+        forAll(Gen.oneOf(greaterOrderValues)) {
+          status =>
+            val result = Ordering[MessageType].max(XMLSubmissionNegativeAcknowledgement, status)
+
+            result mustBe status
+        }
+      }
+    }
+
+    "comparing to WriteOffNotification" - {
+
+      "is greater order than all other status" in {
+
+        forAll(Gen.oneOf(MessageType.values)) {
+          status =>
+            val result = Ordering[MessageType].max(WriteOffNotification, status)
+
+            result mustBe WriteOffNotification
+        }
+      }
+    }
+  }
+
+  def MessageTypeesExcluding(exclude: MessageType*): Seq[MessageType] =
+    MessageType.values.filterNot(
+      x => exclude.toSet.contains(x)
+    )
 }
