@@ -14,21 +14,12 @@
  * limitations under the License.
  */
 
-package models
+package models.request
 
-import play.api.libs.json._
+import models.DepartureId
+import models.ChannelType
+import models.Message
+import play.api.mvc.WrappedRequest
 
-case class EORINumber(value: String) extends AnyVal
-
-object EORINumber {
-
-  implicit val format: Format[EORINumber] = new Format[EORINumber] {
-    override def reads(json: JsValue): JsResult[EORINumber] = json match {
-      case JsString(eori) => JsSuccess(EORINumber(eori))
-      case e              => JsError(s"Error in deserialization of Json value to an EORINumber, expected JsString got ${e.getClass}")
-    }
-
-    override def writes(eoriNumber: EORINumber): JsString = JsString(eoriNumber.value)
-  }
-
-}
+case class DepartureMessagesRequest[A](request: AuthenticatedRequest[A], departureId: DepartureId, channel: ChannelType, messages: List[Message])
+    extends WrappedRequest[A](request)

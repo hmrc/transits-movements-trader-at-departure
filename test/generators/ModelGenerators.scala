@@ -213,4 +213,13 @@ trait ModelGenerators extends BaseGenerators with JavaTimeGenerators with JsonHe
         Gen.const(EisSubmissionSuccessful)
       )
     )
+
+  implicit lazy val arbitraryDepartureMessage: Arbitrary[DepartureMessages] =
+    Arbitrary {
+      for {
+        departureId <- arbitrary[DepartureId]
+        eoriNumber  <- arbitrary[String]
+        message     <- arbitrary[MessageWithStatus]
+      } yield DepartureMessages(departureId, EORINumber(eoriNumber), List(message))
+    }
 }
