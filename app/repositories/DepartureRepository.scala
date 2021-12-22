@@ -304,6 +304,34 @@ class DepartureRepository @Inject()(
       )
   }
 
+  def getMessagesOfType(departureId: DepartureId, channelFilter: ChannelType, messageTypes: List[MessageType]): Future[Option[DepartureMessages]] =
+    collection.flatMap {
+      c =>
+        c.aggregateWith[DepartureMessages](allowDiskUse = true) {
+            _ =>
+              import c.aggregationFramework._
+
+              val initialFilter: PipelineOperator = Match(Json.obj("_id" -> departureId, "channel" -> channelFilter))
+
+              val project = List[PipelineOperator](Project(Json.obj("_id" -> 1, "eoriNumber" -> 1, "messages" -> 1)))
+
+              // Filters out the messages with message types we don't care about, meaning that if we have a
+              // match for the arrival id and the eori number, but not a message type match,
+              // we then get an empty list which indiates an arrival that doesn't have the required message
+              // types as of yet, but would otherwise be valid
+              val inFilter       = Json.obj("$in"     -> Json.arr("$$message.messageType", messageTypes.map(_.code).toSeq))
+              val messagesFilter = Json.obj("$filter" -> Json.obj("input" -> "$messages", "as" -> "message", "cond" -> inFilter))
+
+              val secondaryFilter = List[PipelineOperator](AddFields(Json.obj("messages" -> messagesFilter)))
+
+              val transformations = project ++ secondaryFilter
+
+              (initialFilter, transformations)
+
+          }
+          .headOption
+    }
+
   def getMessage(departureId: DepartureId, channelFilter: ChannelType, messageId: MessageId): Future[Option[Message]] =
     collection.flatMap {
       c =>
