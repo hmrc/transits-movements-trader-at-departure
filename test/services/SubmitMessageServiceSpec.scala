@@ -244,9 +244,8 @@ class SubmitMessageServiceSpec extends SpecBase with JsonHelper with ScalaCheckD
         forAll(arbitrary[DepartureId],
                arbitrary[MessageId],
                arbitrary[MessageWithStatus],
-               arbitrary[DepartureStatus],
                arbitrary[EisSubmissionFailureDownstream]) {
-          (departureId, messageId, movementMessage, departureStatus, submissionFailure) =>
+          (departureId, messageId, movementMessage, submissionFailure) =>
             when(mockDepartureRepository.addNewMessage(any(), any())).thenReturn(Future.successful(Success(())))
             when(mockMessageConnector.post(any(), any(), any(), any())(any())).thenReturn(Future.successful(submissionFailure))
             when(mockDepartureRepository.updateDeparture(any(), any())(any())).thenReturn(Future.successful(Success(())))
