@@ -116,13 +116,13 @@ class MovementMessageOrchestratorServiceSpec extends SpecBase {
       when(mockGetDepartureService.getDepartureAndAuditDeletedDepartures(any(), any(), any())(any()))
         .thenReturn(EitherT[Future, ErrorState, Departure](Future.successful(Right[ErrorState, Departure](initialDeparture))))
 
-      when(mockSaveMessageService.validateXmlSaveMessageUpdateMrn(any(), any(), any(), any(), any(), any()))
+      when(mockSaveMessageService.validateXmlSaveMessageUpdateMrn(any(), any(), any(), any(), any()))
         .thenReturn(Future.successful(SubmissionProcessingResult.SubmissionSuccess))
 
       service.saveNCTSMessage(MessageSender(DepartureId(1), 1)).futureValue mustBe Right(SubmissionSuccess(initialDeparture))
 
-      verify(mockSaveMessageService).validateXmlSaveMessageUpdateMrn(any(), any(), any(), any(), any(), any())
-      verify(mockSaveMessageService, never()).validateXmlAndSaveMessage(any(), any(), any(), any(), any())
+      verify(mockSaveMessageService).validateXmlSaveMessageUpdateMrn(any(), any(), any(), any(), any())
+      verify(mockSaveMessageService, never()).validateXmlAndSaveMessage(any(), any(), any(), any())
       verify(mockAuditService).auditNCTSMessages(eqTo(ChannelType.Web), any(), eqTo(MrnAllocatedResponse), any())(any())
       verify(mockPullPushService).sendPushNotificationIfBoxExists(any(), any(), any())(any())
     }
@@ -155,13 +155,13 @@ class MovementMessageOrchestratorServiceSpec extends SpecBase {
       when(mockGetDepartureService.getDepartureAndAuditDeletedDepartures(any(), any(), any())(any()))
         .thenReturn(EitherT[Future, ErrorState, Departure](Future.successful(Right[ErrorState, Departure](departure))))
 
-      when(mockSaveMessageService.validateXmlAndSaveMessage(any(), any(), any(), any(), any()))
+      when(mockSaveMessageService.validateXmlAndSaveMessage(any(), any(), any(), any()))
         .thenReturn(Future.successful(SubmissionProcessingResult.SubmissionSuccess))
 
       service.saveNCTSMessage(MessageSender(DepartureId(1), 1)).futureValue mustBe Right(SubmissionSuccess(departure))
 
-      verify(mockSaveMessageService, never()).validateXmlSaveMessageUpdateMrn(any(), any(), any(), any(), any(), any())
-      verify(mockSaveMessageService).validateXmlAndSaveMessage(any(), any(), any(), any(), any())
+      verify(mockSaveMessageService, never()).validateXmlSaveMessageUpdateMrn(any(), any(), any(), any(), any())
+      verify(mockSaveMessageService).validateXmlAndSaveMessage(any(), any(), any(), any())
       verify(mockAuditService).auditNCTSMessages(eqTo(ChannelType.Web), any(), eqTo(ReleaseForTransitResponse), any())(any())
       verify(mockPullPushService).sendPushNotificationIfBoxExists(any(), any(), any())(any())
     }
@@ -180,13 +180,13 @@ class MovementMessageOrchestratorServiceSpec extends SpecBase {
       when(mockGetDepartureService.getDepartureAndAuditDeletedDepartures(any(), any(), any())(any()))
         .thenReturn(EitherT[Future, ErrorState, Departure](Future.successful(Left[ErrorState, Departure](DepartureNotFound("")))))
 
-      when(mockSaveMessageService.validateXmlAndSaveMessage(any(), any(), any(), any(), any()))
+      when(mockSaveMessageService.validateXmlAndSaveMessage(any(), any(), any(), any()))
         .thenReturn(Future.successful(SubmissionProcessingResult.SubmissionSuccess))
 
       service.saveNCTSMessage(MessageSender(DepartureId(1), 1)).futureValue mustBe Left(DepartureNotFound(""))
 
-      verify(mockSaveMessageService, never()).validateXmlSaveMessageUpdateMrn(any(), any(), any(), any(), any(), any())
-      verify(mockSaveMessageService, never()).validateXmlAndSaveMessage(any(), any(), any(), any(), any())
+      verify(mockSaveMessageService, never()).validateXmlSaveMessageUpdateMrn(any(), any(), any(), any(), any())
+      verify(mockSaveMessageService, never()).validateXmlAndSaveMessage(any(), any(), any(), any())
       verify(mockAuditService, never()).auditNCTSMessages(eqTo(ChannelType.Web), any(), eqTo(ReleaseForTransitResponse), any())(any())
       verifyNoInteractions(mockPullPushService)
     }
@@ -219,13 +219,13 @@ class MovementMessageOrchestratorServiceSpec extends SpecBase {
       when(mockGetDepartureService.getDepartureAndAuditDeletedDepartures(any(), any(), any())(any()))
         .thenReturn(EitherT[Future, ErrorState, Departure](Future.successful(Right[ErrorState, Departure](departure))))
 
-      when(mockSaveMessageService.validateXmlAndSaveMessage(any(), any(), any(), any(), any()))
+      when(mockSaveMessageService.validateXmlAndSaveMessage(any(), any(), any(), any()))
         .thenReturn(Future.successful(SubmissionProcessingResult.SubmissionFailureInternal))
 
       service.saveNCTSMessage(MessageSender(DepartureId(1), 1)).futureValue mustBe Left(SubmissionFailureInternal)
 
-      verify(mockSaveMessageService, never()).validateXmlSaveMessageUpdateMrn(any(), any(), any(), any(), any(), any())
-      verify(mockSaveMessageService).validateXmlAndSaveMessage(any(), any(), any(), any(), any())
+      verify(mockSaveMessageService, never()).validateXmlSaveMessageUpdateMrn(any(), any(), any(), any(), any())
+      verify(mockSaveMessageService).validateXmlAndSaveMessage(any(), any(), any(), any())
       verify(mockAuditService, never()).auditNCTSMessages(eqTo(ChannelType.Web), any(), eqTo(ReleaseForTransitResponse), any())(any())
       verifyNoInteractions(mockPullPushService)
     }
@@ -258,13 +258,13 @@ class MovementMessageOrchestratorServiceSpec extends SpecBase {
       when(mockGetDepartureService.getDepartureAndAuditDeletedDepartures(any(), any(), any())(any()))
         .thenReturn(EitherT[Future, ErrorState, Departure](Future.successful(Right[ErrorState, Departure](departure))))
 
-      when(mockSaveMessageService.validateXmlAndSaveMessage(any(), any(), any(), any(), any()))
+      when(mockSaveMessageService.validateXmlAndSaveMessage(any(), any(), any(), any()))
         .thenReturn(Future.successful(SubmissionProcessingResult.SubmissionFailureExternal))
 
       service.saveNCTSMessage(MessageSender(DepartureId(1), 1)).futureValue mustBe Left(SubmissionFailureExternal)
 
-      verify(mockSaveMessageService, never()).validateXmlSaveMessageUpdateMrn(any(), any(), any(), any(), any(), any())
-      verify(mockSaveMessageService).validateXmlAndSaveMessage(any(), any(), any(), any(), any())
+      verify(mockSaveMessageService, never()).validateXmlSaveMessageUpdateMrn(any(), any(), any(), any(), any())
+      verify(mockSaveMessageService).validateXmlAndSaveMessage(any(), any(), any(), any())
       verify(mockAuditService, never()).auditNCTSMessages(eqTo(ChannelType.Web), any(), eqTo(ReleaseForTransitResponse), any())(any())
       verifyNoInteractions(mockPullPushService)
     }
@@ -283,13 +283,13 @@ class MovementMessageOrchestratorServiceSpec extends SpecBase {
       when(mockGetDepartureService.getDepartureAndAuditDeletedDepartures(any(), any(), any())(any()))
         .thenReturn(EitherT[Future, ErrorState, Departure](Future.successful(Right[ErrorState, Departure](initialDeparture))))
 
-      when(mockSaveMessageService.validateXmlSaveMessageUpdateMrn(any(), any(), any(), any(), any(), any()))
+      when(mockSaveMessageService.validateXmlSaveMessageUpdateMrn(any(), any(), any(), any(), any()))
         .thenReturn(Future.successful(SubmissionProcessingResult.SubmissionSuccess))
 
       service.saveNCTSMessage(MessageSender(DepartureId(1), 1)).futureValue mustBe Left(XMLMRNError("The element 'DocNumHEA5' must contain a value."))
 
-      verify(mockSaveMessageService, never()).validateXmlSaveMessageUpdateMrn(any(), any(), any(), any(), any(), any())
-      verify(mockSaveMessageService, never()).validateXmlAndSaveMessage(any(), any(), any(), any(), any())
+      verify(mockSaveMessageService, never()).validateXmlSaveMessageUpdateMrn(any(), any(), any(), any(), any())
+      verify(mockSaveMessageService, never()).validateXmlAndSaveMessage(any(), any(), any(), any())
       verify(mockAuditService, never()).auditNCTSMessages(any(), any(), any(), any())(any())
       verifyNoInteractions(mockPullPushService)
     }

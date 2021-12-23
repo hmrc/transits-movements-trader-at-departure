@@ -38,15 +38,14 @@ class SaveMessageService @Inject()(departureRepository: DepartureRepository, dep
     nextMessageId: MessageId,
     messageXml: NodeSeq,
     messageSender: MessageSender,
-    messageResponse: MessageResponse,
-    departureStatus: DepartureStatus
+    messageResponse: MessageResponse
   ): Future[SubmissionProcessingResult] =
     xmlValidationService.validate(messageXml.toString(), messageResponse.xsdFile) match {
       case Success(_) =>
         departureService.makeMessage(nextMessageId, messageSender.messageCorrelationId, messageResponse.messageType)(messageXml) match {
           case Right(message) =>
             departureRepository
-              .addResponseMessage(messageSender.departureId, message, departureStatus)
+              .addResponseMessage(messageSender.departureId, message)
               .map {
                 case Success(_) => SubmissionSuccess
                 case Failure(_) => SubmissionFailureInternal
@@ -63,7 +62,6 @@ class SaveMessageService @Inject()(departureRepository: DepartureRepository, dep
     messageXml: NodeSeq,
     messageSender: MessageSender,
     messageResponse: MessageResponse,
-    departureStatus: DepartureStatus,
     mrn: MovementReferenceNumber
   ): Future[SubmissionProcessingResult] =
     xmlValidationService.validate(messageXml.toString(), messageResponse.xsdFile) match {
@@ -71,7 +69,7 @@ class SaveMessageService @Inject()(departureRepository: DepartureRepository, dep
         departureService.makeMessage(nextMessageId, messageSender.messageCorrelationId, messageResponse.messageType)(messageXml) match {
           case Right(message) =>
             departureRepository
-              .setMrnAndAddResponseMessage(messageSender.departureId, message, departureStatus, mrn)
+              .setMrnAndAddResponseMessage(messageSender.departureId, message, mrn)
               .map {
                 case Success(_) => SubmissionSuccess
                 case Failure(_) => SubmissionFailureInternal

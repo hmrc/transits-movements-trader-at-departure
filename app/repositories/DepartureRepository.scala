@@ -366,7 +366,7 @@ class DepartureRepository @Inject()(
           .headOption
     }
 
-  def addResponseMessage(departureId: DepartureId, message: Message, status: DepartureStatus): Future[Try[Unit]] = {
+  def addResponseMessage(departureId: DepartureId, message: Message): Future[Try[Unit]] = {
     val selector = Json.obj(
       "_id" -> departureId
     )
@@ -374,8 +374,7 @@ class DepartureRepository @Inject()(
     val modifier =
       Json.obj(
         "$set" -> Json.obj(
-          "lastUpdated" -> LocalDateTime.now(clock),
-          "status"      -> status.toString
+          "lastUpdated" -> LocalDateTime.now(clock)
         ),
         "$push" -> Json.obj(
           "messages" -> Json.toJson(message)
@@ -406,7 +405,7 @@ class DepartureRepository @Inject()(
     }
   }
 
-  def setMrnAndAddResponseMessage(departureId: DepartureId, message: Message, status: DepartureStatus, mrn: MovementReferenceNumber): Future[Try[Unit]] = {
+  def setMrnAndAddResponseMessage(departureId: DepartureId, message: Message, mrn: MovementReferenceNumber): Future[Try[Unit]] = {
     val selector = Json.obj(
       "_id" -> departureId
     )
@@ -415,8 +414,7 @@ class DepartureRepository @Inject()(
       Json.obj(
         "$set" -> Json.obj(
           "lastUpdated"             -> LocalDateTime.now(clock),
-          "movementReferenceNumber" -> mrn,
-          "status"                  -> status.toString
+          "movementReferenceNumber" -> mrn
         ),
         "$push" -> Json.obj(
           "messages" -> Json.toJson(message)

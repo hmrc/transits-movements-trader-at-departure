@@ -616,10 +616,9 @@ class DepartureRepositorySpec
             departure.nextMessageCorrelationId,
             convertXmlToJson(messageBody.toString)
           )
-        val newState = DepartureStatus.DepartureRejected
 
         service.insert(departure).futureValue
-        val addMessageResult = service.addResponseMessage(departure.departureId, declarationRejectedMessage, newState).futureValue
+        val addMessageResult = service.addResponseMessage(departure.departureId, declarationRejectedMessage).futureValue
 
         val selector = Json.obj("_id" -> departure.departureId)
 
@@ -632,7 +631,7 @@ class DepartureRepositorySpec
 
         addMessageResult mustBe a[Success[_]]
         updatedDeparture.nextMessageCorrelationId - departure.nextMessageCorrelationId mustBe 0
-        updatedDeparture.status mustEqual newState
+        updatedDeparture.status mustEqual DepartureStatus.DepartureRejected
         updatedDeparture.messages.size - departure.messages.size mustEqual 1
         updatedDeparture.messages.last mustEqual declarationRejectedMessage
       }
@@ -673,10 +672,9 @@ class DepartureRepositorySpec
             messageCorrelationId = 1,
             convertXmlToJson(messageBody.toString)
           )
-        val newState = DepartureStatus.DepartureRejected
 
         service.insert(departure).futureValue
-        val result = service.addResponseMessage(DepartureId(2), declarationRejected, newState).futureValue
+        val result = service.addResponseMessage(DepartureId(2), declarationRejected).futureValue
 
         result mustBe a[Failure[_]]
       }
