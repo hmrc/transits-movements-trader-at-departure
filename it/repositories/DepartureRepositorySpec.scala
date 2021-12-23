@@ -708,11 +708,10 @@ class DepartureRepositorySpec
             departure.nextMessageCorrelationId,
             convertXmlToJson(messageBody.toString)
           )
-        val newState = DepartureStatus.MrnAllocated
 
         service.insert(departure).futureValue
         val addMessageResult =
-          service.setMrnAndAddResponseMessage(departure.departureId, mrnAllocatedMessage, newState, MovementReferenceNumber(mrn)).futureValue
+          service.setMrnAndAddResponseMessage(departure.departureId, mrnAllocatedMessage, MovementReferenceNumber(mrn)).futureValue
 
         val selector = Json.obj("_id" -> departure.departureId)
 
@@ -725,7 +724,7 @@ class DepartureRepositorySpec
 
         addMessageResult mustBe a[Success[_]]
         updatedDeparture.nextMessageCorrelationId - departure.nextMessageCorrelationId mustBe 0
-        updatedDeparture.status mustEqual newState
+        updatedDeparture.status mustEqual DepartureStatus.MrnAllocated
         updatedDeparture.movementReferenceNumber.get mustEqual MovementReferenceNumber(mrn)
         updatedDeparture.messages.size - departure.messages.size mustEqual 1
         updatedDeparture.messages.last mustEqual mrnAllocatedMessage
@@ -768,10 +767,9 @@ class DepartureRepositorySpec
             departure.nextMessageCorrelationId,
             convertXmlToJson(messageBody.toString)
           )
-        val newState = DepartureStatus.DepartureRejected
 
         service.insert(departure).futureValue
-        val addMessageResult = service.setMrnAndAddResponseMessage(DepartureId(2), mrnAllocatedMessage, newState, MovementReferenceNumber(mrn)).futureValue
+        val addMessageResult = service.setMrnAndAddResponseMessage(DepartureId(2), mrnAllocatedMessage, MovementReferenceNumber(mrn)).futureValue
 
         addMessageResult mustBe a[Failure[_]]
       }
