@@ -51,7 +51,7 @@ object MessageTypeUtils {
     } else {
       currentStatus match {
         case DepartureStatus.DeclarationCancellationRequestNegativeAcknowledgement =>
-          if (previousMessage.messageType == MessageType.DepartureDeclaration | previousMessage.messageType == MessageType.DeclarationCancellationRequest) {
+          if (previousMessage.messageType == MessageType.DepartureDeclaration || previousMessage.messageType == MessageType.DeclarationCancellationRequest) {
             previousMessage.messageType
           } else {
             messagesWithSameDateTime.map(_.messageType).max
