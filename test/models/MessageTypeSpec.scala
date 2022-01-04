@@ -131,39 +131,35 @@ class MessageTypeSpec extends SpecBase with ScalaCheckDrivenPropertyChecks with 
 
         MessageTypeesExcluding(DepartureDeclaration).foreach {
           status =>
-            val result = Ordering[MessageType].max(DepartureDeclaration, status)
-
-            result mustBe status
+            Ordering[MessageType].max(DepartureDeclaration, status) mustBe status
+            Ordering[MessageType].max(status, DepartureDeclaration) mustBe status
         }
       }
     }
 
     "comparing to DeclarationRejected" - {
-      "all status must have greater order except for DepartureDeclaration" in {
+      "all status must have greater order except for DepartureDeclaration, PositiveAcknowledgement and XMLSubmissionNegativeAcknowledgement" in {
 
-        MessageTypeesExcluding(DeclarationRejected, DepartureDeclaration, PositiveAcknowledgement).foreach {
+        MessageTypeesExcluding(DeclarationRejected, DepartureDeclaration, PositiveAcknowledgement, XMLSubmissionNegativeAcknowledgement).foreach {
           status =>
-            val result = Ordering[MessageType].max(DeclarationRejected, status)
-
-            result mustBe status
+            Ordering[MessageType].max(DeclarationRejected, status) mustBe status
+            Ordering[MessageType].max(status, DeclarationRejected) mustBe status
         }
       }
 
       "then it should have great order than PositiveAcknowledgement" in {
-        val result = Ordering[MessageType].max(DeclarationRejected, PositiveAcknowledgement)
-
-        result mustBe DeclarationRejected
+        Ordering[MessageType].max(DeclarationRejected, PositiveAcknowledgement) mustBe DeclarationRejected
+        Ordering[MessageType].max(PositiveAcknowledgement, DeclarationRejected) mustBe DeclarationRejected
       }
     }
 
     "comparing to PositiveAcknowledgement" - {
-      "all status must have greater order except for DepartureDeclaration" in {
+      "all status must have greater order except for DepartureDeclaration and XMLSubmissionNegativeAcknowledgement" in {
 
-        MessageTypeesExcluding(PositiveAcknowledgement, DepartureDeclaration).foreach {
+        MessageTypeesExcluding(PositiveAcknowledgement, DepartureDeclaration, XMLSubmissionNegativeAcknowledgement).foreach {
           status =>
-            val result = Ordering[MessageType].max(PositiveAcknowledgement, status)
-
-            result mustBe status
+            Ordering[MessageType].max(PositiveAcknowledgement, status) mustBe status
+            Ordering[MessageType].max(status, PositiveAcknowledgement) mustBe status
         }
       }
     }
@@ -172,7 +168,8 @@ class MessageTypeSpec extends SpecBase with ScalaCheckDrivenPropertyChecks with 
       val lesserOrderValues = Seq(
         DepartureDeclaration,
         PositiveAcknowledgement,
-        DeclarationRejected
+        DeclarationRejected,
+        XMLSubmissionNegativeAcknowledgement
       )
 
       val greaterOrderValues = Seq(
@@ -182,17 +179,14 @@ class MessageTypeSpec extends SpecBase with ScalaCheckDrivenPropertyChecks with 
         DeclarationCancellationRequest,
         CancellationDecision,
         WriteOffNotification,
-        GuaranteeNotValid,
-        XMLSubmissionNegativeAcknowledgement
+        GuaranteeNotValid
       )
 
-      "is greater order than DepartureDeclaration, PositiveAcknowledgement, DeclarationRejected" in {
+      "is greater order than DepartureDeclaration, PositiveAcknowledgement, DeclarationRejected, XMLSubmissionNegativeAcknowledgement" in {
 
         forAll(Gen.oneOf(lesserOrderValues)) {
           status =>
-            val result = Ordering[MessageType].max(MrnAllocated, status)
-
-            result mustBe MrnAllocated
+            Ordering[MessageType].max(MrnAllocated, status) mustBe MrnAllocated
         }
       }
 
@@ -200,9 +194,7 @@ class MessageTypeSpec extends SpecBase with ScalaCheckDrivenPropertyChecks with 
 
         forAll(Gen.oneOf(greaterOrderValues)) {
           status =>
-            val result = Ordering[MessageType].max(MrnAllocated, status)
-
-            result mustBe status
+            Ordering[MessageType].max(MrnAllocated, status) mustBe status
         }
       }
     }
@@ -214,7 +206,8 @@ class MessageTypeSpec extends SpecBase with ScalaCheckDrivenPropertyChecks with 
         PositiveAcknowledgement,
         DeclarationRejected,
         MrnAllocated,
-        GuaranteeNotValid
+        GuaranteeNotValid,
+        XMLSubmissionNegativeAcknowledgement
       )
 
       val greaterOrderValues = Seq(
@@ -222,17 +215,14 @@ class MessageTypeSpec extends SpecBase with ScalaCheckDrivenPropertyChecks with 
         ReleaseForTransit,
         DeclarationCancellationRequest,
         CancellationDecision,
-        WriteOffNotification,
-        XMLSubmissionNegativeAcknowledgement
+        WriteOffNotification
       )
 
-      "is greater order than DepartureDeclaration, PositiveAcknowledgement, DeclarationRejected, MrnAllocated, GuaranteeNotValid" in {
+      "is greater order than DepartureDeclaration, PositiveAcknowledgement, DeclarationRejected, MrnAllocated, GuaranteeNotValid, XMLSubmissionNegativeAcknowledgement" in {
 
         forAll(Gen.oneOf(lesserOrderValues)) {
           status =>
-            val result = Ordering[MessageType].max(ControlDecisionNotification, status)
-
-            result mustBe ControlDecisionNotification
+            Ordering[MessageType].max(ControlDecisionNotification, status) mustBe ControlDecisionNotification
         }
       }
 
@@ -240,9 +230,7 @@ class MessageTypeSpec extends SpecBase with ScalaCheckDrivenPropertyChecks with 
 
         forAll(Gen.oneOf(greaterOrderValues)) {
           status =>
-            val result = Ordering[MessageType].max(ControlDecisionNotification, status)
-
-            result mustBe status
+            Ordering[MessageType].max(ControlDecisionNotification, status) mustBe status
         }
       }
     }
@@ -253,7 +241,8 @@ class MessageTypeSpec extends SpecBase with ScalaCheckDrivenPropertyChecks with 
         DepartureDeclaration,
         PositiveAcknowledgement,
         DeclarationRejected,
-        MrnAllocated
+        MrnAllocated,
+        XMLSubmissionNegativeAcknowledgement
       )
 
       val greaterOrderValues = Seq(
@@ -262,17 +251,14 @@ class MessageTypeSpec extends SpecBase with ScalaCheckDrivenPropertyChecks with 
         DeclarationCancellationRequest,
         CancellationDecision,
         WriteOffNotification,
-        GuaranteeNotValid,
-        XMLSubmissionNegativeAcknowledgement
+        GuaranteeNotValid
       )
 
-      "is greater order than DepartureDeclaration, PositiveAcknowledgement, DeclarationRejected, MrnAllocated" in {
+      "is greater order than DepartureDeclaration, PositiveAcknowledgement, DeclarationRejected, MrnAllocated, XMLSubmissionNegativeAcknowledgement" in {
 
         forAll(Gen.oneOf(lesserOrderValues)) {
           status =>
-            val result = Ordering[MessageType].max(GuaranteeNotValid, status)
-
-            result mustBe GuaranteeNotValid
+            Ordering[MessageType].max(GuaranteeNotValid, status) mustBe GuaranteeNotValid
         }
       }
 
@@ -280,9 +266,7 @@ class MessageTypeSpec extends SpecBase with ScalaCheckDrivenPropertyChecks with 
 
         forAll(Gen.oneOf(greaterOrderValues)) {
           status =>
-            val result = Ordering[MessageType].max(GuaranteeNotValid, status)
-
-            result mustBe status
+            Ordering[MessageType].max(GuaranteeNotValid, status) mustBe status
         }
       }
     }
@@ -294,24 +278,22 @@ class MessageTypeSpec extends SpecBase with ScalaCheckDrivenPropertyChecks with 
         DeclarationRejected,
         MrnAllocated,
         ControlDecisionNotification,
-        GuaranteeNotValid
+        GuaranteeNotValid,
+        XMLSubmissionNegativeAcknowledgement
       )
 
       val greaterOrderValues = Seq(
         ReleaseForTransit,
         DeclarationCancellationRequest,
         CancellationDecision,
-        WriteOffNotification,
-        XMLSubmissionNegativeAcknowledgement
+        WriteOffNotification
       )
 
-      "is greater order than DepartureDeclaration, PositiveAcknowledgement, DeclarationRejected, MrnAllocated, ControlDecision, GuaranteeNotValid" in {
+      "is greater order than DepartureDeclaration, PositiveAcknowledgement, DeclarationRejected, MrnAllocated, ControlDecision, GuaranteeNotValid, XMLSubmissionNegativeAcknowledgement" in {
 
         forAll(Gen.oneOf(lesserOrderValues)) {
           status =>
-            val result = Ordering[MessageType].max(NoReleaseForTransit, status)
-
-            result mustBe NoReleaseForTransit
+            Ordering[MessageType].max(NoReleaseForTransit, status) mustBe NoReleaseForTransit
         }
       }
 
@@ -319,9 +301,7 @@ class MessageTypeSpec extends SpecBase with ScalaCheckDrivenPropertyChecks with 
 
         forAll(Gen.oneOf(greaterOrderValues)) {
           status =>
-            val result = Ordering[MessageType].max(NoReleaseForTransit, status)
-
-            result mustBe status
+            Ordering[MessageType].max(NoReleaseForTransit, status) mustBe status
         }
       }
     }
@@ -334,7 +314,8 @@ class MessageTypeSpec extends SpecBase with ScalaCheckDrivenPropertyChecks with 
         MrnAllocated,
         NoReleaseForTransit,
         ControlDecisionNotification,
-        GuaranteeNotValid
+        GuaranteeNotValid,
+        XMLSubmissionNegativeAcknowledgement
       )
 
       val greaterOrderValues = Seq(
@@ -342,16 +323,13 @@ class MessageTypeSpec extends SpecBase with ScalaCheckDrivenPropertyChecks with 
         DeclarationCancellationRequest,
         CancellationDecision,
         WriteOffNotification,
-        XMLSubmissionNegativeAcknowledgement
       )
 
-      "is greater order than DepartureDeclaration, PositiveAcknowledgement, DeclarationRejected, MrnAllocated, NoReleaseForTransit, Control Decision, GuaranteeNotValid" in {
+      "is greater order than DepartureDeclaration, PositiveAcknowledgement, DeclarationRejected, MrnAllocated, NoReleaseForTransit, Control Decision, GuaranteeNotValid, XMLSubmissionNegativeAcknowledgement" in {
 
         forAll(Gen.oneOf(lesserOrderValues)) {
           status =>
-            val result = Ordering[MessageType].max(ReleaseForTransit, status)
-
-            result mustBe ReleaseForTransit
+            Ordering[MessageType].max(ReleaseForTransit, status) mustBe ReleaseForTransit
         }
       }
 
@@ -375,13 +353,14 @@ class MessageTypeSpec extends SpecBase with ScalaCheckDrivenPropertyChecks with 
         NoReleaseForTransit,
         ControlDecisionNotification,
         GuaranteeNotValid,
-        ReleaseForTransit
+        ReleaseForTransit,
+        NoReleaseForTransit
       )
 
       val greaterOrderValues = Seq(
-        DeclarationCancellationRequest,
         CancellationDecision,
-        XMLSubmissionNegativeAcknowledgement
+        XMLSubmissionNegativeAcknowledgement,
+        WriteOffNotification
       )
 
       "is greater order than " +
@@ -392,14 +371,12 @@ class MessageTypeSpec extends SpecBase with ScalaCheckDrivenPropertyChecks with 
         "NoReleaseForTransit, " +
         "Control Decision, " +
         "GuaranteeNotValid, " +
-        "ReleaseForTransit, " +
-        "WriteOffNotification" in {
+        "ReleaseForTransit" in {
 
         forAll(Gen.oneOf(lesserOrderValues)) {
           status =>
-            val result = Ordering[MessageType].max(DeclarationCancellationRequest, status)
-
-            result mustBe DeclarationCancellationRequest
+            Ordering[MessageType].max(DeclarationCancellationRequest, status) mustBe DeclarationCancellationRequest
+            Ordering[MessageType].max(status, DeclarationCancellationRequest) mustBe DeclarationCancellationRequest
         }
       }
 
@@ -407,9 +384,8 @@ class MessageTypeSpec extends SpecBase with ScalaCheckDrivenPropertyChecks with 
 
         forAll(Gen.oneOf(greaterOrderValues)) {
           status =>
-            val result = Ordering[MessageType].max(DeclarationCancellationRequest, status)
-
-            result mustBe status
+            Ordering[MessageType].max(DeclarationCancellationRequest, status) mustBe status
+            Ordering[MessageType].max(status, DeclarationCancellationRequest) mustBe status
         }
       }
     }
@@ -424,12 +400,13 @@ class MessageTypeSpec extends SpecBase with ScalaCheckDrivenPropertyChecks with 
         ControlDecisionNotification,
         GuaranteeNotValid,
         ReleaseForTransit,
-        DeclarationCancellationRequest
+        DeclarationCancellationRequest,
+        XMLSubmissionNegativeAcknowledgement
       )
 
       val greaterOrderValues = Seq(
         CancellationDecision,
-        XMLSubmissionNegativeAcknowledgement
+        WriteOffNotification
       )
 
       "is greater order than " +
@@ -441,14 +418,13 @@ class MessageTypeSpec extends SpecBase with ScalaCheckDrivenPropertyChecks with 
         "Control Decision, " +
         "GuaranteeNotValid, " +
         "ReleaseForTransit, " +
-        "WriteOffNotification ," +
+        "XMLSubmissionNegativeAcknowledgement ," +
         "DeclarationCancellationRequest" in {
 
         forAll(Gen.oneOf(lesserOrderValues)) {
           status =>
-            val result = Ordering[MessageType].max(CancellationDecision, status)
-
-            result mustBe CancellationDecision
+            Ordering[MessageType].max(CancellationDecision, status) mustBe CancellationDecision
+            Ordering[MessageType].max(status, CancellationDecision) mustBe CancellationDecision
         }
       }
 
@@ -456,9 +432,8 @@ class MessageTypeSpec extends SpecBase with ScalaCheckDrivenPropertyChecks with 
 
         forAll(Gen.oneOf(greaterOrderValues)) {
           status =>
-            val result = Ordering[MessageType].max(CancellationDecision, status)
-
-            result mustBe status
+            Ordering[MessageType].max(CancellationDecision, status) mustBe status
+            Ordering[MessageType].max(status, CancellationDecision) mustBe status
         }
       }
     }
@@ -487,9 +462,8 @@ class MessageTypeSpec extends SpecBase with ScalaCheckDrivenPropertyChecks with 
 
         forAll(Gen.oneOf(lesserOrderValues)) {
           status =>
-            val result = Ordering[MessageType].max(XMLSubmissionNegativeAcknowledgement, status)
-
-            result mustBe XMLSubmissionNegativeAcknowledgement
+            Ordering[MessageType].max(XMLSubmissionNegativeAcknowledgement, status) mustBe XMLSubmissionNegativeAcknowledgement
+            Ordering[MessageType].max(status, XMLSubmissionNegativeAcknowledgement) mustBe XMLSubmissionNegativeAcknowledgement
         }
       }
 
@@ -497,9 +471,8 @@ class MessageTypeSpec extends SpecBase with ScalaCheckDrivenPropertyChecks with 
 
         forAll(Gen.oneOf(greaterOrderValues)) {
           status =>
-            val result = Ordering[MessageType].max(XMLSubmissionNegativeAcknowledgement, status)
-
-            result mustBe status
+            Ordering[MessageType].max(XMLSubmissionNegativeAcknowledgement, status) mustBe status
+            Ordering[MessageType].max(status, XMLSubmissionNegativeAcknowledgement) mustBe status
         }
       }
     }
@@ -510,9 +483,7 @@ class MessageTypeSpec extends SpecBase with ScalaCheckDrivenPropertyChecks with 
 
         forAll(Gen.oneOf(MessageType.values)) {
           status =>
-            val result = Ordering[MessageType].max(WriteOffNotification, status)
-
-            result mustBe WriteOffNotification
+            Ordering[MessageType].max(WriteOffNotification, status) mustBe WriteOffNotification
         }
       }
     }
