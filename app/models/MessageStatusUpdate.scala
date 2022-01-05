@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 HM Revenue & Customs
+ * Copyright 2022 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,27 +16,13 @@
 
 package models
 
-import cats._
 import play.api.libs.json.Json
 import play.api.libs.json.Writes
 
 import java.time.Clock
 import java.time.LocalDateTime
 
-sealed trait DepartureUpdate
-
-object DepartureUpdate {
-
-  implicit val departureUpdateSemigroup: Semigroup[DepartureUpdate] = {
-    case (_: MessageStatusUpdate, x: MessageStatusUpdate) => x
-  }
-
-  implicit def departureUpdateDepartureModifier(implicit clock: Clock): DepartureModifier[DepartureUpdate] = {
-    case x: MessageStatusUpdate => DepartureModifier.toJson(x)
-  }
-}
-
-final case class MessageStatusUpdate(messageId: MessageId, messageStatus: MessageStatus) extends DepartureUpdate
+final case class MessageStatusUpdate(messageId: MessageId, messageStatus: MessageStatus)
 
 object MessageStatusUpdate extends MongoDateTimeFormats {
 

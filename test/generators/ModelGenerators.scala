@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 HM Revenue & Customs
+ * Copyright 2022 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,20 +52,6 @@ trait ModelGenerators extends BaseGenerators with JavaTimeGenerators with JsonHe
         messageStatus <- arbitrary[MessageStatus]
       } yield MessageStatusUpdate(messageId, messageStatus)
     }
-
-  val departureUpdateTypeGenerator: Gen[Gen[DepartureUpdate]] =
-    Gen.oneOf[Gen[DepartureUpdate]](
-      arbitrary[MessageStatusUpdate],
-      arbitrary[MessageStatusUpdate]
-    )
-
-  implicit val arbitraryDepartureUpdate: Arbitrary[DepartureUpdate] =
-    Arbitrary(
-      Gen.oneOf[DepartureUpdate](
-        arbitrary[MessageStatusUpdate],
-        arbitrary[MessageStatusUpdate]
-      )
-    )
 
   implicit lazy val arbitraryMessageStatus: Arbitrary[MessageStatus] =
     Arbitrary {
