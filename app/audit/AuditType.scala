@@ -28,6 +28,9 @@ object AuditType extends Enumerable.Implicits {
   case object DepartureDeclarationSubmitted         extends AuditType
   case object DepartureCancellationRequestSubmitted extends AuditType
 
+  // Error
+  case object MissingMovementRequested extends AuditType
+
   //Transform
   case object MesSenMES3Added extends AuditType
 
@@ -47,6 +50,7 @@ object AuditType extends Enumerable.Implicits {
     Seq(
       DepartureDeclarationSubmitted,
       DepartureCancellationRequestSubmitted,
+      MissingMovementRequested,
       PositiveAcknowledgementReceived,
       MrnAllocatedReceived,
       DeclarationRejectedReceived,

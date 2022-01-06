@@ -53,6 +53,9 @@ import play.api.test.Helpers.running
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 
 import scala.xml.NodeSeq
+import play.api.test.FakeRequest
+import models.request.AuthenticatedRequest
+import models.DepartureId
 
 class AuditServiceSpec extends SpecBase with ScalaCheckPropertyChecks with BeforeAndAfterEach with ModelGenerators {
 
@@ -143,6 +146,26 @@ class AuditServiceSpec extends SpecBase with ScalaCheckPropertyChecks with Befor
 
       }
     }
-  }
 
+    "must audit missing movement events" in {
+      forAll(Gen.oneOf(ChannelType.values)) {
+        (channel) =>
+          val request = new AuthenticatedRequest[Any](FakeRequest(), channel, Ior.right(EORINumber(Constants.NewEnrolmentIdKey)))
+          val application = baseApplicationBuilder
+            .overrides(bind[AuditConnector].toInstance(mockAuditConnector))
+            .build()
+
+          running(application) {
+            val auditService    = application.injector.instanceOf[AuditService]
+            val departureId     = DepartureId(1234)
+            val expectedDetails = AuthenticatedAuditDetails(request.channel, request.enrolmentId, Json.obj("departureId" -> departureId))
+            auditService.auditMissingMovementEvent(request, departureId)
+
+            verify(mockAuditConnector, times(1)).sendExplicitAudit(eqTo(MissingMovementRequested.toString), eqTo(expectedDetails))(any(), any(), any())
+            reset(mockAuditConnector)
+          }
+
+      }
+    }
+  }
 }

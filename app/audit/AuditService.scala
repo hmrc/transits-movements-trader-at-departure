@@ -27,6 +27,9 @@ import javax.inject.Inject
 
 import scala.concurrent.ExecutionContext
 import scala.xml.NodeSeq
+import play.api.libs.json.Json
+import models.request.AuthenticatedRequest
+import uk.gov.hmrc.play.http.HeaderCarrierConverter
 
 class AuditService @Inject()(auditConnector: AuditConnector, messageTranslator: MessageTranslation)(implicit ec: ExecutionContext) extends XmlToJson {
 
@@ -36,6 +39,12 @@ class AuditService @Inject()(auditConnector: AuditConnector, messageTranslator: 
   def auditEvent(auditType: AuditType, customerId: Ior[TURN, EORINumber], message: Message, channel: ChannelType)(implicit hc: HeaderCarrier): Unit = {
     val details = AuthenticatedAuditDetails(channel, customerId, messageTranslator.translate(message.messageJson))
     auditConnector.sendExplicitAudit(auditType.toString, details)
+  }
+
+  def auditMissingMovementEvent(request: AuthenticatedRequest[_], departureId: DepartureId): Unit = {
+    implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
+    val details                    = AuthenticatedAuditDetails(request.channel, request.enrolmentId, Json.obj("departureId" -> departureId))
+    auditConnector.sendExplicitAudit(MissingMovementRequested.toString, details)
   }
 
   def auditNCTSMessages(channel: ChannelType, customerId: String, messageResponse: MessageResponse, xml: NodeSeq)(implicit hc: HeaderCarrier): Unit = {

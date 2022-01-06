@@ -22,6 +22,8 @@ import migrations.MigrationRunner
 import models.DepartureId
 import models.DepartureWithoutMessages
 import org.mockito.ArgumentMatchers.{eq => eqTo, _}
+import org.mockito.Mockito.times
+import org.mockito.Mockito.verify
 import org.mockito.Mockito.when
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalatest.OptionValues
@@ -45,6 +47,8 @@ import uk.gov.hmrc.auth.core.Enrolments
 import scala.concurrent.Future
 import models.ChannelType.Web
 import models.ChannelType.Api
+import audit.AuditService
+import models.request.AuthenticatedRequest
 
 class AuthenticateGetDepartureWithoutMessagesForReadActionProviderSpec
     extends AnyFreeSpec
@@ -151,12 +155,13 @@ class AuthenticateGetDepartureWithoutMessagesForReadActionProviderSpec
         status(result) mustBe NOT_FOUND
       }
 
-      "must return Not Found when the departure does not exist" in {
+      "must return Not Found and audit when the departure does not exist" in {
 
         val departureId = arbitrary[DepartureId].sample.value
 
         val mockAuthConnector: AuthConnector = mock[AuthConnector]
         val mockDepartureRepository          = mock[DepartureRepository]
+        val mockAuditService: AuditService   = mock[AuditService]
 
         when(mockAuthConnector.authorise[Enrolments](any(), any())(any(), any()))
           .thenReturn(Future.successful(validEnrolments))
@@ -166,7 +171,8 @@ class AuthenticateGetDepartureWithoutMessagesForReadActionProviderSpec
           .overrides(
             bind[DepartureRepository].toInstance(mockDepartureRepository),
             bind[AuthConnector].toInstance(mockAuthConnector),
-            bind[MigrationRunner].to[FakeMigrationRunner]
+            bind[MigrationRunner].to[FakeMigrationRunner],
+            bind[AuditService].toInstance(mockAuditService)
           )
 
         val actionProvider = application.injector().instanceOf[AuthenticatedGetDepartureWithoutMessagesForReadActionProvider]
@@ -175,6 +181,7 @@ class AuthenticateGetDepartureWithoutMessagesForReadActionProviderSpec
         val result     = controller.get(departureId)(fakeRequest)
 
         status(result) mustBe NOT_FOUND
+        verify(mockAuditService, times(1)).auditMissingMovementEvent(any[AuthenticatedRequest[_]], eqTo(departureId))
       }
 
       "must return Not Found when the departure exists but does not share the channel" in {

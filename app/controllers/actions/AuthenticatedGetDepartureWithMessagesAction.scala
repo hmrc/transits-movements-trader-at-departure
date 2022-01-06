@@ -29,18 +29,21 @@ import repositories.DepartureRepository
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
+import audit.AuditService
 
 private[actions] class AuthenticatedGetDepartureWithMessagesActionProvider @Inject()(
-  repository: DepartureRepository
+  repository: DepartureRepository,
+  auditService: AuditService
 )(implicit ec: ExecutionContext) {
 
   def apply(departureId: DepartureId): ActionRefiner[AuthenticatedRequest, DepartureWithMessagesRequest] =
-    new AuthenticatedGetDepartureWithMessagesAction(departureId, repository)
+    new AuthenticatedGetDepartureWithMessagesAction(departureId, repository, auditService)
 }
 
 private[actions] class AuthenticatedGetDepartureWithMessagesAction(
   departureId: DepartureId,
-  repository: DepartureRepository
+  repository: DepartureRepository,
+  auditService: AuditService
 )(implicit val executionContext: ExecutionContext)
     extends ActionRefiner[AuthenticatedRequest, DepartureWithMessagesRequest]
     with Logging {
@@ -55,6 +58,7 @@ private[actions] class AuthenticatedGetDepartureWithMessagesAction(
           logger.warn("Attempt to retrieve an departure for another EORI")
           Left(NotFound)
         case None =>
+          auditService.auditMissingMovementEvent(request, departureId)
           Left(NotFound)
       }
       .recover {
