@@ -23,9 +23,6 @@ import config.AppConfig
 import generators.ModelGenerators
 import models.ChannelType.Api
 import models.ChannelType.Web
-import models.DepartureStatus.Initialized
-import models.DepartureStatus.MrnAllocated
-import models.DepartureStatus.PositiveAcknowledgement
 import models.MessageStatus.SubmissionPending
 import models.MessageStatus.SubmissionSucceeded
 import models._
@@ -492,7 +489,18 @@ class DepartureRepositorySpec
       "must add a message, update the timestamp and increment nextCorrelationId" in {
         database.flatMap(_.drop()).futureValue
 
-        val departure = arbitrary[Departure].sample.value.copy(status = DepartureStatus.DepartureSubmitted)
+        val declarationMessages = NonEmptyList.one(
+          MessageWithStatus(
+            MessageId(1),
+            LocalDateTime.of(2021, 2, 2, 2, 2),
+            MessageType.DepartureDeclaration,
+            <CC015></CC015>,
+            MessageStatus.SubmissionPending,
+            1,
+            Json.obj("CC029" -> Json.obj())
+          )
+        )
+        val departure = arbitrary[Departure].sample.value.copy(messages = declarationMessages)
 
         val dateOfPrep = LocalDate.now(clock)
         val timeOfPrep = LocalTime.of(1, 1)
@@ -540,7 +548,18 @@ class DepartureRepositorySpec
       "must fail if the departure cannot be found" in {
         database.flatMap(_.drop()).futureValue
 
-        val departure = arbitrary[Departure].sample.value copy (status = DepartureStatus.DepartureSubmitted, departureId = DepartureId(1))
+        val messages = NonEmptyList.one(
+          MessageWithStatus(
+            MessageId(1),
+            LocalDateTime.of(2021, 2, 2, 2, 2),
+            MessageType.DepartureDeclaration,
+            <CC015></CC015>,
+            MessageStatus.SubmissionPending,
+            1,
+            Json.obj("CC029" -> Json.obj())
+          )
+        )
+        val departure = arbitrary[Departure].sample.value copy (messages = messages, departureId = DepartureId(1))
 
         val dateOfPrep = LocalDate.now(clock)
         val timeOfPrep = LocalTime.of(1, 1)
@@ -573,41 +592,6 @@ class DepartureRepositorySpec
       }
     }
 
-    "updateDeparture" - {
-      "must update the departure and return a Success Unit when successful" in {
-        database.flatMap(_.drop()).futureValue
-
-        val departureStatus = DepartureStatusUpdate(Initialized)
-        val departure       = departureWithOneMessage.sample.value.copy(status = PositiveAcknowledgement)
-        val selector        = DepartureIdSelector(departure.departureId)
-
-        service.insert(departure).futureValue
-
-        service.updateDeparture(selector, departureStatus).futureValue
-
-        val updatedDeparture = service.get(departure.departureId, departure.channel).futureValue.value
-
-        updatedDeparture.status mustEqual departureStatus.departureStatus
-      }
-
-      "must return a Failure if the selector does not match any documents" in {
-        database.flatMap(_.drop()).futureValue
-
-        val departureStatus = DepartureStatusUpdate(Initialized)
-        val departure       = departureWithOneMessage.sample.value copy (departureId = DepartureId(1), status = MrnAllocated)
-        val selector        = DepartureIdSelector(DepartureId(2))
-
-        service.insert(departure).futureValue
-
-        val result = service.updateDeparture(selector, departureStatus).futureValue
-
-        val updatedDeparture = service.get(departure.departureId, departure.channel).futureValue.value
-
-        result mustBe a[Failure[_]]
-        updatedDeparture.status must not be departureStatus.departureStatus
-      }
-    }
-
     "addResponseMessage" - {
       "must add a message, update the status of a document and update the timestamp" in {
         database.flatMap(_.drop()).futureValue
@@ -632,10 +616,9 @@ class DepartureRepositorySpec
             departure.nextMessageCorrelationId,
             convertXmlToJson(messageBody.toString)
           )
-        val newState = DepartureStatus.DepartureRejected
 
         service.insert(departure).futureValue
-        val addMessageResult = service.addResponseMessage(departure.departureId, declarationRejectedMessage, newState).futureValue
+        val addMessageResult = service.addResponseMessage(departure.departureId, declarationRejectedMessage).futureValue
 
         val selector = Json.obj("_id" -> departure.departureId)
 
@@ -648,14 +631,26 @@ class DepartureRepositorySpec
 
         addMessageResult mustBe a[Success[_]]
         updatedDeparture.nextMessageCorrelationId - departure.nextMessageCorrelationId mustBe 0
-        updatedDeparture.status mustEqual newState
+        updatedDeparture.status mustEqual DepartureStatus.DepartureRejected
         updatedDeparture.messages.size - departure.messages.size mustEqual 1
         updatedDeparture.messages.last mustEqual declarationRejectedMessage
       }
       "must fail if the departure cannot be found" in {
         database.flatMap(_.drop()).futureValue
 
-        val departure = arbitrary[Departure].sample.value copy (status = DepartureStatus.DepartureSubmitted, departureId = DepartureId(1))
+        val messages = NonEmptyList.one(
+          MessageWithStatus(
+            MessageId(1),
+            LocalDateTime.of(2021, 2, 2, 2, 2),
+            MessageType.DepartureDeclaration,
+            <CC015></CC015>,
+            MessageStatus.SubmissionPending,
+            1,
+            Json.obj("CC029" -> Json.obj())
+          )
+        )
+
+        val departure = arbitrary[Departure].sample.value copy (messages = messages, departureId = DepartureId(1))
 
         val dateOfPrep = LocalDate.now(clock)
         val timeOfPrep = LocalTime.of(1, 1)
@@ -677,10 +672,9 @@ class DepartureRepositorySpec
             messageCorrelationId = 1,
             convertXmlToJson(messageBody.toString)
           )
-        val newState = DepartureStatus.DepartureRejected
 
         service.insert(departure).futureValue
-        val result = service.addResponseMessage(DepartureId(2), declarationRejected, newState).futureValue
+        val result = service.addResponseMessage(DepartureId(2), declarationRejected).futureValue
 
         result mustBe a[Failure[_]]
       }
@@ -714,11 +708,10 @@ class DepartureRepositorySpec
             departure.nextMessageCorrelationId,
             convertXmlToJson(messageBody.toString)
           )
-        val newState = DepartureStatus.MrnAllocated
 
         service.insert(departure).futureValue
         val addMessageResult =
-          service.setMrnAndAddResponseMessage(departure.departureId, mrnAllocatedMessage, newState, MovementReferenceNumber(mrn)).futureValue
+          service.setMrnAndAddResponseMessage(departure.departureId, mrnAllocatedMessage, MovementReferenceNumber(mrn)).futureValue
 
         val selector = Json.obj("_id" -> departure.departureId)
 
@@ -731,7 +724,7 @@ class DepartureRepositorySpec
 
         addMessageResult mustBe a[Success[_]]
         updatedDeparture.nextMessageCorrelationId - departure.nextMessageCorrelationId mustBe 0
-        updatedDeparture.status mustEqual newState
+        updatedDeparture.status mustEqual DepartureStatus.MrnAllocated
         updatedDeparture.movementReferenceNumber.get mustEqual MovementReferenceNumber(mrn)
         updatedDeparture.messages.size - departure.messages.size mustEqual 1
         updatedDeparture.messages.last mustEqual mrnAllocatedMessage
@@ -740,7 +733,18 @@ class DepartureRepositorySpec
       "must fail if the departure cannot be found" in {
         database.flatMap(_.drop()).futureValue
 
-        val departure = arbitrary[Departure].sample.value copy (status = DepartureStatus.DepartureSubmitted, departureId = DepartureId(1))
+        val messages = NonEmptyList.one(
+          MessageWithStatus(
+            MessageId(1),
+            LocalDateTime.of(2021, 2, 2, 2, 2),
+            MessageType.DepartureDeclaration,
+            <CC015></CC015>,
+            MessageStatus.SubmissionPending,
+            1,
+            Json.obj("CC029" -> Json.obj())
+          )
+        )
+        val departure = arbitrary[Departure].sample.value copy (messages = messages, departureId = DepartureId(1))
 
         val mrn        = "mrn"
         val dateOfPrep = LocalDate.now(clock)
@@ -763,10 +767,9 @@ class DepartureRepositorySpec
             departure.nextMessageCorrelationId,
             convertXmlToJson(messageBody.toString)
           )
-        val newState = DepartureStatus.DepartureRejected
 
         service.insert(departure).futureValue
-        val addMessageResult = service.setMrnAndAddResponseMessage(DepartureId(2), mrnAllocatedMessage, newState, MovementReferenceNumber(mrn)).futureValue
+        val addMessageResult = service.setMrnAndAddResponseMessage(DepartureId(2), mrnAllocatedMessage, MovementReferenceNumber(mrn)).futureValue
 
         addMessageResult mustBe a[Failure[_]]
       }

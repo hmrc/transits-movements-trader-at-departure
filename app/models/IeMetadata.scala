@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 HM Revenue & Customs
+ * Copyright 2022 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,6 @@
 
 package models
 
-abstract class IeMetadata(val code: String, val rootNode: String) {
+abstract class IeMetadata(val id: Int, val code: String, val rootNode: String) {
   override val toString: String = code
 }

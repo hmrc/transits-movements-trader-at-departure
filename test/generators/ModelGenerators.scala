@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 HM Revenue & Customs
+ * Copyright 2022 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,31 +52,6 @@ trait ModelGenerators extends BaseGenerators with JavaTimeGenerators with JsonHe
         messageStatus <- arbitrary[MessageStatus]
       } yield MessageStatusUpdate(messageId, messageStatus)
     }
-
-  implicit val arbitraryDepartureStatusUpdate: Arbitrary[DepartureStatusUpdate] = Arbitrary(arbitrary[DepartureStatus].map(DepartureStatusUpdate(_)))
-
-  implicit val arbitraryCompoundStatusUpdate: Arbitrary[CompoundStatusUpdate] = Arbitrary {
-    for {
-      departureStatusUpdate <- arbitrary[DepartureStatusUpdate]
-      messageStatusUpdate   <- arbitrary[MessageStatusUpdate]
-    } yield CompoundStatusUpdate(departureStatusUpdate, messageStatusUpdate)
-  }
-
-  val departureUpdateTypeGenerator: Gen[Gen[DepartureUpdate]] =
-    Gen.oneOf[Gen[DepartureUpdate]](
-      arbitrary[MessageStatusUpdate],
-      arbitrary[DepartureStatusUpdate],
-      arbitrary[CompoundStatusUpdate]
-    )
-
-  implicit val arbitraryDepartureUpdate: Arbitrary[DepartureUpdate] =
-    Arbitrary(
-      Gen.oneOf[DepartureUpdate](
-        arbitrary[MessageStatusUpdate],
-        arbitrary[DepartureStatusUpdate],
-        arbitrary[CompoundStatusUpdate]
-      )
-    )
 
   implicit lazy val arbitraryMessageStatus: Arbitrary[MessageStatus] =
     Arbitrary {
@@ -161,12 +136,11 @@ trait ModelGenerators extends BaseGenerators with JavaTimeGenerators with JsonHe
         eN              <- arbitrary[String]
         mrn             <- arbitrary[MovementReferenceNumber]
         rN              <- arbitrary[String]
-        status          <- arbitrary[DepartureStatus]
         created         <- arbitrary[LocalDateTime]
         lastUpdated     <- arbitrary[LocalDateTime]
         messages        <- nonEmptyListOfMaxLength[MessageWithStatus](2)
         notificationBox <- arbitrary[Option[Box]]
-      } yield models.Departure(id, channel, eN, Some(mrn), rN, status, created, lastUpdated, messages.length + 1, messages, notificationBox)
+      } yield models.Departure(id, channel, eN, Some(mrn), rN, created, lastUpdated, messages.length + 1, messages, notificationBox)
     }
 
   implicit lazy val arbitraryDepartureWithoutMessages: Arbitrary[DepartureWithoutMessages] =

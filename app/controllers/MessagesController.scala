@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 HM Revenue & Customs
+ * Copyright 2022 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,27 +79,23 @@ class MessagesController @Inject()(
                   request.body
                 ) match {
                 case Right(message) =>
-                  StatusTransition.targetStatus(request.departure.status, MessageReceivedEvent.DeclarationCancellationRequest) match {
-                    case Right(status) =>
-                      submitMessageService
-                        .submitMessage(departureId, message, status, request.channel)
-                        .map {
-                          case SubmissionProcessingResult.SubmissionFailureInternal =>
-                            InternalServerError
-                          case SubmissionProcessingResult.SubmissionFailureExternal =>
-                            BadGateway
-                          case submissionFailureRejected: SubmissionProcessingResult.SubmissionFailureRejected =>
-                            BadRequest(submissionFailureRejected.responseBody)
-                          case SubmissionProcessingResult.SubmissionSuccess =>
-                            auditService.auditEvent(DepartureCancellationRequestSubmitted, request.request.enrolmentId, message, request.channel)
-                            Accepted
-                              .withHeaders(
-                                "Location" -> routes.MessagesController.getMessage(request.departure.departureId, request.departure.nextMessageId).url
-                              )
-                        }
-                    case Left(error) =>
-                      Future.successful(BadRequest(error.reason))
-                  }
+                  submitMessageService
+                    .submitMessage(departureId, message, request.channel)
+                    .map {
+                      case SubmissionProcessingResult.SubmissionFailureInternal =>
+                        InternalServerError
+                      case SubmissionProcessingResult.SubmissionFailureExternal =>
+                        BadGateway
+                      case submissionFailureRejected: SubmissionProcessingResult.SubmissionFailureRejected =>
+                        BadRequest(submissionFailureRejected.responseBody)
+                      case SubmissionProcessingResult.SubmissionSuccess =>
+                        auditService.auditEvent(DepartureCancellationRequestSubmitted, request.request.enrolmentId, message, request.channel)
+                        Accepted
+                          .withHeaders(
+                            "Location" -> routes.MessagesController.getMessage(request.departure.departureId, request.departure.nextMessageId).url
+                          )
+                    }
+
                 case Left(error) =>
                   logger.warn(error.message)
                   Future.successful(BadRequest(error.message))

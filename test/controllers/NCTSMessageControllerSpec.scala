@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 HM Revenue & Customs
+ * Copyright 2022 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,6 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
       movementReferenceNumber = None,
       referenceNumber = "SomeREf",
       eoriNumber = "AB123456",
-      status = DepartureStatus.DepartureSubmitted,
       created = LocalDateTime.of(2021, 2, 2, 2, 2),
       lastUpdated = LocalDateTime.of(2021, 2, 2, 4, 2),
       messages = NonEmptyList.one(

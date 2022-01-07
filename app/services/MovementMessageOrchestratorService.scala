@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 HM Revenue & Customs
+ * Copyright 2022 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,11 +22,9 @@ import cats.implicits.catsStdInstancesForFuture
 import com.kenshoo.play.metrics.Metrics
 import metrics.HasMetrics
 import models.Departure
-import models.DepartureStatus
 import models.MessageResponse
 import models.MessageSender
 import models.MrnAllocatedResponse
-import models.StatusTransition
 import models.ErrorState
 import models.SubmissionSuccess
 import models.XMLMRNError
@@ -53,19 +51,18 @@ class MovementMessageOrchestratorService @Inject()(
   private def validateAndSaveMessage(messageResponse: MessageResponse,
                                      xml: NodeSeq,
                                      departure: Departure,
-                                     messageSender: MessageSender,
-                                     newState: DepartureStatus): EitherT[Future, ErrorState, SubmissionSuccess] =
+                                     messageSender: MessageSender): EitherT[Future, ErrorState, SubmissionSuccess] =
     messageResponse match {
       case MrnAllocatedResponse =>
         for {
           mrn <- EitherT.fromEither(XmlMessageParser.mrnR(xml).left.map[ErrorState](error => XMLMRNError(error.message)))
           savedMessage <- EitherT(
             saveMessageService
-              .validateXmlSaveMessageUpdateMrn(departure.nextMessageId, xml, messageSender, messageResponse, newState, mrn)
+              .validateXmlSaveMessageUpdateMrn(departure.nextMessageId, xml, messageSender, messageResponse, mrn)
               .map(_.toEither(departure)))
         } yield savedMessage
       case _ =>
-        EitherT(saveMessageService.validateXmlAndSaveMessage(departure.nextMessageId, xml, messageSender, messageResponse, newState).map(_.toEither(departure)))
+        EitherT(saveMessageService.validateXmlAndSaveMessage(departure.nextMessageId, xml, messageSender, messageResponse).map(_.toEither(departure)))
     }
 
   def saveNCTSMessage(messageSender: MessageSender)(
@@ -76,8 +73,7 @@ class MovementMessageOrchestratorService @Inject()(
       .withLock(messageSender.departureId)(for {
         inboundMessageResponse <- EitherT.fromEither(MessageResponse.fromRequest(request))
         departure              <- getDepartureService.getDepartureAndAuditDeletedDepartures(messageSender.departureId, inboundMessageResponse, request.body)
-        nextStatus             <- EitherT.fromEither(StatusTransition.targetStatus(departure.status, inboundMessageResponse.messageReceived))
-        validatedMessage       <- validateAndSaveMessage(inboundMessageResponse, request.body, departure, messageSender, nextStatus)
+        validatedMessage       <- validateAndSaveMessage(inboundMessageResponse, request.body, departure, messageSender)
         _ = auditService.auditNCTSMessages(departure.channel, departure.eoriNumber, inboundMessageResponse, request.body)
         _ = pushPullNotificationService.sendPushNotificationIfBoxExists(departure, inboundMessageResponse, request)
       } yield validatedMessage)

@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 HM Revenue & Customs
+ * Copyright 2022 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ import models.ChannelType.Api
 import models.ChannelType.Web
 import models.Departure
 import models.DepartureId
-import models.DepartureStatus
 import models.DepartureWithoutMessages
 import models.EORINumber
 import models.MessageId
@@ -122,7 +121,6 @@ class DeparturesControllerSpec
     channel = Api,
     eoriNumber = "eori",
     movementReferenceNumber = None,
-    status = DepartureStatus.Initialized,
     created = localDateTime,
     lastUpdated = localDateTime,
     nextMessageCorrelationId = movementMessage(1).messageCorrelationId + 1,

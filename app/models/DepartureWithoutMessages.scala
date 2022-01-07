@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 HM Revenue & Customs
+ * Copyright 2022 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import play.api.libs.json.Reads
 import play.api.libs.json.Writes
 import play.api.libs.json.__
 import play.api.libs.functional.syntax._
+import utils.MessageTypeUtils
 
 case class DepartureWithoutMessages(
   departureId: DepartureId,
@@ -35,14 +36,17 @@ case class DepartureWithoutMessages(
   eoriNumber: String,
   movementReferenceNumber: Option[MovementReferenceNumber],
   referenceNumber: String,
-  status: DepartureStatus,
   created: LocalDateTime,
   lastUpdated: LocalDateTime,
   notificationBox: Option[Box],
   nextMessageId: MessageId,
   nextMessageCorrelationId: Int,
   messagesMetaData: Seq[MessageMetaData]
-) extends BaseDeparture {}
+) extends BaseDeparture {
+
+  val status: DepartureStatus         = MessageTypeUtils.currentDepartureStatus(messagesMetaData.toList)
+  val previousStatus: DepartureStatus = MessageTypeUtils.previousDepartureStatus(messagesMetaData.toList, status)
+}
 
 object DepartureWithoutMessages {
 
@@ -53,7 +57,6 @@ object DepartureWithoutMessages {
       departure.eoriNumber,
       departure.movementReferenceNumber,
       departure.referenceNumber,
-      departure.status,
       departure.created,
       departure.lastUpdated,
       departure.notificationBox,
@@ -76,7 +79,6 @@ object DepartureWithoutMessages {
         (__ \ "eoriNumber").read[String] and
         (__ \ "movementReferenceNumber").readNullable[MovementReferenceNumber] and
         (__ \ "referenceNumber").read[String] and
-        (__ \ "status").read[DepartureStatus] and
         (__ \ "created").read(MongoDateTimeFormats.localDateTimeRead) and
         (__ \ "lastUpdated")
           .read(MongoDateTimeFormats.localDateTimeRead)
@@ -93,7 +95,6 @@ object DepartureWithoutMessages {
     "eoriNumber"               -> 1,
     "movementReferenceNumber"  -> 1,
     "referenceNumber"          -> 1,
-    "status"                   -> 1,
     "created"                  -> 1,
     "updated"                  -> 1,
     "lastUpdated"              -> 1,

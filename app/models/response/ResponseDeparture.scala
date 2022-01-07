@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 HM Revenue & Customs
+ * Copyright 2022 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ case class ResponseDeparture(departureId: DepartureId,
                              movementReferenceNumber: Option[MovementReferenceNumber],
                              referenceNumber: String,
                              status: DepartureStatus,
+                             previousStatus: DepartureStatus,
                              created: LocalDateTime,
                              updated: LocalDateTime,
                              messagesMetaData: Seq[MessageMetaData])
@@ -48,6 +49,7 @@ object ResponseDeparture {
       departure.movementReferenceNumber,
       departure.referenceNumber,
       departure.status,
+      departure.previousStatus,
       departure.created,
       departure.lastUpdated,
       departure.messages.map(x => MessageMetaData(x.messageType, x.dateTime)).toList
@@ -61,6 +63,7 @@ object ResponseDeparture {
       departureWithoutMessages.movementReferenceNumber,
       departureWithoutMessages.referenceNumber,
       departureWithoutMessages.status,
+      departureWithoutMessages.previousStatus,
       departureWithoutMessages.created,
       departureWithoutMessages.lastUpdated,
       departureWithoutMessages.messagesMetaData

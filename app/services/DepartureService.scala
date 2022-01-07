@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 HM Revenue & Customs
+ * Copyright 2022 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ package services
 import cats.data._
 import cats.implicits._
 import com.google.inject.Inject
-import models.DepartureStatus.Initialized
 import models.MessageStatus.SubmissionPending
 import models.ParseError.EmptyNodeSeq
 import models._
@@ -68,7 +67,6 @@ class DepartureService @Inject()(departureIdRepository: DepartureIdRepository)(i
               ),
               None,
               reference,
-              Initialized,
               dateTime,
               LocalDateTime.now(clock),
               2,

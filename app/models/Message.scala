@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 HM Revenue & Customs
+ * Copyright 2022 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,12 @@ import play.api.libs.functional.syntax._
 import java.time.ZoneOffset
 import java.time.OffsetDateTime
 
-sealed trait Message {
+trait MessageTypeWithTime {
+  def dateTime: LocalDateTime
+  def messageType: MessageType
+}
+
+sealed trait Message extends MessageTypeWithTime {
   def messageId: MessageId
   def dateTime: LocalDateTime
   def messageType: MessageType

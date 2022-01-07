@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 HM Revenue & Customs
+ * Copyright 2022 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,16 +20,16 @@ import cats.data.NonEmptyList
 import models.ChannelType
 import models.Departure
 import models.DepartureId
-import models.DepartureStatus.DepartureSubmitted
 import models.MessageId
 import models.MessageStatus
-import models.MessageType.DepartureDeclaration
 import models.MessageWithStatus
+import models.MessageType.DepartureDeclaration
 import testOnly.models.SeedEori
-
 import java.time.Clock
 import java.time.LocalDateTime
+
 import javax.inject.Inject
+
 import scala.util.Random
 import scala.xml.Elem
 import scala.xml.XML
@@ -52,7 +52,6 @@ private[services] class TestDataGenerator @Inject()(clock: Clock) {
       eori.format,
       None,
       referenceNumber,
-      DepartureSubmitted,
       dateTime,
       dateTime,
       2,

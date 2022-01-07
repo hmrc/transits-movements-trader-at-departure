@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 HM Revenue & Customs
+ * Copyright 2022 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import cats.data.Reader
 import models.ChannelType
 import models.Departure
 import models.DepartureId
-import models.DepartureStatus
 import models.Message
 import models.MessageId
 import models.MessageType
@@ -47,7 +46,6 @@ class MessageRetrievalServiceSpec extends SpecBase with JsonHelper {
           "AB123456C",
           None,
           "SomeReference",
-          DepartureStatus.ReleaseForTransit,
           LocalDateTime.now(),
           LocalDateTime.now(),
           3,
@@ -110,7 +108,6 @@ class MessageRetrievalServiceSpec extends SpecBase with JsonHelper {
           "AB123456C",
           None,
           "SomeReference",
-          DepartureStatus.ReleaseForTransit,
           LocalDateTime.now(),
           LocalDateTime.now(),
           3,
