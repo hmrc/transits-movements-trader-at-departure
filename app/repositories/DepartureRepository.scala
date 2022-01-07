@@ -56,7 +56,8 @@ class DepartureRepository @Inject()(
   val metrics: Metrics
 )(implicit ec: ExecutionContext, clock: Clock)
     extends MongoDateTimeFormats
-    with HasMetrics {
+    with HasMetrics
+    with Repository {
 
   private lazy val eoriNumberIndex: Aux[BSONSerializationPack.type] = IndexUtils.index(
     key = Seq("eoriNumber" -> IndexType.Ascending),
@@ -497,8 +498,8 @@ class DepartureRepository @Inject()(
 
         collection.flatMap {
           coll =>
-            val fetchCount      = coll.count(Some(baseSelector))
-            val fetchMatchCount = coll.count(Some(fullSelector))
+            val fetchCount      = coll.simpleCount(baseSelector)
+            val fetchMatchCount = coll.simpleCount(fullSelector)
 
             val fetchResults = coll
               .aggregateWith[DepartureWithoutMessages](allowDiskUse = true) {

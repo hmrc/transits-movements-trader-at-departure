@@ -24,19 +24,18 @@ import generators.ModelGenerators
 import models.ChannelType.Web
 import models.MessageStatus.SubmissionFailed
 import models.MessageStatus.SubmissionPending
-import models.SubmissionProcessingResult.SubmissionFailureExternal
-import models.SubmissionProcessingResult.SubmissionFailureInternal
-import models.SubmissionProcessingResult.SubmissionFailureRejected
 import models.Departure
 import models.DepartureId
 import models.DepartureIdSelector
-import models.DepartureStatus
 import models.MessageId
 import models.MessageStatus
 import models.MessageStatusUpdate
 import models.MessageType
 import models.MessageWithStatus
 import models.SubmissionProcessingResult
+import models.SubmissionProcessingResult.SubmissionFailureExternal
+import models.SubmissionProcessingResult.SubmissionFailureInternal
+import models.SubmissionProcessingResult.SubmissionFailureRejected
 import org.mockito.ArgumentMatchers.{eq => eqTo, _}
 import org.mockito.Mockito
 import org.mockito.Mockito._

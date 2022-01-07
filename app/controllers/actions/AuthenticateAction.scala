@@ -16,13 +16,13 @@
 
 package controllers.actions
 
+import audit.AuditType.SuccessfulAuthTracking
 import audit.AuditService
 import audit.AuthenticationDetails
-import audit.UnauthenticatedAuditDetails
-import audit.AuditType.SuccessfulAuthTracking
 import cats.data.Ior
 import com.kenshoo.play.metrics.Metrics
 import config.Constants._
+import metrics.HasMetrics
 import models.ChannelType
 import models.EORINumber
 import models.TURN
@@ -38,9 +38,8 @@ import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
-import javax.inject.Inject
-import metrics.HasMetrics
 
+import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 

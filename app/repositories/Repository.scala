@@ -14,12 +14,29 @@
  * limitations under the License.
  */
 
-package utils
+package repositories
 
-import com.kenshoo.play.metrics.Metrics
-import com.codahale.metrics.MetricRegistry
+import play.api.libs.json.JsObject
+import reactivemongo.api.ReadConcern
+import reactivemongo.play.json.collection.JSONCollection
 
-class TestMetrics extends Metrics {
-  override def defaultRegistry: MetricRegistry = new MetricRegistry
-  override def toJson: String                  = ""
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
+
+trait Repository {
+
+  implicit class JSONCollectionImplicits(coll: JSONCollection) {
+
+    def simpleCount(selector: JsObject)(implicit ec: ExecutionContext): Future[Int] =
+      coll
+        .count(
+          selector = Some(selector),
+          limit = None,
+          skip = 0,
+          hint = None,
+          readConcern = ReadConcern.Local
+        )
+        .map(_.toInt)
+  }
+
 }

@@ -16,33 +16,23 @@
 
 package controllers.actions
 
+import audit.AuditType.SuccessfulAuthTracking
 import audit.AuditService
 import audit.AuthenticationDetails
-import audit.AuditType.SuccessfulAuthTracking
 import models.ChannelType.Web
 import org.mockito.ArgumentMatchers.any
+import org.mockito.ArgumentMatchers.{eq => eqTo}
 import org.mockito.Mockito._
+import org.scalatest.BeforeAndAfterEach
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.mvc.Action
-import play.api.mvc.AnyContent
-import play.api.mvc.AnyContentAsEmpty
-import play.api.mvc.Headers
-import play.api.mvc.Results
+import play.api.mvc._
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import uk.gov.hmrc.auth.core.AuthConnector
-import uk.gov.hmrc.auth.core.Enrolment
-import uk.gov.hmrc.auth.core.EnrolmentIdentifier
-import uk.gov.hmrc.auth.core.Enrolments
-import uk.gov.hmrc.auth.core.MissingBearerToken
-import org.mockito.ArgumentMatchers.any
-import org.mockito.ArgumentMatchers.{eq => eqTo}
-import org.mockito.Mockito
-import org.scalatest.BeforeAndAfterEach
+import uk.gov.hmrc.auth.core._
 
 import scala.concurrent.Future
 
