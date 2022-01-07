@@ -16,12 +16,8 @@
 
 package utils
 
-import java.io.File
-
 import base.SpecBase
 import config.AppConfig
-import org.scalatest.freespec.AnyFreeSpec
-import org.scalatest.matchers.must.Matchers
 import play.api.Configuration
 import play.api.Environment
 import play.api.Mode
@@ -29,6 +25,8 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import play.api.test.Helpers.running
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
+
+import java.io.File
 
 class MessageTranslationSpec extends SpecBase {
 

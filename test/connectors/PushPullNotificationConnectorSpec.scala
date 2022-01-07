@@ -32,13 +32,9 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks._
 import play.api.test.Helpers._
 import uk.gov.hmrc.http.HeaderCarrier
-import play.api.inject.bind
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import java.time.LocalDateTime
-
-import migrations.FakeMigrationRunner
-import migrations.MigrationRunner
+import scala.concurrent.ExecutionContext.Implicits.global
 
 class PushPullNotificationConnectorSpec extends AnyFreeSpec with WiremockSuite with ScalaFutures with Matchers with IntegrationPatience {
   override protected def portConfigKey: String = "microservice.services.push-pull-notifications-api.port"
