@@ -3,7 +3,7 @@ import sbt._
 
 object AppDependencies {
 
-  private val catsVersion    = "2.6.1"
+  private val catsVersion    = "2.7.0"
   private val mongockVersion = "4.3.8"
 
   val compile = Seq(
