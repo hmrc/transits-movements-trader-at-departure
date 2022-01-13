@@ -23,7 +23,7 @@ object AppDependencies {
     "org.mockito"             % "mockito-core"         % "3.8.0",
     "org.scalatest"          %% "scalatest"            % "3.2.10",
     "com.typesafe.play"      %% "play-test"            % current,
-    "org.scalatestplus.play" %% "scalatestplus-play"   % "4.0.3",
+    "org.scalatestplus.play" %% "scalatestplus-play"   % "5.1.0",
     "org.scalatestplus"      %% "mockito-3-2"          % "3.1.2.0",
     "org.scalacheck"         %% "scalacheck"           % "1.15.4",
     "com.github.tomakehurst"  % "wiremock-standalone"  % "2.27.2",
