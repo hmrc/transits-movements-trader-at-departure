@@ -3,7 +3,7 @@ import sbt._
 
 object AppDependencies {
 
-  private val catsVersion    = "2.7.0"
+  private val catsVersion    = "2.6.1"
   private val mongockVersion = "4.3.8"
 
   val compile = Seq(
@@ -16,14 +16,14 @@ object AppDependencies {
     "com.github.cloudyrock.mongock" % "mongock-standalone"              % mongockVersion,
     "com.github.cloudyrock.mongock" % "mongodb-sync-v4-driver"          % mongockVersion,
     "org.mongodb"                   % "mongodb-driver-sync"             % "4.3.1",
-    "uk.gov.hmrc.mongo"            %% "hmrc-mongo-play-28"              % "0.59.0"
+    "uk.gov.hmrc.mongo"            %% "hmrc-mongo-play-28"              % "0.55.0"
   )
 
   val test = Seq(
-    "org.mockito"             % "mockito-core"         % "4.2.0",
+    "org.mockito"             % "mockito-core"         % "3.8.0",
     "org.scalatest"          %% "scalatest"            % "3.2.10",
     "com.typesafe.play"      %% "play-test"            % current,
-    "org.scalatestplus.play" %% "scalatestplus-play"   % "5.1.0",
+    "org.scalatestplus.play" %% "scalatestplus-play"   % "4.0.3",
     "org.scalatestplus"      %% "mockito-3-2"          % "3.1.2.0",
     "org.scalacheck"         %% "scalacheck"           % "1.15.4",
     "com.github.tomakehurst"  % "wiremock-standalone"  % "2.27.2",
