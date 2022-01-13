@@ -8,7 +8,7 @@ object AppDependencies {
 
   val compile = Seq(
     "org.reactivemongo"            %% "play2-reactivemongo"             % "0.20.13-play28",
-    "uk.gov.hmrc"                  %% "bootstrap-backend-play-28"       % "5.16.0",
+    "uk.gov.hmrc"                  %% "bootstrap-backend-play-28"       % "5.19.0",
     "com.typesafe.play"            %% "play-iteratees"                  % "2.6.1",
     "com.typesafe.play"            %% "play-iteratees-reactive-streams" % "2.6.1",
     "org.typelevel"                %% "cats-core"                       % catsVersion,
@@ -16,7 +16,7 @@ object AppDependencies {
     "com.github.cloudyrock.mongock" % "mongock-standalone"              % mongockVersion,
     "com.github.cloudyrock.mongock" % "mongodb-sync-v4-driver"          % mongockVersion,
     "org.mongodb"                   % "mongodb-driver-sync"             % "4.3.1",
-    "uk.gov.hmrc.mongo"            %% "hmrc-mongo-play-28"              % "0.55.0"
+    "uk.gov.hmrc.mongo"            %% "hmrc-mongo-play-28"              % "0.59.0"
   )
 
   val test = Seq(
