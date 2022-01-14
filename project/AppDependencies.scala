@@ -3,12 +3,12 @@ import sbt._
 
 object AppDependencies {
 
-  private val catsVersion    = "2.7.0"
+  private val catsVersion    = "2.6.1"
   private val mongockVersion = "4.3.8"
 
   val compile = Seq(
     "org.reactivemongo"            %% "play2-reactivemongo"             % "0.20.13-play28",
-    "uk.gov.hmrc"                  %% "bootstrap-backend-play-28"       % "5.19.0",
+    "uk.gov.hmrc"                  %% "bootstrap-backend-play-28"       % "5.16.0",
     "com.typesafe.play"            %% "play-iteratees"                  % "2.6.1",
     "com.typesafe.play"            %% "play-iteratees-reactive-streams" % "2.6.1",
     "org.typelevel"                %% "cats-core"                       % catsVersion,
@@ -20,10 +20,10 @@ object AppDependencies {
   )
 
   val test = Seq(
-    "org.mockito"             % "mockito-core"         % "3.12.4",
+    "org.mockito"             % "mockito-core"         % "3.8.0",
     "org.scalatest"          %% "scalatest"            % "3.2.10",
     "com.typesafe.play"      %% "play-test"            % current,
-    "org.scalatestplus.play" %% "scalatestplus-play"   % "5.1.0",
+    "org.scalatestplus.play" %% "scalatestplus-play"   % "4.0.3",
     "org.scalatestplus"      %% "mockito-3-2"          % "3.1.2.0",
     "org.scalacheck"         %% "scalacheck"           % "1.15.4",
     "com.github.tomakehurst"  % "wiremock-standalone"  % "2.27.2",
