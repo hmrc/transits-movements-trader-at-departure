@@ -21,9 +21,8 @@ sealed abstract class ChannelType(name: String) {
 }
 
 object ChannelType extends Enumerable.Implicits {
-  object Web     extends ChannelType("web")
-  object Api     extends ChannelType("api")
-  object Deleted extends ChannelType("deleted")
+  object Web extends ChannelType("web")
+  object Api extends ChannelType("api")
 
   val values: Seq[ChannelType] = Seq(Web, Api)
 

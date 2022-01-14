@@ -58,7 +58,7 @@ private[actions] class AuthenticatedGetDepartureWithoutMessagesAction(
           logger.warn("Attempt to retrieve an departure for another EORI")
           Left(NotFound)
         case None =>
-          auditService.auditMissingMovementEvent(request, departureId)
+          auditService.auditCustomerRequestedMissingMovementEvent(request, departureId)
           Left(NotFound)
       }
       .recover {

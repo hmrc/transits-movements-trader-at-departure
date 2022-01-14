@@ -56,6 +56,7 @@ import scala.xml.NodeSeq
 import play.api.test.FakeRequest
 import models.request.AuthenticatedRequest
 import models.DepartureId
+import utils.XmlToJson
 
 class AuditServiceSpec extends SpecBase with ScalaCheckPropertyChecks with BeforeAndAfterEach with ModelGenerators {
 
@@ -64,6 +65,11 @@ class AuditServiceSpec extends SpecBase with ScalaCheckPropertyChecks with Befor
   override def beforeEach(): Unit = {
     super.beforeEach()
     reset(mockAuditConnector)
+  }
+
+  // We need to do this in order to get at the protected toJson inside
+  object XmlToJsonConversion extends XmlToJson {
+    def apply(xml: NodeSeq): JsObject = toJson(xml)
   }
 
   "AuditService" - {
@@ -147,7 +153,7 @@ class AuditServiceSpec extends SpecBase with ScalaCheckPropertyChecks with Befor
       }
     }
 
-    "must audit missing movement events" in {
+    "must audit customer missing movement events" in {
       forAll(Gen.oneOf(ChannelType.values)) {
         (channel) =>
           val request = new AuthenticatedRequest[Any](FakeRequest(), channel, Ior.right(EORINumber(Constants.NewEnrolmentIdKey)))
@@ -159,13 +165,37 @@ class AuditServiceSpec extends SpecBase with ScalaCheckPropertyChecks with Befor
             val auditService    = application.injector.instanceOf[AuditService]
             val departureId     = DepartureId(1234)
             val expectedDetails = AuthenticatedAuditDetails(request.channel, request.enrolmentId, Json.obj("departureId" -> departureId))
-            auditService.auditMissingMovementEvent(request, departureId)
+            auditService.auditCustomerRequestedMissingMovementEvent(request, departureId)
 
-            verify(mockAuditConnector, times(1)).sendExplicitAudit(eqTo(MissingMovementRequested.toString), eqTo(expectedDetails))(any(), any(), any())
+            verify(mockAuditConnector, times(1)).sendExplicitAudit(eqTo(CustomerRequestedMissingMovement.toString), eqTo(expectedDetails))(any(), any(), any())
             reset(mockAuditConnector)
           }
 
       }
+    }
+
+    "must audit NCTS missing movement events" in {
+      val application = baseApplicationBuilder
+        .overrides(bind[AuditConnector].toInstance(mockAuditConnector))
+        .build()
+
+      running(application) {
+        val auditService    = application.injector.instanceOf[AuditService]
+        val departureId     = DepartureId(1234)
+        val messageResponse = WriteOffNotificationResponse
+        val xml             = <node>test</node>
+        auditService.auditNCTSRequestedMissingMovementEvent(departureId, messageResponse, xml)
+
+        val expectedDetails = Json.obj(
+          "departureId"         -> departureId,
+          "messageResponseType" -> WriteOffNotificationReceived.toString,
+          "message"             -> XmlToJsonConversion(xml)
+        )
+
+        verify(mockAuditConnector, times(1)).sendExplicitAudit(eqTo(NCTSRequestedMissingMovement.toString), eqTo(expectedDetails))(any(), any())
+        reset(mockAuditConnector)
+      }
+
     }
   }
 }

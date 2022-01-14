@@ -19,17 +19,17 @@ package audit
 import audit.AuditType._
 import cats.data.Ior
 import models._
+import models.request.AuthenticatedRequest
+import play.api.libs.json.Json
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
+import uk.gov.hmrc.play.http.HeaderCarrierConverter
 import utils.MessageTranslation
 import utils.XmlToJson
 import javax.inject.Inject
 
 import scala.concurrent.ExecutionContext
 import scala.xml.NodeSeq
-import play.api.libs.json.Json
-import models.request.AuthenticatedRequest
-import uk.gov.hmrc.play.http.HeaderCarrierConverter
 
 class AuditService @Inject()(auditConnector: AuditConnector, messageTranslator: MessageTranslation)(implicit ec: ExecutionContext) extends XmlToJson {
 
@@ -41,30 +41,41 @@ class AuditService @Inject()(auditConnector: AuditConnector, messageTranslator: 
     auditConnector.sendExplicitAudit(auditType.toString, details)
   }
 
-  def auditMissingMovementEvent(request: AuthenticatedRequest[_], departureId: DepartureId): Unit = {
+  def auditCustomerRequestedMissingMovementEvent(request: AuthenticatedRequest[_], departureId: DepartureId): Unit = {
     implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
     val details                    = AuthenticatedAuditDetails(request.channel, request.enrolmentId, Json.obj("departureId" -> departureId))
-    auditConnector.sendExplicitAudit(MissingMovementRequested.toString, details)
+    auditConnector.sendExplicitAudit(CustomerRequestedMissingMovement.toString, details)
+  }
+
+  def auditNCTSRequestedMissingMovementEvent(departureId: DepartureId, messageResponse: MessageResponse, xml: NodeSeq)(implicit hc: HeaderCarrier): Unit = {
+    val details = Json.obj(
+      "departureId"         -> departureId,
+      "messageResponseType" -> getAuditType(messageResponse).toString,
+      "message"             -> toJson(xml)
+    )
+    auditConnector.sendExplicitAudit(NCTSRequestedMissingMovement.toString, details)
   }
 
   def auditNCTSMessages(channel: ChannelType, customerId: String, messageResponse: MessageResponse, xml: NodeSeq)(implicit hc: HeaderCarrier): Unit = {
 
-    val auditType: AuditType = messageResponse match {
-      case PositiveAcknowledgementResponse              => PositiveAcknowledgementReceived
-      case MrnAllocatedResponse                         => MrnAllocatedReceived
-      case DepartureRejectedResponse                    => DeclarationRejectedReceived
-      case ControlDecisionNotificationResponse          => ControlDecisionNotificationReceived
-      case NoReleaseForTransitResponse                  => NoReleaseForTransitReceived
-      case ReleaseForTransitResponse                    => ReleaseForTransitReceived
-      case CancellationDecisionResponse                 => CancellationDecisionReceived
-      case WriteOffNotificationResponse                 => WriteOffNotificationReceived
-      case GuaranteeNotValidResponse                    => GuaranteeNotValidReceived
-      case XMLSubmissionNegativeAcknowledgementResponse => XMLSubmissionNegativeAcknowledgement
-    }
+    val auditType = getAuditType(messageResponse)
 
     val details = UnauthenticatedAuditDetails(channel, customerId, toJson(xml))
 
     auditConnector.sendExplicitAudit(auditType.toString, details)
+  }
+
+  private def getAuditType(messageResponse: MessageResponse): AuditType = messageResponse match {
+    case PositiveAcknowledgementResponse              => PositiveAcknowledgementReceived
+    case MrnAllocatedResponse                         => MrnAllocatedReceived
+    case DepartureRejectedResponse                    => DeclarationRejectedReceived
+    case ControlDecisionNotificationResponse          => ControlDecisionNotificationReceived
+    case NoReleaseForTransitResponse                  => NoReleaseForTransitReceived
+    case ReleaseForTransitResponse                    => ReleaseForTransitReceived
+    case CancellationDecisionResponse                 => CancellationDecisionReceived
+    case WriteOffNotificationResponse                 => WriteOffNotificationReceived
+    case GuaranteeNotValidResponse                    => GuaranteeNotValidReceived
+    case XMLSubmissionNegativeAcknowledgementResponse => XMLSubmissionNegativeAcknowledgement
   }
 
 }

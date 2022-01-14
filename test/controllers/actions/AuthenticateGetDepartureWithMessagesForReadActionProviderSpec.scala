@@ -185,7 +185,7 @@ class AuthenticateGetDepartureWithMessagesForReadActionProviderSpec
         val result     = controller.get(departureId)(fakeRequest)
 
         status(result) mustBe NOT_FOUND
-        verify(mockAuditService, times(1)).auditMissingMovementEvent(any[AuthenticatedRequest[_]], eqTo(departureId))
+        verify(mockAuditService, times(1)).auditCustomerRequestedMissingMovementEvent(any[AuthenticatedRequest[_]], eqTo(departureId))
       }
 
       "must return Not Found when the departure exists but does not share the channel" in {

@@ -18,7 +18,6 @@ package services
 
 import audit.AuditService
 import cats.data.EitherT
-import models.ChannelType.Deleted
 import models.Departure
 import models.DepartureId
 import models.DepartureNotFound
@@ -44,10 +43,9 @@ private[services] class DepartureRetrievalService @Inject()(repository: Departur
     implicit hc: HeaderCarrier): EitherT[Future, ErrorState, Departure] =
     EitherT(
       getDepartureById(departureId)
-    ).leftMap {
-      case submissionState: DepartureNotFound =>
-        auditService.auditNCTSMessages(Deleted, "Deleted", messageResponse, xml)
-        submissionState
-      case submissionState => submissionState
+    ).leftSemiflatTap {
+      case _: DepartureNotFound =>
+        Future.successful(auditService.auditNCTSRequestedMissingMovementEvent(departureId, messageResponse, xml))
+      case _ => Future.successful(())
     }
 }
