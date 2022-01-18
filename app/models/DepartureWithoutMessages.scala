@@ -50,6 +50,8 @@ case class DepartureWithoutMessages(
 
 object DepartureWithoutMessages {
 
+  // TODO remove this?
+
   def fromDeparture(departure: Departure) =
     DepartureWithoutMessages(
       departure.departureId,
