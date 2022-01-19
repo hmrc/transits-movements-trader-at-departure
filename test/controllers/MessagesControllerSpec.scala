@@ -24,10 +24,8 @@ import cats.data.NonEmptyList
 import connectors.MessageConnector
 import connectors.MessageConnector.EisSubmissionResult.ErrorInPayload
 import generators.ModelGenerators
-import models.ChannelType.Api
 import models.ChannelType.Web
 import models.MessageStatus.SubmissionFailed
-import models.MessageStatus.SubmissionPending
 import models.MessageStatus.SubmissionSucceeded
 import models._
 import models.response.ResponseDepartureWithMessages
@@ -39,7 +37,6 @@ import org.mockito.Mockito.verify
 import org.mockito.Mockito.when
 import org.scalacheck.Arbitrary
 import org.scalacheck.Arbitrary.arbitrary
-import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.IntegrationPatience
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
@@ -47,10 +44,10 @@ import play.api.inject.bind
 import play.api.libs.json.Json
 import play.api.test.FakeRequest
 import play.api.test.Helpers.GET
-import play.api.test.Helpers._
 import play.api.test.Helpers.contentAsJson
 import play.api.test.Helpers.route
 import play.api.test.Helpers.running
+import play.api.test.Helpers._
 import repositories.DepartureRepository
 import repositories.LockRepository
 import services.SubmitMessageService
@@ -71,15 +68,13 @@ class MessagesControllerSpec
     with BeforeAndAfterEach
     with IntegrationPatience {
 
-  implicit val responseDepartureWrite = ResponseDepartureWithMessages.writes
-  implicit val responseMessageWrite   = ResponseMessage.writes
+  val departureWithoutMessages = arbitrary[DepartureWithoutMessages].sample.value.copy(eoriNumber = "eori")
 
   val localDate     = LocalDate.now()
   val localTime     = LocalTime.of(1, 1)
   val localDateTime = LocalDateTime.of(localDate, localTime)
 
-  val departureId = arbitrary[DepartureId].sample.value
-  val mrn         = arbitrary[MovementReferenceNumber].sample.value
+  val mrn = arbitrary[MovementReferenceNumber].sample.value
 
   val declarationCancellationRequestXmlBody =
     <CC014A>
@@ -93,7 +88,8 @@ class MessagesControllerSpec
 
   val savedDeclarationCancellationRequestXml =
     <CC014A>
-      <SynVerNumMES2>123</SynVerNumMES2><MesSenMES3>{MessageSender(departureId, 2).toString}</MesSenMES3>
+      <SynVerNumMES2>123</SynVerNumMES2>
+      <MesSenMES3>{MessageSender(departureWithoutMessages.departureId, 2).toString}</MesSenMES3>
       <DatOfPreMES9>{Format.dateFormatted(localDate)}</DatOfPreMES9>
       <TimOfPreMES10>{Format.timeFormatted(localTime)}</TimOfPreMES10>
       <HEAHEA>
@@ -112,42 +108,19 @@ class MessagesControllerSpec
       </HEAHEA>
     </CC015A>
 
-  val message = MessageWithStatus(
-    MessageId(1),
-    localDateTime,
-    MessageType.DeclarationCancellationRequest,
-    savedDeclarationCancellationRequestXml,
-    SubmissionPending,
-    2,
-    savedDeclarationCancellationRequestJsonBody
-  )
-
-  val notificationBox = Gen.option(arbitrary[Box]).sample.value
-
-  val departureWithoutMessages = DepartureWithoutMessages(
-    departureId,
-    Api,
-    "eori",
-    Some(mrn),
-    "ref",
-    localDateTime,
-    localDateTime,
-    notificationBox,
-    MessageId(2),
-    2,
-    Seq(MessageMetaData(MessageType.MrnAllocated, localDateTime))
-  )
-
   "post" - {
 
     "must return Accepted, add the message to the departure, send the message upstream and set the message state to SubmissionSucceeded" in {
+
       val mockDepartureRepository  = mock[DepartureRepository]
       val mockLockRepository       = mock[LockRepository]
       val mockSubmitMessageService = mock[SubmitMessageService]
       val mockAuditService         = mock[AuditService]
 
       when(mockLockRepository.lock(any())).thenReturn(Future.successful(true))
+
       when(mockLockRepository.unlock(any())).thenReturn(Future.successful(()))
+
       when(mockDepartureRepository.getWithoutMessages(any(), any()))
         .thenReturn(Future.successful(Some(departureWithoutMessages)))
 
@@ -164,15 +137,18 @@ class MessagesControllerSpec
         .build()
 
       running(application) {
+
         val request = FakeRequest(POST, routes.MessagesController.post(departureWithoutMessages.departureId).url)
           .withHeaders("channel" -> departureWithoutMessages.channel.toString)
           .withXmlBody(declarationCancellationRequestXmlBody)
+
         val result = route(application, request).value
 
         contentAsString(result) mustBe empty
         status(result) mustEqual ACCEPTED
 
-        header("Location", result).value must be(routes.MessagesController.getMessage(departureWithoutMessages.departureId, MessageId(2)).url)
+        header("Location", result).value must be(
+          routes.MessagesController.getMessage(departureWithoutMessages.departureId, MessageId(departureWithoutMessages.nextMessageCorrelationId)).url)
 
         verify(mockSubmitMessageService, times(1)).submitMessage(
           eqTo(departureWithoutMessages.departureId),
