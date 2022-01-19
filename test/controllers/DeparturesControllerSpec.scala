@@ -523,8 +523,8 @@ class DeparturesControllerSpec
         .overrides(bind[DepartureRepository].toInstance(mockDepartureRepository))
         .build()
 
-      val departure = Arbitrary.arbitrary[Departure].sample.value.copy(eoriNumber = "eori2")
-      when(mockDepartureRepository.getWithoutMessages(any(), any())).thenReturn(Future.successful(Some(DepartureWithoutMessages.fromDeparture(departure))))
+      val departure = Arbitrary.arbitrary[DepartureWithoutMessages].sample.value.copy(eoriNumber = "eori2")
+      when(mockDepartureRepository.getWithoutMessages(any(), any())).thenReturn(Future.successful(Some(departure)))
 
       running(application) {
         val request = FakeRequest(GET, routes.DeparturesController.get(DepartureId(1)).url)

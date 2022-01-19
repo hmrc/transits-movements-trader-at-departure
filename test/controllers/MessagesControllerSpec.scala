@@ -122,24 +122,21 @@ class MessagesControllerSpec
     savedDeclarationCancellationRequestJsonBody
   )
 
-  val messageId = MessageId(1)
+  val notificationBox = Gen.option(arbitrary[Box]).sample.value
 
-  val departureWithOneMessage: Gen[Departure] = for {
-    departure <- arbitrary[Departure]
-  } yield
-    departure.copy(
-      departureId,
-      Api,
-      "eori",
-      Some(mrn),
-      "ref",
-      localDateTime,
-      localDateTime,
-      message.messageCorrelationId,
-      NonEmptyList.one(message.copy(messageType = MessageType.MrnAllocated))
-    )
-
-  val departure = departureWithOneMessage.sample.value
+  val departureWithoutMessages = DepartureWithoutMessages(
+    departureId,
+    Api,
+    "eori",
+    Some(mrn),
+    "ref",
+    localDateTime,
+    localDateTime,
+    notificationBox,
+    MessageId(2),
+    2,
+    Seq(MessageMetaData(MessageType.MrnAllocated, localDateTime))
+  )
 
   "post" - {
 
@@ -152,7 +149,7 @@ class MessagesControllerSpec
       when(mockLockRepository.lock(any())).thenReturn(Future.successful(true))
       when(mockLockRepository.unlock(any())).thenReturn(Future.successful(()))
       when(mockDepartureRepository.getWithoutMessages(any(), any()))
-        .thenReturn(Future.successful(Some(DepartureWithoutMessages.fromDeparture(departure))))
+        .thenReturn(Future.successful(Some(departureWithoutMessages)))
 
       when(mockSubmitMessageService.submitMessage(any(), any(), any())(any()))
         .thenReturn(Future.successful(SubmissionProcessingResult.SubmissionSuccess))
@@ -167,25 +164,25 @@ class MessagesControllerSpec
         .build()
 
       running(application) {
-        val request = FakeRequest(POST, routes.MessagesController.post(departure.departureId).url)
-          .withHeaders("channel" -> departure.channel.toString)
+        val request = FakeRequest(POST, routes.MessagesController.post(departureWithoutMessages.departureId).url)
+          .withHeaders("channel" -> departureWithoutMessages.channel.toString)
           .withXmlBody(declarationCancellationRequestXmlBody)
         val result = route(application, request).value
 
         contentAsString(result) mustBe empty
         status(result) mustEqual ACCEPTED
 
-        header("Location", result).value must be(routes.MessagesController.getMessage(departure.departureId, MessageId(2)).url)
+        header("Location", result).value must be(routes.MessagesController.getMessage(departureWithoutMessages.departureId, MessageId(2)).url)
 
         verify(mockSubmitMessageService, times(1)).submitMessage(
-          eqTo(departure.departureId),
+          eqTo(departureWithoutMessages.departureId),
           any(),
           any()
         )(any())
 
         verify(mockAuditService, times(1)).auditEvent(
           eqTo(DepartureCancellationRequestSubmitted),
-          eqTo(Ior.right(EORINumber(departure.eoriNumber))),
+          eqTo(Ior.right(EORINumber(departureWithoutMessages.eoriNumber))),
           any(),
           any()
         )(any())
@@ -228,7 +225,8 @@ class MessagesControllerSpec
 
       when(mockLockRepository.lock(any())).thenReturn(Future.successful(true))
       when(mockLockRepository.unlock(any())).thenReturn(Future.successful(()))
-      when(mockDepartureRepository.getWithoutMessages(any(), any())).thenReturn(Future.successful(Some(DepartureWithoutMessages.fromDeparture(departure))))
+      when(mockDepartureRepository.getWithoutMessages(any(), any()))
+        .thenReturn(Future.successful(Some(departureWithoutMessages)))
 
       when(mockSubmitMessageService.submitMessage(any(), any(), any())(any()))
         .thenReturn(Future.successful(SubmissionProcessingResult.SubmissionFailureInternal))
@@ -242,8 +240,8 @@ class MessagesControllerSpec
         .build()
 
       running(application) {
-        val request = FakeRequest(POST, routes.MessagesController.post(departure.departureId).url)
-          .withHeaders("channel" -> departure.channel.toString)
+        val request = FakeRequest(POST, routes.MessagesController.post(departureWithoutMessages.departureId).url)
+          .withHeaders("channel" -> departureWithoutMessages.channel.toString)
           .withXmlBody(declarationCancellationRequestXmlBody)
 
         val result = route(application, request).value
@@ -259,7 +257,8 @@ class MessagesControllerSpec
 
       when(mockLockRepository.lock(any())).thenReturn(Future.successful(true))
       when(mockLockRepository.unlock(any())).thenReturn(Future.successful(()))
-      when(mockDepartureRepository.getWithoutMessages(any(), any())).thenReturn(Future.successful(Some(DepartureWithoutMessages.fromDeparture(departure))))
+      when(mockDepartureRepository.getWithoutMessages(any(), any()))
+        .thenReturn(Future.successful(Some(departureWithoutMessages)))
 
       val application =
         baseApplicationBuilder
@@ -272,8 +271,8 @@ class MessagesControllerSpec
       running(application) {
         val requestXmlBody = <CC014A><HEAHEA></HEAHEA></CC014A>
 
-        val request = FakeRequest(POST, routes.MessagesController.post(departure.departureId).url)
-          .withHeaders("channel" -> departure.channel.toString)
+        val request = FakeRequest(POST, routes.MessagesController.post(departureWithoutMessages.departureId).url)
+          .withHeaders("channel" -> departureWithoutMessages.channel.toString)
           .withXmlBody(requestXmlBody)
 
         val result = route(application, request).value
@@ -290,7 +289,8 @@ class MessagesControllerSpec
 
       when(mockLockRepository.lock(any())).thenReturn(Future.successful(true))
       when(mockLockRepository.unlock(any())).thenReturn(Future.successful(()))
-      when(mockDepartureRepository.getWithoutMessages(any(), any())).thenReturn(Future.successful(Some(DepartureWithoutMessages.fromDeparture(departure))))
+      when(mockDepartureRepository.getWithoutMessages(any(), any()))
+        .thenReturn(Future.successful(Some(departureWithoutMessages)))
 
       val application =
         baseApplicationBuilder
@@ -304,8 +304,8 @@ class MessagesControllerSpec
       running(application) {
         val requestXmlBody = <CC099A><HEAHEA></HEAHEA></CC099A>
 
-        val request = FakeRequest(POST, routes.MessagesController.post(departure.departureId).url)
-          .withHeaders("channel" -> departure.channel.toString)
+        val request = FakeRequest(POST, routes.MessagesController.post(departureWithoutMessages.departureId).url)
+          .withHeaders("channel" -> departureWithoutMessages.channel.toString)
           .withXmlBody(requestXmlBody)
 
         val result = route(application, request).value
@@ -322,7 +322,8 @@ class MessagesControllerSpec
 
       when(mockLockRepository.lock(any())).thenReturn(Future.successful(true))
       when(mockLockRepository.unlock(any())).thenReturn(Future.successful(()))
-      when(mockDepartureRepository.getWithoutMessages(any(), any())).thenReturn(Future.successful(Some(DepartureWithoutMessages.fromDeparture(departure))))
+      when(mockDepartureRepository.getWithoutMessages(any(), any()))
+        .thenReturn(Future.successful(Some(departureWithoutMessages)))
 
       when(mockSubmitMessageService.submitMessage(any(), any(), any())(any()))
         .thenReturn(Future.successful(SubmissionProcessingResult.SubmissionFailureExternal))
@@ -336,8 +337,8 @@ class MessagesControllerSpec
         .build()
 
       running(application) {
-        val request = FakeRequest(POST, routes.MessagesController.post(departure.departureId).url)
-          .withHeaders("channel" -> departure.channel.toString)
+        val request = FakeRequest(POST, routes.MessagesController.post(departureWithoutMessages.departureId).url)
+          .withHeaders("channel" -> departureWithoutMessages.channel.toString)
           .withXmlBody(declarationCancellationRequestXmlBody)
 
         val result = route(application, request).value
@@ -354,7 +355,8 @@ class MessagesControllerSpec
 
       when(mockLockRepository.lock(any())).thenReturn(Future.successful(true))
       when(mockLockRepository.unlock(any())).thenReturn(Future.successful(()))
-      when(mockDepartureRepository.getWithoutMessages(any(), any())).thenReturn(Future.successful(Some(DepartureWithoutMessages.fromDeparture(departure))))
+      when(mockDepartureRepository.getWithoutMessages(any(), any()))
+        .thenReturn(Future.successful(Some(departureWithoutMessages)))
 
       when(mockSubmitMessageService.submitMessage(any(), any(), any())(any()))
         .thenReturn(Future.successful(SubmissionProcessingResult.SubmissionFailureRejected(ErrorInPayload.responseBody)))
@@ -368,8 +370,8 @@ class MessagesControllerSpec
         .build()
 
       running(application) {
-        val request = FakeRequest(POST, routes.MessagesController.post(departure.departureId).url)
-          .withHeaders("channel" -> departure.channel.toString)
+        val request = FakeRequest(POST, routes.MessagesController.post(departureWithoutMessages.departureId).url)
+          .withHeaders("channel" -> departureWithoutMessages.channel.toString)
           .withXmlBody(declarationCancellationRequestXmlBody)
 
         val result = route(application, request).value
@@ -386,7 +388,8 @@ class MessagesControllerSpec
 
       when(mockLockRepository.lock(any())).thenReturn(Future.successful(true))
       when(mockLockRepository.unlock(any())).thenReturn(Future.successful(()))
-      when(mockDepartureRepository.getWithoutMessages(any(), any())).thenReturn(Future.successful(Some(DepartureWithoutMessages.fromDeparture(departure))))
+      when(mockDepartureRepository.getWithoutMessages(any(), any()))
+        .thenReturn(Future.successful(Some(departureWithoutMessages)))
 
       when(mockSubmitMessageService.submitMessage(any(), any(), any())(any()))
         .thenReturn(Future.successful(SubmissionProcessingResult.SubmissionFailureInternal))
@@ -400,8 +403,8 @@ class MessagesControllerSpec
         .build()
 
       running(application) {
-        val request = FakeRequest(POST, routes.MessagesController.post(departure.departureId).url)
-          .withHeaders("channel" -> departure.channel.toString)
+        val request = FakeRequest(POST, routes.MessagesController.post(departureWithoutMessages.departureId).url)
+          .withHeaders("channel" -> departureWithoutMessages.channel.toString)
           .withXmlBody(declarationCancellationRequestXmlBody)
 
         val result = route(application, request).value

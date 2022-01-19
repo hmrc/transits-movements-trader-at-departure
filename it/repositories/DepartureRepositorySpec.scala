@@ -103,6 +103,22 @@ class DepartureRepositorySpec
     message   <- arbitrary[MessageWithStatus]
   } yield departure.copy(messages = NonEmptyList.one(message.copy(status = SubmissionPending)))
 
+  private def departureWithoutMessages(departure: Departure): DepartureWithoutMessages = {
+    DepartureWithoutMessages(
+      departure.departureId,
+      departure.channel,
+      departure.eoriNumber,
+      departure.movementReferenceNumber,
+      departure.referenceNumber,
+      departure.created,
+      departure.lastUpdated,
+      departure.notificationBox,
+      departure.nextMessageId,
+      departure.nextMessageCorrelationId,
+      departure.messages.map(x => MessageMetaData(x.messageType, x.dateTime)).toList
+    )
+  }
+
   "DepartureRepository" - {
 
     "insert" - {
@@ -337,13 +353,13 @@ class DepartureRepositorySpec
         database.flatMap(_.drop()).futureValue
 
         val departure                = arbitrary[Departure].sample.value
-        val departureWithoutMessages = DepartureWithoutMessages.fromDeparture(departure)
+
         service.insert(departure).futureValue
         val result = service.getWithoutMessages(departure.departureId)
 
         whenReady(result) {
           r =>
-            r.value mustEqual departureWithoutMessages
+            r.value mustEqual departureWithoutMessages(departure)
         }
       }
 
@@ -381,13 +397,13 @@ class DepartureRepositorySpec
         database.flatMap(_.drop()).futureValue
 
         val departure                = arbitrary[Departure].sample.value.copy(channel = Api)
-        val departureWithoutMessages = DepartureWithoutMessages.fromDeparture(departure)
+
         service.insert(departure).futureValue
         val result = service.getWithoutMessages(departure.departureId, departure.channel)
 
         whenReady(result) {
           r =>
-            r.value mustEqual departureWithoutMessages
+            r.value mustEqual departureWithoutMessages(departure)
         }
       }
 
@@ -776,22 +792,6 @@ class DepartureRepositorySpec
     }
 
     "fetchAllDepartures" - {
-
-      def departureWithoutMessages(departure: Departure): DepartureWithoutMessages = {
-        DepartureWithoutMessages(
-          departure.departureId,
-          departure.channel,
-          departure.eoriNumber,
-          departure.movementReferenceNumber,
-          departure.referenceNumber,
-          departure.created,
-          departure.lastUpdated,
-          departure.notificationBox,
-          departure.nextMessageId,
-          departure.nextMessageCorrelationId,
-          departure.messages.map(x => MessageMetaData(x.messageType, x.dateTime)).toList
-        )
-      }
 
       "return DeparturesWithoutMessages that match an eoriNumber and channel type" in {
         database.flatMap(_.drop()).futureValue
