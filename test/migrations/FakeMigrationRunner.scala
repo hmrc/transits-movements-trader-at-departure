@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 
-package utils
+package migrations
 
-import com.kenshoo.play.metrics.Metrics
-import com.codahale.metrics.MetricRegistry
+import com.google.inject.Singleton
+import javax.inject.Inject
 
-class TestMetrics extends Metrics {
-  override def defaultRegistry: MetricRegistry = new MetricRegistry
-  override def toJson: String                  = ""
-}
+@Singleton
+class FakeMigrationRunner @Inject() extends MigrationRunner {}

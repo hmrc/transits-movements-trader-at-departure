@@ -16,11 +16,8 @@
 
 package utils
 
-import java.io.File
-
+import base.SpecBase
 import config.AppConfig
-import org.scalatest.freespec.AnyFreeSpec
-import org.scalatest.matchers.must.Matchers
 import play.api.Configuration
 import play.api.Environment
 import play.api.Mode
@@ -29,10 +26,12 @@ import play.api.libs.json.Json
 import play.api.test.Helpers.running
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
-class MessageTranslationSpec extends AnyFreeSpec with Matchers {
+import java.io.File
+
+class MessageTranslationSpec extends SpecBase {
 
   val appBuilder: GuiceApplicationBuilder =
-    new GuiceApplicationBuilder().configure("message-translation-file" -> "TestMessageTranslation.json")
+    baseApplicationBuilder.configure("message-translation-file" -> "TestMessageTranslation.json")
 
   ".translate" - {
 

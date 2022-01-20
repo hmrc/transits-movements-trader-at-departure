@@ -16,24 +16,28 @@
 
 package controllers
 
+import akka.actor.ActorSystem
 import akka.stream.scaladsl.Source
+import akka.testkit.TestKit
 import akka.util.ByteString
 import base.SpecBase
 import cats.data.Ior
-import controllers.actions.AuthenticatedGetDepartureWithMessagesForReadActionProvider
+import controllers.actions.AuthenticateGetDepartureMessagesForReadActionProvider
 import generators.ModelGenerators
 import models.ChannelType.Web
-import models.Departure
 import models.DepartureId
 import models.EORINumber
+import models.Message
+import models.MessageWithStatus
 import models.PdfDocument
 import models.request.AuthenticatedRequest
-import models.request.DepartureWithMessagesRequest
+import models.request.DepartureMessagesRequest
 import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.{eq => eqTo}
 import org.mockito.Mockito.when
 import org.mockito.invocation.InvocationOnMock
 import org.scalacheck.Arbitrary.arbitrary
+import org.scalatest.BeforeAndAfterAll
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.mvc.ActionBuilder
@@ -50,9 +54,6 @@ import utils.TestMetrics
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import akka.actor.ActorSystem
-import org.scalatest.BeforeAndAfterAll
-import akka.testkit.TestKit
 
 class PDFRetrievalControllerSpec extends SpecBase with ScalaCheckPropertyChecks with ModelGenerators with BeforeAndAfterEach with BeforeAndAfterAll {
   implicit val system = ActorSystem(suiteName)
@@ -62,23 +63,23 @@ class PDFRetrievalControllerSpec extends SpecBase with ScalaCheckPropertyChecks 
 
   class Setup(departureId: DepartureId) {
 
-    val mockPDFGenerationService: PDFRetrievalService                          = mock[PDFRetrievalService]
-    val mockAction: AuthenticatedGetDepartureWithMessagesForReadActionProvider = mock[AuthenticatedGetDepartureWithMessagesForReadActionProvider]
+    val mockPDFGenerationService: PDFRetrievalService                     = mock[PDFRetrievalService]
+    val mockAction: AuthenticateGetDepartureMessagesForReadActionProvider = mock[AuthenticateGetDepartureMessagesForReadActionProvider]
 
     val controller: PDFRetrievalController = new PDFRetrievalController(mockPDFGenerationService, mockAction, stubControllerComponents(), new TestMetrics)
 
-    private val fakeActionBuilder: ActionBuilder[DepartureWithMessagesRequest, AnyContent] = mock[ActionBuilder[DepartureWithMessagesRequest, AnyContent]]
+    private val fakeActionBuilder: ActionBuilder[DepartureMessagesRequest, AnyContent] = mock[ActionBuilder[DepartureMessagesRequest, AnyContent]]
 
-    val testDeparture: Departure = arbitrary[Departure].sample.value
+    when(mockAction(any(), any())).thenReturn(fakeActionBuilder)
 
-    when(mockAction(departureId = departureId)).thenReturn(fakeActionBuilder)
+    val message: Message = arbitrary[MessageWithStatus].sample.value
 
-    when(fakeActionBuilder.async(any[DepartureWithMessagesRequest[AnyContent] => Future[Result]])).thenAnswer {
+    when(fakeActionBuilder.async(any[DepartureMessagesRequest[AnyContent] => Future[Result]])).thenAnswer {
       (invocation: InvocationOnMock) =>
         val body = invocation
           .getArgument(0)
-          .asInstanceOf[DepartureWithMessagesRequest[AnyContent] => Future[Result]](
-            DepartureWithMessagesRequest(AuthenticatedRequest(fakeRequest, Web, Ior.right(EORINumber("eori"))), testDeparture, Web)
+          .asInstanceOf[DepartureMessagesRequest[AnyContent] => Future[Result]](
+            DepartureMessagesRequest(AuthenticatedRequest(fakeRequest, Web, Ior.right(EORINumber("eori"))), departureId, Web, List(message))
           )
 
         stubControllerComponents().actionBuilder.async(body)
@@ -89,7 +90,7 @@ class PDFRetrievalControllerSpec extends SpecBase with ScalaCheckPropertyChecks 
     "getTransitAccompanyingDocument" - {
 
       "should return a 200 if there is data found" in new Setup(DepartureId(23)) {
-        when(mockPDFGenerationService.getAccompanyingDocumentPDF(eqTo(testDeparture))(any()))
+        when(mockPDFGenerationService.getAccompanyingDocumentPDF(eqTo(message))(any()))
           .thenReturn(Future.successful(Right(PdfDocument(Source.single(ByteString("Hello".getBytes())), None, None, None))))
 
         val result: Future[Result] = controller.getAccompanyingDocument(DepartureId(23)).apply(fakeRequest)
@@ -99,7 +100,7 @@ class PDFRetrievalControllerSpec extends SpecBase with ScalaCheckPropertyChecks 
       }
 
       "should return a conflict if there is incorrect state error" in new Setup(DepartureId(24)) {
-        when(mockPDFGenerationService.getAccompanyingDocumentPDF(eqTo(testDeparture))(any()))
+        when(mockPDFGenerationService.getAccompanyingDocumentPDF(eqTo(message))(any()))
           .thenReturn(Future.successful(Left(IncorrectStateError)))
 
         val result: Future[Result] = controller.getAccompanyingDocument(DepartureId(24)).apply(fakeRequest)
@@ -108,7 +109,7 @@ class PDFRetrievalControllerSpec extends SpecBase with ScalaCheckPropertyChecks 
       }
 
       "should return an internal server error if there is unexpected error" in new Setup(DepartureId(25)) {
-        when(mockPDFGenerationService.getAccompanyingDocumentPDF(eqTo(testDeparture))(any()))
+        when(mockPDFGenerationService.getAccompanyingDocumentPDF(eqTo(message))(any()))
           .thenReturn(Future.successful(Left(UnexpectedError)))
 
         val result: Future[Result] = controller.getAccompanyingDocument(DepartureId(25)).apply(fakeRequest)

@@ -17,10 +17,11 @@
 package controllers.actions
 
 import generators.ModelGenerators
-import migrations.FakeMigrationRunner
 import migrations.MigrationRunner
+import migrations.FakeMigrationRunner
+import models.ChannelType.Api
+import models.ChannelType.Web
 import models.DepartureId
-import models.DepartureWithoutMessages
 import org.mockito.ArgumentMatchers.{eq => eqTo, _}
 import org.mockito.Mockito.when
 import org.scalacheck.Arbitrary.arbitrary
@@ -31,7 +32,11 @@ import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.mvc._
+import play.api.mvc.Action
+import play.api.mvc.AnyContent
+import play.api.mvc.AnyContentAsEmpty
+import play.api.mvc.Headers
+import play.api.mvc.Results
 import play.api.test.FakeRequest
 import play.api.test.Helpers.contentAsString
 import play.api.test.Helpers.status
@@ -43,10 +48,11 @@ import uk.gov.hmrc.auth.core.EnrolmentIdentifier
 import uk.gov.hmrc.auth.core.Enrolments
 
 import scala.concurrent.Future
-import models.ChannelType.Web
-import models.ChannelType.Api
+import models.DepartureMessages
+import models.EORINumber
+import models.ChannelType
 
-class AuthenticateGetDepartureWithoutMessagesForReadActionProviderSpec
+class AuthenticateGetDepartureMessagesForReadActionProviderSpec
     extends AnyFreeSpec
     with Matchers
     with MockitoSugar
@@ -59,11 +65,11 @@ class AuthenticateGetDepartureWithoutMessagesForReadActionProviderSpec
 
   def fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("", "").withHeaders("channel" -> Web.toString())
 
-  class Harness(authAndGet: AuthenticatedGetDepartureWithoutMessagesForReadActionProvider) {
+  class Harness(authAndGet: AuthenticateGetDepartureMessagesForReadActionProvider) {
 
-    def get(departureId: DepartureId): Action[AnyContent] = authAndGet(departureId) {
+    def get(departureId: DepartureId): Action[AnyContent] = authAndGet(departureId, List()) {
       request =>
-        Results.Ok(request.departure.departureId.toString)
+        Results.Ok(request.departureId.toString)
     }
   }
 
@@ -98,16 +104,16 @@ class AuthenticateGetDepartureWithoutMessagesForReadActionProviderSpec
         )
       )
 
-      "must get a departure when it exists and its EORI matches the user's" in {
+      "must get matching messages when it exists and its EORI matches the user's" in {
 
-        val departure = arbitrary[DepartureWithoutMessages].sample.value copy (eoriNumber = eoriNumber)
+        val departureMessages = arbitrary[DepartureMessages].sample.value copy (eoriNumber = EORINumber(eoriNumber))
 
         val mockAuthConnector: AuthConnector = mock[AuthConnector]
         val mockDepartureRepository          = mock[DepartureRepository]
 
         when(mockAuthConnector.authorise[Enrolments](any(), any())(any(), any()))
           .thenReturn(Future.successful(validEnrolments))
-        when(mockDepartureRepository.getWithoutMessages(any(), any())) thenReturn Future.successful(Some(departure))
+        when(mockDepartureRepository.getMessagesOfType(any(), any(), any())) thenReturn Future.successful(Some(departureMessages))
 
         val application = applicationBuilder
           .overrides(
@@ -116,25 +122,25 @@ class AuthenticateGetDepartureWithoutMessagesForReadActionProviderSpec
             bind[MigrationRunner].to[FakeMigrationRunner]
           )
 
-        val actionProvider = application.injector().instanceOf[AuthenticatedGetDepartureWithoutMessagesForReadActionProvider]
+        val actionProvider = application.injector().instanceOf[AuthenticateGetDepartureMessagesForReadActionProvider]
 
         val controller = new Harness(actionProvider)
-        val result     = controller.get(departure.departureId)(fakeRequest)
+        val result     = controller.get(departureMessages.departureId)(fakeRequest)
 
         status(result) mustBe OK
-        contentAsString(result) mustBe departure.departureId.toString
+        contentAsString(result) mustBe departureMessages.departureId.toString
       }
 
       "must return Not Found when the departure exists and its EORI does not match the user's" in {
 
-        val departure = arbitrary[DepartureWithoutMessages].sample.value copy (eoriNumber = "invalid EORI number")
+        val departureMessages = arbitrary[DepartureMessages].sample.value copy (eoriNumber = EORINumber("invalid EORI number"))
 
         val mockAuthConnector: AuthConnector = mock[AuthConnector]
         val mockDepartureRepository          = mock[DepartureRepository]
 
         when(mockAuthConnector.authorise[Enrolments](any(), any())(any(), any()))
           .thenReturn(Future.successful(validEnrolments))
-        when(mockDepartureRepository.getWithoutMessages(any(), any())) thenReturn Future.successful(Some(departure))
+        when(mockDepartureRepository.getMessagesOfType(any(), any(), any())) thenReturn Future.successful(Some(departureMessages))
 
         val application = applicationBuilder
           .overrides(
@@ -143,10 +149,36 @@ class AuthenticateGetDepartureWithoutMessagesForReadActionProviderSpec
             bind[MigrationRunner].to[FakeMigrationRunner]
           )
 
-        val actionProvider = application.injector().instanceOf[AuthenticatedGetDepartureWithoutMessagesForReadActionProvider]
+        val actionProvider = application.injector().instanceOf[AuthenticateGetDepartureMessagesForReadActionProvider]
 
         val controller = new Harness(actionProvider)
-        val result     = controller.get(departure.departureId)(fakeRequest)
+        val result     = controller.get(departureMessages.departureId)(fakeRequest)
+
+        status(result) mustBe NOT_FOUND
+      }
+
+      "must return Not Found when the departure exists and but there are no matching messages" in {
+
+        val departureMessages = arbitrary[DepartureMessages].sample.value copy (messages = List(), eoriNumber = EORINumber(eoriNumber))
+
+        val mockAuthConnector: AuthConnector = mock[AuthConnector]
+        val mockDepartureRepository          = mock[DepartureRepository]
+
+        when(mockAuthConnector.authorise[Enrolments](any(), any())(any(), any()))
+          .thenReturn(Future.successful(validEnrolments))
+        when(mockDepartureRepository.getMessagesOfType(any(), any(), any())) thenReturn Future.successful(Some(departureMessages))
+
+        val application = applicationBuilder
+          .overrides(
+            bind[DepartureRepository].toInstance(mockDepartureRepository),
+            bind[AuthConnector].toInstance(mockAuthConnector),
+            bind[MigrationRunner].to[FakeMigrationRunner]
+          )
+
+        val actionProvider = application.injector().instanceOf[AuthenticateGetDepartureMessagesForReadActionProvider]
+
+        val controller = new Harness(actionProvider)
+        val result     = controller.get(departureMessages.departureId)(fakeRequest)
 
         status(result) mustBe NOT_FOUND
       }
@@ -160,7 +192,7 @@ class AuthenticateGetDepartureWithoutMessagesForReadActionProviderSpec
 
         when(mockAuthConnector.authorise[Enrolments](any(), any())(any(), any()))
           .thenReturn(Future.successful(validEnrolments))
-        when(mockDepartureRepository.getWithoutMessages(any(), any())) thenReturn Future.successful(None)
+        when(mockDepartureRepository.getMessagesOfType(any(), any(), any())) thenReturn Future.successful(None)
 
         val application = applicationBuilder
           .overrides(
@@ -169,7 +201,7 @@ class AuthenticateGetDepartureWithoutMessagesForReadActionProviderSpec
             bind[MigrationRunner].to[FakeMigrationRunner]
           )
 
-        val actionProvider = application.injector().instanceOf[AuthenticatedGetDepartureWithoutMessagesForReadActionProvider]
+        val actionProvider = application.injector().instanceOf[AuthenticateGetDepartureMessagesForReadActionProvider]
 
         val controller = new Harness(actionProvider)
         val result     = controller.get(departureId)(fakeRequest)
@@ -177,7 +209,7 @@ class AuthenticateGetDepartureWithoutMessagesForReadActionProviderSpec
         status(result) mustBe NOT_FOUND
       }
 
-      "must return Not Found when the departure exists but does not share the channel" in {
+      "must return Not Found when departure messages exist but does not share the channel" in {
 
         val departureId = arbitrary[DepartureId].sample.value
 
@@ -186,7 +218,7 @@ class AuthenticateGetDepartureWithoutMessagesForReadActionProviderSpec
 
         when(mockAuthConnector.authorise[Enrolments](any(), any())(any(), any()))
           .thenReturn(Future.successful(validEnrolments))
-        when(mockDepartureRepository.getWithoutMessages(any(), eqTo(Api))).thenReturn(Future.successful(None))
+        when(mockDepartureRepository.getMessagesOfType(any(), eqTo(Api), any())).thenReturn(Future.successful(None))
 
         val application = applicationBuilder
           .overrides(
@@ -197,7 +229,7 @@ class AuthenticateGetDepartureWithoutMessagesForReadActionProviderSpec
           .build()
 
         running(application) {
-          val actionProvider = application.injector.instanceOf[AuthenticatedGetDepartureWithoutMessagesForReadActionProvider]
+          val actionProvider = application.injector.instanceOf[AuthenticateGetDepartureMessagesForReadActionProvider]
 
           val fakeAPIRequest = fakeRequest.withHeaders("channel" -> Api.toString())
 
@@ -208,9 +240,9 @@ class AuthenticateGetDepartureWithoutMessagesForReadActionProviderSpec
         }
       }
 
-      "must return Ok when the departure exists and shares the same channel" in {
+      "must return Ok when departure messages exist and share the same channel" in {
 
-        val departure = arbitrary[DepartureWithoutMessages].sample.value copy (eoriNumber = eoriNumber, channel = Api)
+        val departureMessages = arbitrary[DepartureMessages].sample.value copy (eoriNumber = EORINumber(eoriNumber))
 
         val departureId = arbitrary[DepartureId].sample.value
 
@@ -219,7 +251,7 @@ class AuthenticateGetDepartureWithoutMessagesForReadActionProviderSpec
 
         when(mockAuthConnector.authorise[Enrolments](any(), any())(any(), any()))
           .thenReturn(Future.successful(validEnrolments))
-        when(mockDepartureRepository.getWithoutMessages(any(), eqTo(Api))).thenReturn(Future.successful(Some(departure)))
+        when(mockDepartureRepository.getMessagesOfType(any(), eqTo(Api), any())).thenReturn(Future.successful(Some(departureMessages)))
 
         val application = applicationBuilder
           .overrides(
@@ -230,9 +262,9 @@ class AuthenticateGetDepartureWithoutMessagesForReadActionProviderSpec
           .build()
 
         running(application) {
-          val actionProvider = application.injector.instanceOf[AuthenticatedGetDepartureWithoutMessagesForReadActionProvider]
+          val actionProvider = application.injector.instanceOf[AuthenticateGetDepartureMessagesForReadActionProvider]
 
-          val fakeAPIRequest = fakeRequest.withHeaders("channel" -> departure.channel.toString())
+          val fakeAPIRequest = fakeRequest.withHeaders("channel" -> ChannelType.Api.toString)
 
           val controller = new Harness(actionProvider)
           val result     = controller.get(departureId)(fakeAPIRequest)
@@ -249,7 +281,7 @@ class AuthenticateGetDepartureWithoutMessagesForReadActionProviderSpec
 
         when(mockAuthConnector.authorise[Enrolments](any(), any())(any(), any()))
           .thenReturn(Future.successful(validEnrolments))
-        when(mockDepartureRepository.getWithoutMessages(any(), any())) thenReturn Future.failed(new Exception)
+        when(mockDepartureRepository.getMessagesOfType(any(), any(), any())) thenReturn Future.failed(new Exception)
 
         val application = applicationBuilder
           .overrides(
@@ -258,7 +290,7 @@ class AuthenticateGetDepartureWithoutMessagesForReadActionProviderSpec
             bind[MigrationRunner].to[FakeMigrationRunner]
           )
 
-        val actionProvider = application.injector().instanceOf[AuthenticatedGetDepartureWithoutMessagesForReadActionProvider]
+        val actionProvider = application.injector().instanceOf[AuthenticateGetDepartureMessagesForReadActionProvider]
 
         val controller = new Harness(actionProvider)
         val result     = controller.get(departureId)(fakeRequest)
@@ -300,7 +332,7 @@ class AuthenticateGetDepartureWithoutMessagesForReadActionProviderSpec
             bind[MigrationRunner].to[FakeMigrationRunner]
           )
 
-        val actionProvider = application.injector().instanceOf[AuthenticatedGetDepartureWithoutMessagesForReadActionProvider]
+        val actionProvider = application.injector().instanceOf[AuthenticateGetDepartureMessagesForReadActionProvider]
 
         val controller = new Harness(actionProvider)
         val result     = controller.get(departureId)(fakeRequest)
@@ -355,7 +387,7 @@ class AuthenticateGetDepartureWithoutMessagesForReadActionProviderSpec
           .build()
 
         running(application) {
-          val actionProvider = application.injector.instanceOf[AuthenticatedGetDepartureWithoutMessagesForReadActionProvider]
+          val actionProvider = application.injector.instanceOf[AuthenticateGetDepartureMessagesForReadActionProvider]
 
           val controller = new Harness(actionProvider)
           val result     = controller.get(departureId)(fakeRequest.withHeaders(Headers.create()))
@@ -412,7 +444,7 @@ class AuthenticateGetDepartureWithoutMessagesForReadActionProviderSpec
           .build()
 
         running(application) {
-          val actionProvider = application.injector.instanceOf[AuthenticatedGetDepartureWithoutMessagesForReadActionProvider]
+          val actionProvider = application.injector.instanceOf[AuthenticateGetDepartureMessagesForReadActionProvider]
 
           val controller = new Harness(actionProvider)
           val result     = controller.get(departureId)(fakeRequest.withHeaders("channel" -> "web2"))

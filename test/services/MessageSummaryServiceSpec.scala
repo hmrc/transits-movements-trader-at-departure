@@ -15,6 +15,8 @@
  */
 
 package services
+import java.time.LocalDateTime
+
 import base.SpecBase
 import cats.data.NonEmptyList
 import generators.ModelGenerators
@@ -37,35 +39,37 @@ class MessageSummaryServiceSpec extends SpecBase with ModelGenerators with Scala
 
   import MessageSummaryServiceSpec.MovementMessagesHelpers._
 
-  def messageGeneratorSent(messageType: MessageType): Gen[MessageWithStatus] = {
+  def messageGeneratorSent(messageType: MessageType, dateTime: LocalDateTime): Gen[MessageWithStatus] = {
     val message = xml.XML.loadString(s"<${messageType.rootNode}>test</${messageType.rootNode}>")
-    arbitrary[MessageWithStatus].map(_.copy(messageType = messageType, message = message, status = SubmissionPending))
+    arbitrary[MessageWithStatus].map(_.copy(messageType = messageType, message = message, status = SubmissionPending, dateTime = dateTime))
   }
 
-  def messageGeneratorResponse(messageType: MessageType): Gen[MessageWithoutStatus] = {
+  def messageGeneratorResponse(messageType: MessageType, dateTime: LocalDateTime): Gen[MessageWithoutStatus] = {
     val message = xml.XML.loadString(s"<${messageType.rootNode}>test</${messageType.rootNode}>")
-    arbitrary[MessageWithoutStatus].map(_.copy(messageType = messageType, message = message))
+    arbitrary[MessageWithoutStatus].map(_.copy(messageType = messageType, message = message, dateTime = dateTime))
   }
 
-  def createMovementWithState(state: DepartureStatus, msgs: NonEmptyList[Message]): Gen[Departure] =
+  def createMovementWithState(msgs: NonEmptyList[Message]): Gen[Departure] =
     for {
       departureMovement <- arbitrary[Departure]
-    } yield departureMovement.copy(messages = msgs, status = state)
+    } yield departureMovement.copy(messages = msgs)
 
   def createMovement(msgs: NonEmptyList[Message]): Gen[Departure] =
     for {
       departureMovement <- arbitrary[Departure]
     } yield departureMovement.copy(messages = msgs)
 
-  private val ie015Gen = messageGeneratorSent(DepartureDeclaration)
-  private val ie016Gen = messageGeneratorResponse(DeclarationRejected)
-  private val ie028Gen = messageGeneratorResponse(MrnAllocated)
-  private val ie055Gen = messageGeneratorResponse(GuaranteeNotValid)
-  private val ie009Gen = messageGeneratorResponse(CancellationDecision)
-  private val ie014Gen = messageGeneratorResponse(DeclarationCancellationRequest)
-  private val ie051Gen = messageGeneratorResponse(NoReleaseForTransit)
-  private val ie060Gen = messageGeneratorResponse(ControlDecisionNotification)
-  private val ie917Gen = messageGeneratorResponse(MessageType.XMLSubmissionNegativeAcknowledgement)
+  private val localDateTime  = LocalDateTime.now()
+  private val updateDateTime = localDateTime.plusDays(1)
+  private val ie015Gen       = messageGeneratorSent(DepartureDeclaration, localDateTime)
+  private val ie016Gen       = messageGeneratorResponse(DeclarationRejected, updateDateTime)
+  private val ie028Gen       = messageGeneratorResponse(MrnAllocated, updateDateTime)
+  private val ie055Gen       = messageGeneratorResponse(GuaranteeNotValid, updateDateTime)
+  private val ie009Gen       = messageGeneratorResponse(CancellationDecision, updateDateTime)
+  private val ie014Gen       = messageGeneratorResponse(DeclarationCancellationRequest, updateDateTime)
+  private val ie051Gen       = messageGeneratorResponse(NoReleaseForTransit, updateDateTime)
+  private val ie060Gen       = messageGeneratorResponse(ControlDecisionNotification, updateDateTime)
+  private val ie917Gen       = messageGeneratorResponse(MessageType.XMLSubmissionNegativeAcknowledgement, updateDateTime)
 
   private val service = new MessageSummaryService
 
@@ -246,9 +250,10 @@ class MessageSummaryServiceSpec extends SpecBase with ModelGenerators with Scala
       }
 
       "latest IE055 when thee departure state is GuaranteeNotValid" in {
+
         forAll(ie015Gen, ie055Gen) {
           (ie015, ie055) =>
-            forAll(createMovementWithState(DepartureStatus.GuaranteeNotValid, NonEmptyList.of(ie015, ie055))) {
+            forAll(createMovementWithState(NonEmptyList.of(ie015, ie055))) {
               departure =>
                 val (message, messageId) = service.guaranteeNotValidRejectionMessage(departure).value
 
@@ -259,11 +264,12 @@ class MessageSummaryServiceSpec extends SpecBase with ModelGenerators with Scala
       }
 
       "None when there has been a guarantee not valid message and correction" in {
-        forAll(ie015Gen.submitted.msgCorrId(1), ie055Gen.msgCorrId(1), ie015Gen.msgCorrId(2)) {
+        val ie015GenNew = messageGeneratorSent(DepartureDeclaration, localDateTime.plusDays(2))
+        forAll(ie015Gen.submitted.msgCorrId(1), ie055Gen.msgCorrId(1), ie015GenNew.msgCorrId(2)) {
           case (ie015Old, ie055, ie015) =>
             val messages = NonEmptyList.of(ie015Old, ie055, ie015)
 
-            forAll(createMovementWithState(DepartureStatus.DepartureSubmitted, messages)) {
+            forAll(createMovementWithState(messages)) {
               departure =>
                 service.guaranteeNotValidRejectionMessage(departure) must not be defined
             }
@@ -275,7 +281,7 @@ class MessageSummaryServiceSpec extends SpecBase with ModelGenerators with Scala
           case (ie015Old, ie055, secondIE055) =>
             val messages = NonEmptyList.of(ie015Old, ie055, secondIE055)
 
-            forAll(createMovementWithState(DepartureStatus.GuaranteeNotValid, messages)) {
+            forAll(createMovementWithState(messages)) {
               departure =>
                 val (message, messageId) = service.guaranteeNotValidRejectionMessage(departure).value
 
@@ -288,7 +294,7 @@ class MessageSummaryServiceSpec extends SpecBase with ModelGenerators with Scala
       "IE015 when all IE055 have been rejected" in {
         forAll(ie015Gen.submitted.msgCorrId(1), ie055Gen.msgCorrId(1), ie015Gen.msgCorrId(2), ie055Gen.msgCorrId(2)) {
           case (ie015Old, ie055Old, ie015, ie055) =>
-            forAll(createMovementWithState(DepartureStatus.GuaranteeNotValid, NonEmptyList.of(ie015Old, ie055Old, ie015, ie055))) {
+            forAll(createMovementWithState(NonEmptyList.of(ie015Old, ie055Old, ie015, ie055))) {
               departure =>
                 val (message, messageId) = service.guaranteeNotValidRejectionMessage(departure).value
 
@@ -582,7 +588,7 @@ class MessageSummaryServiceSpec extends SpecBase with ModelGenerators with Scala
           case (ie015, ie055) =>
             val messages = NonEmptyList.of(ie015, ie055)
 
-            forAll(createMovementWithState(DepartureStatus.GuaranteeNotValid, messages)) {
+            forAll(createMovementWithState(messages)) {
               departure =>
                 val expectedMessageSummary =
                   MessagesSummary(departure, ie015.messageId, None, None, Some(ie055.messageId))

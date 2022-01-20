@@ -27,7 +27,12 @@ import play.api.libs.functional.syntax._
 import java.time.ZoneOffset
 import java.time.OffsetDateTime
 
-sealed trait Message {
+trait MessageTypeWithTime {
+  def dateTime: LocalDateTime
+  def messageType: MessageType
+}
+
+sealed trait Message extends MessageTypeWithTime {
   def messageId: MessageId
   def dateTime: LocalDateTime
   def messageType: MessageType

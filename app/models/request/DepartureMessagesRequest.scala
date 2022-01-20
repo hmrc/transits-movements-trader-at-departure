@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package utils
+package models.request
 
-import com.kenshoo.play.metrics.Metrics
-import com.codahale.metrics.MetricRegistry
+import models.DepartureId
+import models.ChannelType
+import models.Message
+import play.api.mvc.WrappedRequest
 
-class TestMetrics extends Metrics {
-  override def defaultRegistry: MetricRegistry = new MetricRegistry
-  override def toJson: String                  = ""
-}
+case class DepartureMessagesRequest[A](request: AuthenticatedRequest[A], departureId: DepartureId, channel: ChannelType, messages: List[Message])
+    extends WrappedRequest[A](request)

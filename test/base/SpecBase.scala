@@ -36,6 +36,8 @@ import uk.gov.hmrc.http.HeaderCarrier
 import scala.xml.Utility
 import scala.xml.XML
 import com.kenshoo.play.metrics.Metrics
+import migrations.MigrationRunner
+import migrations.FakeMigrationRunner
 import utils.TestMetrics
 
 trait SpecBase extends AnyFreeSpec with Matchers with MockitoSugar with ScalaFutures with OptionValues with EitherValues {
@@ -51,7 +53,8 @@ trait SpecBase extends AnyFreeSpec with Matchers with MockitoSugar with ScalaFut
       )
       .overrides(
         bind[AuthenticateActionProvider].to[FakeAuthenticateActionProvider],
-        bind[Metrics].toInstance(new TestMetrics)
+        bind[Metrics].toInstance(new TestMetrics),
+        bind[MigrationRunner].to[FakeMigrationRunner]
       )
 
   implicit val messageWithStatusEquality: Equality[MessageWithStatus] = (a: MessageWithStatus, b: Any) =>
@@ -74,17 +77,17 @@ trait SpecBase extends AnyFreeSpec with Matchers with MockitoSugar with ScalaFut
         val unAppliedA = Departure.unapply(a).get
         val unAppliedX = Departure.unapply(x).get
 
-        val normalisedMessagesA = unAppliedA._10.map {
+        val normalisedMessagesA = unAppliedA._9.map {
           y =>
             Utility.trim(XML.loadString(y.message.toString()))
         }
-        val normalisedA = unAppliedA.copy(_10 = normalisedMessagesA)
+        val normalisedA = unAppliedA.copy(_9 = normalisedMessagesA)
 
-        val normalisedMessagesX = unAppliedX._10.map {
+        val normalisedMessagesX = unAppliedX._9.map {
           z =>
             Utility.trim(XML.loadString(z.message.toString()))
         }
-        val normalisedX = unAppliedX.copy(_10 = normalisedMessagesX)
+        val normalisedX = unAppliedX.copy(_9 = normalisedMessagesX)
 
         normalisedA == normalisedX
       }

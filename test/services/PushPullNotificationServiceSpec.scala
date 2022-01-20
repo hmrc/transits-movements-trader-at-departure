@@ -26,7 +26,6 @@ import models.BoxId
 import models.Departure
 import models.DepartureId
 import models.DepartureMessageNotification
-import models.DepartureStatus
 import models.MessageId
 import models.MessageStatus
 import models.MessageType
@@ -177,7 +176,6 @@ class PushPullNotificationServiceSpec extends SpecBase with BeforeAndAfterEach w
         movementReferenceNumber = None,
         referenceNumber = "SomeREf",
         eoriNumber = "AB123456",
-        status = DepartureStatus.DepartureSubmitted,
         created = LocalDateTime.of(2021, 2, 2, 2, 2),
         lastUpdated = LocalDateTime.of(2021, 2, 2, 4, 2),
         messages = NonEmptyList.one(

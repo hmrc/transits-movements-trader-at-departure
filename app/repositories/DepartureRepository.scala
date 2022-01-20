@@ -56,7 +56,8 @@ class DepartureRepository @Inject()(
   val metrics: Metrics
 )(implicit ec: ExecutionContext, clock: Clock)
     extends MongoDateTimeFormats
-    with HasMetrics {
+    with HasMetrics
+    with Repository {
 
   private lazy val eoriNumberIndex: Aux[BSONSerializationPack.type] = IndexUtils.index(
     key = Seq("eoriNumber" -> IndexType.Ascending),
@@ -304,6 +305,34 @@ class DepartureRepository @Inject()(
       )
   }
 
+  def getMessagesOfType(departureId: DepartureId, channelFilter: ChannelType, messageTypes: List[MessageType]): Future[Option[DepartureMessages]] =
+    collection.flatMap {
+      c =>
+        c.aggregateWith[DepartureMessages](allowDiskUse = true) {
+            _ =>
+              import c.aggregationFramework._
+
+              val initialFilter: PipelineOperator = Match(Json.obj("_id" -> departureId, "channel" -> channelFilter))
+
+              val project = List[PipelineOperator](Project(Json.obj("_id" -> 1, "eoriNumber" -> 1, "messages" -> 1)))
+
+              // Filters out the messages with message types we don't care about, meaning that if we have a
+              // match for the arrival id and the eori number, but not a message type match,
+              // we then get an empty list which indiates an arrival that doesn't have the required message
+              // types as of yet, but would otherwise be valid
+              val inFilter       = Json.obj("$in"     -> Json.arr("$$message.messageType", messageTypes.map(_.code).toSeq))
+              val messagesFilter = Json.obj("$filter" -> Json.obj("input" -> "$messages", "as" -> "message", "cond" -> inFilter))
+
+              val secondaryFilter = List[PipelineOperator](AddFields(Json.obj("messages" -> messagesFilter)))
+
+              val transformations = project ++ secondaryFilter
+
+              (initialFilter, transformations)
+
+          }
+          .headOption
+    }
+
   def getMessage(departureId: DepartureId, channelFilter: ChannelType, messageId: MessageId): Future[Option[Message]] =
     collection.flatMap {
       c =>
@@ -338,7 +367,7 @@ class DepartureRepository @Inject()(
           .headOption
     }
 
-  def addResponseMessage(departureId: DepartureId, message: Message, status: DepartureStatus): Future[Try[Unit]] = {
+  def addResponseMessage(departureId: DepartureId, message: Message): Future[Try[Unit]] = {
     val selector = Json.obj(
       "_id" -> departureId
     )
@@ -346,8 +375,7 @@ class DepartureRepository @Inject()(
     val modifier =
       Json.obj(
         "$set" -> Json.obj(
-          "lastUpdated" -> LocalDateTime.now(clock),
-          "status"      -> status.toString
+          "lastUpdated" -> LocalDateTime.now(clock)
         ),
         "$push" -> Json.obj(
           "messages" -> Json.toJson(message)
@@ -378,7 +406,7 @@ class DepartureRepository @Inject()(
     }
   }
 
-  def setMrnAndAddResponseMessage(departureId: DepartureId, message: Message, status: DepartureStatus, mrn: MovementReferenceNumber): Future[Try[Unit]] = {
+  def setMrnAndAddResponseMessage(departureId: DepartureId, message: Message, mrn: MovementReferenceNumber): Future[Try[Unit]] = {
     val selector = Json.obj(
       "_id" -> departureId
     )
@@ -387,8 +415,7 @@ class DepartureRepository @Inject()(
       Json.obj(
         "$set" -> Json.obj(
           "lastUpdated"             -> LocalDateTime.now(clock),
-          "movementReferenceNumber" -> mrn,
-          "status"                  -> status.toString
+          "movementReferenceNumber" -> mrn
         ),
         "$push" -> Json.obj(
           "messages" -> Json.toJson(message)
@@ -471,8 +498,8 @@ class DepartureRepository @Inject()(
 
         collection.flatMap {
           coll =>
-            val fetchCount      = coll.count(Some(baseSelector))
-            val fetchMatchCount = coll.count(Some(fullSelector))
+            val fetchCount      = coll.simpleCount(baseSelector)
+            val fetchMatchCount = coll.simpleCount(fullSelector)
 
             val fetchResults = coll
               .aggregateWith[DepartureWithoutMessages](allowDiskUse = true) {

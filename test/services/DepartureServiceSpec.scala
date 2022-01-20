@@ -87,7 +87,6 @@ class DepartureServiceSpec extends SpecBase with JsonHelper with IntegrationPati
         movementReferenceNumber = None,
         referenceNumber = ref,
         eoriNumber = eori,
-        status = DepartureStatus.Initialized,
         created = dateTime,
         lastUpdated = dateTime,
         messages = NonEmptyList.one(

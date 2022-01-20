@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 HM Revenue & Customs
+ * Copyright 2022 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,9 +23,6 @@ import config.AppConfig
 import generators.ModelGenerators
 import models.ChannelType.Api
 import models.ChannelType.Web
-import models.DepartureStatus.Initialized
-import models.DepartureStatus.MrnAllocated
-import models.DepartureStatus.PositiveAcknowledgement
 import models.MessageStatus.SubmissionPending
 import models.MessageStatus.SubmissionSucceeded
 import models._
@@ -56,6 +53,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.reflect.ClassTag
 import scala.util.Failure
 import scala.util.Success
+import scala.xml.NodeSeq
 
 class DepartureRepositorySpec
     extends AnyFreeSpec
@@ -171,6 +169,123 @@ class DepartureRepositorySpec
             r.isDefined mustBe false
         }
       }
+    }
+
+
+    "getMessagesOfType(arrivalId: ArrivalId, channelFilter: ChannelType, messageTypes: List[MessageType])" - {
+        
+      val mType = MessageType.ReleaseForTransit
+
+      val node = NodeSeq.fromSeq(Seq(<CC029B>m</CC029B>))
+
+      val message = MessageWithStatus(
+          MessageId(1),
+          LocalDateTime.now(),
+          MessageType.ReleaseForTransit,
+          node,
+          MessageStatus.SubmissionSucceeded,
+          1
+        )
+
+      val otherMessage = MessageWithStatus(
+          MessageId(2),
+          LocalDateTime.now(),
+          MessageType.NoReleaseForTransit,
+          node,
+          MessageStatus.SubmissionSucceeded,
+          2
+        )
+
+      "must get the appropriate messages when they exist and has the right channel type" in {
+        database.flatMap(_.drop()).futureValue
+        val departure = arbitrary[Departure].sample.value copy (messages = NonEmptyList[Message](message, List.empty))
+
+        service.insert(departure).futureValue
+
+        // We copy the message node because the returned node isn't equal, even though it's 
+        // identical for our purposes. As it's not what we are really testing, we just copy the
+        // original message across so it doesn't fail the equality check
+        val result = service.getMessagesOfType(departure.departureId, departure.channel, List(mType))
+          .map(opt => opt.map(ar => ar.messages.asInstanceOf[List[MessageWithStatus]].map(x => x copy (message = node))))
+
+        whenReady(result) {
+          r =>  
+            r mustBe defined
+            r.get must contain theSameElementsAs List(message)
+        }
+      }
+
+      "must only return the appropriate messages when an arrival is matched" in {
+        database.flatMap(_.drop()).futureValue
+        val departure = arbitrary[Departure].sample.value copy (messages = NonEmptyList[Message](message, List(otherMessage)))
+
+        service.insert(departure).futureValue
+
+        // As in the previous test.
+        val result = service.getMessagesOfType(departure.departureId, departure.channel, List(mType))
+          .map(opt => opt.map(ar => ar.messages.asInstanceOf[List[MessageWithStatus]].map(x => x copy (message = node))))
+
+        whenReady(result) {
+          r =>
+            r mustBe defined
+            r.get must contain theSameElementsAs List(message)
+        }
+      }
+
+      "must return an empty list when an arrival exists but no messages match" in {
+        database.flatMap(_.drop()).futureValue
+
+        val departure = arbitrary[Departure].sample.value copy (departureId = DepartureId(1), messages = NonEmptyList[Message](otherMessage, List.empty))
+
+        service.insert(departure).futureValue
+        val result = service.getMessagesOfType(DepartureId(1), departure.channel, List(mType))
+
+        whenReady(result) {
+          r => 
+            r mustBe defined
+            r.get.messages mustEqual List()
+        }
+      }
+
+      "must return None when an arrival does not exist" in {
+        database.flatMap(_.drop()).futureValue
+        val departure = arbitrary[Departure].sample.value copy (departureId = DepartureId(1))
+
+        service.insert(departure).futureValue
+        val result = service.getMessagesOfType(DepartureId(2), departure.channel, List(mType))
+
+        whenReady(result) {
+          r => 
+            r must not be defined
+        }
+      }
+
+      "must return an empty list when an arrival exists but without any of the message type" in {
+        database.flatMap(_.drop()).futureValue
+        val departure = arbitrary[Departure].sample.value copy (departureId = DepartureId(1))
+
+        service.insert(departure).futureValue
+        val result = service.getMessagesOfType(DepartureId(2), departure.channel, List(mType))
+
+        whenReady(result) {
+          r =>
+            r mustBe empty
+        } 
+      }
+
+      "must return None when an arrival does exist but with the wrong channel type" in {
+        database.flatMap(_.drop()).futureValue
+        val departure = arbitrary[Departure].sample.value copy (channel = ChannelType.Api)
+
+        service.insert(departure).futureValue
+        val result = service.getMessagesOfType(departure.departureId, ChannelType.Web, List(mType))
+
+        whenReady(result) {
+          r => 
+            r must not be defined
+        }
+      }
+
     }
 
     "get(departureId: DepartureId, channelFilter: ChannelType)" - {
@@ -374,7 +489,18 @@ class DepartureRepositorySpec
       "must add a message, update the timestamp and increment nextCorrelationId" in {
         database.flatMap(_.drop()).futureValue
 
-        val departure = arbitrary[Departure].sample.value.copy(status = DepartureStatus.DepartureSubmitted)
+        val declarationMessages = NonEmptyList.one(
+          MessageWithStatus(
+            MessageId(1),
+            LocalDateTime.of(2021, 2, 2, 2, 2),
+            MessageType.DepartureDeclaration,
+            <CC015></CC015>,
+            MessageStatus.SubmissionPending,
+            1,
+            Json.obj("CC029" -> Json.obj())
+          )
+        )
+        val departure = arbitrary[Departure].sample.value.copy(messages = declarationMessages)
 
         val dateOfPrep = LocalDate.now(clock)
         val timeOfPrep = LocalTime.of(1, 1)
@@ -422,7 +548,18 @@ class DepartureRepositorySpec
       "must fail if the departure cannot be found" in {
         database.flatMap(_.drop()).futureValue
 
-        val departure = arbitrary[Departure].sample.value copy (status = DepartureStatus.DepartureSubmitted, departureId = DepartureId(1))
+        val messages = NonEmptyList.one(
+          MessageWithStatus(
+            MessageId(1),
+            LocalDateTime.of(2021, 2, 2, 2, 2),
+            MessageType.DepartureDeclaration,
+            <CC015></CC015>,
+            MessageStatus.SubmissionPending,
+            1,
+            Json.obj("CC029" -> Json.obj())
+          )
+        )
+        val departure = arbitrary[Departure].sample.value copy (messages = messages, departureId = DepartureId(1))
 
         val dateOfPrep = LocalDate.now(clock)
         val timeOfPrep = LocalTime.of(1, 1)
@@ -455,41 +592,6 @@ class DepartureRepositorySpec
       }
     }
 
-    "updateDeparture" - {
-      "must update the departure and return a Success Unit when successful" in {
-        database.flatMap(_.drop()).futureValue
-
-        val departureStatus = DepartureStatusUpdate(Initialized)
-        val departure       = departureWithOneMessage.sample.value.copy(status = PositiveAcknowledgement)
-        val selector        = DepartureIdSelector(departure.departureId)
-
-        service.insert(departure).futureValue
-
-        service.updateDeparture(selector, departureStatus).futureValue
-
-        val updatedDeparture = service.get(departure.departureId, departure.channel).futureValue.value
-
-        updatedDeparture.status mustEqual departureStatus.departureStatus
-      }
-
-      "must return a Failure if the selector does not match any documents" in {
-        database.flatMap(_.drop()).futureValue
-
-        val departureStatus = DepartureStatusUpdate(Initialized)
-        val departure       = departureWithOneMessage.sample.value copy (departureId = DepartureId(1), status = MrnAllocated)
-        val selector        = DepartureIdSelector(DepartureId(2))
-
-        service.insert(departure).futureValue
-
-        val result = service.updateDeparture(selector, departureStatus).futureValue
-
-        val updatedDeparture = service.get(departure.departureId, departure.channel).futureValue.value
-
-        result mustBe a[Failure[_]]
-        updatedDeparture.status must not be departureStatus.departureStatus
-      }
-    }
-
     "addResponseMessage" - {
       "must add a message, update the status of a document and update the timestamp" in {
         database.flatMap(_.drop()).futureValue
@@ -514,10 +616,9 @@ class DepartureRepositorySpec
             departure.nextMessageCorrelationId,
             convertXmlToJson(messageBody.toString)
           )
-        val newState = DepartureStatus.DepartureRejected
 
         service.insert(departure).futureValue
-        val addMessageResult = service.addResponseMessage(departure.departureId, declarationRejectedMessage, newState).futureValue
+        val addMessageResult = service.addResponseMessage(departure.departureId, declarationRejectedMessage).futureValue
 
         val selector = Json.obj("_id" -> departure.departureId)
 
@@ -530,14 +631,26 @@ class DepartureRepositorySpec
 
         addMessageResult mustBe a[Success[_]]
         updatedDeparture.nextMessageCorrelationId - departure.nextMessageCorrelationId mustBe 0
-        updatedDeparture.status mustEqual newState
+        updatedDeparture.status mustEqual DepartureStatus.DepartureRejected
         updatedDeparture.messages.size - departure.messages.size mustEqual 1
         updatedDeparture.messages.last mustEqual declarationRejectedMessage
       }
       "must fail if the departure cannot be found" in {
         database.flatMap(_.drop()).futureValue
 
-        val departure = arbitrary[Departure].sample.value copy (status = DepartureStatus.DepartureSubmitted, departureId = DepartureId(1))
+        val messages = NonEmptyList.one(
+          MessageWithStatus(
+            MessageId(1),
+            LocalDateTime.of(2021, 2, 2, 2, 2),
+            MessageType.DepartureDeclaration,
+            <CC015></CC015>,
+            MessageStatus.SubmissionPending,
+            1,
+            Json.obj("CC029" -> Json.obj())
+          )
+        )
+
+        val departure = arbitrary[Departure].sample.value copy (messages = messages, departureId = DepartureId(1))
 
         val dateOfPrep = LocalDate.now(clock)
         val timeOfPrep = LocalTime.of(1, 1)
@@ -559,10 +672,9 @@ class DepartureRepositorySpec
             messageCorrelationId = 1,
             convertXmlToJson(messageBody.toString)
           )
-        val newState = DepartureStatus.DepartureRejected
 
         service.insert(departure).futureValue
-        val result = service.addResponseMessage(DepartureId(2), declarationRejected, newState).futureValue
+        val result = service.addResponseMessage(DepartureId(2), declarationRejected).futureValue
 
         result mustBe a[Failure[_]]
       }
@@ -596,11 +708,10 @@ class DepartureRepositorySpec
             departure.nextMessageCorrelationId,
             convertXmlToJson(messageBody.toString)
           )
-        val newState = DepartureStatus.MrnAllocated
 
         service.insert(departure).futureValue
         val addMessageResult =
-          service.setMrnAndAddResponseMessage(departure.departureId, mrnAllocatedMessage, newState, MovementReferenceNumber(mrn)).futureValue
+          service.setMrnAndAddResponseMessage(departure.departureId, mrnAllocatedMessage, MovementReferenceNumber(mrn)).futureValue
 
         val selector = Json.obj("_id" -> departure.departureId)
 
@@ -613,7 +724,7 @@ class DepartureRepositorySpec
 
         addMessageResult mustBe a[Success[_]]
         updatedDeparture.nextMessageCorrelationId - departure.nextMessageCorrelationId mustBe 0
-        updatedDeparture.status mustEqual newState
+        updatedDeparture.status mustEqual DepartureStatus.MrnAllocated
         updatedDeparture.movementReferenceNumber.get mustEqual MovementReferenceNumber(mrn)
         updatedDeparture.messages.size - departure.messages.size mustEqual 1
         updatedDeparture.messages.last mustEqual mrnAllocatedMessage
@@ -622,7 +733,18 @@ class DepartureRepositorySpec
       "must fail if the departure cannot be found" in {
         database.flatMap(_.drop()).futureValue
 
-        val departure = arbitrary[Departure].sample.value copy (status = DepartureStatus.DepartureSubmitted, departureId = DepartureId(1))
+        val messages = NonEmptyList.one(
+          MessageWithStatus(
+            MessageId(1),
+            LocalDateTime.of(2021, 2, 2, 2, 2),
+            MessageType.DepartureDeclaration,
+            <CC015></CC015>,
+            MessageStatus.SubmissionPending,
+            1,
+            Json.obj("CC029" -> Json.obj())
+          )
+        )
+        val departure = arbitrary[Departure].sample.value copy (messages = messages, departureId = DepartureId(1))
 
         val mrn        = "mrn"
         val dateOfPrep = LocalDate.now(clock)
@@ -645,10 +767,9 @@ class DepartureRepositorySpec
             departure.nextMessageCorrelationId,
             convertXmlToJson(messageBody.toString)
           )
-        val newState = DepartureStatus.DepartureRejected
 
         service.insert(departure).futureValue
-        val addMessageResult = service.setMrnAndAddResponseMessage(DepartureId(2), mrnAllocatedMessage, newState, MovementReferenceNumber(mrn)).futureValue
+        val addMessageResult = service.setMrnAndAddResponseMessage(DepartureId(2), mrnAllocatedMessage, MovementReferenceNumber(mrn)).futureValue
 
         addMessageResult mustBe a[Failure[_]]
       }

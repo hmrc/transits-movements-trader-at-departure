@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 HM Revenue & Customs
+ * Copyright 2022 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import cats.data.NonEmptyList
 import models.ChannelType
 import models.Departure
 import models.DepartureId
-import models.DepartureStatus
 import models.MessageId
 import models.MessageStatus
 import models.MessageType
@@ -70,7 +69,6 @@ class PDFRetrievalControllerISpec extends ApiSpecBase with JsonHelper {
         "1234567",
         None,
         "SomeReference",
-        DepartureStatus.ReleaseForTransit,
         LocalDateTime.now(),
         LocalDateTime.now(),
         3,
@@ -145,7 +143,6 @@ class PDFRetrievalControllerISpec extends ApiSpecBase with JsonHelper {
         "1234567",
         None,
         "SomeReference",
-        DepartureStatus.ReleaseForTransit,
         LocalDateTime.now(),
         LocalDateTime.now(),
         3,
@@ -220,7 +217,6 @@ class PDFRetrievalControllerISpec extends ApiSpecBase with JsonHelper {
         "1234567",
         None,
         "SomeReference",
-        DepartureStatus.ReleaseForTransit,
         LocalDateTime.now(),
         LocalDateTime.now(),
         3,

@@ -19,7 +19,6 @@ package services
 import cats.data._
 import cats.implicits._
 import com.google.inject.Inject
-import models.DepartureStatus.Initialized
 import models.MessageStatus.SubmissionPending
 import models.ParseError.EmptyNodeSeq
 import models._
@@ -68,7 +67,6 @@ class DepartureService @Inject()(departureIdRepository: DepartureIdRepository)(i
               ),
               None,
               reference,
-              Initialized,
               dateTime,
               LocalDateTime.now(clock),
               2,

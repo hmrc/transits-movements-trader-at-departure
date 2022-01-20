@@ -22,7 +22,6 @@ import cats.data.Reader
 import models.ChannelType
 import models.Departure
 import models.DepartureId
-import models.DepartureStatus
 import models.Message
 import models.MessageId
 import models.MessageType
@@ -47,7 +46,6 @@ class MessageRetrievalServiceSpec extends SpecBase with JsonHelper {
           "AB123456C",
           None,
           "SomeReference",
-          DepartureStatus.ReleaseForTransit,
           LocalDateTime.now(),
           LocalDateTime.now(),
           3,
@@ -110,7 +108,6 @@ class MessageRetrievalServiceSpec extends SpecBase with JsonHelper {
           "AB123456C",
           None,
           "SomeReference",
-          DepartureStatus.ReleaseForTransit,
           LocalDateTime.now(),
           LocalDateTime.now(),
           3,

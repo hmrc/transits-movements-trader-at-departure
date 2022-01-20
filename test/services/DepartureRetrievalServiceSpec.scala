@@ -24,7 +24,6 @@ import models.ChannelType
 import models.Departure
 import models.DepartureId
 import models.DepartureNotFound
-import models.DepartureStatus
 import models.MessageId
 import models.MessageStatus
 import models.MessageType
@@ -59,7 +58,6 @@ class DepartureRetrievalServiceSpec extends SpecBase {
       movementReferenceNumber = None,
       referenceNumber = "SomeREf",
       eoriNumber = "AB123456",
-      status = DepartureStatus.DepartureSubmitted,
       created = LocalDateTime.of(2021, 2, 2, 2, 2),
       lastUpdated = LocalDateTime.of(2021, 2, 2, 4, 2),
       messages = NonEmptyList.one(

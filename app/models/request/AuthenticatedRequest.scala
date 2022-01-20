@@ -24,6 +24,7 @@ import models.EORINumber
 import models.TURN
 import play.api.mvc.Request
 import play.api.mvc.WrappedRequest
+import models.DepartureMessages
 
 case class AuthenticatedRequest[A](request: Request[A], channel: ChannelType, enrolmentId: Ior[TURN, EORINumber]) extends WrappedRequest[A](request) {
   private def matchesEnrolmentId(eoriNumber: String): Boolean =
@@ -40,4 +41,7 @@ case class AuthenticatedRequest[A](request: Request[A], channel: ChannelType, en
 
   def hasMatchingEnrolmentId(departure: DepartureWithoutMessages): Boolean =
     matchesEnrolmentId(departure.eoriNumber)
+
+  def hasMatchingEnrolmentId(departure: DepartureMessages): Boolean =
+    matchesEnrolmentId(departure.eoriNumber.value)
 }

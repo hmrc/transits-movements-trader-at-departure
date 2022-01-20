@@ -30,7 +30,6 @@ import models.ChannelType.Api
 import models.ChannelType.Web
 import models.Departure
 import models.DepartureId
-import models.DepartureStatus
 import models.DepartureWithoutMessages
 import models.EORINumber
 import models.MessageId
@@ -122,7 +121,6 @@ class DeparturesControllerSpec
     channel = Api,
     eoriNumber = "eori",
     movementReferenceNumber = None,
-    status = DepartureStatus.Initialized,
     created = localDateTime,
     lastUpdated = localDateTime,
     nextMessageCorrelationId = movementMessage(1).messageCorrelationId + 1,

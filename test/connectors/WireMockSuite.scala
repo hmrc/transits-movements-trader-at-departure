@@ -28,6 +28,8 @@ import com.kenshoo.play.metrics.Metrics
 import utils.TestMetrics
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration
 import com.github.tomakehurst.wiremock.common.ConsoleNotifier
+import migrations.FakeMigrationRunner
+import migrations.MigrationRunner
 
 trait WiremockSuite extends BeforeAndAfterAll with BeforeAndAfterEach {
   this: Suite =>
@@ -46,7 +48,8 @@ trait WiremockSuite extends BeforeAndAfterAll with BeforeAndAfterEach {
       .overrides(bindings: _*)
 
   protected def bindings: Seq[GuiceableModule] = Seq(
-    bind[Metrics].toInstance(new TestMetrics)
+    bind[Metrics].toInstance(new TestMetrics),
+    bind[MigrationRunner].to[FakeMigrationRunner]
   )
 
   override def beforeAll(): Unit = {

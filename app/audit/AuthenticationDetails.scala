@@ -14,12 +14,19 @@
  * limitations under the License.
  */
 
-package utils
+package audit
 
-import com.kenshoo.play.metrics.Metrics
-import com.codahale.metrics.MetricRegistry
+import models.ChannelType
+import play.api.libs.json.Json
+import play.api.libs.json.OWrites
 
-class TestMetrics extends Metrics {
-  override def defaultRegistry: MetricRegistry = new MetricRegistry
-  override def toJson: String                  = ""
+case class AuthenticationDetails(channel: ChannelType, enrolmentType: String)
+
+object AuthenticationDetails {
+  implicit val writes: OWrites[AuthenticationDetails] = (details: AuthenticationDetails) => {
+    Json.obj(
+      "channel"       -> details.channel,
+      "enrolmentType" -> details.enrolmentType
+    )
+  }
 }

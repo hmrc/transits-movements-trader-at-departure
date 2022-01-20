@@ -14,12 +14,20 @@
  * limitations under the License.
  */
 
-package utils
+package models
 
-import com.kenshoo.play.metrics.Metrics
-import com.codahale.metrics.MetricRegistry
+import play.api.libs.functional.syntax._
+import play.api.libs.json._
 
-class TestMetrics extends Metrics {
-  override def defaultRegistry: MetricRegistry = new MetricRegistry
-  override def toJson: String                  = ""
+case class DepartureMessages(departureId: DepartureId, eoriNumber: EORINumber, messages: List[Message])
+
+object DepartureMessages {
+
+  implicit val read: Reads[DepartureMessages] =
+    (
+      (__ \ "_id").read[DepartureId] and
+        (__ \ "eoriNumber").read[EORINumber] and
+        (__ \ "messages").read[List[Message]]
+    )(DepartureMessages.apply _)
+
 }

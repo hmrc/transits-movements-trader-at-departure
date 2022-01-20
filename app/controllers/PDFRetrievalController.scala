@@ -17,9 +17,10 @@
 package controllers
 
 import com.kenshoo.play.metrics.Metrics
-import controllers.actions.AuthenticatedGetDepartureWithMessagesForReadActionProvider
+import controllers.actions.AuthenticateGetDepartureMessagesForReadActionProvider
 import metrics.HasActionMetrics
 import models.DepartureId
+import models.MessageType
 import play.api.Logging
 import play.api.http.HeaderNames
 import play.api.mvc.Action
@@ -35,7 +36,7 @@ import scala.concurrent.ExecutionContext
 
 class PDFRetrievalController @Inject()(
   pdfGenerationService: PDFRetrievalService,
-  authenticateForRead: AuthenticatedGetDepartureWithMessagesForReadActionProvider,
+  authenticateForRead: AuthenticateGetDepartureMessagesForReadActionProvider,
   cc: ControllerComponents,
   val metrics: Metrics
 )(implicit ec: ExecutionContext)
@@ -45,9 +46,9 @@ class PDFRetrievalController @Inject()(
 
   def getAccompanyingDocument(departureId: DepartureId): Action[AnyContent] =
     withMetricsTimerAction("get-accompanying-document") {
-      authenticateForRead(departureId).async {
+      authenticateForRead(departureId, List(MessageType.ReleaseForTransit)).async {
         implicit request =>
-          pdfGenerationService.getAccompanyingDocumentPDF(request.departure).map {
+          pdfGenerationService.getAccompanyingDocumentPDF(request.messages.maxBy(_.messageCorrelationId)).map {
             case Right(pdf) =>
               val responseHeaders = pdf.contentDisposition.map(HeaderNames.CONTENT_DISPOSITION -> _).toList
               Ok.streamed(pdf.dataSource, pdf.contentLength, pdf.contentType).withHeaders(responseHeaders: _*)

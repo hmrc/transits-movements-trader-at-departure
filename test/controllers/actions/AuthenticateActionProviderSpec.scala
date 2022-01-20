@@ -16,30 +16,27 @@
 
 package controllers.actions
 
+import audit.AuditType.SuccessfulAuthTracking
+import audit.AuditService
+import audit.AuthenticationDetails
 import models.ChannelType.Web
 import org.mockito.ArgumentMatchers.any
+import org.mockito.ArgumentMatchers.{eq => eqTo}
 import org.mockito.Mockito._
+import org.scalatest.BeforeAndAfterEach
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.mvc.Action
-import play.api.mvc.AnyContent
-import play.api.mvc.AnyContentAsEmpty
-import play.api.mvc.Headers
-import play.api.mvc.Results
+import play.api.mvc._
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import uk.gov.hmrc.auth.core.AuthConnector
-import uk.gov.hmrc.auth.core.Enrolment
-import uk.gov.hmrc.auth.core.EnrolmentIdentifier
-import uk.gov.hmrc.auth.core.Enrolments
-import uk.gov.hmrc.auth.core.MissingBearerToken
+import uk.gov.hmrc.auth.core._
 
 import scala.concurrent.Future
 
-class AuthenticateActionProviderSpec extends AnyFreeSpec with Matchers with MockitoSugar {
+class AuthenticateActionProviderSpec extends AnyFreeSpec with Matchers with MockitoSugar with BeforeAndAfterEach {
 
   def fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("", "").withHeaders("channel" -> Web.toString())
 
@@ -94,6 +91,11 @@ class AuthenticateActionProviderSpec extends AnyFreeSpec with Matchers with Mock
       state = "Activated"
     )
 
+  val mockAuditService = mock[AuditService]
+
+  override def beforeEach(): Unit =
+    reset(mockAuditService)
+
   "authenticate" - {
 
     "when a user has valid enrolments" - {
@@ -111,7 +113,8 @@ class AuthenticateActionProviderSpec extends AnyFreeSpec with Matchers with Mock
 
         val application = baseApplication
           .overrides(
-            bind[AuthConnector].toInstance(mockAuthConnector)
+            bind[AuthConnector].toInstance(mockAuthConnector),
+            bind[AuditService].toInstance(mockAuditService)
           )
           .build()
 
@@ -122,6 +125,7 @@ class AuthenticateActionProviderSpec extends AnyFreeSpec with Matchers with Mock
 
         status(result) mustEqual OK
         contentAsString(result) mustEqual eoriNumber
+        verify(mockAuditService, times(1)).authAudit(eqTo(SuccessfulAuthTracking), eqTo(AuthenticationDetails(Web, "Modern")))(any())
       }
 
       "must pass on the user's TURN" in {
@@ -133,7 +137,8 @@ class AuthenticateActionProviderSpec extends AnyFreeSpec with Matchers with Mock
 
         val application = baseApplication
           .overrides(
-            bind[AuthConnector].toInstance(mockAuthConnector)
+            bind[AuthConnector].toInstance(mockAuthConnector),
+            bind[AuditService].toInstance(mockAuditService)
           )
           .build()
 
@@ -144,6 +149,7 @@ class AuthenticateActionProviderSpec extends AnyFreeSpec with Matchers with Mock
 
         status(result) mustEqual OK
         contentAsString(result) mustEqual turn
+        verify(mockAuditService, times(1)).authAudit(eqTo(SuccessfulAuthTracking), eqTo(AuthenticationDetails(Web, "Legacy")))(any())
       }
 
       "must pick user's EORI over their TURN if both enrolments are present" in {
@@ -155,7 +161,8 @@ class AuthenticateActionProviderSpec extends AnyFreeSpec with Matchers with Mock
 
         val application = baseApplication
           .overrides(
-            bind[AuthConnector].toInstance(mockAuthConnector)
+            bind[AuthConnector].toInstance(mockAuthConnector),
+            bind[AuditService].toInstance(mockAuditService)
           )
           .build()
 
@@ -166,6 +173,7 @@ class AuthenticateActionProviderSpec extends AnyFreeSpec with Matchers with Mock
 
         status(result) mustEqual OK
         contentAsString(result) mustEqual eoriNumber
+        verify(mockAuditService, times(1)).authAudit(eqTo(SuccessfulAuthTracking), eqTo(AuthenticationDetails(Web, "Modern")))(any())
       }
 
     }
