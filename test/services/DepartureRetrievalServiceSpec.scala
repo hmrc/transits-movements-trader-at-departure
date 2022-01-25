@@ -102,7 +102,7 @@ class DepartureRetrievalServiceSpec extends SpecBase {
         .mustBe(Left(DepartureNotFound(s"[GetDepartureService][getDepartureById] Unable to retrieve departure message for arrival id: ${departureId.index}")))
 
       verify(mockRepo).get(eqTo(departureId))
-      verify(mockAuditService).auditNCTSMessages(eqTo(ChannelType.Deleted), eqTo("Deleted"), eqTo(MrnAllocatedResponse), eqTo(node))(any())
+      verify(mockAuditService).auditNCTSRequestedMissingMovementEvent(eqTo(departureId), eqTo(MrnAllocatedResponse), eqTo(node))(any())
     }
   }
 }

@@ -16,6 +16,7 @@
 
 package controllers.actions
 
+import audit.AuditService
 import models.DepartureId
 import models.request.AuthenticatedRequest
 import models.request.DepartureWithoutMessagesRequest
@@ -31,16 +32,18 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
 private[actions] class AuthenticatedGetDepartureWithoutMessagesActionProvider @Inject()(
-  repository: DepartureRepository
+  repository: DepartureRepository,
+  auditService: AuditService
 )(implicit ec: ExecutionContext) {
 
   def apply(departureId: DepartureId): ActionRefiner[AuthenticatedRequest, DepartureWithoutMessagesRequest] =
-    new AuthenticatedGetDepartureWithoutMessagesAction(departureId, repository)
+    new AuthenticatedGetDepartureWithoutMessagesAction(departureId, repository, auditService)
 }
 
 private[actions] class AuthenticatedGetDepartureWithoutMessagesAction(
   departureId: DepartureId,
-  repository: DepartureRepository
+  repository: DepartureRepository,
+  auditService: AuditService
 )(implicit val executionContext: ExecutionContext)
     extends ActionRefiner[AuthenticatedRequest, DepartureWithoutMessagesRequest]
     with Logging {
@@ -55,6 +58,7 @@ private[actions] class AuthenticatedGetDepartureWithoutMessagesAction(
           logger.warn("Attempt to retrieve an departure for another EORI")
           Left(NotFound)
         case None =>
+          auditService.auditCustomerRequestedMissingMovementEvent(request, departureId)
           Left(NotFound)
       }
       .recover {
