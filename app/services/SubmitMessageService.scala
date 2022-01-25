@@ -33,6 +33,7 @@ import scala.concurrent.Future
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
+import scala.util.control.NonFatal
 
 class SubmitMessageService @Inject()(departureRepository: DepartureRepository, messageConnector: MessageConnector)(implicit clock: Clock, ec: ExecutionContext)
     extends Logging {
@@ -74,8 +75,8 @@ class SubmitMessageService @Inject()(departureRepository: DepartureRepository, m
                           SubmissionProcessingResult.SubmissionFailureInternal
                     })
                     .recover({
-                      case _ =>
-                        logger.warn("Mongo failure when updating message status")
+                      case NonFatal(e) =>
+                        logger.error("Mongo failure when updating message status", e)
                         SubmissionProcessingResult.SubmissionFailureInternal
                     })
 
@@ -85,8 +86,8 @@ class SubmitMessageService @Inject()(departureRepository: DepartureRepository, m
                   updateMessage(departureId, message, submissionResult)
                     .map(_ => SubmissionProcessingResult.SubmissionFailureExternal)
                     .recover({
-                      case _ =>
-                        logger.warn("Mongo failure when updating message status")
+                      case NonFatal(e) =>
+                        logger.error("Mongo failure when updating message status", e)
                         SubmissionProcessingResult.SubmissionFailureExternal
                     })
               }
@@ -107,8 +108,8 @@ class SubmitMessageService @Inject()(departureRepository: DepartureRepository, m
                 updateDepartureAndMessage(departure.departureId, messageId)
                   .map(_ => SubmissionProcessingResult.SubmissionSuccess)
                   .recover({
-                    case _ =>
-                      logger.warn("Mongo failure when updating message status")
+                    case NonFatal(e) =>
+                      logger.error("Mongo failure when updating message status", e)
                       SubmissionProcessingResult.SubmissionFailureInternal
                   })
 
@@ -124,8 +125,8 @@ class SubmitMessageService @Inject()(departureRepository: DepartureRepository, m
                         SubmissionProcessingResult.SubmissionFailureInternal
                   })
                   .recover({
-                    case _ =>
-                      logger.warn("Mongo failure when updating message status")
+                    case NonFatal(e) =>
+                      logger.error("Mongo failure when updating message status", e)
                       SubmissionProcessingResult.SubmissionFailureInternal
                   })
 
@@ -135,16 +136,16 @@ class SubmitMessageService @Inject()(departureRepository: DepartureRepository, m
                 updateMessage(departure.departureId, message, submissionResult)
                   .map(_ => SubmissionProcessingResult.SubmissionFailureExternal)
                   .recover({
-                    case _ =>
-                      logger.warn("Mongo failure when updating message status")
+                    case NonFatal(e) =>
+                      logger.error("Mongo failure when updating message status", e)
                       SubmissionProcessingResult.SubmissionFailureExternal
                   })
             }
 
       }
       .recover {
-        case _ =>
-          logger.warn("Mongo failure when inserting a new departure")
+        case NonFatal(e) =>
+          logger.error("Mongo failure when inserting a new departure", e)
           SubmissionProcessingResult.SubmissionFailureInternal
       }
 
