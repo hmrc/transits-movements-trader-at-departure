@@ -28,12 +28,13 @@ import play.api.http.HeaderNames
 import play.api.http.HttpVerbs
 import play.api.mvc.Request
 import play.api.test.FakeRequest
+
 import java.nio.charset.StandardCharsets
 import java.time.LocalDateTime
-
 import scala.xml.NodeSeq
 import models.request.AuthenticatedRequest
 import cats.data.Ior
+import org.scalacheck.Arbitrary.arbitrary
 
 class DepartureMessageNotificationSpec extends SpecBase with ScalaCheckDrivenPropertyChecks with ModelGenerators with HttpVerbs {
 
@@ -44,31 +45,35 @@ class DepartureMessageNotificationSpec extends SpecBase with ScalaCheckDrivenPro
     val bodyLength = testBody.toString.getBytes(StandardCharsets.UTF_8).length
 
     "produces the expected model" in {
-      val response      = responseGenerator.sample.value
-      val departure     = arbitraryDeparture.arbitrary.sample.value
-      val messageSender = MessageSender(departure.departureId, departure.messages.last.messageCorrelationId)
+      val response = responseGenerator.sample.value
+
+      val departureWithoutMessages = arbitrary[DepartureWithoutMessages].sample.value
+
+      val messageSender = MessageSender(departureWithoutMessages.departureId, departureWithoutMessages.nextMessageCorrelationId)
 
       val request =
         AuthenticatedRequest(
           FakeRequest(POST, routes.NCTSMessageController.post(messageSender).url)
             .withBody[NodeSeq](testBody)
             .withHeaders(HeaderNames.CONTENT_LENGTH -> bodyLength.toString),
-          departure.channel,
+          departureWithoutMessages.channel,
           Ior.right(EORINumber("eori"))
         )
 
-      val departureWithoutMessagesRequest = DepartureWithoutMessagesRequest(request, DepartureWithoutMessages.fromDeparture(departure), Api)
+      val departureWithoutMessagesRequest = DepartureWithoutMessagesRequest(request, departureWithoutMessages, Api)
       val responseRequest                 = DepartureResponseRequest(departureWithoutMessagesRequest, response)
 
       val now = LocalDateTime.now()
 
+      val departureIdIndex = departureWithoutMessages.departureId.index
+
       val expectedNotification =
         DepartureMessageNotification(
-          s"/customs/transits/movements/departures/${departure.departureId.index}/messages/${departure.messages.length + 1}",
-          s"/customs/transits/movements/departures/${departure.departureId.index}",
-          departure.eoriNumber,
-          departure.departureId,
-          MessageId(departure.messages.length + 1),
+          s"/customs/transits/movements/departures/$departureIdIndex/messages/${departureWithoutMessages.nextMessageCorrelationId}",
+          s"/customs/transits/movements/departures/$departureIdIndex",
+          departureWithoutMessages.eoriNumber,
+          departureWithoutMessages.departureId,
+          departureWithoutMessages.nextMessageId,
           now,
           response.messageType,
           Some(testBody)
@@ -80,31 +85,34 @@ class DepartureMessageNotificationSpec extends SpecBase with ScalaCheckDrivenPro
     }
 
     "does not include the message body when it is over 100kb" in {
-      val response      = responseGenerator.sample.value
-      val departure     = arbitraryDeparture.arbitrary.sample.value
-      val messageSender = MessageSender(departure.departureId, departure.messages.last.messageCorrelationId)
+      val response                 = responseGenerator.sample.value
+      val departureWithoutMessages = arbitrary[DepartureWithoutMessages].sample.value
+
+      val messageSender = MessageSender(departureWithoutMessages.departureId, departureWithoutMessages.nextMessageCorrelationId)
 
       val request =
         AuthenticatedRequest(
           FakeRequest(POST, routes.NCTSMessageController.post(messageSender).url)
             .withBody[NodeSeq](testBody)
             .withHeaders(HeaderNames.CONTENT_LENGTH -> "100001"),
-          departure.channel,
+          departureWithoutMessages.channel,
           Ior.right(EORINumber("eori"))
         )
 
-      val departureRequest = DepartureWithoutMessagesRequest(request, DepartureWithoutMessages.fromDeparture(departure), Api)
+      val departureRequest = DepartureWithoutMessagesRequest(request, departureWithoutMessages, Api)
       val responseRequest  = DepartureResponseRequest(departureRequest, response)
 
       val now = LocalDateTime.now()
 
+      val departureIdIndex = departureWithoutMessages.departureId.index
+
       val expectedNotification =
         DepartureMessageNotification(
-          s"/customs/transits/movements/departures/${departure.departureId.index}/messages/${departure.messages.length + 1}",
-          s"/customs/transits/movements/departures/${departure.departureId.index}",
-          departure.eoriNumber,
-          departure.departureId,
-          MessageId(departure.messages.length + 1),
+          s"/customs/transits/movements/departures/$departureIdIndex/messages/${departureWithoutMessages.nextMessageCorrelationId}",
+          s"/customs/transits/movements/departures/$departureIdIndex",
+          departureWithoutMessages.eoriNumber,
+          departureWithoutMessages.departureId,
+          departureWithoutMessages.nextMessageId,
           now,
           response.messageType,
           None

@@ -525,7 +525,7 @@ class DepartureRepository @Inject()(
             (fetchResults, fetchCount, fetchMatchCount).mapN {
               case (results, count, matchCount) =>
                 ResponseDepartures(
-                  results.map(ResponseDeparture.build),
+                  results.map(ResponseDeparture.fromDepartureWithoutMessage),
                   results.length,
                   totalDepartures = count,
                   totalMatched = matchCount

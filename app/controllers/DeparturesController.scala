@@ -113,7 +113,7 @@ class DeparturesController @Inject()(
     withMetricsTimerAction("get-departure-by-id") {
       authenticatedDepartureWithoutMessagesForRead(departureId) {
         implicit request =>
-          Ok(Json.toJsObject(ResponseDeparture.build(request.departure)))
+          Ok(Json.toJsObject(ResponseDeparture.fromDepartureWithoutMessage(request.departure)))
       }
     }
 

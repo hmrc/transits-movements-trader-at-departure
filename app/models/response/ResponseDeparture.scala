@@ -17,11 +17,9 @@
 package models.response
 
 import controllers.routes
-import models.Departure
 import models.DepartureId
 import models.DepartureStatus
 import models.DepartureWithoutMessages
-import models.MessageMetaData
 import models.MovementReferenceNumber
 import play.api.libs.json.Json
 import play.api.libs.json.OWrites
@@ -36,26 +34,11 @@ case class ResponseDeparture(departureId: DepartureId,
                              status: DepartureStatus,
                              previousStatus: DepartureStatus,
                              created: LocalDateTime,
-                             updated: LocalDateTime,
-                             messagesMetaData: Seq[MessageMetaData])
+                             updated: LocalDateTime)
 
 object ResponseDeparture {
 
-  def build(departure: Departure): ResponseDeparture =
-    ResponseDeparture(
-      departure.departureId,
-      routes.DeparturesController.get(departure.departureId).url,
-      routes.MessagesController.getMessages(departure.departureId).url,
-      departure.movementReferenceNumber,
-      departure.referenceNumber,
-      departure.status,
-      departure.previousStatus,
-      departure.created,
-      departure.lastUpdated,
-      departure.messages.map(x => MessageMetaData(x.messageType, x.dateTime)).toList
-    )
-
-  def build(departureWithoutMessages: DepartureWithoutMessages): ResponseDeparture =
+  def fromDepartureWithoutMessage(departureWithoutMessages: DepartureWithoutMessages): ResponseDeparture =
     ResponseDeparture(
       departureWithoutMessages.departureId,
       routes.DeparturesController.get(departureWithoutMessages.departureId).url,
@@ -65,8 +48,7 @@ object ResponseDeparture {
       departureWithoutMessages.status,
       departureWithoutMessages.previousStatus,
       departureWithoutMessages.created,
-      departureWithoutMessages.lastUpdated,
-      departureWithoutMessages.messagesMetaData
+      departureWithoutMessages.lastUpdated
     )
 
   implicit val writes: OWrites[ResponseDeparture] = Json.writes[ResponseDeparture]

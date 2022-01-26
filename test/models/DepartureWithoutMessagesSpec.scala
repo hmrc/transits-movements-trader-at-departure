@@ -17,11 +17,9 @@
 package models
 
 import base.SpecBase
-import cats.data.NonEmptyList
 import generators.ModelGenerators
 import models.MessageType.DeclarationRejected
 import models.MessageType.DepartureDeclaration
-import models.MessageType.MrnAllocated
 import models.MessageType.PositiveAcknowledgement
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks.forAll
@@ -32,44 +30,6 @@ import java.time.LocalDateTime
 class DepartureWithoutMessagesSpec extends SpecBase with ModelGenerators with MongoDateTimeFormats {
 
   "DepartureWithoutMessages" - {
-    "apply" - {
-
-      "must return DepartureWithoutMessage with the latest messages meta data" in {
-
-        forAll(arbitrary[Departure], arbitrary[MessageWithStatus]) {
-          (departure, message) =>
-            val expectedDateTime             = LocalDateTime.now
-            val expectedDateTimeMinusMinutes = LocalDateTime.now.minusMinutes(10)
-            val expectedDateTimeMinusHours   = LocalDateTime.now.minusHours(2)
-            val expectedDateTimeMinusDays    = LocalDateTime.now.minusDays(1)
-
-            val message1 = message.copy(dateTime = expectedDateTimeMinusDays, messageType = PositiveAcknowledgement)
-            val message2 = message.copy(dateTime = expectedDateTimeMinusMinutes, messageType = DepartureDeclaration)
-            val message3 = message.copy(dateTime = expectedDateTimeMinusHours, messageType = MrnAllocated)
-            val message4 = message.copy(dateTime = expectedDateTime, messageType = DeclarationRejected)
-
-            val departureWithDateTime = departure.copy(
-              messages = NonEmptyList(message1, List(message2, message3, message4))
-            )
-
-            val result = DepartureWithoutMessages.fromDeparture(departureWithDateTime)
-
-            val expectedMessageMetaData1 = MessageMetaData(message1.messageType, message1.dateTime)
-            val expectedMessageMetaData2 = MessageMetaData(message2.messageType, message2.dateTime)
-            val expectedMessageMetaData3 = MessageMetaData(message3.messageType, message3.dateTime)
-            val expectedMessageMetaData4 = MessageMetaData(message4.messageType, message4.dateTime)
-
-            val expectedResult = Seq(
-              expectedMessageMetaData1,
-              expectedMessageMetaData2,
-              expectedMessageMetaData3,
-              expectedMessageMetaData4
-            )
-
-            result.messagesMetaData mustBe expectedResult
-        }
-      }
-    }
 
     "must Serialise and return latest message type" in {
 

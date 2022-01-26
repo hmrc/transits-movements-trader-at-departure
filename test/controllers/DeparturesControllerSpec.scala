@@ -483,8 +483,8 @@ class DeparturesControllerSpec
         .overrides(bind[DepartureRepository].toInstance(mockDepartureRepository))
         .build()
 
-      val departure = Arbitrary.arbitrary[Departure].sample.value.copy(eoriNumber = "eori")
-      when(mockDepartureRepository.getWithoutMessages(any(), any())).thenReturn(Future.successful(Some(DepartureWithoutMessages.fromDeparture(departure))))
+      val departure = Arbitrary.arbitrary[DepartureWithoutMessages].sample.value.copy(eoriNumber = "eori")
+      when(mockDepartureRepository.getWithoutMessages(any(), any())).thenReturn(Future.successful(Some(departure)))
 
       running(application) {
         val request = FakeRequest(GET, routes.DeparturesController.get(DepartureId(1)).url)
@@ -493,7 +493,7 @@ class DeparturesControllerSpec
         val result = route(application, request).value
 
         status(result) mustEqual OK
-        contentAsJson(result) mustEqual Json.toJson(ResponseDeparture.build(departure))
+        contentAsJson(result) mustEqual Json.toJson(ResponseDeparture.fromDepartureWithoutMessage(departure))
       }
     }
 
@@ -523,8 +523,8 @@ class DeparturesControllerSpec
         .overrides(bind[DepartureRepository].toInstance(mockDepartureRepository))
         .build()
 
-      val departure = Arbitrary.arbitrary[Departure].sample.value.copy(eoriNumber = "eori2")
-      when(mockDepartureRepository.getWithoutMessages(any(), any())).thenReturn(Future.successful(Some(DepartureWithoutMessages.fromDeparture(departure))))
+      val departure = Arbitrary.arbitrary[DepartureWithoutMessages].sample.value.copy(eoriNumber = "eori2")
+      when(mockDepartureRepository.getWithoutMessages(any(), any())).thenReturn(Future.successful(Some(departure)))
 
       running(application) {
         val request = FakeRequest(GET, routes.DeparturesController.get(DepartureId(1)).url)
@@ -559,8 +559,8 @@ class DeparturesControllerSpec
     "must return all departures from database" in {
       val mockDepartureRepository = mock[DepartureRepository]
 
-      val departure          = Arbitrary.arbitrary[Departure].sample.value.copy(eoriNumber = "eori")
-      val responseDeparture  = ResponseDeparture.build(departure)
+      val departure          = Arbitrary.arbitrary[DepartureWithoutMessages].sample.value.copy(eoriNumber = "eori")
+      val responseDeparture  = ResponseDeparture.fromDepartureWithoutMessage(departure)
       val responseDepartures = ResponseDepartures(Seq(responseDeparture), 1, 1, 1)
 
       when(mockDepartureRepository.fetchAllDepartures(any(), any(), any(), any(), any(), any())).thenReturn(Future.successful(responseDepartures))
