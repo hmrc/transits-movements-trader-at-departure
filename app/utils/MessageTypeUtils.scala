@@ -20,10 +20,11 @@ import java.time.LocalDateTime
 import models.DepartureStatus
 import models.MessageType
 import models.MessageTypeWithTime
+import play.api.Logging
 
 import scala.annotation.tailrec
 
-object MessageTypeUtils {
+object MessageTypeUtils extends Logging {
 
   implicit private val localDateOrdering: Ordering[LocalDateTime] = _ compareTo _
 
@@ -61,6 +62,7 @@ object MessageTypeUtils {
       case MessageType.WriteOffNotification           => DepartureStatus.WriteOffNotification
       case MessageType.GuaranteeNotValid              => DepartureStatus.GuaranteeNotValid
       case MessageType.XMLSubmissionNegativeAcknowledgement =>
+        logger.info("[latestDepartureStatus] Latest message is of type XMLSubmissionNegativeAcknowledgement. Checking previous message.")
         getPreviousMessage(messagesList).messageType match {
           case MessageType.DepartureDeclaration           => DepartureStatus.DepartureSubmittedNegativeAcknowledgement
           case MessageType.DeclarationCancellationRequest => DepartureStatus.DeclarationCancellationRequestNegativeAcknowledgement
