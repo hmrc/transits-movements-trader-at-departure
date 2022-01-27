@@ -20,7 +20,6 @@ import audit.AuditService
 import base.SpecBase
 import cats.data.NonEmptyList
 import models.ChannelType.Web
-import models.ChannelType
 import models.Departure
 import models.DepartureId
 import models.DepartureNotFound

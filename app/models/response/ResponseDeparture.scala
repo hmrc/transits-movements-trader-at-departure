@@ -26,15 +26,16 @@ import play.api.libs.json.OWrites
 
 import java.time.LocalDateTime
 
-case class ResponseDeparture(departureId: DepartureId,
-                             location: String,
-                             messagesLocation: String,
-                             movementReferenceNumber: Option[MovementReferenceNumber],
-                             referenceNumber: String,
-                             status: DepartureStatus,
-                             previousStatus: DepartureStatus,
-                             created: LocalDateTime,
-                             updated: LocalDateTime)
+case class ResponseDeparture(
+  departureId: DepartureId,
+  location: String,
+  messagesLocation: String,
+  movementReferenceNumber: Option[MovementReferenceNumber],
+  referenceNumber: String,
+  status: DepartureStatus,
+  created: LocalDateTime,
+  updated: LocalDateTime
+)
 
 object ResponseDeparture {
 
@@ -46,7 +47,6 @@ object ResponseDeparture {
       departureWithoutMessages.movementReferenceNumber,
       departureWithoutMessages.referenceNumber,
       departureWithoutMessages.status,
-      departureWithoutMessages.previousStatus,
       departureWithoutMessages.created,
       departureWithoutMessages.lastUpdated
     )
