@@ -35,8 +35,8 @@ object MessageTypeUtils {
   }
 
   private def getPreviousMessage(messagesList: List[MessageTypeWithTime]): MessageTypeWithTime = {
-    val previousMessage          = messagesList.sortBy(_.dateTime).takeRight(2).head
-    val messagesWithSameDateTime = messagesList.filter(_.dateTime == previousMessage.dateTime)
+    val previousMessage               = messagesList.sortBy(_.dateTime).takeRight(2).head
+    lazy val messagesWithSameDateTime = messagesList.filter(_.dateTime == previousMessage.dateTime)
 
     previousMessage.messageType match {
       case MessageType.DepartureDeclaration | MessageType.DeclarationCancellationRequest => previousMessage
@@ -62,11 +62,9 @@ object MessageTypeUtils {
       case MessageType.GuaranteeNotValid              => DepartureStatus.GuaranteeNotValid
       case MessageType.XMLSubmissionNegativeAcknowledgement =>
         getPreviousMessage(messagesList).messageType match {
-          case MessageType.DepartureDeclaration =>
-            DepartureStatus.DepartureSubmittedNegativeAcknowledgement
-          case MessageType.DeclarationCancellationRequest =>
-            DepartureStatus.DeclarationCancellationRequestNegativeAcknowledgement
-          case _ => latestDepartureStatus(messagesList.filterNot(_ == latestMessage))
+          case MessageType.DepartureDeclaration           => DepartureStatus.DepartureSubmittedNegativeAcknowledgement
+          case MessageType.DeclarationCancellationRequest => DepartureStatus.DeclarationCancellationRequestNegativeAcknowledgement
+          case _                                          => latestDepartureStatus(messagesList.filterNot(_ == latestMessage))
         }
     }
   }
