@@ -16,35 +16,26 @@
 
 package utils
 
-import java.time.LocalDateTime
 import models.DepartureStatus
 import models.MessageType
 import models.MessageTypeWithTime
 import play.api.Logging
 
+import java.time.LocalDateTime
 import scala.annotation.tailrec
 
 object MessageTypeUtils extends Logging {
 
-  implicit private val localDateOrdering: Ordering[LocalDateTime] = _ compareTo _
-
-  private def getLatestMessage(messagesList: List[MessageTypeWithTime]): MessageTypeWithTime = {
-    val latestMessage            = messagesList.maxBy(_.dateTime)
-    val messagesWithSameDateTime = messagesList.filter(_.dateTime == latestMessage.dateTime)
-
-    if (messagesWithSameDateTime.size == 1) latestMessage else messagesWithSameDateTime.maxBy(_.messageType)
+  private def getMessage(messagesList: List[MessageTypeWithTime], drop: Int): MessageTypeWithTime = {
+    implicit val localDateOrdering: Ordering[LocalDateTime] = _ compareTo _
+    messagesList.sortBy(m => (m.dateTime, m.messageType)).dropRight(drop).last
   }
 
-  private def getPreviousMessage(messagesList: List[MessageTypeWithTime]): MessageTypeWithTime = {
-    val previousMessage               = messagesList.sortBy(_.dateTime).takeRight(2).head
-    lazy val messagesWithSameDateTime = messagesList.filter(_.dateTime == previousMessage.dateTime)
+  private def getLatestMessage(messagesList: List[MessageTypeWithTime]): MessageTypeWithTime =
+    getMessage(messagesList, 0)
 
-    previousMessage.messageType match {
-      case MessageType.DepartureDeclaration | MessageType.DeclarationCancellationRequest => previousMessage
-      case _ if messagesWithSameDateTime.size == 1                                       => previousMessage
-      case _                                                                             => messagesWithSameDateTime.maxBy(_.messageType)
-    }
-  }
+  private def getPreviousMessage(messagesList: List[MessageTypeWithTime]): MessageTypeWithTime =
+    getMessage(messagesList, 1)
 
   @tailrec
   def latestDepartureStatus(messagesList: List[MessageTypeWithTime]): DepartureStatus = {
