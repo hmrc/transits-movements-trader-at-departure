@@ -21,6 +21,7 @@ import generators.ModelGenerators
 import models.DepartureStatus
 import models.MessageMetaData
 import models.MessageType
+import org.scalacheck.Gen
 import org.scalatest.Assertion
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
@@ -248,6 +249,23 @@ class MessageTypeUtilsSpec extends SpecBase with ScalaCheckDrivenPropertyChecks 
             )
 
           MessageTypeUtils.latestDepartureStatus(messages) mustBe DepartureStatus.MrnAllocated
+        }
+      }
+    }
+
+    "must return Undetermined" - {
+      "when messages list is empty" in {
+
+        MessageTypeUtils.latestDepartureStatus(Nil) mustBe DepartureStatus.Undetermined
+      }
+
+      "when messages list only contains XMLSubmissionNegativeAcknowledgement type" in {
+
+        forAll(Gen.choose(1, 10)) {
+          size =>
+            val messages = List.fill(size)(MessageMetaData(messageType = MessageType.XMLSubmissionNegativeAcknowledgement, localDateTime))
+
+            MessageTypeUtils.latestDepartureStatus(messages) mustBe DepartureStatus.Undetermined
         }
       }
     }

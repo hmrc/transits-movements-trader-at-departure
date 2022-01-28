@@ -29,39 +29,45 @@ object MessageTypeUtils extends Logging {
   private def getMessage(
     messagesList: List[MessageTypeWithTime],
     drop: Int
-  )(implicit mto: Ordering[MessageType]): MessageTypeWithTime = {
+  )(implicit mto: Ordering[MessageType]): Option[MessageTypeWithTime] = {
     implicit val ldto: Ordering[LocalDateTime] = _ compareTo _
-    messagesList.sortBy(m => (m.dateTime, m.messageType)).dropRight(drop).last
+    messagesList.sortBy(m => (m.dateTime, m.messageType)).dropRight(drop).lastOption
   }
 
-  private def getLatestMessage(messagesList: List[MessageTypeWithTime]): MessageTypeWithTime =
+  private def getLatestMessage(messagesList: List[MessageTypeWithTime]): Option[MessageTypeWithTime] =
     getMessage(messagesList, 0)(MessageType.latestMessageOrdering)
 
-  private def getPreviousMessage(messagesList: List[MessageTypeWithTime]): MessageTypeWithTime =
+  private def getPreviousMessage(messagesList: List[MessageTypeWithTime]): Option[MessageTypeWithTime] =
     getMessage(messagesList, 1)(MessageType.previousMessageOrdering)
 
   @tailrec
-  def latestDepartureStatus(messagesList: List[MessageTypeWithTime]): DepartureStatus = {
-    val latestMessage = getLatestMessage(messagesList)
-    latestMessage.messageType match {
-      case MessageType.PositiveAcknowledgement        => DepartureStatus.PositiveAcknowledgement
-      case MessageType.DepartureDeclaration           => DepartureStatus.DepartureSubmitted
-      case MessageType.MrnAllocated                   => DepartureStatus.MrnAllocated
-      case MessageType.DeclarationRejected            => DepartureStatus.DepartureRejected
-      case MessageType.ControlDecisionNotification    => DepartureStatus.ControlDecisionNotification
-      case MessageType.NoReleaseForTransit            => DepartureStatus.NoReleaseForTransit
-      case MessageType.ReleaseForTransit              => DepartureStatus.ReleaseForTransit
-      case MessageType.DeclarationCancellationRequest => DepartureStatus.DeclarationCancellationRequest
-      case MessageType.CancellationDecision           => DepartureStatus.CancellationDecision
-      case MessageType.WriteOffNotification           => DepartureStatus.WriteOffNotification
-      case MessageType.GuaranteeNotValid              => DepartureStatus.GuaranteeNotValid
-      case MessageType.XMLSubmissionNegativeAcknowledgement =>
-        logger.info("[latestDepartureStatus] Latest message is of type XMLSubmissionNegativeAcknowledgement. Checking previous message.")
-        getPreviousMessage(messagesList).messageType match {
-          case MessageType.DepartureDeclaration           => DepartureStatus.DepartureSubmittedNegativeAcknowledgement
-          case MessageType.DeclarationCancellationRequest => DepartureStatus.DeclarationCancellationRequestNegativeAcknowledgement
-          case _                                          => latestDepartureStatus(messagesList.filterNot(_ == latestMessage))
+  def latestDepartureStatus(messagesList: List[MessageTypeWithTime]): DepartureStatus =
+    getLatestMessage(messagesList) match {
+      case Some(latestMessage) =>
+        latestMessage.messageType match {
+          case MessageType.PositiveAcknowledgement        => DepartureStatus.PositiveAcknowledgement
+          case MessageType.DepartureDeclaration           => DepartureStatus.DepartureSubmitted
+          case MessageType.MrnAllocated                   => DepartureStatus.MrnAllocated
+          case MessageType.DeclarationRejected            => DepartureStatus.DepartureRejected
+          case MessageType.ControlDecisionNotification    => DepartureStatus.ControlDecisionNotification
+          case MessageType.NoReleaseForTransit            => DepartureStatus.NoReleaseForTransit
+          case MessageType.ReleaseForTransit              => DepartureStatus.ReleaseForTransit
+          case MessageType.DeclarationCancellationRequest => DepartureStatus.DeclarationCancellationRequest
+          case MessageType.CancellationDecision           => DepartureStatus.CancellationDecision
+          case MessageType.WriteOffNotification           => DepartureStatus.WriteOffNotification
+          case MessageType.GuaranteeNotValid              => DepartureStatus.GuaranteeNotValid
+          case MessageType.XMLSubmissionNegativeAcknowledgement =>
+            logger.info("[latestDepartureStatus] Latest message is of type XMLSubmissionNegativeAcknowledgement. Checking previous message.")
+            getPreviousMessage(messagesList) match {
+              case Some(previousMessage) =>
+                previousMessage.messageType match {
+                  case MessageType.DepartureDeclaration           => DepartureStatus.DepartureSubmittedNegativeAcknowledgement
+                  case MessageType.DeclarationCancellationRequest => DepartureStatus.DeclarationCancellationRequestNegativeAcknowledgement
+                  case _                                          => latestDepartureStatus(messagesList.filterNot(_ == latestMessage))
+                }
+              case None => DepartureStatus.Undetermined
+            }
         }
+      case None => DepartureStatus.Undetermined
     }
-  }
 }
