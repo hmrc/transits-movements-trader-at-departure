@@ -138,7 +138,7 @@ trait ModelGenerators extends BaseGenerators with JavaTimeGenerators with JsonHe
         rN              <- arbitrary[String]
         created         <- arbitrary[LocalDateTime]
         lastUpdated     <- arbitrary[LocalDateTime]
-        messages        <- nonEmptyListOfMaxLength[MessageWithStatus](2).retryUntil(!_.forall(_.messageType == MessageType.XMLSubmissionNegativeAcknowledgement))
+        messages        <- nonEmptyListOfMaxLength[MessageWithStatus](2)
         notificationBox <- arbitrary[Option[Box]]
       } yield models.Departure(id, channel, eN, Some(mrn), rN, created, lastUpdated, messages.length + 1, messages, notificationBox)
     }
@@ -161,7 +161,7 @@ trait ModelGenerators extends BaseGenerators with JavaTimeGenerators with JsonHe
         rN              <- arbitrary[String]
         created         <- arbitrary[LocalDateTime]
         lastUpdated     <- arbitrary[LocalDateTime]
-        messageMetaData <- nonEmptyListOfMaxLength[MessageMetaData](2).retryUntil(!_.forall(_.messageType == MessageType.XMLSubmissionNegativeAcknowledgement))
+        messageMetaData <- nonEmptyListOfMaxLength[MessageMetaData](2)
         notificationBox <- arbitrary[Option[Box]]
       } yield
         DepartureWithoutMessages(
@@ -186,7 +186,7 @@ trait ModelGenerators extends BaseGenerators with JavaTimeGenerators with JsonHe
     Arbitrary(Gen.oneOf(SubmissionProcessingResult.values))
 
   implicit lazy val arbitraryMessageType: Arbitrary[MessageType] =
-    Arbitrary(Gen.oneOf(MessageType.values.filterNot(_ == MessageType.XMLSubmissionNegativeAcknowledgement)))
+    Arbitrary(Gen.oneOf(MessageType.values))
 
   implicit lazy val arbitrarySubmissionFailure: Arbitrary[EisSubmissionFailure] =
     Arbitrary(Gen.oneOf(arbitrary[EisSubmissionRejected], arbitrary[EisSubmissionFailureDownstream]))
