@@ -27,22 +27,22 @@ import scala.annotation.tailrec
 object MessageTypeUtils extends Logging {
 
   private def getMessage(
-    messagesList: List[MessageTypeWithTime],
+    messages: List[MessageTypeWithTime],
     drop: Int
   )(implicit mto: Ordering[MessageType]): Option[MessageTypeWithTime] = {
     implicit val ldto: Ordering[LocalDateTime] = _ compareTo _
-    messagesList.sortBy(m => (m.dateTime, m.messageType)).dropRight(drop).lastOption
+    messages.sortBy(m => (m.dateTime, m.messageType)).dropRight(drop).lastOption
   }
 
-  private def getLatestMessage(messagesList: List[MessageTypeWithTime]): Option[MessageTypeWithTime] =
-    getMessage(messagesList, 0)(MessageType.latestMessageOrdering)
+  private def getLatestMessage(messages: List[MessageTypeWithTime]): Option[MessageTypeWithTime] =
+    getMessage(messages, 0)(MessageType.latestMessageOrdering)
 
-  private def getPreviousMessage(messagesList: List[MessageTypeWithTime]): Option[MessageTypeWithTime] =
-    getMessage(messagesList, 1)(MessageType.previousMessageOrdering)
+  private def getPreviousMessage(messages: List[MessageTypeWithTime]): Option[MessageTypeWithTime] =
+    getMessage(messages, 1)(MessageType.previousMessageOrdering)
 
   @tailrec
-  def latestDepartureStatus(messagesList: List[MessageTypeWithTime]): DepartureStatus =
-    getLatestMessage(messagesList) match {
+  def latestDepartureStatus(messages: List[MessageTypeWithTime]): DepartureStatus =
+    getLatestMessage(messages) match {
       case Some(latestMessage) =>
         latestMessage.messageType match {
           case MessageType.PositiveAcknowledgement        => DepartureStatus.PositiveAcknowledgement
@@ -58,12 +58,12 @@ object MessageTypeUtils extends Logging {
           case MessageType.GuaranteeNotValid              => DepartureStatus.GuaranteeNotValid
           case MessageType.XMLSubmissionNegativeAcknowledgement =>
             logger.info("[latestDepartureStatus] Latest message is of type XMLSubmissionNegativeAcknowledgement. Checking previous message.")
-            getPreviousMessage(messagesList) match {
+            getPreviousMessage(messages) match {
               case Some(previousMessage) =>
                 previousMessage.messageType match {
                   case MessageType.DepartureDeclaration           => DepartureStatus.DepartureSubmittedNegativeAcknowledgement
                   case MessageType.DeclarationCancellationRequest => DepartureStatus.DeclarationCancellationRequestNegativeAcknowledgement
-                  case _                                          => latestDepartureStatus(messagesList.filterNot(_ == latestMessage))
+                  case _                                          => latestDepartureStatus(messages.filterNot(_ == latestMessage))
                 }
               case None => DepartureStatus.Undetermined
             }
