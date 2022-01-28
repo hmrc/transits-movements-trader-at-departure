@@ -26,16 +26,19 @@ import scala.annotation.tailrec
 
 object MessageTypeUtils extends Logging {
 
-  private def getMessage(messagesList: List[MessageTypeWithTime], drop: Int): MessageTypeWithTime = {
-    implicit val localDateOrdering: Ordering[LocalDateTime] = _ compareTo _
+  private def getMessage(
+    messagesList: List[MessageTypeWithTime],
+    drop: Int
+  )(implicit mto: Ordering[MessageType]): MessageTypeWithTime = {
+    implicit val ldto: Ordering[LocalDateTime] = _ compareTo _
     messagesList.sortBy(m => (m.dateTime, m.messageType)).dropRight(drop).last
   }
 
   private def getLatestMessage(messagesList: List[MessageTypeWithTime]): MessageTypeWithTime =
-    getMessage(messagesList, 0)
+    getMessage(messagesList, 0)(MessageType.latestMessageOrdering)
 
   private def getPreviousMessage(messagesList: List[MessageTypeWithTime]): MessageTypeWithTime =
-    getMessage(messagesList, 1)
+    getMessage(messagesList, 1)(MessageType.previousMessageOrdering)
 
   @tailrec
   def latestDepartureStatus(messagesList: List[MessageTypeWithTime]): DepartureStatus = {

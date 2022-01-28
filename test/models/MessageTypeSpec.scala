@@ -125,11 +125,11 @@ class MessageTypeSpec extends SpecBase with ScalaCheckDrivenPropertyChecks with 
     }
   }
 
-  "ordering" - {
+  "latestMessageOrdering" - {
     "comparing to DepartureDeclaration" - {
       "all status must have greater order" in {
 
-        MessageTypeesExcluding(DepartureDeclaration).foreach {
+        forAll(messageTypesExcluding(DepartureDeclaration)) {
           status =>
             Ordering[MessageType].max(DepartureDeclaration, status) mustBe status
             Ordering[MessageType].max(status, DepartureDeclaration) mustBe status
@@ -140,7 +140,7 @@ class MessageTypeSpec extends SpecBase with ScalaCheckDrivenPropertyChecks with 
     "comparing to DeclarationRejected" - {
       "all status must have greater order except for DepartureDeclaration, PositiveAcknowledgement and XMLSubmissionNegativeAcknowledgement" in {
 
-        MessageTypeesExcluding(DeclarationRejected, DepartureDeclaration, PositiveAcknowledgement, XMLSubmissionNegativeAcknowledgement).foreach {
+        forAll(messageTypesExcluding(DeclarationRejected, DepartureDeclaration, PositiveAcknowledgement, XMLSubmissionNegativeAcknowledgement)) {
           status =>
             Ordering[MessageType].max(DeclarationRejected, status) mustBe status
             Ordering[MessageType].max(status, DeclarationRejected) mustBe status
@@ -156,7 +156,7 @@ class MessageTypeSpec extends SpecBase with ScalaCheckDrivenPropertyChecks with 
     "comparing to PositiveAcknowledgement" - {
       "all status must have greater order except for DepartureDeclaration and XMLSubmissionNegativeAcknowledgement" in {
 
-        MessageTypeesExcluding(PositiveAcknowledgement, DepartureDeclaration, XMLSubmissionNegativeAcknowledgement).foreach {
+        forAll(messageTypesExcluding(PositiveAcknowledgement, DepartureDeclaration, XMLSubmissionNegativeAcknowledgement)) {
           status =>
             Ordering[MessageType].max(PositiveAcknowledgement, status) mustBe status
             Ordering[MessageType].max(status, PositiveAcknowledgement) mustBe status
@@ -489,8 +489,38 @@ class MessageTypeSpec extends SpecBase with ScalaCheckDrivenPropertyChecks with 
     }
   }
 
-  def MessageTypeesExcluding(exclude: MessageType*): Seq[MessageType] =
-    MessageType.values.filterNot(
-      x => exclude.toSet.contains(x)
-    )
+  "previousMessageOrdering" - {
+
+    "comparing to DeclarationCancellationRequest" - {
+      "all statuses must have lesser order" in {
+
+        forAll(messageTypesExcluding(DeclarationCancellationRequest)) {
+          status =>
+            MessageType.previousMessageOrdering.max(DeclarationCancellationRequest, status) mustBe DeclarationCancellationRequest
+            MessageType.previousMessageOrdering.max(status, DeclarationCancellationRequest) mustBe DeclarationCancellationRequest
+        }
+      }
+    }
+
+    "comparing to DepartureDeclaration" - {
+      "all statuses must have lesser order (except DeclarationCancellationRequest)" in {
+
+        forAll(messageTypesExcluding(DeclarationCancellationRequest, DepartureDeclaration)) {
+          status =>
+            MessageType.previousMessageOrdering.max(DepartureDeclaration, status) mustBe DepartureDeclaration
+            MessageType.previousMessageOrdering.max(status, DepartureDeclaration) mustBe DepartureDeclaration
+        }
+      }
+    }
+
+    "comparing DeclarationCancellationRequest to DepartureDeclaration" - {
+      "DeclarationCancellationRequest must have greater order" in {
+        MessageType.previousMessageOrdering.max(DeclarationCancellationRequest, DepartureDeclaration) mustBe DeclarationCancellationRequest
+        MessageType.previousMessageOrdering.max(DepartureDeclaration, DeclarationCancellationRequest) mustBe DeclarationCancellationRequest
+      }
+    }
+  }
+
+  def messageTypesExcluding(exclude: MessageType*): Gen[MessageType] =
+    arbitrary[MessageType].retryUntil(x => !exclude.toSet.contains(x))
 }

@@ -63,10 +63,24 @@ object MessageType extends Enumerable.Implicits {
         values.find(_.rootNode == nodeSeq.head.label)
     }
 
-  implicit val ordering: Ordering[MessageType] = (x: MessageType, y: MessageType) => {
+  // ensures XMLSubmissionNegativeAcknowledgement is sorted after DeclarationCancellationRequest
+  implicit val latestMessageOrdering: Ordering[MessageType] = (x: MessageType, y: MessageType) => {
     (x, y) match {
       case (XMLSubmissionNegativeAcknowledgement, DeclarationCancellationRequest) => 1
       case (DeclarationCancellationRequest, XMLSubmissionNegativeAcknowledgement) => -1
+
+      case (_, _) => x.id.compareTo(y.id)
+    }
+  }
+
+  // ensures DeclarationCancellationRequest and DepartureDeclaration are sorted after everything else
+  val previousMessageOrdering: Ordering[MessageType] = (x: MessageType, y: MessageType) => {
+    (x, y) match {
+      case (DeclarationCancellationRequest, _) => 1
+      case (_, DeclarationCancellationRequest) => -1
+
+      case (DepartureDeclaration, _) => 1
+      case (_, DepartureDeclaration) => -1
 
       case (_, _) => x.id.compareTo(y.id)
     }
