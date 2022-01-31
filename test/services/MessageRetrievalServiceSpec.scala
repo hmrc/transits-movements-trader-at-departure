@@ -87,19 +87,13 @@ class MessageRetrievalServiceSpec extends SpecBase with JsonHelper {
                     ),
                     MessageId(3)
                   )
-                )
+              )
             )
           )
 
         service
           .getReleaseForTransitMessage(departure)
-          .value mustBe MessageWithoutStatus(
-            MessageId(3),
-            date,
-            MessageType.ReleaseForTransit,
-            <released></released>,
-            2
-        )
+          .value mustBe MessageWithoutStatus(MessageId(3), date, MessageType.ReleaseForTransit, <released></released>, 2)
       }
       "Return a None if releaseFromTransit message is not present" in new Setup {
         val departure: Departure = Departure(
