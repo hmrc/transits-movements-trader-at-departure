@@ -96,8 +96,7 @@ class DepartureServiceSpec extends SpecBase with JsonHelper with IntegrationPati
             MessageType.DepartureDeclaration,
             savedMovement,
             MessageStatus.SubmissionPending,
-            1,
-            convertXmlToJson(savedMovement.toString)
+            1
           )
         ),
         nextMessageCorrelationId = 2,
@@ -183,8 +182,7 @@ class DepartureServiceSpec extends SpecBase with JsonHelper with IntegrationPati
           MessageType.DepartureDeclaration,
           savedMovement,
           SubmissionPending,
-          messageCorrelationId,
-          convertXmlToJson(savedMovement.toString)
+          messageCorrelationId
         )
 
       val result = service.makeMessageWithStatus(id, expectedMessage.messageId, messageCorrelationId, MessageType.DepartureDeclaration)(movement)

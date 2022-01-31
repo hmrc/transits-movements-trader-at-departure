@@ -55,24 +55,21 @@ class DepartureWithoutMessagesSpec extends SpecBase with ModelGenerators with Mo
                 "dateTime"             -> localDateTimeNow.minusHours(2),
                 "messageType"          -> "IE928",
                 "message"              -> "<foo></foo>",
-                "messageCorrelationId" -> 1,
-                "messageJson"          -> ""
+                "messageCorrelationId" -> 1
               ),
               Json.obj(
                 "messageId"            -> 2,
                 "dateTime"             -> localDateTimeNow,
                 "messageType"          -> "IE015",
                 "message"              -> "<foo></foo>",
-                "messageCorrelationId" -> 1,
-                "messageJson"          -> ""
+                "messageCorrelationId" -> 1
               ),
               Json.obj(
                 "messageId"            -> 3,
                 "dateTime"             -> localDateTimeNow.minusDays(5),
                 "messageType"          -> "IE016",
                 "message"              -> "<foo></foo>",
-                "messageCorrelationId" -> 1,
-                "messageJson"          -> ""
+                "messageCorrelationId" -> 1
               )
             )
           )

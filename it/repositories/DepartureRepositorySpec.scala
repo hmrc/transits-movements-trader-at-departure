@@ -518,8 +518,7 @@ class DepartureRepositorySpec
             MessageType.DepartureDeclaration,
             <CC015></CC015>,
             MessageStatus.SubmissionPending,
-            1,
-            Json.obj("CC029" -> Json.obj())
+            1
           )
         )
         val departure = arbitrary[Departure].sample.value.copy(messages = declarationMessages)
@@ -542,8 +541,7 @@ class DepartureRepositorySpec
             dateTime,
             MessageType.DepartureDeclaration,
             messageBody,
-            departure.nextMessageCorrelationId,
-            convertXmlToJson(messageBody.toString)
+            departure.nextMessageCorrelationId
           )
 
         service.insert(departure).futureValue
@@ -577,8 +575,7 @@ class DepartureRepositorySpec
             MessageType.DepartureDeclaration,
             <CC015></CC015>,
             MessageStatus.SubmissionPending,
-            1,
-            Json.obj("CC029" -> Json.obj())
+            1
           )
         )
         val departure = arbitrary[Departure].sample.value copy (messages = messages, departureId = DepartureId(1))
@@ -600,8 +597,7 @@ class DepartureRepositorySpec
             LocalDateTime.of(dateOfPrep, timeOfPrep),
             MessageType.DepartureDeclaration,
             messageBody,
-            messageCorrelationId = 1,
-            convertXmlToJson(messageBody.toString)
+            messageCorrelationId = 1
           )
 
         service.insert(departure).futureValue
@@ -635,8 +631,7 @@ class DepartureRepositorySpec
             dateTime,
             MessageType.DeclarationRejected,
             messageBody,
-            departure.nextMessageCorrelationId,
-            convertXmlToJson(messageBody.toString)
+            departure.nextMessageCorrelationId
           )
 
         service.insert(departure).futureValue
@@ -667,8 +662,7 @@ class DepartureRepositorySpec
             MessageType.DepartureDeclaration,
             <CC015></CC015>,
             MessageStatus.SubmissionPending,
-            1,
-            Json.obj("CC029" -> Json.obj())
+            1
           )
         )
 
@@ -691,8 +685,7 @@ class DepartureRepositorySpec
             LocalDateTime.of(dateOfPrep, timeOfPrep),
             MessageType.DeclarationRejected,
             messageBody,
-            messageCorrelationId = 1,
-            convertXmlToJson(messageBody.toString)
+            messageCorrelationId = 1
           )
 
         service.insert(departure).futureValue
@@ -727,8 +720,7 @@ class DepartureRepositorySpec
             dateTime,
             MessageType.MrnAllocated,
             messageBody,
-            departure.nextMessageCorrelationId,
-            convertXmlToJson(messageBody.toString)
+            departure.nextMessageCorrelationId
           )
 
         service.insert(departure).futureValue
@@ -762,8 +754,7 @@ class DepartureRepositorySpec
             MessageType.DepartureDeclaration,
             <CC015></CC015>,
             MessageStatus.SubmissionPending,
-            1,
-            Json.obj("CC029" -> Json.obj())
+            1
           )
         )
         val departure = arbitrary[Departure].sample.value copy (messages = messages, departureId = DepartureId(1))
@@ -786,8 +777,7 @@ class DepartureRepositorySpec
             LocalDateTime.of(dateOfPrep, timeOfPrep),
             MessageType.MrnAllocated,
             messageBody,
-            departure.nextMessageCorrelationId,
-            convertXmlToJson(messageBody.toString)
+            departure.nextMessageCorrelationId
           )
 
         service.insert(departure).futureValue

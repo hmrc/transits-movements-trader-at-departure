@@ -25,19 +25,19 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
 import utils.MessageTranslation
-import utils.XmlToJson
-import javax.inject.Inject
+import utils.XMLTransformer.toJson
 
+import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 import scala.xml.NodeSeq
 
-class AuditService @Inject()(auditConnector: AuditConnector, messageTranslator: MessageTranslation)(implicit ec: ExecutionContext) extends XmlToJson {
+class AuditService @Inject()(auditConnector: AuditConnector, messageTranslator: MessageTranslation)(implicit ec: ExecutionContext) {
 
   def authAudit(auditType: AuditType, details: AuthenticationDetails)(implicit hc: HeaderCarrier): Unit =
     auditConnector.sendExplicitAudit(auditType.toString, details)
 
   def auditEvent(auditType: AuditType, customerId: Ior[TURN, EORINumber], message: Message, channel: ChannelType)(implicit hc: HeaderCarrier): Unit = {
-    val details = AuthenticatedAuditDetails(channel, customerId, messageTranslator.translate(message.messageJson))
+    val details = AuthenticatedAuditDetails(channel, customerId, messageTranslator.translate(toJson(message.message)))
     auditConnector.sendExplicitAudit(auditType.toString, details)
   }
 
