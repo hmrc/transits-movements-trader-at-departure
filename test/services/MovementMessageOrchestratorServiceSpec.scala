@@ -21,8 +21,8 @@ import base.SpecBase
 import cats.data.EitherT
 import cats.data.NonEmptyList
 import com.kenshoo.play.metrics.Metrics
-import models.ChannelType
 import models.ChannelType.Web
+import models.ChannelType
 import models.Departure
 import models.DepartureId
 import models.DepartureNotFound
@@ -45,7 +45,6 @@ import org.mockito.Mockito.never
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.verifyNoInteractions
 import org.mockito.Mockito.when
-import play.api.libs.json.Json
 import play.api.mvc.Request
 import play.api.test.FakeRequest
 
@@ -92,8 +91,7 @@ class MovementMessageOrchestratorServiceSpec extends SpecBase {
           MessageType.DepartureDeclaration,
           <CC015></CC015>,
           MessageStatus.SubmissionPending,
-          1,
-          Json.obj("CC029" -> Json.obj())
+          1
         )
       ),
       nextMessageCorrelationId = 2,
@@ -145,8 +143,7 @@ class MovementMessageOrchestratorServiceSpec extends SpecBase {
           MessageType.MrnAllocated,
           <CC015></CC015>,
           MessageStatus.SubmissionPending,
-          1,
-          Json.obj("CC029" -> Json.obj())
+          1
         )
       )
 
@@ -209,8 +206,7 @@ class MovementMessageOrchestratorServiceSpec extends SpecBase {
           MessageType.MrnAllocated,
           <CC015></CC015>,
           MessageStatus.SubmissionPending,
-          1,
-          Json.obj("CC029" -> Json.obj())
+          1
         )
       )
 
@@ -248,8 +244,7 @@ class MovementMessageOrchestratorServiceSpec extends SpecBase {
           MessageType.MrnAllocated,
           <CC015></CC015>,
           MessageStatus.SubmissionPending,
-          1,
-          Json.obj("CC029" -> Json.obj())
+          1
         )
       )
 

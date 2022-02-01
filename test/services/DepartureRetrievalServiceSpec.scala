@@ -20,7 +20,6 @@ import audit.AuditService
 import base.SpecBase
 import cats.data.NonEmptyList
 import models.ChannelType.Web
-import models.ChannelType
 import models.Departure
 import models.DepartureId
 import models.DepartureNotFound
@@ -29,13 +28,12 @@ import models.MessageStatus
 import models.MessageType
 import models.MessageWithStatus
 import models.MrnAllocatedResponse
+import org.mockito.ArgumentMatchers.any
+import org.mockito.ArgumentMatchers.{eq => eqTo}
 import org.mockito.Mockito.never
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.when
 import repositories.DepartureRepository
-import org.mockito.ArgumentMatchers.any
-import org.mockito.ArgumentMatchers.{eq => eqTo}
-import play.api.libs.json.Json
 
 import java.time.LocalDateTime
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -67,8 +65,7 @@ class DepartureRetrievalServiceSpec extends SpecBase {
           MessageType.DepartureDeclaration,
           <CC015></CC015>,
           MessageStatus.SubmissionPending,
-          1,
-          Json.obj("CC029" -> Json.obj())
+          1
         )
       ),
       nextMessageCorrelationId = 2,

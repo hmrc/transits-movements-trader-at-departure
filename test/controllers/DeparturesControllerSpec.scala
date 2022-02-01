@@ -112,8 +112,7 @@ class DeparturesControllerSpec
     MessageType.DepartureDeclaration,
     savedXmlMessage(messageCorrelationId).map(trim),
     SubmissionPending,
-    1,
-    convertXmlToJson(savedXmlMessage(messageCorrelationId).map(trim).toString)
+    1
   )
 
   val initializedDeparture = Departure(
