@@ -19,22 +19,21 @@ package controllers
 import base.SpecBase
 import cats.data.NonEmptyList
 import generators.ModelGenerators
-import java.time.LocalDateTime
-import models._
 import models.ChannelType.Web
-import org.mockito.ArgumentMatchers._
-import org.mockito.ArgumentMatchers.{eq => eqTo}
+import models._
+import org.mockito.ArgumentMatchers.{eq => eqTo, _}
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
-import play.api.libs.json.Json
 import play.api.mvc.Result
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
 import services.MovementMessageOrchestratorService
 import utils.TestMetrics
+
+import java.time.LocalDateTime
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 
 class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks with ModelGenerators with BeforeAndAfterEach {
 
@@ -59,8 +58,7 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
           MessageType.DepartureDeclaration,
           <CC015></CC015>,
           MessageStatus.SubmissionPending,
-          1,
-          Json.obj("CC029" -> Json.obj())
+          1
         )
       ),
       nextMessageCorrelationId = 2,

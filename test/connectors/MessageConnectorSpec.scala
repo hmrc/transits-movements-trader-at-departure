@@ -97,8 +97,7 @@ class MessageConnectorSpec
               messageType,
               <CC007A>test</CC007A>,
               MessageStatus.SubmissionPending,
-              1,
-              convertXmlToJson(<CC007A>test</CC007A>.toString)
+              1
             )
             val departureId = DepartureId(123)
 
@@ -136,8 +135,7 @@ class MessageConnectorSpec
               messageType,
               <CC007A>test</CC007A>,
               MessageStatus.SubmissionPending,
-              1,
-              convertXmlToJson(<CC007A>test</CC007A>.toString)
+              1
             )
             val departureId = DepartureId(123)
             val app         = appBuilder.build()
@@ -177,8 +175,7 @@ class MessageConnectorSpec
               messageType,
               <CC007A>test</CC007A>,
               MessageStatus.SubmissionPending,
-              1,
-              convertXmlToJson(<CC007A>test</CC007A>.toString())
+              1
             )
             val departureId = DepartureId(123)
             val app         = appBuilder.build()
@@ -219,8 +216,7 @@ class MessageConnectorSpec
               messageType,
               <CC007A>test</CC007A>,
               MessageStatus.SubmissionPending,
-              1,
-              convertXmlToJson(<CC007A>test</CC007A>.toString())
+              1
             )
             val departureId = DepartureId(123)
             val app         = appBuilder.build()

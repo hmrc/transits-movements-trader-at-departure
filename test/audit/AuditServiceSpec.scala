@@ -21,10 +21,12 @@ import base.SpecBase
 import cats.data.Ior
 import config.Constants
 import generators.ModelGenerators
+import models.ChannelType.Api
 import models.CancellationDecisionResponse
 import models.ChannelType
 import models.ControlDecisionNotificationResponse
 import models.Departure
+import models.DepartureId
 import models.DepartureRejectedResponse
 import models.EORINumber
 import models.GuaranteeNotValidResponse
@@ -35,28 +37,25 @@ import models.PositiveAcknowledgementResponse
 import models.ReleaseForTransitResponse
 import models.WriteOffNotificationResponse
 import models.XMLSubmissionNegativeAcknowledgementResponse
-import models.ChannelType.Api
+import models.request.AuthenticatedRequest
 import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.{eq => eqTo}
 import org.mockito.Mockito.reset
 import org.mockito.Mockito.times
 import org.mockito.Mockito.verify
-import org.scalacheck.Arbitrary
 import org.scalacheck.Arbitrary.arbitrary
+import org.scalacheck.Arbitrary
 import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.inject.bind
-import play.api.libs.json.JsObject
 import play.api.libs.json.Json
+import play.api.test.FakeRequest
 import play.api.test.Helpers.running
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
+import utils.XMLTransformer.toJson
 
 import scala.xml.NodeSeq
-import play.api.test.FakeRequest
-import models.request.AuthenticatedRequest
-import models.DepartureId
-import utils.XmlToJson
 
 class AuditServiceSpec extends SpecBase with ScalaCheckPropertyChecks with BeforeAndAfterEach with ModelGenerators {
 
@@ -67,23 +66,17 @@ class AuditServiceSpec extends SpecBase with ScalaCheckPropertyChecks with Befor
     reset(mockAuditConnector)
   }
 
-  // We need to do this in order to get at the protected toJson inside
-  object XmlToJsonConversion extends XmlToJson {
-    def apply(xml: NodeSeq): JsObject = toJson(xml)
-  }
-
   "AuditService" - {
     "must audit notification message event" in {
 
-      def gen(xml: NodeSeq, jsObj: JsObject): Gen[MessageWithStatus] =
+      def gen(xml: NodeSeq) =
         for {
           message <- arbitrary[MessageWithStatus]
-        } yield message.copy(message = xml, messageJson = jsObj)
+        } yield message.copy(message = xml)
 
-      val requestEori        = Ior.right(EORINumber("eori"))
-      val requestXml         = <xml>test</xml>
-      val requestedXmlToJson = Json.obj("channel" -> "api", "xml" -> "test")
-      val message            = gen(requestXml, requestedXmlToJson).sample.get
+      val requestEori = Ior.right(EORINumber("eori"))
+      val requestXml  = <xml>test</xml>
+      val message     = gen(requestXml).sample.get
 
       forAll(Gen.oneOf(AuditType.values)) {
         auditType =>
@@ -189,7 +182,7 @@ class AuditServiceSpec extends SpecBase with ScalaCheckPropertyChecks with Befor
         val expectedDetails = Json.obj(
           "departureId"         -> departureId,
           "messageResponseType" -> WriteOffNotificationReceived.toString,
-          "message"             -> XmlToJsonConversion(xml)
+          "message"             -> toJson(xml)
         )
 
         verify(mockAuditConnector, times(1)).sendExplicitAudit(eqTo(NCTSRequestedMissingMovement.toString), eqTo(expectedDetails))(any(), any())

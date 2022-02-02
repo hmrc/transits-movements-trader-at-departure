@@ -42,17 +42,16 @@ import org.mockito.Mockito.when
 import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
-import play.api.libs.json.Json
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import utils.Format
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -185,8 +184,7 @@ class PushPullNotificationServiceSpec extends SpecBase with BeforeAndAfterEach w
             MessageType.DepartureDeclaration,
             <CC015></CC015>,
             MessageStatus.SubmissionPending,
-            1,
-            Json.obj("CC029" -> Json.obj())
+            1
           )
         ),
         nextMessageCorrelationId = 2,

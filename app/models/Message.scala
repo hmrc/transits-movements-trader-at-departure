@@ -16,16 +16,14 @@
 
 package models
 
-import java.time.LocalDateTime
-
+import play.api.libs.functional.syntax._
 import play.api.libs.json._
 import utils.NodeSeqFormat
-import utils.XmlToJson
 
-import scala.xml.NodeSeq
-import play.api.libs.functional.syntax._
-import java.time.ZoneOffset
+import java.time.LocalDateTime
 import java.time.OffsetDateTime
+import java.time.ZoneOffset
+import scala.xml.NodeSeq
 
 trait MessageTypeWithTime {
   def dateTime: LocalDateTime
@@ -37,7 +35,6 @@ sealed trait Message extends MessageTypeWithTime {
   def dateTime: LocalDateTime
   def messageType: MessageType
   def message: NodeSeq
-  def messageJson: JsObject
   def messageCorrelationId: Int
   def optStatus: Option[MessageStatus]
 
@@ -51,8 +48,7 @@ final case class MessageWithStatus(
   messageType: MessageType,
   message: NodeSeq,
   status: MessageStatus,
-  messageCorrelationId: Int,
-  messageJson: JsObject
+  messageCorrelationId: Int
 ) extends Message { def optStatus = Some(status) }
 
 final case class MessageWithoutStatus(
@@ -60,8 +56,7 @@ final case class MessageWithoutStatus(
   dateTime: LocalDateTime,
   messageType: MessageType,
   message: NodeSeq,
-  messageCorrelationId: Int,
-  messageJson: JsObject
+  messageCorrelationId: Int
 ) extends Message {
   def optStatus = None
 }
@@ -85,7 +80,7 @@ object Message extends NodeSeqFormat with MongoDateTimeFormats {
 
 }
 
-object MessageWithStatus extends NodeSeqFormat with MongoDateTimeFormats with XmlToJson {
+object MessageWithStatus extends NodeSeqFormat with MongoDateTimeFormats {
 
   implicit val readsMessagWithStatus: Reads[MessageWithStatus] =
     (
@@ -94,25 +89,15 @@ object MessageWithStatus extends NodeSeqFormat with MongoDateTimeFormats with Xm
         (__ \ "messageType").read[MessageType] and
         (__ \ "message").read[NodeSeq] and
         (__ \ "status").read[MessageStatus] and
-        (__ \ "messageCorrelationId").read[Int] and
-        (__ \ "messageJson").read[JsObject].orElse(Reads.pure(Json.obj()))
-    )(MessageWithStatus(_, _, _, _, _, _, _))
+        (__ \ "messageCorrelationId").read[Int]
+    )(MessageWithStatus(_, _, _, _, _, _))
 
   implicit val writesMessageWithStatus: OWrites[MessageWithStatus] =
     Json.writes[MessageWithStatus]
 
-  def apply(
-    messageId: MessageId,
-    dateTime: LocalDateTime,
-    messageType: MessageType,
-    message: NodeSeq,
-    status: MessageStatus,
-    messageCorrelationId: Int
-  ): MessageWithStatus =
-    MessageWithStatus(messageId, dateTime, messageType, message, status, messageCorrelationId, toJson(message))
 }
 
-object MessageWithoutStatus extends NodeSeqFormat with MongoDateTimeFormats with XmlToJson {
+object MessageWithoutStatus extends NodeSeqFormat with MongoDateTimeFormats {
 
   implicit val readsMessagWithoutStatus: Reads[MessageWithoutStatus] =
     (
@@ -120,14 +105,10 @@ object MessageWithoutStatus extends NodeSeqFormat with MongoDateTimeFormats with
         (__ \ "dateTime").read[LocalDateTime] and
         (__ \ "messageType").read[MessageType] and
         (__ \ "message").read[NodeSeq] and
-        (__ \ "messageCorrelationId").read[Int] and
-        (__ \ "messageJson").read[JsObject].orElse(Reads.pure(Json.obj()))
-    )(MessageWithoutStatus(_, _, _, _, _, _))
+        (__ \ "messageCorrelationId").read[Int]
+    )(MessageWithoutStatus(_, _, _, _, _))
 
   implicit val writesMessageWithoutStatus: OWrites[MessageWithoutStatus] =
     Json.writes[MessageWithoutStatus]
-
-  def apply(messageId: MessageId, dateTime: LocalDateTime, messageType: MessageType, message: NodeSeq, messageCorrelationId: Int): MessageWithoutStatus =
-    MessageWithoutStatus(messageId, dateTime, messageType, message, messageCorrelationId, toJson(message))
 
 }
