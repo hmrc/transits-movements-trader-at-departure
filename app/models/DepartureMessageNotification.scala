@@ -43,7 +43,7 @@ object DepartureMessageNotification {
 
   implicit val writesDepartureId: Writes[DepartureId] = Writes.of[String].contramap(_.index.toString)
 
-  private val writesDepartureMessageNotification: OWrites[DepartureMessageNotification] =
+  implicit val writesDepartureMessageNotification: OWrites[DepartureMessageNotification] =
     (
       (__ \ "messageUri").write[String] and
         (__ \ "requestId").write[String] and
@@ -55,18 +55,12 @@ object DepartureMessageNotification {
         (__ \ "messageBody").writeNullable[NodeSeq]
     )(unlift(DepartureMessageNotification.unapply))
 
-  implicit val writesDepartureMessageNotificationWithRequestId: OWrites[DepartureMessageNotification] =
-    OWrites.transform(writesDepartureMessageNotification) {
-      (departure, obj) =>
-        obj ++ Json.obj("requestId" -> requestId(departure.departureId))
-    }
-
   def fromRequest(request: DepartureResponseRequest[NodeSeq], timestamp: LocalDateTime): DepartureMessageNotification = {
-    val oneHundredKilobytes = 100000
-    val eoriNumber          = request.departure.eoriNumber
-    val messageId           = request.departure.nextMessageId
-    val departureUrl        = requestId(request.departure.departureId)
-    val bodySize            = request.headers.get(HeaderNames.CONTENT_LENGTH).map(_.toInt)
+    val eightyKilobytes = 80000
+    val eoriNumber      = request.departure.eoriNumber
+    val messageId       = request.departure.nextMessageId
+    val departureUrl    = requestId(request.departure.departureId)
+    val bodySize        = request.headers.get(HeaderNames.CONTENT_LENGTH).map(_.toInt)
     DepartureMessageNotification(
       s"$departureUrl/messages/${messageId.value}",
       departureUrl,
@@ -75,7 +69,7 @@ object DepartureMessageNotification {
       messageId,
       timestamp,
       request.messageResponse.messageType,
-      if (bodySize.exists(_ < oneHundredKilobytes)) Some(request.body) else None
+      if (bodySize.exists(_ < eightyKilobytes)) Some(request.body) else None
     )
   }
 
@@ -85,10 +79,10 @@ object DepartureMessageNotification {
     timestamp: LocalDateTime,
     request: Request[NodeSeq]
   ): DepartureMessageNotification = {
-    val oneHundredKilobytes = 100000
-    val messageId           = departure.nextMessageId
-    val departureUrl        = requestId(departure.departureId)
-    val bodySize            = request.headers.get(HeaderNames.CONTENT_LENGTH).map(_.toInt)
+    val eightyKilobytes = 80000
+    val messageId       = departure.nextMessageId
+    val departureUrl    = requestId(departure.departureId)
+    val bodySize        = request.headers.get(HeaderNames.CONTENT_LENGTH).map(_.toInt)
 
     DepartureMessageNotification(
       s"$departureUrl/messages/${messageId.value}",
@@ -98,7 +92,7 @@ object DepartureMessageNotification {
       messageId,
       timestamp,
       messageResponse.messageType,
-      if (bodySize.exists(_ < oneHundredKilobytes)) Some(request.body) else None
+      if (bodySize.exists(_ < eightyKilobytes)) Some(request.body) else None
     )
   }
 }
