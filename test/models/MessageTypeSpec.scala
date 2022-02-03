@@ -492,9 +492,9 @@ class MessageTypeSpec extends SpecBase with ScalaCheckDrivenPropertyChecks with 
   "previousMessageOrdering" - {
 
     "comparing to DeclarationCancellationRequest" - {
-      "all statuses must have lesser order" in {
+      "all statuses must have lesser order (except XMLSubmissionNegativeAcknowledgement)" in {
 
-        forAll(messageTypesExcluding(DeclarationCancellationRequest)) {
+        forAll(messageTypesExcluding(DeclarationCancellationRequest, XMLSubmissionNegativeAcknowledgement)) {
           status =>
             MessageType.previousMessageOrdering.max(DeclarationCancellationRequest, status) mustBe DeclarationCancellationRequest
             MessageType.previousMessageOrdering.max(status, DeclarationCancellationRequest) mustBe DeclarationCancellationRequest
@@ -503,9 +503,9 @@ class MessageTypeSpec extends SpecBase with ScalaCheckDrivenPropertyChecks with 
     }
 
     "comparing to DepartureDeclaration" - {
-      "all statuses must have lesser order (except DeclarationCancellationRequest)" in {
+      "all statuses must have lesser order (except XMLSubmissionNegativeAcknowledgement and DeclarationCancellationRequest)" in {
 
-        forAll(messageTypesExcluding(DeclarationCancellationRequest, DepartureDeclaration)) {
+        forAll(messageTypesExcluding(DeclarationCancellationRequest, XMLSubmissionNegativeAcknowledgement, DepartureDeclaration)) {
           status =>
             MessageType.previousMessageOrdering.max(DepartureDeclaration, status) mustBe DepartureDeclaration
             MessageType.previousMessageOrdering.max(status, DepartureDeclaration) mustBe DepartureDeclaration
@@ -517,6 +517,22 @@ class MessageTypeSpec extends SpecBase with ScalaCheckDrivenPropertyChecks with 
       "DeclarationCancellationRequest must have greater order" in {
         MessageType.previousMessageOrdering.max(DeclarationCancellationRequest, DepartureDeclaration) mustBe DeclarationCancellationRequest
         MessageType.previousMessageOrdering.max(DepartureDeclaration, DeclarationCancellationRequest) mustBe DeclarationCancellationRequest
+      }
+    }
+
+    "comparing XMLSubmissionNegativeAcknowledgement to DepartureDeclaration" - {
+      "XMLSubmissionNegativeAcknowledgement must have greater order" in {
+        MessageType.previousMessageOrdering.max(XMLSubmissionNegativeAcknowledgement, DepartureDeclaration) mustBe XMLSubmissionNegativeAcknowledgement
+        MessageType.previousMessageOrdering.max(DepartureDeclaration, XMLSubmissionNegativeAcknowledgement) mustBe XMLSubmissionNegativeAcknowledgement
+      }
+    }
+
+    "comparing XMLSubmissionNegativeAcknowledgement to DeclarationCancellationRequest" - {
+      "XMLSubmissionNegativeAcknowledgement must have greater order" in {
+        MessageType.previousMessageOrdering
+          .max(XMLSubmissionNegativeAcknowledgement, DeclarationCancellationRequest) mustBe XMLSubmissionNegativeAcknowledgement
+        MessageType.previousMessageOrdering
+          .max(DeclarationCancellationRequest, XMLSubmissionNegativeAcknowledgement) mustBe XMLSubmissionNegativeAcknowledgement
       }
     }
   }

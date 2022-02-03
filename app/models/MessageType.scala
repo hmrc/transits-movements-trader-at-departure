@@ -73,9 +73,12 @@ object MessageType extends Enumerable.Implicits {
     }
   }
 
-  // ensures DeclarationCancellationRequest and DepartureDeclaration are sorted after everything else
+  // ensures XMLSubmissionNegativeAcknowledgement, DeclarationCancellationRequest and DepartureDeclaration are sorted after everything else
   val previousMessageOrdering: Ordering[MessageType] = (x: MessageType, y: MessageType) => {
     (x, y) match {
+      case (XMLSubmissionNegativeAcknowledgement, _) => 1
+      case (_, XMLSubmissionNegativeAcknowledgement) => -1
+
       case (DeclarationCancellationRequest, _) => 1
       case (_, DeclarationCancellationRequest) => -1
 

@@ -162,6 +162,19 @@ class MessageTypeUtilsSpec extends SpecBase with ScalaCheckDrivenPropertyChecks 
 
               MessageTypeUtils.latestDepartureStatus(messages) mustBe DepartureStatus.CancellationDecision
             }
+
+            "Scenario 4" in {
+              val messages =
+                List(
+                  MessageMetaData(messageType = MessageType.DepartureDeclaration, dateTime = localDateTime.minusDays(1)),
+                  MessageMetaData(messageType = MessageType.PositiveAcknowledgement, dateTime = localDateTime),
+                  MessageMetaData(messageType = MessageType.MrnAllocated, dateTime = localDateTime),
+                  MessageMetaData(messageType = MessageType.DeclarationCancellationRequest, dateTime = localDateTime),
+                  MessageMetaData(messageType = MessageType.XMLSubmissionNegativeAcknowledgement, dateTime = localDateTime)
+                )
+
+              MessageTypeUtils.latestDepartureStatus(messages) mustBe DepartureStatus.DeclarationCancellationRequestNegativeAcknowledgement
+            }
           }
         }
 
