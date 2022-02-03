@@ -21,7 +21,6 @@ import cats.data.NonEmptyList
 import generators.ModelGenerators
 import models.ChannelType.Web
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-import play.api.libs.json.Json
 
 import java.time.LocalDateTime
 
@@ -56,8 +55,7 @@ class SubmissionProcessingResultSpec extends SpecBase with ScalaCheckDrivenPrope
           MessageType.DepartureDeclaration,
           <CC015></CC015>,
           MessageStatus.SubmissionPending,
-          1,
-          Json.obj("CC029" -> Json.obj())
+          1
         )
       ),
       nextMessageCorrelationId = 2,

@@ -83,8 +83,7 @@ class SubmitMessageServiceSpec extends SpecBase with JsonHelper with ScalaCheckD
     MessageType.DepartureDeclaration,
     requestXmlBody,
     SubmissionPending,
-    2,
-    requestJsonBody
+    2
   )
 
   val departureWithOneMessage: Gen[Departure] = for {

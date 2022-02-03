@@ -18,27 +18,15 @@ package api
 
 import api.helpers.ApiSpecBase
 import cats.data.NonEmptyList
-import models.ChannelType
-import models.Departure
-import models.DepartureId
-import models.MessageId
-import models.MessageStatus
-import models.MessageType
-import models.MessageWithStatus
-import models.MessageWithoutStatus
+import models.{ChannelType, Departure, DepartureId, MessageId, MessageStatus, MessageType, MessageWithStatus, MessageWithoutStatus}
 import play.api.Application
-import play.api.http.ContentTypes
-import play.api.http.HeaderNames
-import play.api.libs.json.Json
+import play.api.http.{ContentTypes, HeaderNames}
 import play.api.libs.ws.WSClient
-import play.api.test.Helpers.BAD_GATEWAY
-import play.api.test.Helpers.OK
+import play.api.test.Helpers.{BAD_GATEWAY, OK}
 import repositories.DepartureRepository
 import utils.JsonHelper
 
-import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.Paths
+import java.nio.file.{Files, Path, Paths}
 import java.time.LocalDateTime
 import java.util.UUID
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -79,8 +67,7 @@ class PDFRetrievalControllerISpec extends ApiSpecBase with JsonHelper {
             MessageType.DepartureDeclaration,
             <departure></departure>,
             MessageStatus.SubmissionSucceeded,
-            1,
-            convertXmlToJson(<departure></departure>.toString)
+            1
           ),
           List(
             MessageWithoutStatus(
@@ -88,8 +75,7 @@ class PDFRetrievalControllerISpec extends ApiSpecBase with JsonHelper {
               LocalDateTime.now(),
               MessageType.ReleaseForTransit,
               <released><HEAHEA><SecHEA358>1</SecHEA358></HEAHEA></released>,
-              2,
-              convertXmlToJson(<released><HEAHEA><SecHEA358>1</SecHEA358></HEAHEA></released>.toString)
+              2
             )
           )
         ),
@@ -153,8 +139,7 @@ class PDFRetrievalControllerISpec extends ApiSpecBase with JsonHelper {
             MessageType.DepartureDeclaration,
             <departure></departure>,
             MessageStatus.SubmissionSucceeded,
-            1,
-            convertXmlToJson(<departure></departure>.toString)
+            1
           ),
           List(
             MessageWithoutStatus(
@@ -162,8 +147,7 @@ class PDFRetrievalControllerISpec extends ApiSpecBase with JsonHelper {
               LocalDateTime.now(),
               MessageType.ReleaseForTransit,
               <released></released>,
-              2,
-              convertXmlToJson(<released></released>.toString)
+              2
             )
           )
         ),
@@ -227,10 +211,9 @@ class PDFRetrievalControllerISpec extends ApiSpecBase with JsonHelper {
             MessageType.DepartureDeclaration,
             <departure></departure>,
             MessageStatus.SubmissionSucceeded,
-            1,
-            Json.obj()
+            1
           ),
-          List(MessageWithoutStatus(MessageId(2), LocalDateTime.now(), MessageType.ReleaseForTransit, <released></released>, 2, Json.obj()))
+          List(MessageWithoutStatus(MessageId(2), LocalDateTime.now(), MessageType.ReleaseForTransit, <released></released>, 2))
         ),
         None
       )

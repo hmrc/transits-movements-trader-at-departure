@@ -55,8 +55,7 @@ class MessageRetrievalServiceSpec extends SpecBase with JsonHelper {
               LocalDateTime.now(),
               MessageType.DepartureDeclaration,
               <departure></departure>,
-              1,
-              convertXmlToJson(<departure></departure>.toString)
+              1
             ),
             List(
               MessageWithoutStatus(
@@ -64,8 +63,7 @@ class MessageRetrievalServiceSpec extends SpecBase with JsonHelper {
                 LocalDateTime.now(),
                 MessageType.ReleaseForTransit,
                 <released></released>,
-                2,
-                convertXmlToJson(<released></released>.toString)
+                2
               )
             )
           ),
@@ -80,12 +78,13 @@ class MessageRetrievalServiceSpec extends SpecBase with JsonHelper {
               _ =>
                 Some(
                   (
-                    MessageWithoutStatus(MessageId(3),
-                                         date,
-                                         MessageType.ReleaseForTransit,
-                                         <released></released>,
-                                         2,
-                                         convertXmlToJson(<released></released>.toString)),
+                    MessageWithoutStatus(
+                      MessageId(3),
+                      date,
+                      MessageType.ReleaseForTransit,
+                      <released></released>,
+                      2
+                    ),
                     MessageId(3)
                   )
               )
@@ -94,12 +93,7 @@ class MessageRetrievalServiceSpec extends SpecBase with JsonHelper {
 
         service
           .getReleaseForTransitMessage(departure)
-          .value mustBe MessageWithoutStatus(MessageId(3),
-                                             date,
-                                             MessageType.ReleaseForTransit,
-                                             <released></released>,
-                                             2,
-                                             convertXmlToJson(<released></released>.toString))
+          .value mustBe MessageWithoutStatus(MessageId(3), date, MessageType.ReleaseForTransit, <released></released>, 2)
       }
       "Return a None if releaseFromTransit message is not present" in new Setup {
         val departure: Departure = Departure(
@@ -117,8 +111,7 @@ class MessageRetrievalServiceSpec extends SpecBase with JsonHelper {
               LocalDateTime.now(),
               MessageType.DepartureDeclaration,
               <departure></departure>,
-              1,
-              convertXmlToJson(<departure></departure>.toString)
+              1
             ),
             Nil
           ),

@@ -92,7 +92,7 @@ trait ModelGenerators extends BaseGenerators with JavaTimeGenerators with JsonHe
         xml         <- Gen.const(<blankXml>message</blankXml>)
         messageType <- arbitrary[MessageType]
         status = SubmissionPending
-      } yield MessageWithStatus(messageId, LocalDateTime.of(date, time), messageType, xml, status, 1, convertXmlToJson(xml.toString()))
+      } yield MessageWithStatus(messageId, LocalDateTime.of(date, time), messageType, xml, status, 1)
     }
 
   implicit lazy val arbitraryMessageWithoutStateXml: Arbitrary[MessageWithoutStatus] =
@@ -103,7 +103,8 @@ trait ModelGenerators extends BaseGenerators with JavaTimeGenerators with JsonHe
         time        <- timesBetween(pastDate, dateNow)
         xml         <- Gen.const(<blankXml>message</blankXml>)
         messageType <- arbitrary[MessageType]
-      } yield MessageWithoutStatus(messageId, LocalDateTime.of(date, time), messageType, xml, 1, convertXmlToJson(xml.toString()))
+
+      } yield MessageWithoutStatus(messageId, LocalDateTime.of(date, time), messageType, xml, 1)
     }
 
   implicit lazy val arbitraryState: Arbitrary[DepartureStatus] =
