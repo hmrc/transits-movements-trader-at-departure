@@ -90,7 +90,7 @@ trait ModelGenerators extends BaseGenerators with JavaTimeGenerators with JsonHe
         date        <- datesBetween(pastDate, dateNow)
         time        <- timesBetween(pastDate, dateNow)
         xml         <- Gen.const(<blankXml>message</blankXml>)
-        messageType <- Gen.oneOf(MessageType.values)
+        messageType <- arbitrary[MessageType]
         status = SubmissionPending
       } yield MessageWithStatus(messageId, LocalDateTime.of(date, time), messageType, xml, status, 1)
     }
@@ -102,7 +102,8 @@ trait ModelGenerators extends BaseGenerators with JavaTimeGenerators with JsonHe
         date        <- datesBetween(pastDate, dateNow)
         time        <- timesBetween(pastDate, dateNow)
         xml         <- Gen.const(<blankXml>message</blankXml>)
-        messageType <- Gen.oneOf(MessageType.values)
+        messageType <- arbitrary[MessageType]
+
       } yield MessageWithoutStatus(messageId, LocalDateTime.of(date, time), messageType, xml, 1)
     }
 
@@ -164,17 +165,19 @@ trait ModelGenerators extends BaseGenerators with JavaTimeGenerators with JsonHe
         messageMetaData <- nonEmptyListOfMaxLength[MessageMetaData](2)
         notificationBox <- arbitrary[Option[Box]]
       } yield
-        DepartureWithoutMessages(id,
-                                 channel,
-                                 eN,
-                                 mrn,
-                                 rN,
-                                 created,
-                                 lastUpdated,
-                                 notificationBox,
-                                 MessageId(messageMetaData.length + 1),
-                                 messageMetaData.length + 1,
-                                 messageMetaData.toList)
+        DepartureWithoutMessages(
+          id,
+          channel,
+          eN,
+          mrn,
+          rN,
+          created,
+          lastUpdated,
+          notificationBox,
+          MessageId(messageMetaData.length + 1),
+          messageMetaData.length + 1,
+          messageMetaData.toList
+        )
     }
 
   implicit lazy val arbitraryFailure: Arbitrary[SubmissionFailure] =

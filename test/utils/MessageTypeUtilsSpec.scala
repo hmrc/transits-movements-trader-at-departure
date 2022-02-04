@@ -16,79 +16,78 @@
 
 package utils
 
-import java.time.LocalDateTime
-
 import base.SpecBase
 import generators.ModelGenerators
 import models.DepartureStatus
 import models.MessageMetaData
 import models.MessageType
+import org.scalacheck.Gen
+import org.scalatest.Assertion
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
+
+import java.time.LocalDateTime
 
 class MessageTypeUtilsSpec extends SpecBase with ScalaCheckDrivenPropertyChecks with ModelGenerators {
 
-  "toDepartureStatus" - {
-    "PositiveAcknowledgement must convert to PositiveAcknowledgement" in {
-      MessageTypeUtils.toDepartureStatus(MessageType.PositiveAcknowledgement) mustBe DepartureStatus.PositiveAcknowledgement
-    }
+  private def localDateTime: LocalDateTime = LocalDateTime.now()
 
-    "DepartureDeclaration must convert to DepartureSubmitted" in {
-      MessageTypeUtils.toDepartureStatus(MessageType.DepartureDeclaration) mustBe DepartureStatus.DepartureSubmitted
-    }
-
-    "MrnAllocated must convert to MrnAllocated" in {
-      MessageTypeUtils.toDepartureStatus(MessageType.MrnAllocated) mustBe DepartureStatus.MrnAllocated
-    }
-
-    "DeclarationRejected must convert to DepartureRejected" in {
-      MessageTypeUtils.toDepartureStatus(MessageType.DeclarationRejected) mustBe DepartureStatus.DepartureRejected
-    }
-
-    "ControlDecisionNotification must convert to ControlDecisionNotification" in {
-      MessageTypeUtils.toDepartureStatus(MessageType.ControlDecisionNotification) mustBe DepartureStatus.ControlDecisionNotification
-    }
-
-    "NoReleaseForTransit must convert to NoReleaseForTransit" in {
-      MessageTypeUtils.toDepartureStatus(MessageType.NoReleaseForTransit) mustBe DepartureStatus.NoReleaseForTransit
-    }
-
-    "ReleaseForTransit must convert to ReleaseForTransit" in {
-      MessageTypeUtils.toDepartureStatus(MessageType.ReleaseForTransit) mustBe DepartureStatus.ReleaseForTransit
-    }
-
-    "DeclarationCancellationRequest must convert to DeclarationCancellationRequest" in {
-      MessageTypeUtils.toDepartureStatus(MessageType.DeclarationCancellationRequest) mustBe DepartureStatus.DeclarationCancellationRequest
-    }
-
-    "CancellationDecision must convert to CancellationDecision" in {
-      MessageTypeUtils.toDepartureStatus(MessageType.CancellationDecision) mustBe DepartureStatus.CancellationDecision
-    }
-
-    "WriteOffNotification must convert to WriteOffNotification" in {
-      MessageTypeUtils.toDepartureStatus(MessageType.WriteOffNotification) mustBe DepartureStatus.WriteOffNotification
-    }
-
-    "GuaranteeNotValid must convert to GuaranteeNotValid" in {
-      MessageTypeUtils.toDepartureStatus(MessageType.GuaranteeNotValid) mustBe DepartureStatus.GuaranteeNotValid
-    }
-
-    "XMLSubmissionNegativeAcknowledgement must convert to DeclarationCancellationRequestNegativeAcknowledgement" in {
-      MessageTypeUtils.toDepartureStatus(MessageType.XMLSubmissionNegativeAcknowledgement) mustBe DepartureStatus.DeclarationCancellationRequestNegativeAcknowledgement
-    }
-  }
-
-  "currentStatus" - {
+  "latestDepartureStatus" - {
     "when there is only the message from the user" - {
 
-      "must return messageType" in {
-        val localDateTime: LocalDateTime = LocalDateTime.now()
+      "must return messageType" - {
 
-        val messages =
-          List(
-            MessageMetaData(messageType = MessageType.DepartureDeclaration, dateTime = localDateTime.minusSeconds(10))
-          )
+        def runTest(input: MessageType, expectedOutput: DepartureStatus): Assertion = {
+          val messages =
+            List(
+              MessageMetaData(messageType = input, dateTime = localDateTime.minusSeconds(10))
+            )
 
-        MessageTypeUtils.currentDepartureStatus(messages) mustBe DepartureStatus.DepartureSubmitted
+          MessageTypeUtils.latestDepartureStatus(messages) mustBe expectedOutput
+        }
+
+        "when PositiveAcknowledgement" in {
+          runTest(MessageType.PositiveAcknowledgement, DepartureStatus.PositiveAcknowledgement)
+        }
+
+        "when DepartureDeclaration" in {
+          runTest(MessageType.DepartureDeclaration, DepartureStatus.DepartureSubmitted)
+        }
+
+        "when MrnAllocated" in {
+          runTest(MessageType.MrnAllocated, DepartureStatus.MrnAllocated)
+        }
+
+        "when DeclarationRejected" in {
+          runTest(MessageType.DeclarationRejected, DepartureStatus.DepartureRejected)
+        }
+
+        "when ControlDecisionNotification" in {
+          runTest(MessageType.ControlDecisionNotification, DepartureStatus.ControlDecisionNotification)
+        }
+
+        "when NoReleaseForTransit" in {
+          runTest(MessageType.NoReleaseForTransit, DepartureStatus.NoReleaseForTransit)
+        }
+
+        "when ReleaseForTransit" in {
+          runTest(MessageType.ReleaseForTransit, DepartureStatus.ReleaseForTransit)
+        }
+
+        "when DeclarationCancellationRequest" in {
+          runTest(MessageType.DeclarationCancellationRequest, DepartureStatus.DeclarationCancellationRequest)
+        }
+
+        "when CancellationDecision" in {
+          runTest(MessageType.CancellationDecision, DepartureStatus.CancellationDecision)
+        }
+
+        "when WriteOffNotification" in {
+          runTest(MessageType.WriteOffNotification, DepartureStatus.WriteOffNotification)
+        }
+
+        "when GuaranteeNotValid" in {
+          runTest(MessageType.GuaranteeNotValid, DepartureStatus.GuaranteeNotValid)
+        }
       }
     }
 
@@ -96,23 +95,19 @@ class MessageTypeUtilsSpec extends SpecBase with ScalaCheckDrivenPropertyChecks 
       "when there is a single response from NCTS" - {
         "must return the messageType for the latest NCTS message" in {
 
-          val localDateTime: LocalDateTime = LocalDateTime.now()
-
           val messages =
             List(
               MessageMetaData(messageType = MessageType.DepartureDeclaration, dateTime = localDateTime),
               MessageMetaData(messageType = MessageType.PositiveAcknowledgement, dateTime = localDateTime.plusSeconds(10))
             )
 
-          MessageTypeUtils.currentDepartureStatus(messages) mustBe DepartureStatus.PositiveAcknowledgement
+          MessageTypeUtils.latestDepartureStatus(messages) mustBe DepartureStatus.PositiveAcknowledgement
         }
       }
 
       "when there are multiple responses from NCTS" - {
         "when messages are well ordered" - {
           "must return the messageType for the latest NCTS message" in {
-
-            val localDateTime: LocalDateTime = LocalDateTime.now()
 
             val messages =
               List(
@@ -121,7 +116,7 @@ class MessageTypeUtilsSpec extends SpecBase with ScalaCheckDrivenPropertyChecks 
                 MessageMetaData(messageType = MessageType.MrnAllocated, dateTime = localDateTime.plusSeconds(20))
               )
 
-            MessageTypeUtils.currentDepartureStatus(messages) mustBe DepartureStatus.MrnAllocated
+            MessageTypeUtils.latestDepartureStatus(messages) mustBe DepartureStatus.MrnAllocated
           }
         }
 
@@ -130,8 +125,6 @@ class MessageTypeUtilsSpec extends SpecBase with ScalaCheckDrivenPropertyChecks 
 
             "Scenario 1" in {
 
-              val localDateTime: LocalDateTime = LocalDateTime.now()
-
               val messages =
                 List(
                   MessageMetaData(messageType = MessageType.DepartureDeclaration, dateTime = localDateTime),
@@ -139,12 +132,10 @@ class MessageTypeUtilsSpec extends SpecBase with ScalaCheckDrivenPropertyChecks 
                   MessageMetaData(messageType = MessageType.PositiveAcknowledgement, dateTime = localDateTime.plusSeconds(10))
                 )
 
-              MessageTypeUtils.currentDepartureStatus(messages) mustBe DepartureStatus.MrnAllocated
+              MessageTypeUtils.latestDepartureStatus(messages) mustBe DepartureStatus.MrnAllocated
             }
 
             "Scenario 2" in {
-
-              val localDateTime: LocalDateTime = LocalDateTime.now()
 
               val messages =
                 List(
@@ -155,12 +146,10 @@ class MessageTypeUtilsSpec extends SpecBase with ScalaCheckDrivenPropertyChecks 
                   MessageMetaData(messageType = MessageType.PositiveAcknowledgement, dateTime = localDateTime.plusDays(1))
                 )
 
-              MessageTypeUtils.currentDepartureStatus(messages) mustBe DepartureStatus.NoReleaseForTransit
+              MessageTypeUtils.latestDepartureStatus(messages) mustBe DepartureStatus.NoReleaseForTransit
             }
 
             "Scenario 3" in {
-
-              val localDateTime: LocalDateTime = LocalDateTime.now()
 
               val messages =
                 List(
@@ -171,7 +160,20 @@ class MessageTypeUtilsSpec extends SpecBase with ScalaCheckDrivenPropertyChecks 
                   MessageMetaData(messageType = MessageType.PositiveAcknowledgement, dateTime = localDateTime.plusSeconds(1))
                 )
 
-              MessageTypeUtils.currentDepartureStatus(messages) mustBe DepartureStatus.CancellationDecision
+              MessageTypeUtils.latestDepartureStatus(messages) mustBe DepartureStatus.CancellationDecision
+            }
+
+            "Scenario 4" in {
+              val messages =
+                List(
+                  MessageMetaData(messageType = MessageType.DepartureDeclaration, dateTime = localDateTime.minusDays(1)),
+                  MessageMetaData(messageType = MessageType.PositiveAcknowledgement, dateTime = localDateTime),
+                  MessageMetaData(messageType = MessageType.MrnAllocated, dateTime = localDateTime),
+                  MessageMetaData(messageType = MessageType.DeclarationCancellationRequest, dateTime = localDateTime),
+                  MessageMetaData(messageType = MessageType.XMLSubmissionNegativeAcknowledgement, dateTime = localDateTime)
+                )
+
+              MessageTypeUtils.latestDepartureStatus(messages) mustBe DepartureStatus.DeclarationCancellationRequestNegativeAcknowledgement
             }
           }
         }
@@ -180,8 +182,6 @@ class MessageTypeUtilsSpec extends SpecBase with ScalaCheckDrivenPropertyChecks 
 
           "must return the latest messageType" in {
 
-            val localDateTime: LocalDateTime = LocalDateTime.now()
-
             val messages =
               List(
                 MessageMetaData(messageType = MessageType.DepartureDeclaration, dateTime = localDateTime),
@@ -189,170 +189,97 @@ class MessageTypeUtilsSpec extends SpecBase with ScalaCheckDrivenPropertyChecks 
                 MessageMetaData(messageType = MessageType.PositiveAcknowledgement, dateTime = localDateTime.plusMinutes(10))
               )
 
-            MessageTypeUtils.currentDepartureStatus(messages) mustBe DepartureStatus.MrnAllocated
+            MessageTypeUtils.latestDepartureStatus(messages) mustBe DepartureStatus.MrnAllocated
 
           }
         }
       }
     }
-  }
 
-  "previousStatus" - {
+    "when latest message type is XMLSubmissionNegativeAcknowledgement" - {
 
-    "when there is only the message from the user" - {
-
-      "must return messageType" in {
-        val localDateTime: LocalDateTime = LocalDateTime.now()
-
-        val messages =
-          List(
-            MessageMetaData(messageType = MessageType.DepartureDeclaration, dateTime = localDateTime.minusSeconds(10))
-          )
-
-        val currentStatus = MessageTypeUtils.currentDepartureStatus(messages)
-        MessageTypeUtils.previousDepartureStatus(messages, currentStatus) mustBe DepartureStatus.DepartureSubmitted
-      }
-    }
-
-    "when there are responses from NCTS for the departure" - {
-      "when there is a single response from NCTS" - {
-        "must return the messageType for the second latest NCTS message" in {
-
-          val localDateTime: LocalDateTime = LocalDateTime.now()
+      "when previous message type is DepartureDeclaration" - {
+        "must return DepartureSubmittedNegativeAcknowledgement" in {
 
           val messages =
             List(
-              MessageMetaData(messageType = MessageType.DepartureDeclaration, dateTime = localDateTime),
-              MessageMetaData(messageType = MessageType.PositiveAcknowledgement, dateTime = localDateTime.plusSeconds(10))
+              MessageMetaData(messageType = MessageType.DepartureDeclaration, localDateTime),
+              MessageMetaData(messageType = MessageType.XMLSubmissionNegativeAcknowledgement, localDateTime.plusMinutes(10))
             )
 
-          val currentStatus = MessageTypeUtils.currentDepartureStatus(messages)
-          MessageTypeUtils.previousDepartureStatus(messages, currentStatus) mustBe DepartureStatus.DepartureSubmitted
+          MessageTypeUtils.latestDepartureStatus(messages) mustBe DepartureStatus.DepartureSubmittedNegativeAcknowledgement
         }
       }
 
-      "when there are multiple responses from NCTS" - {
-        "when messages are well ordered" - {
-          "must return the messageType for the second latest NCTS message" in {
+      "when previous message type is DeclarationCancellationRequest" - {
+        "must return DeclarationCancellationRequestNegativeAcknowledgement" in {
 
-            val localDateTime: LocalDateTime = LocalDateTime.now()
+          val messages =
+            List(
+              MessageMetaData(messageType = MessageType.DeclarationCancellationRequest, localDateTime),
+              MessageMetaData(messageType = MessageType.XMLSubmissionNegativeAcknowledgement, localDateTime.plusMinutes(10))
+            )
+
+          MessageTypeUtils.latestDepartureStatus(messages) mustBe DepartureStatus.DeclarationCancellationRequestNegativeAcknowledgement
+        }
+      }
+
+      "when previous messages have same date time" - {
+        "must return the correct departure status" - {
+          "when DepartureDeclaration" in {
 
             val messages =
               List(
-                MessageMetaData(messageType = MessageType.DepartureDeclaration, dateTime = localDateTime),
-                MessageMetaData(messageType = MessageType.PositiveAcknowledgement, dateTime = localDateTime.plusSeconds(10)),
-                MessageMetaData(messageType = MessageType.MrnAllocated, dateTime = localDateTime.plusSeconds(20))
-              )
-
-            val currentStatus = MessageTypeUtils.currentDepartureStatus(messages)
-            MessageTypeUtils.previousDepartureStatus(messages, currentStatus) mustBe DepartureStatus.PositiveAcknowledgement
-          }
-        }
-
-        "when messages are not well ordered" - {
-          "must return the messageType for the message with the second latest dateTime" - {
-
-            "Scenario 1" in {
-
-              val localDateTime: LocalDateTime = LocalDateTime.now()
-
-              val messages =
-                List(
-                  MessageMetaData(messageType = MessageType.DepartureDeclaration, dateTime = localDateTime),
-                  MessageMetaData(messageType = MessageType.MrnAllocated, dateTime = localDateTime.plusSeconds(20)),
-                  MessageMetaData(messageType = MessageType.PositiveAcknowledgement, dateTime = localDateTime.plusSeconds(10))
-                )
-
-              val currentStatus = MessageTypeUtils.currentDepartureStatus(messages)
-              MessageTypeUtils.previousDepartureStatus(messages, currentStatus) mustBe DepartureStatus.PositiveAcknowledgement
-            }
-
-            "Scenario 2" in {
-
-              val localDateTime: LocalDateTime = LocalDateTime.now()
-
-              val messages =
-                List(
-                  MessageMetaData(messageType = MessageType.GuaranteeNotValid, localDateTime.plusDays(3)),
-                  MessageMetaData(messageType = MessageType.NoReleaseForTransit, localDateTime.plusDays(4)),
-                  MessageMetaData(messageType = MessageType.DepartureDeclaration, localDateTime),
-                  MessageMetaData(messageType = MessageType.MrnAllocated, localDateTime.plusDays(2)),
-                  MessageMetaData(messageType = MessageType.PositiveAcknowledgement, localDateTime.plusDays(1))
-                )
-
-              val currentStatus = MessageTypeUtils.currentDepartureStatus(messages)
-              MessageTypeUtils.previousDepartureStatus(messages, currentStatus) mustBe DepartureStatus.GuaranteeNotValid
-            }
-
-            "Scenario 3" in {
-
-              val localDateTime: LocalDateTime = LocalDateTime.now()
-
-              val messages =
-                List(
-                  MessageMetaData(messageType = MessageType.DeclarationCancellationRequest, localDateTime.plusWeeks(3)),
-                  MessageMetaData(messageType = MessageType.DepartureDeclaration, localDateTime),
-                  MessageMetaData(messageType = MessageType.CancellationDecision, localDateTime.plusMonths(4)),
-                  MessageMetaData(messageType = MessageType.MrnAllocated, localDateTime.plusDays(2)),
-                  MessageMetaData(messageType = MessageType.PositiveAcknowledgement, localDateTime.plusSeconds(1))
-                )
-
-              val currentStatus = MessageTypeUtils.currentDepartureStatus(messages)
-              MessageTypeUtils.previousDepartureStatus(messages, currentStatus) mustBe DepartureStatus.DeclarationCancellationRequest
-            }
-          }
-        }
-
-        "when messages have the same latest dateTime" - {
-
-          "must return the second latest messageType" in {
-
-            val localDateTime: LocalDateTime = LocalDateTime.now()
-
-            val messages =
-              List(
-                MessageMetaData(messageType = MessageType.DepartureDeclaration, localDateTime),
                 MessageMetaData(messageType = MessageType.MrnAllocated, localDateTime),
-                MessageMetaData(messageType = MessageType.PositiveAcknowledgement, localDateTime.plusMinutes(10))
+                MessageMetaData(messageType = MessageType.DepartureDeclaration, localDateTime),
+                MessageMetaData(messageType = MessageType.XMLSubmissionNegativeAcknowledgement, localDateTime.plusMinutes(10))
               )
 
-            val currentStatus = MessageTypeUtils.currentDepartureStatus(messages)
-            MessageTypeUtils.previousDepartureStatus(messages, currentStatus) mustBe DepartureStatus.MrnAllocated
+            MessageTypeUtils.latestDepartureStatus(messages) mustBe DepartureStatus.DepartureSubmittedNegativeAcknowledgement
           }
+
+          "when DeclarationCancellationRequest" in {
+
+            val messages =
+              List(
+                MessageMetaData(messageType = MessageType.MrnAllocated, localDateTime),
+                MessageMetaData(messageType = MessageType.DeclarationCancellationRequest, localDateTime),
+                MessageMetaData(messageType = MessageType.XMLSubmissionNegativeAcknowledgement, localDateTime.plusMinutes(10))
+              )
+
+            MessageTypeUtils.latestDepartureStatus(messages) mustBe DepartureStatus.DeclarationCancellationRequestNegativeAcknowledgement
+          }
+        }
+      }
+
+      "when previous message type is something else" - {
+        "must return the corresponding departure status" in {
+
+          val messages =
+            List(
+              MessageMetaData(messageType = MessageType.MrnAllocated, localDateTime),
+              MessageMetaData(messageType = MessageType.XMLSubmissionNegativeAcknowledgement, localDateTime.plusMinutes(10))
+            )
+
+          MessageTypeUtils.latestDepartureStatus(messages) mustBe DepartureStatus.MrnAllocated
         }
       }
     }
 
-    "when currentStatus is DeclarationCancellationRequestNegativeAcknowledgement" - {
+    "must return Undetermined" - {
+      "when messages list is empty" in {
 
-      "must not weight previous messages when messageType is DepartureSubmitted" in {
-
-        val localDateTime: LocalDateTime = LocalDateTime.now()
-
-        val messages =
-          List(
-            MessageMetaData(messageType = MessageType.DepartureDeclaration, localDateTime),
-            MessageMetaData(messageType = MessageType.XMLSubmissionNegativeAcknowledgement, localDateTime)
-          )
-
-        val currentStatus = MessageTypeUtils.currentDepartureStatus(messages)
-        currentStatus mustBe DepartureStatus.DeclarationCancellationRequestNegativeAcknowledgement
-        MessageTypeUtils.previousDepartureStatus(messages, currentStatus) mustBe DepartureStatus.DepartureSubmitted
+        MessageTypeUtils.latestDepartureStatus(Nil) mustBe DepartureStatus.Undetermined
       }
 
-      "must not weight previous messages when messageType is DepartureCancellation" in {
+      "when messages list only contains XMLSubmissionNegativeAcknowledgement type" in {
 
-        val localDateTime: LocalDateTime = LocalDateTime.now()
+        forAll(Gen.choose(1, 10)) {
+          size =>
+            val messages = List.fill(size)(MessageMetaData(messageType = MessageType.XMLSubmissionNegativeAcknowledgement, localDateTime))
 
-        val messages =
-          List(
-            MessageMetaData(messageType = MessageType.DeclarationCancellationRequest, localDateTime),
-            MessageMetaData(messageType = MessageType.XMLSubmissionNegativeAcknowledgement, localDateTime)
-          )
-
-        val currentStatus = MessageTypeUtils.currentDepartureStatus(messages)
-        currentStatus mustBe DepartureStatus.DeclarationCancellationRequestNegativeAcknowledgement
-        MessageTypeUtils.previousDepartureStatus(messages, currentStatus) mustBe DepartureStatus.DeclarationCancellationRequest
+            MessageTypeUtils.latestDepartureStatus(messages) mustBe DepartureStatus.Undetermined
+        }
       }
     }
   }

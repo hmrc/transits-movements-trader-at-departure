@@ -16,19 +16,11 @@
 
 package models
 
-import java.time.LocalDateTime
-
 import cats.data.NonEmptyList
-import play.api.libs.json.Format
-import play.api.libs.json.JsObject
-import play.api.libs.json.JsResult
-import play.api.libs.json.JsValue
-import play.api.libs.json.Json
-import play.api.libs.json.Reads
-import play.api.libs.json.Writes
-import play.api.libs.json.__
 import play.api.libs.functional.syntax._
-import utils.MessageTypeUtils
+import play.api.libs.json._
+
+import java.time.LocalDateTime
 
 case class DepartureWithoutMessages(
   departureId: DepartureId,
@@ -44,8 +36,7 @@ case class DepartureWithoutMessages(
   messagesMetaData: Seq[MessageMetaData]
 ) extends BaseDeparture {
 
-  val status: DepartureStatus         = MessageTypeUtils.currentDepartureStatus(messagesMetaData.toList)
-  val previousStatus: DepartureStatus = MessageTypeUtils.previousDepartureStatus(messagesMetaData.toList, status)
+  override val messagesList: List[MessageTypeWithTime] = messagesMetaData.toList
 }
 
 object DepartureWithoutMessages {

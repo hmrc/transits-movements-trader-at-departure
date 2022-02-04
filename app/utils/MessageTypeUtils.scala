@@ -16,66 +16,58 @@
 
 package utils
 
-import java.time.LocalDateTime
-
 import models.DepartureStatus
 import models.MessageType
 import models.MessageTypeWithTime
+import play.api.Logging
 
-object MessageTypeUtils {
+import java.time.LocalDateTime
+import scala.annotation.tailrec
 
-  def currentDepartureStatus(messagesList: List[MessageTypeWithTime]): DepartureStatus = {
-    implicit val localDateOrdering: Ordering[LocalDateTime] = _ compareTo _
+object MessageTypeUtils extends Logging {
 
-    val latestMessage            = messagesList.maxBy(_.dateTime)
-    val messagesWithSameDateTime = messagesList.filter(_.dateTime == latestMessage.dateTime)
-
-    val currentMessageType = if (messagesWithSameDateTime.size == 1) {
-      latestMessage.messageType
-    } else {
-      messagesWithSameDateTime.map(_.messageType).max
-    }
-    toDepartureStatus(currentMessageType)
+  private def getMessage(
+    messages: List[MessageTypeWithTime],
+    drop: Int
+  )(implicit mto: Ordering[MessageType]): Option[MessageTypeWithTime] = {
+    implicit val ldto: Ordering[LocalDateTime] = _ compareTo _
+    messages.sortBy(m => (m.dateTime, m.messageType)).dropRight(drop).lastOption
   }
 
-  def previousDepartureStatus(messagesList: List[MessageTypeWithTime], currentStatus: DepartureStatus): DepartureStatus = {
+  private def getLatestMessage(messages: List[MessageTypeWithTime]): Option[MessageTypeWithTime] =
+    getMessage(messages, 0)(MessageType.latestMessageOrdering)
 
-    implicit val localDateOrdering: Ordering[LocalDateTime] = _ compareTo _
+  private def getPreviousMessage(messages: List[MessageTypeWithTime]): Option[MessageTypeWithTime] =
+    getMessage(messages, 1)(MessageType.previousMessageOrdering)
 
-    val previousMessage = messagesList.sortBy(_.dateTime).takeRight(2).head
-
-    val messagesWithSameDateTime = messagesList.filter(_.dateTime == previousMessage.dateTime)
-
-    val previousMessageType = if (messagesWithSameDateTime.size == 1) {
-      previousMessage.messageType
-    } else {
-      currentStatus match {
-        case DepartureStatus.DeclarationCancellationRequestNegativeAcknowledgement =>
-          if (previousMessage.messageType == MessageType.DepartureDeclaration || previousMessage.messageType == MessageType.DeclarationCancellationRequest) {
-            previousMessage.messageType
-          } else {
-            messagesWithSameDateTime.map(_.messageType).max
-          }
-        case _ => messagesWithSameDateTime.map(_.messageType).max
-      }
-    }
-
-    toDepartureStatus(previousMessageType)
-  }
-
-  def toDepartureStatus(messageType: MessageType): DepartureStatus =
-    messageType match {
-      case MessageType.PositiveAcknowledgement              => DepartureStatus.PositiveAcknowledgement
-      case MessageType.DepartureDeclaration                 => DepartureStatus.DepartureSubmitted
-      case MessageType.MrnAllocated                         => DepartureStatus.MrnAllocated
-      case MessageType.DeclarationRejected                  => DepartureStatus.DepartureRejected
-      case MessageType.ControlDecisionNotification          => DepartureStatus.ControlDecisionNotification
-      case MessageType.NoReleaseForTransit                  => DepartureStatus.NoReleaseForTransit
-      case MessageType.ReleaseForTransit                    => DepartureStatus.ReleaseForTransit
-      case MessageType.DeclarationCancellationRequest       => DepartureStatus.DeclarationCancellationRequest
-      case MessageType.CancellationDecision                 => DepartureStatus.CancellationDecision
-      case MessageType.WriteOffNotification                 => DepartureStatus.WriteOffNotification
-      case MessageType.GuaranteeNotValid                    => DepartureStatus.GuaranteeNotValid
-      case MessageType.XMLSubmissionNegativeAcknowledgement => DepartureStatus.DeclarationCancellationRequestNegativeAcknowledgement
+  @tailrec
+  def latestDepartureStatus(messages: List[MessageTypeWithTime]): DepartureStatus =
+    getLatestMessage(messages) match {
+      case Some(latestMessage) =>
+        latestMessage.messageType match {
+          case MessageType.PositiveAcknowledgement        => DepartureStatus.PositiveAcknowledgement
+          case MessageType.DepartureDeclaration           => DepartureStatus.DepartureSubmitted
+          case MessageType.MrnAllocated                   => DepartureStatus.MrnAllocated
+          case MessageType.DeclarationRejected            => DepartureStatus.DepartureRejected
+          case MessageType.ControlDecisionNotification    => DepartureStatus.ControlDecisionNotification
+          case MessageType.NoReleaseForTransit            => DepartureStatus.NoReleaseForTransit
+          case MessageType.ReleaseForTransit              => DepartureStatus.ReleaseForTransit
+          case MessageType.DeclarationCancellationRequest => DepartureStatus.DeclarationCancellationRequest
+          case MessageType.CancellationDecision           => DepartureStatus.CancellationDecision
+          case MessageType.WriteOffNotification           => DepartureStatus.WriteOffNotification
+          case MessageType.GuaranteeNotValid              => DepartureStatus.GuaranteeNotValid
+          case MessageType.XMLSubmissionNegativeAcknowledgement =>
+            logger.info("[latestDepartureStatus] Latest message is of type XMLSubmissionNegativeAcknowledgement. Checking previous message.")
+            getPreviousMessage(messages) match {
+              case Some(previousMessage) =>
+                previousMessage.messageType match {
+                  case MessageType.DepartureDeclaration           => DepartureStatus.DepartureSubmittedNegativeAcknowledgement
+                  case MessageType.DeclarationCancellationRequest => DepartureStatus.DeclarationCancellationRequestNegativeAcknowledgement
+                  case _                                          => latestDepartureStatus(messages.filterNot(_ == latestMessage))
+                }
+              case None => DepartureStatus.Undetermined
+            }
+        }
+      case None => DepartureStatus.Undetermined
     }
 }

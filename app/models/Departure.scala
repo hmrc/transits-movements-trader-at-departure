@@ -39,6 +39,10 @@ trait BaseDeparture {
   def lastUpdated: LocalDateTime
 
   def notificationBox: Option[Box]
+
+  val messagesList: List[MessageTypeWithTime]
+
+  lazy val status: DepartureStatus = MessageTypeUtils.latestDepartureStatus(messagesList)
 }
 
 case class Departure(
@@ -59,8 +63,7 @@ case class Departure(
   def messagesWithId: NonEmptyList[(Message, MessageId)] =
     messages.map(msg => msg -> msg.messageId)
 
-  val status: DepartureStatus         = MessageTypeUtils.currentDepartureStatus(messages.toList)
-  val previousStatus: DepartureStatus = MessageTypeUtils.previousDepartureStatus(messages.toList, status)
+  override val messagesList: List[MessageTypeWithTime] = messages.toList
 }
 
 object Departure {
