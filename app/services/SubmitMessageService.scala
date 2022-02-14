@@ -42,12 +42,14 @@ class SubmitMessageService @Inject()(departureRepository: DepartureRepository, m
   def submitMessage(departureId: DepartureId, message: MessageWithStatus, channelType: ChannelType)(
     implicit hc: HeaderCarrier
   ): Future[SubmissionProcessingResult] =
-    departureRepository.addNewMessage(departureId, message) flatMap {
-      case Failure(_) =>
-        Future.successful(SubmissionProcessingResult.SubmissionFailureInternal)
-      case Success(_) =>
-        postMessage(departureId, message, channelType)("submitMessage")
-    }
+    departureRepository
+      .addNewMessage(departureId, message)
+      .flatMap {
+        case Failure(_) =>
+          Future.successful(SubmissionProcessingResult.SubmissionFailureInternal)
+        case Success(_) =>
+          submitToEis(departureId, message, channelType)("submitMessage")
+      }
 
   def submitDeparture(departure: Departure)(implicit hc: HeaderCarrier): Future[SubmissionProcessingResult] = {
     val (message, _) = departure.messagesWithId.head.leftMap(_.asInstanceOf[MessageWithStatus])
@@ -55,20 +57,16 @@ class SubmitMessageService @Inject()(departureRepository: DepartureRepository, m
       .insert(departure)
       .flatMap {
         _ =>
-          postMessage(departure.departureId, message, departure.channel)("submitDeparture")
+          submitToEis(departure.departureId, message, departure.channel)("submitDeparture")
       }
-      .recoverWith {
-        case e: TimeoutException =>
-          logger.error("POST to EIS timed out", e)
-          updateMessage(departure.departureId, message, DownstreamGatewayTimeout)(SubmissionProcessingResult.SubmissionFailureExternal)(_ =>
-            SubmissionProcessingResult.SubmissionFailureExternal)
+      .recover {
         case NonFatal(e) =>
           logger.error("Mongo failure when inserting a new departure", e)
-          Future.successful(SubmissionProcessingResult.SubmissionFailureInternal)
+          SubmissionProcessingResult.SubmissionFailureInternal
       }
   }
 
-  private def postMessage(
+  private def submitToEis(
     departureId: DepartureId,
     message: MessageWithStatus,
     channel: ChannelType
@@ -92,6 +90,12 @@ class SubmitMessageService @Inject()(departureRepository: DepartureRepository, m
         case submissionResult: EisSubmissionFailureDownstream =>
           logger.warn(s"Failure for $method of type: ${message.messageType.code}, and details: ${submissionResult.toString}")
           updateMessage(departureId, message, submissionResult)(SubmissionProcessingResult.SubmissionFailureExternal)(_ =>
+            SubmissionProcessingResult.SubmissionFailureExternal)
+      }
+      .recoverWith {
+        case e: TimeoutException =>
+          logger.error("EIS submission timed out", e)
+          updateMessage(departureId, message, DownstreamGatewayTimeout)(SubmissionProcessingResult.SubmissionFailureExternal)(_ =>
             SubmissionProcessingResult.SubmissionFailureExternal)
       }
 

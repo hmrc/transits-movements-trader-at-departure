@@ -403,6 +403,33 @@ class SubmitMessageServiceSpec extends SpecBase with JsonHelper with ScalaCheckD
         result.futureValue mustEqual SubmissionFailureExternal
       }
     }
+
+    "return SubmissionFailureExternal if there has been a timeout exception" in {
+      val mockDepartureRepository = mock[DepartureRepository]
+      val mockMessageConnector    = mock[MessageConnector]
+
+      val application = baseApplicationBuilder
+        .overrides(
+          bind[DepartureRepository].toInstance(mockDepartureRepository),
+          bind[MessageConnector].toInstance(mockMessageConnector)
+        )
+        .build()
+
+      running(application) {
+        val service = application.injector.instanceOf[SubmitMessageService]
+
+        when(mockDepartureRepository.addNewMessage(any(), any())).thenReturn(Future.successful(Success(())))
+        when(mockMessageConnector.post(any(), any(), any(), any())(any())).thenReturn(Future.failed(new TimeoutException("")))
+        when(mockDepartureRepository.updateDeparture(any(), any())(any())).thenReturn(Future.successful(Success(())))
+
+        val departureId     = arbitrary[DepartureId].sample.value
+        val movementMessage = arbitrary[MessageWithStatus].sample.value
+
+        val result = service.submitMessage(departureId, movementMessage, Web)
+
+        result.futureValue mustEqual SubmissionFailureExternal
+      }
+    }
   }
 
   "submit a new departure" - {
@@ -661,30 +688,6 @@ class SubmitMessageServiceSpec extends SpecBase with JsonHelper with ScalaCheckD
       }
     }
 
-    "return SubmissionFailureExternal if there has been a timeout exception" in {
-      val mockDepartureRepository = mock[DepartureRepository]
-      val mockMessageConnector    = mock[MessageConnector]
-
-      val application = baseApplicationBuilder
-        .overrides(
-          bind[DepartureRepository].toInstance(mockDepartureRepository),
-          bind[MessageConnector].toInstance(mockMessageConnector)
-        )
-        .build()
-
-      running(application) {
-        val service = application.injector.instanceOf[SubmitMessageService]
-
-        when(mockDepartureRepository.insert(any())).thenReturn(Future.successful(()))
-        when(mockMessageConnector.post(any(), any(), any(), any())(any())).thenReturn(Future.failed(new TimeoutException("")))
-        when(mockDepartureRepository.updateDeparture(any(), any())(any())).thenReturn(Future.successful(Success(())))
-
-        val result = service.submitDeparture(departure)
-
-        result.futureValue mustEqual SubmissionFailureExternal
-      }
-    }
-
     "return SubmissionFailureExternal if there has been a rejection from EIS with an unknown status code" in {
       val mockDepartureRepository = mock[DepartureRepository]
       val mockMessageConnector    = mock[MessageConnector]
@@ -726,6 +729,30 @@ class SubmitMessageServiceSpec extends SpecBase with JsonHelper with ScalaCheckD
         when(mockDepartureRepository.insert(any())).thenReturn(Future.successful(()))
         when(mockMessageConnector.post(any(), any(), any(), any())(any())).thenReturn(Future.successful(UnexpectedHttpResponse(UpstreamErrorResponse("", 501))))
         when(mockDepartureRepository.updateDeparture(any(), any())(any())).thenReturn(Future.failed(new Exception("failed")))
+
+        val result = service.submitDeparture(departure)
+
+        result.futureValue mustEqual SubmissionFailureExternal
+      }
+    }
+
+    "return SubmissionFailureExternal if there has been a timeout exception" in {
+      val mockDepartureRepository = mock[DepartureRepository]
+      val mockMessageConnector    = mock[MessageConnector]
+
+      val application = baseApplicationBuilder
+        .overrides(
+          bind[DepartureRepository].toInstance(mockDepartureRepository),
+          bind[MessageConnector].toInstance(mockMessageConnector)
+        )
+        .build()
+
+      running(application) {
+        val service = application.injector.instanceOf[SubmitMessageService]
+
+        when(mockDepartureRepository.insert(any())).thenReturn(Future.successful(()))
+        when(mockMessageConnector.post(any(), any(), any(), any())(any())).thenReturn(Future.failed(new TimeoutException("")))
+        when(mockDepartureRepository.updateDeparture(any(), any())(any())).thenReturn(Future.successful(Success(())))
 
         val result = service.submitDeparture(departure)
 
