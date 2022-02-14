@@ -27,6 +27,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 
 import java.time.Clock
 import java.time.OffsetDateTime
+import java.util.concurrent.TimeoutException
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -94,13 +95,12 @@ class SubmitMessageService @Inject()(departureRepository: DepartureRepository, m
           }
     }
 
-  def submitDeparture(departure: Departure)(implicit hc: HeaderCarrier): Future[SubmissionProcessingResult] =
+  def submitDeparture(departure: Departure)(implicit hc: HeaderCarrier): Future[SubmissionProcessingResult] = {
+    val (message, messageId) = departure.messagesWithId.head.leftMap(_.asInstanceOf[MessageWithStatus])
     departureRepository
       .insert(departure)
       .flatMap {
         _ =>
-          val (message, messageId) = departure.messagesWithId.head.leftMap(_.asInstanceOf[MessageWithStatus])
-
           messageConnector
             .post(departure.departureId, message, OffsetDateTime.now, departure.channel)
             .flatMap {
@@ -143,11 +143,21 @@ class SubmitMessageService @Inject()(departureRepository: DepartureRepository, m
             }
 
       }
-      .recover {
+      .recoverWith {
+        case e: TimeoutException =>
+          logger.error("POST to EIS timed out", e)
+          updateMessage(departure.departureId, message, DownstreamGatewayTimeout)
+            .map(_ => SubmissionProcessingResult.SubmissionFailureExternal)
+            .recover({
+              case NonFatal(e) =>
+                logger.error("Mongo failure when updating message status", e)
+                SubmissionProcessingResult.SubmissionFailureExternal
+            })
         case NonFatal(e) =>
           logger.error("Mongo failure when inserting a new departure", e)
-          SubmissionProcessingResult.SubmissionFailureInternal
+          Future.successful(SubmissionProcessingResult.SubmissionFailureInternal)
       }
+  }
 
   private def updateMessage(
     departureId: DepartureId,

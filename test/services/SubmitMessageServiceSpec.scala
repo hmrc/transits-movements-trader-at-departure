@@ -54,6 +54,7 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import scala.concurrent.Future
+import scala.concurrent.TimeoutException
 import scala.util.Failure
 import scala.util.Success
 
@@ -657,6 +658,30 @@ class SubmitMessageServiceSpec extends SpecBase with JsonHelper with ScalaCheckD
         val result = service.submitDeparture(departure)
 
         result.futureValue mustEqual SubmissionFailureRejected(ErrorInPayload.responseBody)
+      }
+    }
+
+    "return SubmissionFailureExternal if there has been a timeout exception" in {
+      val mockDepartureRepository = mock[DepartureRepository]
+      val mockMessageConnector    = mock[MessageConnector]
+
+      val application = baseApplicationBuilder
+        .overrides(
+          bind[DepartureRepository].toInstance(mockDepartureRepository),
+          bind[MessageConnector].toInstance(mockMessageConnector)
+        )
+        .build()
+
+      running(application) {
+        val service = application.injector.instanceOf[SubmitMessageService]
+
+        when(mockDepartureRepository.insert(any())).thenReturn(Future.successful(()))
+        when(mockMessageConnector.post(any(), any(), any(), any())(any())).thenReturn(Future.failed(new TimeoutException("")))
+        when(mockDepartureRepository.updateDeparture(any(), any())(any())).thenReturn(Future.successful(Success(())))
+
+        val result = service.submitDeparture(departure)
+
+        result.futureValue mustEqual SubmissionFailureExternal
       }
     }
 
