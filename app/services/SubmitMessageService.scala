@@ -94,7 +94,7 @@ class SubmitMessageService @Inject()(departureRepository: DepartureRepository, m
       }
       .recoverWith {
         case e: TimeoutException =>
-          logger.error("EIS submission timed out", e)
+          logger.error("Submission to EIS timed out", e)
           updateMessage(departureId, message, DownstreamGatewayTimeout)(
             _ => SubmissionProcessingResult.SubmissionFailureExternal
           )(SubmissionProcessingResult.SubmissionFailureExternal)
@@ -104,11 +104,7 @@ class SubmitMessageService @Inject()(departureRepository: DepartureRepository, m
     departureId: DepartureId,
     message: MessageWithStatus,
     submissionResult: EisSubmissionResult
-  )(
-    processResult: Try[Unit] => SubmissionProcessingResult
-  )(
-    defaultResult: SubmissionProcessingResult
-  ): Future[SubmissionProcessingResult] = {
+  )(processResult: Try[Unit] => SubmissionProcessingResult)(defaultResult: SubmissionProcessingResult): Future[SubmissionProcessingResult] = {
     val selector = MessageSelector(departureId, message.messageId)
     val modifier = MessageStatusUpdate(message.messageId, message.status.transition(submissionResult))
     updateDeparture(selector, modifier)(processResult)(defaultResult)
@@ -129,11 +125,7 @@ class SubmitMessageService @Inject()(departureRepository: DepartureRepository, m
   private def updateDeparture(
     selector: DepartureSelector,
     modifier: MessageStatusUpdate
-  )(
-    processResult: Try[Unit] => SubmissionProcessingResult
-  )(
-    defaultResult: SubmissionProcessingResult
-  ): Future[SubmissionProcessingResult] =
+  )(processResult: Try[Unit] => SubmissionProcessingResult)(defaultResult: SubmissionProcessingResult): Future[SubmissionProcessingResult] =
     departureRepository
       .updateDeparture(selector, modifier)
       .map(processResult)
