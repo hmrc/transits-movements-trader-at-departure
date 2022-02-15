@@ -36,7 +36,10 @@ import scala.util.Success
 import scala.util.Try
 import scala.util.control.NonFatal
 
-class SubmitMessageService @Inject()(departureRepository: DepartureRepository, messageConnector: MessageConnector)(implicit clock: Clock, ec: ExecutionContext)
+class SubmitMessageService @Inject()(
+  departureRepository: DepartureRepository,
+  messageConnector: MessageConnector
+)(implicit clock: Clock, ec: ExecutionContext)
     extends Logging {
 
   def submitMessage(departureId: DepartureId, message: MessageWithStatus, channelType: ChannelType)(
