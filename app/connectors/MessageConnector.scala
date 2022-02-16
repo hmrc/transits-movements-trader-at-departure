@@ -96,7 +96,7 @@ object MessageConnector {
   }
 
   object EisSubmissionResult {
-    private val errorResponses = List(ErrorInPayload, VirusFoundOrInvalidToken, DownstreamInternalServerError, DownstreamBadGateway)
+    private val errorResponses = List(ErrorInPayload, VirusFoundOrInvalidToken, DownstreamInternalServerError, DownstreamBadGateway, DownstreamGatewayTimeout)
 
     private val responseMapping = errorResponses.map {
       response =>
@@ -116,7 +116,8 @@ object MessageConnector {
 
     sealed abstract class EisSubmissionFailureDownstream(statusCode: Int, responseBody: String) extends EisSubmissionFailure(statusCode, responseBody)
     object DownstreamInternalServerError                                                        extends EisSubmissionFailureDownstream(500, "Downstream internal server error")
-    object DownstreamBadGateway                                                                 extends EisSubmissionFailureDownstream(502, "Downstream bad gateway ")
+    object DownstreamBadGateway                                                                 extends EisSubmissionFailureDownstream(502, "Downstream bad gateway")
+    object DownstreamGatewayTimeout                                                             extends EisSubmissionFailureDownstream(504, "Downstream gateway timeout")
 
     case class UnexpectedHttpResponse(errorResponse: UpstreamErrorResponse)
         extends EisSubmissionFailureDownstream(errorResponse.statusCode, "Unexpected HTTP Response received")
