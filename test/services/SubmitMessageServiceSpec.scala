@@ -46,6 +46,7 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.inject.bind
 import play.api.test.Helpers.running
 import repositories.DepartureRepository
+import uk.gov.hmrc.http.GatewayTimeoutException
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import utils.Format
 import utils.JsonHelper
@@ -54,7 +55,6 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import scala.concurrent.Future
-import scala.concurrent.TimeoutException
 import scala.util.Failure
 import scala.util.Success
 
@@ -419,7 +419,7 @@ class SubmitMessageServiceSpec extends SpecBase with JsonHelper with ScalaCheckD
         val service = application.injector.instanceOf[SubmitMessageService]
 
         when(mockDepartureRepository.addNewMessage(any(), any())).thenReturn(Future.successful(Success(())))
-        when(mockMessageConnector.post(any(), any(), any(), any())(any())).thenReturn(Future.failed(new TimeoutException("")))
+        when(mockMessageConnector.post(any(), any(), any(), any())(any())).thenReturn(Future.failed(new GatewayTimeoutException("")))
         when(mockDepartureRepository.updateDeparture(any(), any())(any())).thenReturn(Future.successful(Success(())))
 
         val departureId     = arbitrary[DepartureId].sample.value
@@ -751,7 +751,7 @@ class SubmitMessageServiceSpec extends SpecBase with JsonHelper with ScalaCheckD
         val service = application.injector.instanceOf[SubmitMessageService]
 
         when(mockDepartureRepository.insert(any())).thenReturn(Future.successful(()))
-        when(mockMessageConnector.post(any(), any(), any(), any())(any())).thenReturn(Future.failed(new TimeoutException("")))
+        when(mockMessageConnector.post(any(), any(), any(), any())(any())).thenReturn(Future.failed(new GatewayTimeoutException("")))
         when(mockDepartureRepository.updateDeparture(any(), any())(any())).thenReturn(Future.successful(Success(())))
 
         val result = service.submitDeparture(departure)
