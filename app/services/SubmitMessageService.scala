@@ -23,11 +23,11 @@ import connectors.MessageConnector.EisSubmissionResult._
 import models._
 import play.api.Logging
 import repositories.DepartureRepository
+import uk.gov.hmrc.http.GatewayTimeoutException
 import uk.gov.hmrc.http.HeaderCarrier
 
 import java.time.Clock
 import java.time.OffsetDateTime
-import java.util.concurrent.TimeoutException
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -98,7 +98,7 @@ class SubmitMessageService @Inject()(
           )(SubmissionProcessingResult.SubmissionFailureExternal)
       }
       .recoverWith {
-        case e: TimeoutException =>
+        case e: GatewayTimeoutException =>
           logger.error("Submission to EIS timed out", e)
           updateDepartureAfterUnsuccessfulSubmission(departureId, message, DownstreamGatewayTimeout)(
             _ => SubmissionProcessingResult.SubmissionFailureExternal
