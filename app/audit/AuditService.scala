@@ -78,10 +78,14 @@ class AuditService @Inject()(auditConnector: AuditConnector, messageTranslator: 
     case XMLSubmissionNegativeAcknowledgementResponse => XMLSubmissionNegativeAcknowledgement
   }
 
-  def auditDeclarationWithStatistics(auditType: AuditType, enrolmentId: Ior[TURN, EORINumber], message: Message, channel: ChannelType, requestLength: Int)(
-    implicit hc: HeaderCarrier): Unit = {
+  def auditDeclarationWithStatistics(auditType: AuditType,
+                                     enrolmentId: Ior[TURN, EORINumber],
+                                     message: Message,
+                                     channel: ChannelType,
+                                     requestLength: Int,
+                                     boxOpt: Option[BoxId])(implicit hc: HeaderCarrier): Unit = {
 
-    val details = DeclarationAuditDetails(channel, enrolmentId, message.message, requestLength, messageTranslator)
+    val details = DeclarationAuditDetails(channel, enrolmentId, message.message, requestLength, boxOpt, messageTranslator)
     auditConnector.sendExplicitAudit(auditType.toString, details)
   }
 }

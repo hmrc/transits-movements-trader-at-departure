@@ -29,44 +29,44 @@ sealed abstract class AuditDetails {
   def channel: ChannelType
   def customerId: String
   def json: JsObject
+
+  lazy val writeAuditDetails: JsObject =
+    Json.obj(
+      "channel"    -> channel,
+      "customerId" -> customerId
+    ) ++ json
 }
 
 case class AuthenticatedAuditDetails(channel: ChannelType, enrolmentId: Ior[TURN, EORINumber], json: JsObject) extends AuditDetails {
 
-  def customerId: String =
+  lazy val customerId: String =
     enrolmentId.fold(
       turn => turn.value,
       eoriNumber => eoriNumber.value,
       (_, eoriNumber) => eoriNumber.value
     )
 
-  def enrolmentType: String =
+  lazy val enrolmentType: String =
     enrolmentId.fold(
       _ => Constants.LegacyEnrolmentKey,
       _ => Constants.NewEnrolmentKey,
       (_, _) => Constants.NewEnrolmentKey
     )
+
+  lazy val writeAuthenticatedAuditDetails: JsObject =
+    writeAuditDetails ++
+      Json.obj("enrolmentType" -> enrolmentType)
 }
 
 object AuthenticatedAuditDetails {
 
-  implicit val writes: OWrites[AuthenticatedAuditDetails] = (details: AuthenticatedAuditDetails) => {
-    Json.obj(
-      "channel"       -> details.channel,
-      "customerId"    -> details.customerId,
-      "enrolmentType" -> details.enrolmentType
-    ) ++ details.json
-  }
+  implicit val writes: OWrites[AuthenticatedAuditDetails] = _.writeAuthenticatedAuditDetails
+
 }
 
 case class UnauthenticatedAuditDetails(channel: ChannelType, customerId: String, json: JsObject) extends AuditDetails
 
 object UnauthenticatedAuditDetails {
 
-  implicit val writes: OWrites[UnauthenticatedAuditDetails] = (details: UnauthenticatedAuditDetails) => {
-    Json.obj(
-      "channel"    -> details.channel,
-      "customerId" -> details.customerId
-    ) ++ details.json
-  }
+  implicit val writes: OWrites[UnauthenticatedAuditDetails] = _.writeAuditDetails
 }

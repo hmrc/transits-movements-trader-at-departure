@@ -18,6 +18,7 @@ package audit
 
 import cats.data.Ior
 import config.Constants
+import models.BoxId
 import models.ChannelType
 import models.EORINumber
 import models.TURN
@@ -34,6 +35,7 @@ case class DeclarationAuditDetails(
   enrolmentId: Ior[TURN, EORINumber],
   message: NodeSeq,
   requestLength: Int,
+  boxId: Option[BoxId],
   messageTranslator: MessageTranslation
 ) {
 
@@ -80,19 +82,21 @@ case class DeclarationAuditDetails(
 
   def fieldOccurrenceCount(field: String): Int = (message \\ field).length
 
+  lazy val writeDeclarationAuditDetails =
+    Json.obj(
+      "channel"       -> channel,
+      "customerId"    -> customerId,
+      "enrolmentType" -> enrolmentType,
+      "message"       -> declaration,
+      "statistics"    -> statistics
+    ) ++ boxId.fold(JsObject.empty)(id => Json.obj("boxId" -> id))
+
 }
 
 object DeclarationAuditDetails {
 
   val maxRequestLength = 20000
 
-  implicit val writes: OWrites[DeclarationAuditDetails] = (details: DeclarationAuditDetails) => {
-    Json.obj(
-      "channel"       -> details.channel,
-      "customerId"    -> details.customerId,
-      "enrolmentType" -> details.enrolmentType,
-      "message"       -> details.declaration,
-      "statistics"    -> details.statistics
-    )
-  }
+  implicit val writes: OWrites[DeclarationAuditDetails] = _.writeDeclarationAuditDetails
+
 }

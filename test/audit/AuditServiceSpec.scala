@@ -21,9 +21,9 @@ import base.SpecBase
 import cats.data.Ior
 import config.Constants
 import generators.ModelGenerators
-import models.ChannelType.Api
 import models.CancellationDecisionResponse
 import models.ChannelType
+import models.ChannelType.Api
 import models.ControlDecisionNotificationResponse
 import models.Departure
 import models.DepartureId
@@ -43,8 +43,8 @@ import org.mockito.ArgumentMatchers.{eq => eqTo}
 import org.mockito.Mockito.reset
 import org.mockito.Mockito.times
 import org.mockito.Mockito.verify
-import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Arbitrary
+import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
@@ -67,6 +67,11 @@ class AuditServiceSpec extends SpecBase with ScalaCheckPropertyChecks with Befor
     reset(mockAuditConnector)
   }
 
+  def gen(xml: NodeSeq) =
+    for {
+      message <- arbitrary[MessageWithStatus]
+    } yield message.copy(message = xml)
+
   "AuditService" - {
 
     def gen(xml: NodeSeq) =
@@ -75,7 +80,6 @@ class AuditServiceSpec extends SpecBase with ScalaCheckPropertyChecks with Befor
       } yield message.copy(message = xml)
 
     "must audit notification message event" in {
-
       val requestEori = Ior.right(EORINumber("eori"))
       val requestXml  = <xml>test</xml>
       val message     = gen(requestXml).sample.get
@@ -88,7 +92,7 @@ class AuditServiceSpec extends SpecBase with ScalaCheckPropertyChecks with Befor
           running(application) {
             val auditService = application.injector.instanceOf[AuditService]
             auditService.auditEvent(auditType, requestEori, message, Api)
-            verify(mockAuditConnector, times(1)).sendExplicitAudit[AuditDetails](eqTo(auditType.toString()), any())(any(), any(), any())
+            verify(mockAuditConnector, times(1)).sendExplicitAudit[AuditDetails](eqTo(auditType.toString), any())(any(), any(), any())
             reset(mockAuditConnector)
           }
       }
@@ -193,32 +197,38 @@ class AuditServiceSpec extends SpecBase with ScalaCheckPropertyChecks with Befor
       }
     }
 
-    "must audit departure declaration events" - {
+    "must audit departure declaration events" - Seq(arbitraryBox.arbitrary.sample, None).foreach {
+      box =>
+        val mockMessageTranslation: MessageTranslation = mock[MessageTranslation]
 
-      val mockMessageTranslation: MessageTranslation = mock[MessageTranslation]
+        val requestXml = <xml>test</xml>
+        val message    = gen(requestXml).sample.get
+        val request    = new AuthenticatedRequest[Any](FakeRequest(), Api, Ior.right(EORINumber(Constants.NewEnrolmentIdKey)))
 
-      val requestXml = <xml>test</xml>
-      val message    = gen(requestXml).sample.get
-      val request    = new AuthenticatedRequest[Any](FakeRequest(), Api, Ior.right(EORINumber(Constants.NewEnrolmentIdKey)))
+        forAll(Gen.oneOf(DeclarationAuditDetails.maxRequestLength - 1000, DeclarationAuditDetails.maxRequestLength + 1000)) {
+          requestLength =>
+            val application = baseApplicationBuilder
+              .overrides(bind[AuditConnector].toInstance(mockAuditConnector))
+              .overrides(bind[MessageTranslation].toInstance(mockMessageTranslation))
+              .build()
 
-      forAll(Gen.oneOf(DeclarationAuditDetails.maxRequestLength - 1000, DeclarationAuditDetails.maxRequestLength + 1000)) {
-        requestLength =>
-          val application = baseApplicationBuilder
-            .overrides(bind[AuditConnector].toInstance(mockAuditConnector))
-            .overrides(bind[MessageTranslation].toInstance(mockMessageTranslation))
-            .build()
+            running(application) {
+              val auditService = application.injector.instanceOf[AuditService]
 
-          running(application) {
-            val auditService = application.injector.instanceOf[AuditService]
+              val expectedDetails =
+                DeclarationAuditDetails(request.channel, request.enrolmentId, message.message, requestLength, box.map(_.boxId), mockMessageTranslation)
 
-            val expectedDetails = DeclarationAuditDetails(request.channel, request.enrolmentId, message.message, requestLength, mockMessageTranslation)
+              auditService.auditDeclarationWithStatistics(DepartureDeclarationSubmitted,
+                                                          request.enrolmentId,
+                                                          message,
+                                                          request.channel,
+                                                          requestLength,
+                                                          box.map(_.boxId))
 
-            auditService.auditDeclarationWithStatistics(DepartureDeclarationSubmitted, request.enrolmentId, message, request.channel, requestLength)
-
-            verify(mockAuditConnector, times(1)).sendExplicitAudit(eqTo(DepartureDeclarationSubmitted.toString), eqTo(expectedDetails))(any(), any(), any())
-            reset(mockAuditConnector)
-          }
-      }
+              verify(mockAuditConnector, times(1)).sendExplicitAudit(eqTo(DepartureDeclarationSubmitted.toString), eqTo(expectedDetails))(any(), any(), any())
+              reset(mockAuditConnector)
+            }
+        }
     }
   }
 }

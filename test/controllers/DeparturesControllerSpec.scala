@@ -180,7 +180,8 @@ class DeparturesControllerSpec
             eqTo(Ior.right(EORINumber(newDeparture.eoriNumber))),
             any(),
             any(),
-            any()
+            any(),
+            eqTo(None)
           )(any())
 
           verify(mockAuditService, times(1)).auditDeclarationWithStatistics(
@@ -189,6 +190,7 @@ class DeparturesControllerSpec
             any(),
             any(),
             any(),
+            eqTo(None)
           )(any())
         }
       }
@@ -242,7 +244,8 @@ class DeparturesControllerSpec
             eqTo(Ior.right(EORINumber(newDeparture.eoriNumber))),
             any(),
             any(),
-            any()
+            any(),
+            eqTo(Some(testBox.boxId))
           )(any())
 
           verify(mockAuditService, times(1)).auditDeclarationWithStatistics(
@@ -250,7 +253,8 @@ class DeparturesControllerSpec
             eqTo(Ior.right(EORINumber(newDeparture.eoriNumber))),
             any(),
             any(),
-            any()
+            any(),
+            eqTo(None)
           )(any())
         }
       }

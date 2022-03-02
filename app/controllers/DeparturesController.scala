@@ -23,6 +23,7 @@ import com.kenshoo.play.metrics.Metrics
 import config.Constants
 import controllers.actions._
 import metrics.HasActionMetrics
+import metrics.WeekLongCounter
 import models._
 import models.response.ResponseDeparture
 import play.api.Logging
@@ -35,6 +36,7 @@ import services._
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
+import java.time.Clock
 import java.time.OffsetDateTime
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
@@ -58,6 +60,9 @@ class DeparturesController @Inject()(
 
   lazy val departuresCount = histo("get-all-departures-count")
   lazy val messagesCount   = histo("get-departure-by-id-messages-count")
+
+  lazy val acceptedDeparturesWithPPNSBox = new WeekLongCounter(Clock.systemDefaultZone(), counter("accepted-departures-with-ppns-box"))
+  lazy val acceptedDepartures            = new WeekLongCounter(Clock.systemDefaultZone(), counter("accepted-departures"))
 
   private def getBox(clientIdOpt: Option[String])(implicit hc: HeaderCarrier): Future[Option[Box]] =
     clientIdOpt
@@ -94,12 +99,16 @@ class DeparturesController @Inject()(
                                                                       request.enrolmentId,
                                                                       departure.messages.head,
                                                                       request.channel,
-                                                                      request.length)
+                                                                      request.length,
+                                                                      boxOpt.map(_.boxId))
                           auditService.auditDeclarationWithStatistics(MesSenMES3Added,
                                                                       request.enrolmentId,
                                                                       departure.messages.head,
                                                                       request.channel,
-                                                                      request.length)
+                                                                      request.length,
+                                                                      None)
+                          if (boxOpt.isDefined) acceptedDeparturesWithPPNSBox.inc()
+                          acceptedDepartures.inc()
                           Accepted(Json.toJson(boxOpt))
                             .withHeaders(
                               "Location" -> routes.DeparturesController.get(departure.departureId).url
