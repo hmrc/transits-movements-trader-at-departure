@@ -19,6 +19,7 @@ package audit
 import audit.AuditType._
 import base.SpecBase
 import cats.data.Ior
+import config.AppConfig
 import config.Constants
 import generators.ModelGenerators
 import models.ChannelType.Api
@@ -31,6 +32,7 @@ import models.DepartureRejectedResponse
 import models.EORINumber
 import models.GuaranteeNotValidResponse
 import models.MessageWithStatus
+import models.MovementReferenceNumber
 import models.MrnAllocatedResponse
 import models.NoReleaseForTransitResponse
 import models.PositiveAcknowledgementResponse
@@ -48,13 +50,22 @@ import org.scalacheck.Arbitrary
 import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
+import play.api.Configuration
+import play.api.Environment
+import play.api.Mode
 import play.api.inject.bind
 import play.api.libs.json.Json
 import play.api.test.FakeRequest
 import play.api.test.Helpers.running
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
+import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
+import utils.Format
+import utils.MessageTranslation
 import utils.XMLTransformer.toJson
 
+import java.io.File
+import java.time.LocalDate
+import java.time.LocalTime
 import scala.xml.NodeSeq
 
 class AuditServiceSpec extends SpecBase with ScalaCheckPropertyChecks with BeforeAndAfterEach with ModelGenerators {
@@ -67,12 +78,13 @@ class AuditServiceSpec extends SpecBase with ScalaCheckPropertyChecks with Befor
   }
 
   "AuditService" - {
-    "must audit notification message event" in {
 
-      def gen(xml: NodeSeq) =
-        for {
-          message <- arbitrary[MessageWithStatus]
-        } yield message.copy(message = xml)
+    def gen(xml: NodeSeq) =
+      for {
+        message <- arbitrary[MessageWithStatus]
+      } yield message.copy(message = xml)
+
+    "must audit notification message event" in {
 
       val requestEori = Ior.right(EORINumber("eori"))
       val requestXml  = <xml>test</xml>
@@ -187,8 +199,84 @@ class AuditServiceSpec extends SpecBase with ScalaCheckPropertyChecks with Befor
 
         verify(mockAuditConnector, times(1)).sendExplicitAudit(eqTo(NCTSRequestedMissingMovement.toString), eqTo(expectedDetails))(any(), any())
         reset(mockAuditConnector)
+
+      }
+    }
+
+    "must adjust declaration audit according to request size" - {
+
+      val xml =
+        <CC015B>
+          <SynVerNumMES2>123</SynVerNumMES2>
+          <DatOfPreMES9>
+            {Format.dateFormatted(LocalDate.now())}
+          </DatOfPreMES9>
+          <TimOfPreMES10>
+            {Format.timeFormatted(LocalTime.of(1, 1))}
+          </TimOfPreMES10>
+          <HEAHEA>
+            <RefNumHEA4>
+              {arbitrary[MovementReferenceNumber].sample.value}
+            </RefNumHEA4>
+            <TotNumOfIteHEA305>1</TotNumOfIteHEA305>
+          </HEAHEA>
+        </CC015B>
+
+      val statistics = (contentLength: Int) =>
+        Json.obj(
+          "Total number of items"              -> 1,
+          "Declaration request content-length" -> contentLength
+      )
+
+      val message = gen(xml).sample.get
+
+      "when the request is smaller than max size allowed the xml and statistics should be included in the audit detail" in {
+
+        val contentLength = 1000
+        val request       = new AuthenticatedRequest[Any](FakeRequest(), Api, Ior.right(EORINumber(Constants.NewEnrolmentIdKey)))
+
+        val application = baseApplicationBuilder
+          .configure("message-translation-file" -> "MessageTranslation.json")
+          .overrides(bind[AuditConnector].toInstance(mockAuditConnector))
+          .build()
+
+        running(application) {
+          val auditService       = application.injector.instanceOf[AuditService]
+          val messageTranslation = application.injector.instanceOf[MessageTranslation]
+          val jsonMessage        = messageTranslation.translate(toJson(message.message))
+
+          val expectedDetails = AuthenticatedAuditDetails(request.channel, request.enrolmentId, jsonMessage ++ statistics(contentLength))
+
+          auditService.auditDeclarationWithStatistics(contentLength, DepartureDeclarationSubmitted, request.enrolmentId, message, request.channel)
+
+          verify(mockAuditConnector, times(1)).sendExplicitAudit(eqTo(DepartureDeclarationSubmitted.toString), eqTo(expectedDetails))(any(), any(), any())
+          reset(mockAuditConnector)
+        }
       }
 
+      "when the request is larger than max size allowed the audit detail should include statistics and replace translated xml with message" in {
+
+        val contentLength = 60000
+        val request       = new AuthenticatedRequest[Any](FakeRequest(), Api, Ior.right(EORINumber(Constants.NewEnrolmentIdKey)))
+
+        val json = Json.obj(
+          "Declaration Data" -> "The declaration data was too large to be included",
+        )
+
+        val application = baseApplicationBuilder
+          .overrides(bind[AuditConnector].toInstance(mockAuditConnector))
+          .build()
+        running(application) {
+
+          val expectedDetails = AuthenticatedAuditDetails(request.channel, request.enrolmentId, json ++ statistics(contentLength))
+
+          val auditService = application.injector.instanceOf[AuditService]
+          auditService.auditDeclarationWithStatistics(contentLength, DepartureDeclarationSubmitted, request.enrolmentId, message, request.channel)
+
+          verify(mockAuditConnector, times(1)).sendExplicitAudit(eqTo(DepartureDeclarationSubmitted.toString), eqTo(expectedDetails))(any(), any(), any())
+          reset(mockAuditConnector)
+        }
+      }
     }
   }
 }

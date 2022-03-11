@@ -78,4 +78,21 @@ class AuditService @Inject()(auditConnector: AuditConnector, messageTranslator: 
     case XMLSubmissionNegativeAcknowledgementResponse => XMLSubmissionNegativeAcknowledgement
   }
 
+  val maxContentLength = 20000
+
+  def auditDeclarationWithStatistics(requestSize: Int, auditType: AuditType, customerId: Ior[TURN, EORINumber], message: Message, channel: ChannelType)(
+    implicit hc: HeaderCarrier): Unit = {
+
+    val jsonMessage = messageTranslator.translate(toJson(message.message))
+    val itemCount   = (jsonMessage \\ "Total number of items").head.as[Int]
+    val statistics = Json.obj(
+      "Total number of items"              -> itemCount,
+      "Declaration request content-length" -> requestSize
+    )
+
+    val messageBody = if (requestSize > maxContentLength) Json.obj("Declaration Data" -> "The declaration data was too large to be included") else jsonMessage
+
+    val details = AuthenticatedAuditDetails(channel, customerId, messageBody ++ statistics)
+    auditConnector.sendExplicitAudit(auditType.toString, details)
+  }
 }

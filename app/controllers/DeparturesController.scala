@@ -89,8 +89,13 @@ class DeparturesController @Inject()(
                         case submissionFailureRejected: SubmissionProcessingResult.SubmissionFailureRejected =>
                           BadRequest(submissionFailureRejected.responseBody)
                         case SubmissionProcessingResult.SubmissionSuccess =>
-                          auditService.auditEvent(DepartureDeclarationSubmitted, request.enrolmentId, departure.messages.head, request.channel)
-                          auditService.auditEvent(MesSenMES3Added, request.enrolmentId, departure.messages.head, request.channel)
+                          val len = request.headers.get(play.api.http.HeaderNames.CONTENT_LENGTH).get.toInt
+                          auditService.auditDeclarationWithStatistics(len,
+                                                                      DepartureDeclarationSubmitted,
+                                                                      request.enrolmentId,
+                                                                      departure.messages.head,
+                                                                      request.channel)
+                          auditService.auditDeclarationWithStatistics(len, MesSenMES3Added, request.enrolmentId, departure.messages.head, request.channel)
                           Accepted(Json.toJson(boxOpt))
                             .withHeaders(
                               "Location" -> routes.DeparturesController.get(departure.departureId).url
