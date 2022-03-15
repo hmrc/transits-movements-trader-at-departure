@@ -216,12 +216,6 @@ class AuditServiceSpec extends SpecBase with ScalaCheckPropertyChecks with Befor
           </HEAHEA>
         </CC015B>
 
-      val statistics = (contentLength: Int) =>
-        Json.obj(
-          "Total number of items"              -> 1,
-          "Declaration request content-length" -> contentLength
-      )
-
       val message = gen(xml).sample.get
 
       "when the request is smaller than max size allowed the xml and statistics should be included in the audit detail" in {
@@ -251,10 +245,6 @@ class AuditServiceSpec extends SpecBase with ScalaCheckPropertyChecks with Befor
 
         val contentLength = 60000
         val request       = new AuthenticatedRequest[Any](FakeRequest(), Api, Ior.right(EORINumber(Constants.NewEnrolmentIdKey)))
-
-        val json = Json.obj(
-          "Declaration Data" -> "The declaration data was too large to be included",
-        )
 
         val application = baseApplicationBuilder
           .configure("message-translation-file" -> "MessageTranslation.json")
