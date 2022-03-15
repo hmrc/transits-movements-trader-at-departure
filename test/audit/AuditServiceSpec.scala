@@ -19,7 +19,6 @@ package audit
 import audit.AuditType._
 import base.SpecBase
 import cats.data.Ior
-import config.AppConfig
 import config.Constants
 import generators.ModelGenerators
 import models.ChannelType.Api
@@ -50,20 +49,15 @@ import org.scalacheck.Arbitrary
 import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
-import play.api.Configuration
-import play.api.Environment
-import play.api.Mode
 import play.api.inject.bind
 import play.api.libs.json.Json
 import play.api.test.FakeRequest
 import play.api.test.Helpers.running
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
-import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import utils.Format
 import utils.MessageTranslation
 import utils.XMLTransformer.toJson
 
-import java.io.File
 import java.time.LocalDate
 import java.time.LocalTime
 import scala.xml.NodeSeq
@@ -243,9 +237,8 @@ class AuditServiceSpec extends SpecBase with ScalaCheckPropertyChecks with Befor
         running(application) {
           val auditService       = application.injector.instanceOf[AuditService]
           val messageTranslation = application.injector.instanceOf[MessageTranslation]
-          val jsonMessage        = messageTranslation.translate(toJson(message.message))
 
-          val expectedDetails = AuthenticatedAuditDetails(request.channel, request.enrolmentId, jsonMessage ++ statistics(contentLength))
+          val expectedDetails = DeclarationAuditDetails(request.channel, request.enrolmentId, contentLength, message.message, messageTranslation)
 
           auditService.auditDeclarationWithStatistics(contentLength, DepartureDeclarationSubmitted, request.enrolmentId, message, request.channel)
 
@@ -264,11 +257,13 @@ class AuditServiceSpec extends SpecBase with ScalaCheckPropertyChecks with Befor
         )
 
         val application = baseApplicationBuilder
+          .configure("message-translation-file" -> "MessageTranslation.json")
           .overrides(bind[AuditConnector].toInstance(mockAuditConnector))
           .build()
         running(application) {
 
-          val expectedDetails = AuthenticatedAuditDetails(request.channel, request.enrolmentId, json ++ statistics(contentLength))
+          val messageTranslation = application.injector.instanceOf[MessageTranslation]
+          val expectedDetails    = DeclarationAuditDetails(request.channel, request.enrolmentId, contentLength, message.message, messageTranslation)
 
           val auditService = application.injector.instanceOf[AuditService]
           auditService.auditDeclarationWithStatistics(contentLength, DepartureDeclarationSubmitted, request.enrolmentId, message, request.channel)

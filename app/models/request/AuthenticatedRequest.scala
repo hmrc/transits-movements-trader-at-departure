@@ -30,8 +30,6 @@ import play.api.mvc.WrappedRequest
 import models.DepartureMessages
 import uk.gov.hmrc.http.HeaderCarrier
 
-import scala.xml.NodeSeq
-
 case class AuthenticatedRequest[A](request: Request[A], channel: ChannelType, enrolmentId: Ior[TURN, EORINumber]) extends WrappedRequest[A](request) {
   private def matchesEnrolmentId(eoriNumber: String): Boolean =
     enrolmentId.fold(
