@@ -51,9 +51,9 @@ case class AuthenticatedRequest[A](request: Request[A], channel: ChannelType, en
   def hasMatchingEnrolmentId(departure: DepartureMessages): Boolean =
     matchesEnrolmentId(departure.eoriNumber.value)
 
-  def auditDeclaration(auditService: AuditService, request: AuthenticatedRequest[NodeSeq], departure: Departure)(implicit hc: HeaderCarrier): Unit = {
-    val len = request.headers.get(play.api.http.HeaderNames.CONTENT_LENGTH).get.toInt
-    auditService.auditDeclarationWithStatistics(len, DepartureDeclarationSubmitted, request.enrolmentId, departure.messages.head, request.channel)
-    auditService.auditDeclarationWithStatistics(len, MesSenMES3Added, request.enrolmentId, departure.messages.head, request.channel)
+  def auditDeclaration(auditService: AuditService, departure: Departure)(implicit hc: HeaderCarrier): Unit = {
+    val len = headers.get(play.api.http.HeaderNames.CONTENT_LENGTH).get.toInt
+    auditService.auditDeclarationWithStatistics(len, DepartureDeclarationSubmitted, enrolmentId, departure.messages.head, channel)
+    auditService.auditDeclarationWithStatistics(len, MesSenMES3Added, enrolmentId, departure.messages.head, channel)
   }
 }
