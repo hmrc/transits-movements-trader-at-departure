@@ -36,6 +36,7 @@ import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers._
 import org.mockito.BDDMockito._
 import org.mockito.Mockito.reset
+import org.mockito.Mockito.times
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.verifyNoInteractions
 import org.mockito.Mockito.when
@@ -136,6 +137,94 @@ class PushPullNotificationServiceSpec extends SpecBase with BeforeAndAfterEach w
         given(mockedPostNotification).willReturn(successfulResult)
 
         Await.result(service.sendPushNotification(testBox.boxId, testNotification), 30.seconds).mustEqual(())
+      }
+
+      "should return a unit value when connector call fails with a 413, then succeeds after stripping the message, and calls PPNS twice" in {
+        val boxIdMatcher = refEq(testBoxId).asInstanceOf[BoxId]
+
+        val successfulResult = Future.successful(Right(()))
+        val failResult       = Future.successful(Left(UpstreamErrorResponse("Request Entity Too Large", REQUEST_ENTITY_TOO_LARGE)))
+
+        val testEoriNumber  = "1234567800"
+        val testDepartureId = DepartureId(1)
+        val testMessageUri  = requestId(testDepartureId) + "/messages" + ""
+        val testBody        = <test>test content</test>
+
+        val testNotification = DepartureMessageNotification(
+          testMessageUri,
+          requestId(testDepartureId),
+          testEoriNumber,
+          testDepartureId,
+          MessageId(2),
+          LocalDateTime.now,
+          MessageType.DepartureDeclaration,
+          Some(testBody)
+        )
+
+        given(mockConnector.postNotification(boxIdMatcher, any[DepartureMessageNotification])(any[ExecutionContext], any[HeaderCarrier])).willAnswer {
+          invocation =>
+            if (invocation.getArgument[DepartureMessageNotification](1).messageBody.isDefined) failResult
+            else successfulResult
+        }
+
+        Await.result(service.sendPushNotification(testBox.boxId, testNotification), 30.seconds).mustEqual(())
+        verify(mockConnector, times(2))
+          .postNotification(BoxId(ArgumentMatchers.eq(testBoxId)), any[DepartureMessageNotification])(any[ExecutionContext], any[HeaderCarrier])
+      }
+
+      "should return a unit value when connector call fails with a 500, and only call PPNS once" in {
+        val boxIdMatcher = refEq(testBoxId).asInstanceOf[BoxId]
+
+        val failResult = Future.successful(Left(UpstreamErrorResponse("Internal Server Error", INTERNAL_SERVER_ERROR)))
+
+        val testEoriNumber  = "1234567800"
+        val testDepartureId = DepartureId(1)
+        val testMessageUri  = requestId(testDepartureId) + "/messages" + ""
+        val testBody        = <test>test content</test>
+
+        val testNotification = DepartureMessageNotification(
+          testMessageUri,
+          requestId(testDepartureId),
+          testEoriNumber,
+          testDepartureId,
+          MessageId(2),
+          LocalDateTime.now,
+          MessageType.DepartureDeclaration,
+          Some(testBody)
+        )
+
+        given(mockConnector.postNotification(boxIdMatcher, any[DepartureMessageNotification])(any[ExecutionContext], any[HeaderCarrier])).willReturn(failResult)
+
+        Await.result(service.sendPushNotification(testBox.boxId, testNotification), 30.seconds).mustEqual(())
+        verify(mockConnector)
+          .postNotification(BoxId(ArgumentMatchers.eq(testBoxId)), any[DepartureMessageNotification])(any[ExecutionContext], any[HeaderCarrier])
+      }
+
+      "should return a unit value when connector call fails with a 413 and has no message to begin with, and only calls PPNS once" in {
+        val boxIdMatcher = refEq(testBoxId).asInstanceOf[BoxId]
+
+        val failResult = Future.successful(Left(UpstreamErrorResponse("Request Entity Too Large", REQUEST_ENTITY_TOO_LARGE)))
+
+        val testEoriNumber  = "1234567800"
+        val testDepartureId = DepartureId(1)
+        val testMessageUri  = requestId(testDepartureId) + "/messages" + ""
+
+        val testNotification = DepartureMessageNotification(
+          testMessageUri,
+          requestId(testDepartureId),
+          testEoriNumber,
+          testDepartureId,
+          MessageId(2),
+          LocalDateTime.now,
+          MessageType.DepartureDeclaration,
+          None
+        )
+
+        given(mockConnector.postNotification(boxIdMatcher, any[DepartureMessageNotification])(any[ExecutionContext], any[HeaderCarrier])).willReturn(failResult)
+
+        Await.result(service.sendPushNotification(testBox.boxId, testNotification), 30.seconds).mustEqual(())
+        verify(mockConnector)
+          .postNotification(BoxId(ArgumentMatchers.eq(testBoxId)), any[DepartureMessageNotification])(any[ExecutionContext], any[HeaderCarrier])
       }
 
       "should not return anything when call fails" in {
