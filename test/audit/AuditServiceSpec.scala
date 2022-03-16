@@ -197,70 +197,31 @@ class AuditServiceSpec extends SpecBase with ScalaCheckPropertyChecks with Befor
       }
     }
 
-    "must adjust declaration audit according to request size" - {
+    "must audit departure declaration events" - {
 
-      val xml =
-        <CC015B>
-          <SynVerNumMES2>123</SynVerNumMES2>
-          <DatOfPreMES9>
-            {Format.dateFormatted(LocalDate.now())}
-          </DatOfPreMES9>
-          <TimOfPreMES10>
-            {Format.timeFormatted(LocalTime.of(1, 1))}
-          </TimOfPreMES10>
-          <HEAHEA>
-            <RefNumHEA4>
-              {arbitrary[MovementReferenceNumber].sample.value}
-            </RefNumHEA4>
-            <TotNumOfIteHEA305>1</TotNumOfIteHEA305>
-          </HEAHEA>
-        </CC015B>
+      val mockMessageTranslation: MessageTranslation = mock[MessageTranslation]
 
-      val message = gen(xml).sample.get
+      val requestXml = <xml>test</xml>
+      val message    = gen(requestXml).sample.get
+      val request    = new AuthenticatedRequest[Any](FakeRequest(), Api, Ior.right(EORINumber(Constants.NewEnrolmentIdKey)))
 
-      "when the request is smaller than max size allowed the xml and statistics should be included in the audit detail" in {
+      forAll(Gen.oneOf(DeclarationAuditDetails.maxRequestLength - 1000, DeclarationAuditDetails.maxRequestLength + 1000)) {
+        requestSize =>
+          val application = baseApplicationBuilder
+            .overrides(bind[AuditConnector].toInstance(mockAuditConnector))
+            .overrides(bind[MessageTranslation].toInstance(mockMessageTranslation))
+            .build()
 
-        val contentLength = 1000
-        val request       = new AuthenticatedRequest[Any](FakeRequest(), Api, Ior.right(EORINumber(Constants.NewEnrolmentIdKey)))
+          running(application) {
+            val auditService = application.injector.instanceOf[AuditService]
 
-        val application = baseApplicationBuilder
-          .configure("message-translation-file" -> "MessageTranslation.json")
-          .overrides(bind[AuditConnector].toInstance(mockAuditConnector))
-          .build()
+            val expectedDetails = DeclarationAuditDetails(request.channel, request.enrolmentId, message.message, requestSize, mockMessageTranslation)
 
-        running(application) {
-          val auditService       = application.injector.instanceOf[AuditService]
-          val messageTranslation = application.injector.instanceOf[MessageTranslation]
+            auditService.auditDeclarationWithStatistics(DepartureDeclarationSubmitted, request.enrolmentId, message, request.channel, requestSize)
 
-          val expectedDetails = DeclarationAuditDetails(request.channel, request.enrolmentId, contentLength, message.message, messageTranslation)
-
-          auditService.auditDeclarationWithStatistics(contentLength, DepartureDeclarationSubmitted, request.enrolmentId, message, request.channel)
-
-          verify(mockAuditConnector, times(1)).sendExplicitAudit(eqTo(DepartureDeclarationSubmitted.toString), eqTo(expectedDetails))(any(), any(), any())
-          reset(mockAuditConnector)
-        }
-      }
-
-      "when the request is larger than max size allowed the audit detail should include statistics and replace translated xml with message" in {
-
-        val contentLength = 60000
-        val request       = new AuthenticatedRequest[Any](FakeRequest(), Api, Ior.right(EORINumber(Constants.NewEnrolmentIdKey)))
-
-        val application = baseApplicationBuilder
-          .configure("message-translation-file" -> "MessageTranslation.json")
-          .overrides(bind[AuditConnector].toInstance(mockAuditConnector))
-          .build()
-        running(application) {
-
-          val messageTranslation = application.injector.instanceOf[MessageTranslation]
-          val expectedDetails    = DeclarationAuditDetails(request.channel, request.enrolmentId, contentLength, message.message, messageTranslation)
-
-          val auditService = application.injector.instanceOf[AuditService]
-          auditService.auditDeclarationWithStatistics(contentLength, DepartureDeclarationSubmitted, request.enrolmentId, message, request.channel)
-
-          verify(mockAuditConnector, times(1)).sendExplicitAudit(eqTo(DepartureDeclarationSubmitted.toString), eqTo(expectedDetails))(any(), any(), any())
-          reset(mockAuditConnector)
-        }
+            verify(mockAuditConnector, times(1)).sendExplicitAudit(eqTo(DepartureDeclarationSubmitted.toString), eqTo(expectedDetails))(any(), any(), any())
+            reset(mockAuditConnector)
+          }
       }
     }
   }

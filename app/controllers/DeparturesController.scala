@@ -17,6 +17,8 @@
 package controllers
 
 import audit.AuditService
+import audit.AuditType.DepartureDeclarationSubmitted
+import audit.AuditType.MesSenMES3Added
 import com.kenshoo.play.metrics.Metrics
 import config.Constants
 import controllers.actions._
@@ -88,7 +90,16 @@ class DeparturesController @Inject()(
                         case submissionFailureRejected: SubmissionProcessingResult.SubmissionFailureRejected =>
                           BadRequest(submissionFailureRejected.responseBody)
                         case SubmissionProcessingResult.SubmissionSuccess =>
-                          request.auditDeclaration(auditService, departure)
+                          auditService.auditDeclarationWithStatistics(DepartureDeclarationSubmitted,
+                                                                      request.enrolmentId,
+                                                                      departure.messages.head,
+                                                                      request.channel,
+                                                                      request.length)
+                          auditService.auditDeclarationWithStatistics(MesSenMES3Added,
+                                                                      request.enrolmentId,
+                                                                      departure.messages.head,
+                                                                      request.channel,
+                                                                      request.length)
                           Accepted(Json.toJson(boxOpt))
                             .withHeaders(
                               "Location" -> routes.DeparturesController.get(departure.departureId).url

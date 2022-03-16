@@ -176,19 +176,19 @@ class DeparturesControllerSpec
           departureMessage.message.map(trim) mustEqual expectedMessage.message.map(trim)
 
           verify(mockAuditService, times(1)).auditDeclarationWithStatistics(
-            any(),
             eqTo(AuditType.DepartureDeclarationSubmitted),
             eqTo(Ior.right(EORINumber(newDeparture.eoriNumber))),
+            any(),
             any(),
             any()
           )(any())
 
           verify(mockAuditService, times(1)).auditDeclarationWithStatistics(
-            any(),
             eqTo(AuditType.MesSenMES3Added),
             eqTo(Ior.right(EORINumber(newDeparture.eoriNumber))),
             any(),
-            any()
+            any(),
+            any(),
           )(any())
         }
       }
@@ -238,17 +238,17 @@ class DeparturesControllerSpec
           departureMessage.message.map(trim) mustEqual expectedMessage.message.map(trim)
 
           verify(mockAuditService, times(1)).auditDeclarationWithStatistics(
-            any(),
             eqTo(AuditType.DepartureDeclarationSubmitted),
             eqTo(Ior.right(EORINumber(newDeparture.eoriNumber))),
+            any(),
             any(),
             any()
           )(any())
 
           verify(mockAuditService, times(1)).auditDeclarationWithStatistics(
-            any(),
             eqTo(AuditType.MesSenMES3Added),
             eqTo(Ior.right(EORINumber(newDeparture.eoriNumber))),
+            any(),
             any(),
             any()
           )(any())
