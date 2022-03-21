@@ -70,11 +70,11 @@ case class DeclarationAuditDetails(channel: ChannelType,
     "totalNoOfSpecialMentions"         -> fieldOccurrenceCount("SPEMENMT2"),
     "totalNoOfContainers"              -> fieldOccurrenceCount("CONNR2"),
     "totalNoOfCountriesOfRouting"      -> fieldOccurrenceCount("CouOfRouCodITI1"),
-    "requestSize"                      -> requestLength
+    "requestLength"                      -> requestLength
   )
 
   lazy val declaration: JsObject =
-    if (requestLength > DeclarationAuditDetails.maxRequestLength) Json.obj("declaration" -> "The declaration data was too large to be included")
+    if (requestLength > DeclarationAuditDetails.maxRequestLength) Json.obj("declaration" -> "Departure declaration too large to be included")
     else messageTranslator.translate(toJson(message))
 
 }

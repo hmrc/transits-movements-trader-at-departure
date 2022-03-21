@@ -83,9 +83,9 @@ class DeclarationAuditDetailsSpec extends SpecBase with ScalaCheckPropertyChecks
     val message     = gen(xml).sample.get
     val enrolmentId = Ior.right(EORINumber(Constants.NewEnrolmentIdKey))
 
-    val statistics = (requestSize: Int) =>
+    val statistics = (requestLength: Int) =>
       Json.obj(
-        "consignor1"                       -> "consignor",
+        "consignor1"                -> "consignor",
         "consignor2"                       -> "NULL",
         "consignee1"                       -> "consignee",
         "consignee2"                       -> "NULL",
@@ -102,12 +102,12 @@ class DeclarationAuditDetailsSpec extends SpecBase with ScalaCheckPropertyChecks
         "totalNoOfSpecialMentions"         -> 3,
         "totalNoOfContainers"              -> 0,
         "totalNoOfCountriesOfRouting"      -> 0,
-        "requestSize"                      -> requestSize
+        "requestLength"                    -> requestLength
     )
 
     "must include translated xml when request size is less than max size allowed and generate xml statistics" in {
 
-      val requestSize = DeclarationAuditDetails.maxRequestLength - 1000
+      val requestLength = DeclarationAuditDetails.maxRequestLength - 1000
 
       val application = baseApplicationBuilder
         .overrides(bind[MessageTranslation].toInstance(mockMessageTranslation))
@@ -120,27 +120,27 @@ class DeclarationAuditDetailsSpec extends SpecBase with ScalaCheckPropertyChecks
         "customerId"    -> "EORINumber",
         "enrolmentType" -> "HMRC-CTC-ORG",
         "message"       -> jsonMessage,
-        "statistics"    -> statistics(requestSize)
+        "statistics"    -> statistics(requestLength)
       )
 
-      val details = DeclarationAuditDetails(ChannelType.Api, enrolmentId, message.message, requestSize, mockMessageTranslation)
+      val details = DeclarationAuditDetails(ChannelType.Api, enrolmentId, message.message, requestLength, mockMessageTranslation)
 
       Json.toJson(details).as[JsObject] mustEqual expectedDetails
     }
 
     "must include message to indicate request size is more than max size allowed and generate xml statistics" in {
 
-      val requestSize = DeclarationAuditDetails.maxRequestLength + 1000
+      val requestLength = DeclarationAuditDetails.maxRequestLength + 1000
 
       val expectedDetails = Json.obj(
         "channel"       -> "api",
         "customerId"    -> "EORINumber",
         "enrolmentType" -> "HMRC-CTC-ORG",
-        "message"       -> Json.obj("declaration" -> "The declaration data was too large to be included"),
-        "statistics"    -> statistics(requestSize)
+        "message"       -> Json.obj("declaration" -> "Departure declaration too large to be included"),
+        "statistics"    -> statistics(requestLength)
       )
 
-      val details = DeclarationAuditDetails(ChannelType.Api, enrolmentId, message.message, requestSize, mockMessageTranslation)
+      val details = DeclarationAuditDetails(ChannelType.Api, enrolmentId, message.message, requestLength, mockMessageTranslation)
 
       Json.toJson(details).as[JsObject] mustEqual expectedDetails
     }

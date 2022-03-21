@@ -206,7 +206,7 @@ class AuditServiceSpec extends SpecBase with ScalaCheckPropertyChecks with Befor
       val request    = new AuthenticatedRequest[Any](FakeRequest(), Api, Ior.right(EORINumber(Constants.NewEnrolmentIdKey)))
 
       forAll(Gen.oneOf(DeclarationAuditDetails.maxRequestLength - 1000, DeclarationAuditDetails.maxRequestLength + 1000)) {
-        requestSize =>
+        requestLength =>
           val application = baseApplicationBuilder
             .overrides(bind[AuditConnector].toInstance(mockAuditConnector))
             .overrides(bind[MessageTranslation].toInstance(mockMessageTranslation))
@@ -215,9 +215,9 @@ class AuditServiceSpec extends SpecBase with ScalaCheckPropertyChecks with Befor
           running(application) {
             val auditService = application.injector.instanceOf[AuditService]
 
-            val expectedDetails = DeclarationAuditDetails(request.channel, request.enrolmentId, message.message, requestSize, mockMessageTranslation)
+            val expectedDetails = DeclarationAuditDetails(request.channel, request.enrolmentId, message.message, requestLength, mockMessageTranslation)
 
-            auditService.auditDeclarationWithStatistics(DepartureDeclarationSubmitted, request.enrolmentId, message, request.channel, requestSize)
+            auditService.auditDeclarationWithStatistics(DepartureDeclarationSubmitted, request.enrolmentId, message, request.channel, requestLength)
 
             verify(mockAuditConnector, times(1)).sendExplicitAudit(eqTo(DepartureDeclarationSubmitted.toString), eqTo(expectedDetails))(any(), any(), any())
             reset(mockAuditConnector)
