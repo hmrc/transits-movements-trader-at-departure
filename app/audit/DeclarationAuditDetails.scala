@@ -29,11 +29,13 @@ import utils.XMLTransformer.toJson
 
 import scala.xml.NodeSeq
 
-case class DeclarationAuditDetails(channel: ChannelType,
-                                   enrolmentId: Ior[TURN, EORINumber],
-                                   message: NodeSeq,
-                                   requestLength: Int,
-                                   messageTranslator: MessageTranslation) {
+case class DeclarationAuditDetails(
+  channel: ChannelType,
+  enrolmentId: Ior[TURN, EORINumber],
+  message: NodeSeq,
+  requestLength: Int,
+  messageTranslator: MessageTranslation
+) {
 
   lazy val customerId: String =
     enrolmentId.fold(
@@ -48,9 +50,6 @@ case class DeclarationAuditDetails(channel: ChannelType,
       _ => Constants.NewEnrolmentKey,
       (_, _) => Constants.NewEnrolmentKey
     )
-
-  def fieldOccurrenceCount(field: String): Int = (message \\ field).length
-  def fieldValue(field: String): String        = if (fieldOccurrenceCount(field) == 0) "NULL" else (message \\ field).text
 
   lazy val statistics: JsObject = Json.obj(
     "consignor1"                       -> fieldValue("TRACONCO1"),
@@ -70,12 +69,16 @@ case class DeclarationAuditDetails(channel: ChannelType,
     "totalNoOfSpecialMentions"         -> fieldOccurrenceCount("SPEMENMT2"),
     "totalNoOfContainers"              -> fieldOccurrenceCount("CONNR2"),
     "totalNoOfCountriesOfRouting"      -> fieldOccurrenceCount("CouOfRouCodITI1"),
-    "requestLength"                      -> requestLength
+    "requestLength"                    -> requestLength
   )
 
   lazy val declaration: JsObject =
     if (requestLength > DeclarationAuditDetails.maxRequestLength) Json.obj("declaration" -> "Departure declaration too large to be included")
     else messageTranslator.translate(toJson(message))
+
+  def fieldValue(field: String): String = if (fieldOccurrenceCount(field) == 0) "NULL" else (message \\ field).text
+
+  def fieldOccurrenceCount(field: String): Int = (message \\ field).length
 
 }
 

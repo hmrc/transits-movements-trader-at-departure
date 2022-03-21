@@ -31,7 +31,6 @@ import models.DepartureRejectedResponse
 import models.EORINumber
 import models.GuaranteeNotValidResponse
 import models.MessageWithStatus
-import models.MovementReferenceNumber
 import models.MrnAllocatedResponse
 import models.NoReleaseForTransitResponse
 import models.PositiveAcknowledgementResponse
@@ -54,12 +53,9 @@ import play.api.libs.json.Json
 import play.api.test.FakeRequest
 import play.api.test.Helpers.running
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
-import utils.Format
 import utils.MessageTranslation
 import utils.XMLTransformer.toJson
 
-import java.time.LocalDate
-import java.time.LocalTime
 import scala.xml.NodeSeq
 
 class AuditServiceSpec extends SpecBase with ScalaCheckPropertyChecks with BeforeAndAfterEach with ModelGenerators {
@@ -154,7 +150,7 @@ class AuditServiceSpec extends SpecBase with ScalaCheckPropertyChecks with Befor
 
     "must audit customer missing movement events" in {
       forAll(Gen.oneOf(ChannelType.values)) {
-        (channel) =>
+        channel =>
           val request = new AuthenticatedRequest[Any](FakeRequest(), channel, Ior.right(EORINumber(Constants.NewEnrolmentIdKey)))
           val application = baseApplicationBuilder
             .overrides(bind[AuditConnector].toInstance(mockAuditConnector))

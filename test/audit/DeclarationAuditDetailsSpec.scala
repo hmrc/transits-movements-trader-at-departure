@@ -18,21 +18,21 @@ package audit
 
 import base.SpecBase
 import cats.data.Ior
+import config.Constants
 import generators.ModelGenerators
 import models.ChannelType
+import models.EORINumber
 import models.MessageWithStatus
 import models.MovementReferenceNumber
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.inject.bind
-import models.EORINumber
-import config.Constants
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
-import utils.XMLTransformer.toJson
 import utils.Format
 import utils.MessageTranslation
+import utils.XMLTransformer.toJson
 
 import java.time.LocalDate
 import java.time.LocalTime
@@ -80,12 +80,13 @@ class DeclarationAuditDetailsSpec extends SpecBase with ScalaCheckPropertyChecks
         </HEAHEA>
       </CC015B>
 
-    val message     = gen(xml).sample.get
+    val message = gen(xml).sample.get
+
     val enrolmentId = Ior.right(EORINumber(Constants.NewEnrolmentIdKey))
 
     val statistics = (requestLength: Int) =>
       Json.obj(
-        "consignor1"                -> "consignor",
+        "consignor1"                       -> "consignor",
         "consignor2"                       -> "NULL",
         "consignee1"                       -> "consignee",
         "consignee2"                       -> "NULL",
@@ -103,7 +104,7 @@ class DeclarationAuditDetailsSpec extends SpecBase with ScalaCheckPropertyChecks
         "totalNoOfContainers"              -> 0,
         "totalNoOfCountriesOfRouting"      -> 0,
         "requestLength"                    -> requestLength
-    )
+      )
 
     "must include translated xml when request size is less than max size allowed and generate xml statistics" in {
 
@@ -112,8 +113,10 @@ class DeclarationAuditDetailsSpec extends SpecBase with ScalaCheckPropertyChecks
       val application = baseApplicationBuilder
         .overrides(bind[MessageTranslation].toInstance(mockMessageTranslation))
         .build()
+
       val messageTranslation = application.injector.instanceOf[MessageTranslation]
-      val jsonMessage        = messageTranslation.translate(toJson(message.message))
+
+      val jsonMessage = messageTranslation.translate(toJson(message.message))
 
       val expectedDetails = Json.obj(
         "channel"       -> "api",
@@ -126,6 +129,7 @@ class DeclarationAuditDetailsSpec extends SpecBase with ScalaCheckPropertyChecks
       val details = DeclarationAuditDetails(ChannelType.Api, enrolmentId, message.message, requestLength, mockMessageTranslation)
 
       Json.toJson(details).as[JsObject] mustEqual expectedDetails
+
     }
 
     "must include message to indicate request size is more than max size allowed and generate xml statistics" in {
