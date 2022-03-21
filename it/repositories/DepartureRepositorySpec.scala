@@ -200,9 +200,13 @@ class DepartureRepositorySpec
 
       val node = NodeSeq.fromSeq(Seq(<CC029B>m</CC029B>))
 
+      val dateOfPrep = LocalDate.now(clock)
+      val timeOfPrep = LocalTime.of(1, 1, 1)
+      val dateTime   = LocalDateTime.of(dateOfPrep, timeOfPrep)
+
       val message = MessageWithStatus(
           MessageId(1),
-          LocalDateTime.now(),
+          dateTime,
           MessageType.ReleaseForTransit,
           node,
           MessageStatus.SubmissionSucceeded,
@@ -211,7 +215,7 @@ class DepartureRepositorySpec
 
       val otherMessage = MessageWithStatus(
           MessageId(2),
-          LocalDateTime.now(),
+          dateTime,
           MessageType.NoReleaseForTransit,
           node,
           MessageStatus.SubmissionSucceeded,
@@ -514,7 +518,7 @@ class DepartureRepositorySpec
         val declarationMessages = NonEmptyList.one(
           MessageWithStatus(
             MessageId(1),
-            LocalDateTime.of(2021, 2, 2, 2, 2),
+            LocalDateTime.of(2021, 2, 2, 2, 2, 2),
             MessageType.DepartureDeclaration,
             <CC015></CC015>,
             MessageStatus.SubmissionPending,
@@ -617,7 +621,7 @@ class DepartureRepositorySpec
         val departure = arbitrary[Departure].sample.value
 
         val dateOfPrep = LocalDate.now(clock)
-        val timeOfPrep = LocalTime.of(1, 1)
+        val timeOfPrep = LocalTime.of(1, 1, 1)
         val dateTime   = LocalDateTime.of(dateOfPrep, timeOfPrep)
         val messageBody =
           <CC016A>

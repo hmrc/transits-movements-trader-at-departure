@@ -53,6 +53,7 @@ import play.api.libs.json.Json
 import play.api.test.FakeRequest
 import play.api.test.Helpers.running
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
+import utils.MessageTranslation
 import utils.XMLTransformer.toJson
 
 import scala.xml.NodeSeq
@@ -67,12 +68,13 @@ class AuditServiceSpec extends SpecBase with ScalaCheckPropertyChecks with Befor
   }
 
   "AuditService" - {
-    "must audit notification message event" in {
 
-      def gen(xml: NodeSeq) =
-        for {
-          message <- arbitrary[MessageWithStatus]
-        } yield message.copy(message = xml)
+    def gen(xml: NodeSeq) =
+      for {
+        message <- arbitrary[MessageWithStatus]
+      } yield message.copy(message = xml)
+
+    "must audit notification message event" in {
 
       val requestEori = Ior.right(EORINumber("eori"))
       val requestXml  = <xml>test</xml>
@@ -148,7 +150,7 @@ class AuditServiceSpec extends SpecBase with ScalaCheckPropertyChecks with Befor
 
     "must audit customer missing movement events" in {
       forAll(Gen.oneOf(ChannelType.values)) {
-        (channel) =>
+        channel =>
           val request = new AuthenticatedRequest[Any](FakeRequest(), channel, Ior.right(EORINumber(Constants.NewEnrolmentIdKey)))
           val application = baseApplicationBuilder
             .overrides(bind[AuditConnector].toInstance(mockAuditConnector))
@@ -187,8 +189,36 @@ class AuditServiceSpec extends SpecBase with ScalaCheckPropertyChecks with Befor
 
         verify(mockAuditConnector, times(1)).sendExplicitAudit(eqTo(NCTSRequestedMissingMovement.toString), eqTo(expectedDetails))(any(), any())
         reset(mockAuditConnector)
-      }
 
+      }
+    }
+
+    "must audit departure declaration events" - {
+
+      val mockMessageTranslation: MessageTranslation = mock[MessageTranslation]
+
+      val requestXml = <xml>test</xml>
+      val message    = gen(requestXml).sample.get
+      val request    = new AuthenticatedRequest[Any](FakeRequest(), Api, Ior.right(EORINumber(Constants.NewEnrolmentIdKey)))
+
+      forAll(Gen.oneOf(DeclarationAuditDetails.maxRequestLength - 1000, DeclarationAuditDetails.maxRequestLength + 1000)) {
+        requestLength =>
+          val application = baseApplicationBuilder
+            .overrides(bind[AuditConnector].toInstance(mockAuditConnector))
+            .overrides(bind[MessageTranslation].toInstance(mockMessageTranslation))
+            .build()
+
+          running(application) {
+            val auditService = application.injector.instanceOf[AuditService]
+
+            val expectedDetails = DeclarationAuditDetails(request.channel, request.enrolmentId, message.message, requestLength, mockMessageTranslation)
+
+            auditService.auditDeclarationWithStatistics(DepartureDeclarationSubmitted, request.enrolmentId, message, request.channel, requestLength)
+
+            verify(mockAuditConnector, times(1)).sendExplicitAudit(eqTo(DepartureDeclarationSubmitted.toString), eqTo(expectedDetails))(any(), any(), any())
+            reset(mockAuditConnector)
+          }
+      }
     }
   }
 }

@@ -44,4 +44,6 @@ case class AuthenticatedRequest[A](request: Request[A], channel: ChannelType, en
 
   def hasMatchingEnrolmentId(departure: DepartureMessages): Boolean =
     matchesEnrolmentId(departure.eoriNumber.value)
+
+  lazy val length: Int = headers.get(play.api.http.HeaderNames.CONTENT_LENGTH).get.toInt
 }
