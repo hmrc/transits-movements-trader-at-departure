@@ -104,7 +104,7 @@ class DeclarationAuditDetailsSpec extends SpecBase with ScalaCheckPropertyChecks
         "totalNoOfContainers"              -> 0,
         "totalNoOfCountriesOfRouting"      -> 0,
         "requestLength"                    -> requestLength
-      )
+    )
 
     "must include translated xml when request size is less than max size allowed and generate xml statistics" in {
 
@@ -126,7 +126,7 @@ class DeclarationAuditDetailsSpec extends SpecBase with ScalaCheckPropertyChecks
         "statistics"    -> statistics(requestLength)
       )
 
-      val details = DeclarationAuditDetails(ChannelType.Api, enrolmentId, message.message, requestLength, mockMessageTranslation)
+      val details = DeclarationAuditDetails(ChannelType.Api, enrolmentId, message.message, requestLength, None, mockMessageTranslation)
 
       Json.toJson(details).as[JsObject] mustEqual expectedDetails
 
@@ -144,7 +144,7 @@ class DeclarationAuditDetailsSpec extends SpecBase with ScalaCheckPropertyChecks
         "statistics"    -> statistics(requestLength)
       )
 
-      val details = DeclarationAuditDetails(ChannelType.Api, enrolmentId, message.message, requestLength, mockMessageTranslation)
+      val details = DeclarationAuditDetails(ChannelType.Api, enrolmentId, message.message, requestLength, None, mockMessageTranslation)
 
       Json.toJson(details).as[JsObject] mustEqual expectedDetails
     }
