@@ -16,8 +16,16 @@
 
 package models
 
-case class EnrolmentID(turn: Option[TURN], eoriNumber: Option[EORINumber]) {
+import cats.data.Ior
 
-  lazy val customerId: String = eoriNumber.map(x => x.value).getOrElse(turn.get.value)
+case class EnrolmentId(value: Ior[TURN, EORINumber]) extends AnyVal {
+
+  def customerId: String = value.fold(
+    turn => turn.value,
+    eoriNumber => eoriNumber.value,
+    (_, eoriNumber) => eoriNumber.value
+  )
+
+  def isModern: Boolean = !value.isLeft
 
 }

@@ -17,7 +17,7 @@
 package models
 
 import base.SpecBase
-import org.scalacheck.Gen
+import cats.data.Ior
 import org.scalatest.matchers.must.Matchers
 
 class EnrolmentIdSpec extends SpecBase with Matchers {
@@ -26,56 +26,41 @@ class EnrolmentIdSpec extends SpecBase with Matchers {
 
   "when EnrolmentId contains only a TURN" - {
 
-    val enrolmentId: EnrolmentID = EnrolmentID(Option(TURN("ABC")), None)
-
-    "check that we can return a TURN" in {
-
-      enrolmentId.turn mustEqual Some(TURN("ABC"))
-
-    }
-
-    "check that we don't have an EORI" in {
-
-      enrolmentId.eoriNumber mustEqual None
-
-    }
+    val enrolmentId: EnrolmentId = EnrolmentId(Ior.left(TURN("ABC")))
 
     "customerId returns the TURN value" in Seq("ABC", "DEF").foreach {
       arbitaryTurn =>
-        val enrolmentId: EnrolmentID = EnrolmentID(Option(TURN(arbitaryTurn)), None)
+        val enrolmentId: EnrolmentId = EnrolmentId(Ior.left(TURN(arbitaryTurn)))
         enrolmentId.customerId mustEqual arbitaryTurn
+    }
+
+    "returns that the enrolment is not modern" in {
+      enrolmentId.isModern mustEqual false
     }
 
   }
 
   "when EnrolmentId contains only a EORINumber" - {
 
-    val enrolmentId: EnrolmentID = EnrolmentID(None, Option(EORINumber("ABC")))
-
-    "check that we can return a EORINumber" in {
-
-      enrolmentId.eoriNumber mustEqual Some(EORINumber("ABC"))
-
-    }
-
-    "check that we don't have an TURN" in {
-      enrolmentId.turn mustEqual None
-    }
+    val enrolmentId: EnrolmentId = EnrolmentId(Ior.right(EORINumber("ABC")))
 
     "customerId returns the EORINumber value" in Seq("ABC", "DEF").foreach {
       arbitaryTurn =>
-        val enrolmentId: EnrolmentID = EnrolmentID(None, Option(EORINumber(arbitaryTurn)))
+        val enrolmentId: EnrolmentId = EnrolmentId(Ior.right(EORINumber(arbitaryTurn)))
         enrolmentId.customerId mustEqual arbitaryTurn
+    }
+
+    "returns that the enrolment is modern" in {
+      enrolmentId.isModern mustEqual true
     }
   }
 
   "when EnrolmentId contains a EORINumber and a TURN return the EORINumber" - {
 
-    val enrolmentId: EnrolmentID = EnrolmentID(Option(TURN("ABC")), Option(EORINumber("DEF")))
+    val enrolmentId: EnrolmentId = EnrolmentId(Ior.both(TURN("ABC"), EORINumber("DEF")))
 
-    "check that we can return a EORINumber" in {
-
-      enrolmentId.customerId mustEqual "DEF"
+    "returns that the enrolment is modern" in {
+      enrolmentId.isModern mustEqual true
     }
 
   }
