@@ -59,7 +59,6 @@ case class DeclarationAuditDetails(channel: ChannelType,
                                    enrolmentType: String,
                                    message: JsObject,
                                    statistics: JsObject,
-                                   requestLength: Int,
                                    boxId: Option[BoxId])
 
 object DeclarationAuditDetails {
@@ -70,7 +69,6 @@ object DeclarationAuditDetails {
       (__ \ "enrolmentType").write[String] and
       (__ \ "message").write[JsObject] and
       (__ \ "statistics").write[JsObject] and
-      (__ \ "requestLength").write[Int] and
       (__ \ "boxId").writeNullable[BoxId]
   )(unlift(DeclarationAuditDetails.unapply))
 }

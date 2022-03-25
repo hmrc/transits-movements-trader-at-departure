@@ -120,7 +120,7 @@ class AuditService @Inject()(auditConnector: AuditConnector, messageTranslator: 
       if (requestLength > AuditService.maxRequestLength) Json.obj("declaration" -> "Departure declaration too large to be included")
       else messageTranslator.translate(toJson(message.message))
 
-    val details = DeclarationAuditDetails(channel, customerId(enrolmentId), enrolmentType(enrolmentId), json, statistics, requestLength, boxOpt)
+    val details = DeclarationAuditDetails(channel, customerId(enrolmentId), enrolmentType(enrolmentId), json, statistics, boxOpt)
     auditConnector.sendExplicitAudit(auditType.toString, details)
   }
 

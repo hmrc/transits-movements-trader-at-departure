@@ -295,7 +295,6 @@ class AuditServiceSpec extends SpecBase with ScalaCheckPropertyChecks with Befor
                                         Constants.NewEnrolmentKey,
                                         jsonMessage,
                                         statistics(requestLength),
-                                        requestLength,
                                         boxOpt.map(_.boxId))
 
               running(application) {
@@ -330,7 +329,6 @@ class AuditServiceSpec extends SpecBase with ScalaCheckPropertyChecks with Befor
                                         Constants.NewEnrolmentKey,
                                         jsonMessage,
                                         statistics(requestLength),
-                                        requestLength,
                                         boxOpt.map(_.boxId))
 
               running(application) {
