@@ -18,8 +18,10 @@ package audit
 
 import audit.AuditType._
 import cats.data.Ior
+import config.Constants
 import models._
 import models.request.AuthenticatedRequest
+import play.api.libs.json.JsObject
 import play.api.libs.json.Json
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
@@ -31,19 +33,26 @@ import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 import scala.xml.NodeSeq
 
+object AuditService {
+
+  val maxRequestLength: Int = 20000
+
+}
+
 class AuditService @Inject()(auditConnector: AuditConnector, messageTranslator: MessageTranslation)(implicit ec: ExecutionContext) {
 
   def authAudit(auditType: AuditType, details: AuthenticationDetails)(implicit hc: HeaderCarrier): Unit =
     auditConnector.sendExplicitAudit(auditType.toString, details)
 
-  def auditEvent(auditType: AuditType, customerId: Ior[TURN, EORINumber], message: Message, channel: ChannelType)(implicit hc: HeaderCarrier): Unit = {
-    val details = AuthenticatedAuditDetails(channel, customerId, messageTranslator.translate(toJson(message.message)))
+  def auditEvent(auditType: AuditType, ior: Ior[TURN, EORINumber], message: Message, channel: ChannelType)(implicit hc: HeaderCarrier): Unit = {
+    val details = AuthenticatedAuditDetails(channel, customerId(ior), enrolmentType(ior), messageTranslator.translate(toJson(message.message)))
     auditConnector.sendExplicitAudit(auditType.toString, details)
   }
 
   def auditCustomerRequestedMissingMovementEvent(request: AuthenticatedRequest[_], departureId: DepartureId): Unit = {
     implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
-    val details                    = AuthenticatedAuditDetails(request.channel, request.enrolmentId, Json.obj("departureId" -> departureId))
+    val details =
+      AuthenticatedAuditDetails(request.channel, customerId(request.enrolmentId), enrolmentType(request.enrolmentId), Json.obj("departureId" -> departureId))
     auditConnector.sendExplicitAudit(CustomerRequestedMissingMovement.toString, details)
   }
 
@@ -85,7 +94,55 @@ class AuditService @Inject()(auditConnector: AuditConnector, messageTranslator: 
                                      requestLength: Int,
                                      boxOpt: Option[BoxId])(implicit hc: HeaderCarrier): Unit = {
 
-    val details = DeclarationAuditDetails(channel, enrolmentId, message.message, requestLength, boxOpt, messageTranslator)
+    val messageNodes: NodeSeq = message.message
+    val statistics: JsObject = Json.obj(
+      "consignor1"                       -> fieldValue(messageNodes, "TRACONCO1"),
+      "consignor2"                       -> fieldValue(messageNodes, "TRACONCO2"),
+      "consignee1"                       -> fieldValue(messageNodes, "TRACONCE1"),
+      "consignee2"                       -> fieldValue(messageNodes, "TRACONCE2"),
+      "principalTrader"                  -> fieldValue(messageNodes, "TRAPRIPC1"),
+      "guaranteeReferenceNumber"         -> fieldValue(messageNodes, "GuaRefNumGRNREF1"),
+      "guaranteeAccessCode"              -> fieldValue(messageNodes, "AccCodREF6"),
+      "packageCount"                     -> fieldValue(messageNodes, "TotNumOfPacHEA306"),
+      "itemCount"                        -> fieldValue(messageNodes, "TotNumOfIteHEA305"),
+      "totalNoOfTransitOffices"          -> fieldOccurrenceCount(messageNodes, "CUSOFFTRARNS"),
+      "totalNoOfSeals"                   -> fieldOccurrenceCount(messageNodes, "SEAIDSID"),
+      "totalNoOfGuarantees"              -> fieldOccurrenceCount(messageNodes, "GUAREFREF"),
+      "totalNoOfPreviousAdminReferences" -> fieldOccurrenceCount(messageNodes, "PREADMREFAR2"),
+      "totalNoOfProducedDocs"            -> fieldOccurrenceCount(messageNodes, "PRODOCDC2"),
+      "totalNoOfSpecialMentions"         -> fieldOccurrenceCount(messageNodes, "SPEMENMT2"),
+      "totalNoOfContainers"              -> fieldOccurrenceCount(messageNodes, "CONNR2"),
+      "totalNoOfCountriesOfRouting"      -> fieldOccurrenceCount(messageNodes, "CouOfRouCodITI1"),
+      "requestLength"                    -> requestLength
+    )
+
+    val json: JsObject =
+      if (requestLength > AuditService.maxRequestLength) Json.obj("declaration" -> "Departure declaration too large to be included")
+      else messageTranslator.translate(toJson(message.message))
+
+    val details = DeclarationAuditDetails(channel, customerId(enrolmentId), enrolmentType(enrolmentId), json, statistics, requestLength, boxOpt)
     auditConnector.sendExplicitAudit(auditType.toString, details)
   }
+
+  private def fieldValue(message: NodeSeq, field: String): String =
+    if (fieldOccurrenceCount(message, field) == 0) "NULL" else (message \\ field).text
+
+  private def fieldOccurrenceCount(message: NodeSeq, field: String): Int = (message \\ field).length
+
+  // Temporary, awaiting CTDA-1885
+
+  def customerId(enrolmentId: Ior[TURN, EORINumber]): String =
+    enrolmentId.fold(
+      turn => turn.value,
+      eoriNumber => eoriNumber.value,
+      (_, eoriNumber) => eoriNumber.value
+    )
+
+  def enrolmentType(enrolmentId: Ior[TURN, EORINumber]): String =
+    enrolmentId.fold(
+      _ => Constants.LegacyEnrolmentKey,
+      _ => Constants.NewEnrolmentKey,
+      (_, _) => Constants.NewEnrolmentKey
+    )
+
 }

@@ -16,51 +16,30 @@
 
 package audit
 
-import cats.data.Ior
-import config.Constants
+import models.BoxId
 import models.ChannelType
-import models.EORINumber
-import models.TURN
+import play.api.libs.functional.syntax.toFunctionalBuilderOps
+import play.api.libs.functional.syntax.unlift
 import play.api.libs.json.JsObject
-import play.api.libs.json.Json
 import play.api.libs.json.OWrites
+import play.api.libs.json.__
 
 sealed abstract class AuditDetails {
   def channel: ChannelType
   def customerId: String
   def json: JsObject
-
-  lazy val writeAuditDetails: JsObject =
-    Json.obj(
-      "channel"    -> channel,
-      "customerId" -> customerId
-    ) ++ json
 }
 
-case class AuthenticatedAuditDetails(channel: ChannelType, enrolmentId: Ior[TURN, EORINumber], json: JsObject) extends AuditDetails {
-
-  lazy val customerId: String =
-    enrolmentId.fold(
-      turn => turn.value,
-      eoriNumber => eoriNumber.value,
-      (_, eoriNumber) => eoriNumber.value
-    )
-
-  lazy val enrolmentType: String =
-    enrolmentId.fold(
-      _ => Constants.LegacyEnrolmentKey,
-      _ => Constants.NewEnrolmentKey,
-      (_, _) => Constants.NewEnrolmentKey
-    )
-
-  lazy val writeAuthenticatedAuditDetails: JsObject =
-    writeAuditDetails ++
-      Json.obj("enrolmentType" -> enrolmentType)
-}
+case class AuthenticatedAuditDetails(channel: ChannelType, customerId: String, enrolmentType: String, json: JsObject) extends AuditDetails
 
 object AuthenticatedAuditDetails {
 
-  implicit val writes: OWrites[AuthenticatedAuditDetails] = _.writeAuthenticatedAuditDetails
+  implicit val writes: OWrites[AuthenticatedAuditDetails] = (
+    (__ \ "channel").write[ChannelType] and
+      (__ \ "customerId").write[String] and
+      (__ \ "enrolmentType").write[String] and
+      (__ \ "json").write[JsObject]
+  )(unlift(AuthenticatedAuditDetails.unapply))
 
 }
 
@@ -68,5 +47,30 @@ case class UnauthenticatedAuditDetails(channel: ChannelType, customerId: String,
 
 object UnauthenticatedAuditDetails {
 
-  implicit val writes: OWrites[UnauthenticatedAuditDetails] = _.writeAuditDetails
+  implicit val writes: OWrites[UnauthenticatedAuditDetails] = (
+    (__ \ "channel").write[ChannelType] and
+      (__ \ "customerId").write[String] and
+      (__ \ "json").write[JsObject]
+  )(unlift(UnauthenticatedAuditDetails.unapply))
+}
+
+case class DeclarationAuditDetails(channel: ChannelType,
+                                   customerId: String,
+                                   enrolmentType: String,
+                                   message: JsObject,
+                                   statistics: JsObject,
+                                   requestLength: Int,
+                                   boxId: Option[BoxId])
+
+object DeclarationAuditDetails {
+
+  implicit val writes: OWrites[DeclarationAuditDetails] = (
+    (__ \ "channel").write[ChannelType] and
+      (__ \ "customerId").write[String] and
+      (__ \ "enrolmentType").write[String] and
+      (__ \ "message").write[JsObject] and
+      (__ \ "statistics").write[JsObject] and
+      (__ \ "requestLength").write[Int] and
+      (__ \ "boxId").writeNullable[BoxId]
+  )(unlift(DeclarationAuditDetails.unapply))
 }
