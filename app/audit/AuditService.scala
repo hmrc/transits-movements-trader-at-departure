@@ -17,7 +17,6 @@
 package audit
 
 import audit.AuditType._
-import cats.data.Ior
 import models._
 import models.request.AuthenticatedRequest
 import play.api.libs.json.Json
@@ -36,14 +35,16 @@ class AuditService @Inject()(auditConnector: AuditConnector, messageTranslator: 
   def authAudit(auditType: AuditType, details: AuthenticationDetails)(implicit hc: HeaderCarrier): Unit =
     auditConnector.sendExplicitAudit(auditType.toString, details)
 
-  def auditEvent(auditType: AuditType, customerId: Ior[TURN, EORINumber], message: Message, channel: ChannelType)(implicit hc: HeaderCarrier): Unit = {
-    val details = AuthenticatedAuditDetails(channel, customerId, messageTranslator.translate(toJson(message.message)))
+  def auditEvent(auditType: AuditType, customerId: String, enrolmentType: String, message: Message, channel: ChannelType)(implicit
+                                                                                                                          hc: HeaderCarrier): Unit = {
+    val details = AuthenticatedAuditDetails(channel, customerId, enrolmentType, messageTranslator.translate(toJson(message.message)))
     auditConnector.sendExplicitAudit(auditType.toString, details)
   }
 
   def auditCustomerRequestedMissingMovementEvent(request: AuthenticatedRequest[_], departureId: DepartureId): Unit = {
     implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
-    val details                    = AuthenticatedAuditDetails(request.channel, request.enrolmentId, Json.obj("departureId" -> departureId))
+    val details =
+      AuthenticatedAuditDetails(request.channel, request.enrolmentId.customerId, request.enrolmentId.enrolmentType, Json.obj("departureId" -> departureId))
     auditConnector.sendExplicitAudit(CustomerRequestedMissingMovement.toString, details)
   }
 
@@ -78,14 +79,17 @@ class AuditService @Inject()(auditConnector: AuditConnector, messageTranslator: 
     case XMLSubmissionNegativeAcknowledgementResponse => XMLSubmissionNegativeAcknowledgement
   }
 
-  def auditDeclarationWithStatistics(auditType: AuditType,
-                                     enrolmentId: Ior[TURN, EORINumber],
-                                     message: Message,
-                                     channel: ChannelType,
-                                     requestLength: Int,
-                                     boxOpt: Option[BoxId])(implicit hc: HeaderCarrier): Unit = {
+  def auditDeclarationWithStatistics(
+    auditType: AuditType,
+    customerId: String,
+    enrolmentType: String,
+    message: Message,
+    channel: ChannelType,
+    requestLength: Int,
+    boxOpt: Option[BoxId]
+  )(implicit hc: HeaderCarrier): Unit = {
 
-    val details = DeclarationAuditDetails(channel, enrolmentId, message.message, requestLength, boxOpt, messageTranslator)
+    val details = DeclarationAuditDetails(channel, customerId, enrolmentType, message.message, requestLength, boxOpt, messageTranslator)
     auditConnector.sendExplicitAudit(auditType.toString, details)
   }
 }

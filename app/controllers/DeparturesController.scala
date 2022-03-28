@@ -79,7 +79,7 @@ class DeparturesController @Inject()(
           getBox(request.headers.get(Constants.XClientIdHeader)).flatMap {
             boxOpt =>
               departureService
-                .createDeparture(request.enrolmentId, request.body, request.channel, boxOpt)
+                .createDeparture(request.enrolmentId.customerId, request.body, request.channel, boxOpt)
                 .flatMap {
                   case Left(error) =>
                     logger.error(error.message)
@@ -95,18 +95,24 @@ class DeparturesController @Inject()(
                         case submissionFailureRejected: SubmissionProcessingResult.SubmissionFailureRejected =>
                           BadRequest(submissionFailureRejected.responseBody)
                         case SubmissionProcessingResult.SubmissionSuccess =>
-                          auditService.auditDeclarationWithStatistics(DepartureDeclarationSubmitted,
-                                                                      request.enrolmentId,
-                                                                      departure.messages.head,
-                                                                      request.channel,
-                                                                      request.length,
-                                                                      boxOpt.map(_.boxId))
-                          auditService.auditDeclarationWithStatistics(MesSenMES3Added,
-                                                                      request.enrolmentId,
-                                                                      departure.messages.head,
-                                                                      request.channel,
-                                                                      request.length,
-                                                                      None)
+                          auditService.auditDeclarationWithStatistics(
+                            DepartureDeclarationSubmitted,
+                            request.enrolmentId.customerId,
+                            request.enrolmentId.enrolmentType,
+                            departure.messages.head,
+                            request.channel,
+                            request.length,
+                            boxOpt.map(_.boxId)
+                          )
+                          auditService.auditDeclarationWithStatistics(
+                            MesSenMES3Added,
+                            request.enrolmentId.customerId,
+                            request.enrolmentId.enrolmentType,
+                            departure.messages.head,
+                            request.channel,
+                            request.length,
+                            None
+                          )
                           if (boxOpt.isDefined) acceptedDeparturesWithPPNSBox.inc()
                           acceptedDepartures.inc()
                           Accepted(Json.toJson(boxOpt))
@@ -140,7 +146,7 @@ class DeparturesController @Inject()(
       authenticate().async {
         implicit request =>
           departureRepository
-            .fetchAllDepartures(request.enrolmentId, request.channel, updatedSince, lrn, pageSize, page)
+            .fetchAllDepartures(request.enrolmentId.value, request.channel, updatedSince, lrn, pageSize, page)
             .map {
               responseDepartures =>
                 departuresCount.update(responseDepartures.retrievedDepartures)

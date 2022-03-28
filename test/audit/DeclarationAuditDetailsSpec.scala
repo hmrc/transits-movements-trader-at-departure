@@ -22,6 +22,7 @@ import config.Constants
 import generators.ModelGenerators
 import models.ChannelType
 import models.EORINumber
+import models.EnrolmentId
 import models.MessageWithStatus
 import models.MovementReferenceNumber
 import org.scalacheck.Arbitrary.arbitrary
@@ -82,7 +83,7 @@ class DeclarationAuditDetailsSpec extends SpecBase with ScalaCheckPropertyChecks
 
     val message = gen(xml).sample.get
 
-    val enrolmentId = Ior.right(EORINumber(Constants.NewEnrolmentIdKey))
+    val enrolmentId = EnrolmentId(Ior.right(EORINumber(Constants.NewEnrolmentIdKey)))
 
     val statistics = (requestLength: Int) =>
       Json.obj(
@@ -126,7 +127,15 @@ class DeclarationAuditDetailsSpec extends SpecBase with ScalaCheckPropertyChecks
         "statistics"    -> statistics(requestLength)
       )
 
-      val details = DeclarationAuditDetails(ChannelType.Api, enrolmentId, message.message, requestLength, None, mockMessageTranslation)
+      val details = DeclarationAuditDetails(
+        ChannelType.Api,
+        enrolmentId.customerId,
+        enrolmentId.enrolmentType,
+        message.message,
+        requestLength,
+        None,
+        mockMessageTranslation
+      )
 
       Json.toJson(details).as[JsObject] mustEqual expectedDetails
 
@@ -144,7 +153,15 @@ class DeclarationAuditDetailsSpec extends SpecBase with ScalaCheckPropertyChecks
         "statistics"    -> statistics(requestLength)
       )
 
-      val details = DeclarationAuditDetails(ChannelType.Api, enrolmentId, message.message, requestLength, None, mockMessageTranslation)
+      val details = DeclarationAuditDetails(
+        ChannelType.Api,
+        enrolmentId.customerId,
+        enrolmentId.enrolmentType,
+        message.message,
+        requestLength,
+        None,
+        mockMessageTranslation
+      )
 
       Json.toJson(details).as[JsObject] mustEqual expectedDetails
     }

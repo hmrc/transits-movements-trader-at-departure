@@ -65,15 +65,18 @@ class CheckMessageTypeActionProviderSpec
   }
 
   "CheckMessageTypeAction" - {
+
+    val enrolmentId = EnrolmentId(Ior.right(EORINumber("eori")))
+
     "will process the action when the X-Message-Type is present" in {
       forAll(Gen.oneOf(responseMessages.toSeq)) {
-        case (code, response: MessageResponse) => {
+        case (code, response: MessageResponse) =>
           def fakeRequest =
             DepartureWithoutMessagesRequest(
               AuthenticatedRequest(
                 FakeRequest("", "").withHeaders("X-Message-Type" -> code, "channel" -> fakeDepartureWithoutMessages.channel.toString),
                 fakeDepartureWithoutMessages.channel,
-                Ior.right(EORINumber("eori"))
+                enrolmentId
               ),
               fakeDepartureWithoutMessages,
               fakeDepartureWithoutMessages.channel
@@ -88,7 +91,6 @@ class CheckMessageTypeActionProviderSpec
               r.isRight mustBe true
               r.right.get.messageResponse mustBe response
           }
-        }
       }
     }
     "must return an BadRequest when the X-Message-Type is missing" in {
@@ -97,7 +99,7 @@ class CheckMessageTypeActionProviderSpec
           AuthenticatedRequest(
             FakeRequest("", "").withHeaders("channel" -> fakeDepartureWithoutMessages.channel.toString),
             fakeDepartureWithoutMessages.channel,
-            Ior.right(EORINumber("eori"))
+            enrolmentId
           ),
           fakeDepartureWithoutMessages,
           fakeDepartureWithoutMessages.channel
@@ -120,7 +122,7 @@ class CheckMessageTypeActionProviderSpec
           AuthenticatedRequest(
             FakeRequest("", "").withHeaders("X-Message-Type" -> "Invalid-type", "channel" -> fakeDepartureWithoutMessages.channel.toString),
             fakeDepartureWithoutMessages.channel,
-            Ior.right(EORINumber("eori"))
+            enrolmentId
           ),
           fakeDepartureWithoutMessages,
           fakeDepartureWithoutMessages.channel

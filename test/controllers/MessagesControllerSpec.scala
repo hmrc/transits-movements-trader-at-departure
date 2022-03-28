@@ -19,7 +19,6 @@ package controllers
 import audit.AuditService
 import audit.AuditType._
 import base.SpecBase
-import cats.data.Ior
 import cats.data.NonEmptyList
 import connectors.MessageConnector
 import connectors.MessageConnector.EisSubmissionResult.ErrorInPayload
@@ -148,7 +147,8 @@ class MessagesControllerSpec
         status(result) mustEqual ACCEPTED
 
         header("Location", result).value must be(
-          routes.MessagesController.getMessage(departureWithoutMessages.departureId, MessageId(departureWithoutMessages.nextMessageCorrelationId)).url)
+          routes.MessagesController.getMessage(departureWithoutMessages.departureId, MessageId(departureWithoutMessages.nextMessageCorrelationId)).url
+        )
 
         verify(mockSubmitMessageService, times(1)).submitMessage(
           eqTo(departureWithoutMessages.departureId),
@@ -158,7 +158,8 @@ class MessagesControllerSpec
 
         verify(mockAuditService, times(1)).auditEvent(
           eqTo(DepartureCancellationRequestSubmitted),
-          eqTo(Ior.right(EORINumber(departureWithoutMessages.eoriNumber))),
+          any(),
+          any(),
           any(),
           any()
         )(any())

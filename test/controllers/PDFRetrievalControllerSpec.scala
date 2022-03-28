@@ -27,6 +27,7 @@ import generators.ModelGenerators
 import models.ChannelType.Web
 import models.DepartureId
 import models.EORINumber
+import models.EnrolmentId
 import models.Message
 import models.MessageWithStatus
 import models.PdfDocument
@@ -79,7 +80,7 @@ class PDFRetrievalControllerSpec extends SpecBase with ScalaCheckPropertyChecks 
         val body = invocation
           .getArgument(0)
           .asInstanceOf[DepartureMessagesRequest[AnyContent] => Future[Result]](
-            DepartureMessagesRequest(AuthenticatedRequest(fakeRequest, Web, Ior.right(EORINumber("eori"))), departureId, Web, List(message))
+            DepartureMessagesRequest(AuthenticatedRequest(fakeRequest, Web, EnrolmentId(Ior.right(EORINumber("eori")))), departureId, Web, List(message))
           )
 
         stubControllerComponents().actionBuilder.async(body)

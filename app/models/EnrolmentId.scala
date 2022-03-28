@@ -17,9 +17,11 @@
 package models
 
 import cats.data.Ior
+import config.Constants
 
 case class EnrolmentId(value: Ior[TURN, EORINumber]) extends AnyVal {
 
+  // Prefer to use EORI number
   def customerId: String = value.fold(
     turn => turn.value,
     eoriNumber => eoriNumber.value,
@@ -27,5 +29,7 @@ case class EnrolmentId(value: Ior[TURN, EORINumber]) extends AnyVal {
   )
 
   def isModern: Boolean = !value.isLeft
+
+  def enrolmentType: String = if (isModern) Constants.NewEnrolmentKey else Constants.LegacyEnrolmentKey
 
 }

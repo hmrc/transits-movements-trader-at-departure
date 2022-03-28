@@ -22,8 +22,6 @@ import org.scalatest.matchers.must.Matchers
 
 class EnrolmentIdSpec extends SpecBase with Matchers {
 
-  // Ior[TURN, EORINumber]
-
   "when EnrolmentId contains only a TURN" - {
 
     val enrolmentId: EnrolmentId = EnrolmentId(Ior.left(TURN("ABC")))

@@ -16,11 +16,7 @@
 
 package audit
 
-import cats.data.Ior
-import config.Constants
 import models.ChannelType
-import models.EORINumber
-import models.TURN
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
 import play.api.libs.json.OWrites
@@ -37,21 +33,7 @@ sealed abstract class AuditDetails {
     ) ++ json
 }
 
-case class AuthenticatedAuditDetails(channel: ChannelType, enrolmentId: Ior[TURN, EORINumber], json: JsObject) extends AuditDetails {
-
-  lazy val customerId: String =
-    enrolmentId.fold(
-      turn => turn.value,
-      eoriNumber => eoriNumber.value,
-      (_, eoriNumber) => eoriNumber.value
-    )
-
-  lazy val enrolmentType: String =
-    enrolmentId.fold(
-      _ => Constants.LegacyEnrolmentKey,
-      _ => Constants.NewEnrolmentKey,
-      (_, _) => Constants.NewEnrolmentKey
-    )
+case class AuthenticatedAuditDetails(channel: ChannelType, customerId: String, enrolmentType: String, json: JsObject) extends AuditDetails {
 
   lazy val writeAuthenticatedAuditDetails: JsObject =
     writeAuditDetails ++

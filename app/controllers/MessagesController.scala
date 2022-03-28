@@ -89,7 +89,13 @@ class MessagesController @Inject()(
                       case submissionFailureRejected: SubmissionProcessingResult.SubmissionFailureRejected =>
                         BadRequest(submissionFailureRejected.responseBody)
                       case SubmissionProcessingResult.SubmissionSuccess =>
-                        auditService.auditEvent(DepartureCancellationRequestSubmitted, request.request.enrolmentId, message, request.channel)
+                        auditService.auditEvent(
+                          DepartureCancellationRequestSubmitted,
+                          request.request.enrolmentId.customerId,
+                          request.request.enrolmentId.enrolmentType,
+                          message,
+                          request.channel
+                        )
                         Accepted
                           .withHeaders(
                             "Location" -> routes.MessagesController.getMessage(request.departure.departureId, request.departure.nextMessageId).url
@@ -127,9 +133,7 @@ class MessagesController @Inject()(
             if request.hasMatchingEnrolmentId(departure)
             message <- OptionT(departureRepository.getMessage(departureId, request.channel, messageId))
             if !message.optStatus.contains(SubmissionFailed)
-          } yield {
-            Ok(Json.toJsObject(ResponseMessage.build(departureId, message)))
-          }
+          } yield Ok(Json.toJsObject(ResponseMessage.build(departureId, message)))
 
           result.getOrElse(NotFound)
       }

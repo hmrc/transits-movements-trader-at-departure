@@ -16,12 +16,8 @@
 
 package audit
 
-import cats.data.Ior
-import config.Constants
 import models.BoxId
 import models.ChannelType
-import models.EORINumber
-import models.TURN
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
 import play.api.libs.json.OWrites
@@ -32,26 +28,13 @@ import scala.xml.NodeSeq
 
 case class DeclarationAuditDetails(
   channel: ChannelType,
-  enrolmentId: Ior[TURN, EORINumber],
+  customerId: String,
+  enrolmentType: String,
   message: NodeSeq,
   requestLength: Int,
   boxId: Option[BoxId],
   messageTranslator: MessageTranslation
 ) {
-
-  lazy val customerId: String =
-    enrolmentId.fold(
-      turn => turn.value,
-      eoriNumber => eoriNumber.value,
-      (_, eoriNumber) => eoriNumber.value
-    )
-
-  lazy val enrolmentType: String =
-    enrolmentId.fold(
-      _ => Constants.LegacyEnrolmentKey,
-      _ => Constants.NewEnrolmentKey,
-      (_, _) => Constants.NewEnrolmentKey
-    )
 
   lazy val statistics: JsObject = Json.obj(
     "consignor1"                       -> fieldValue("TRACONCO1"),
@@ -89,7 +72,9 @@ case class DeclarationAuditDetails(
       "enrolmentType" -> enrolmentType,
       "message"       -> declaration,
       "statistics"    -> statistics
-    ) ++ boxId.fold(JsObject.empty)(id => Json.obj("boxId" -> id))
+    ) ++ boxId.fold(JsObject.empty)(
+      id => Json.obj("boxId" -> id)
+    )
 
 }
 
