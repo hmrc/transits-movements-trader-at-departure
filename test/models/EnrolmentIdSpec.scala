@@ -18,6 +18,7 @@ package models
 
 import base.SpecBase
 import cats.data.Ior
+import config.Constants
 import org.scalatest.matchers.must.Matchers
 
 class EnrolmentIdSpec extends SpecBase with Matchers {
@@ -36,6 +37,10 @@ class EnrolmentIdSpec extends SpecBase with Matchers {
       enrolmentId.isModern mustEqual false
     }
 
+    "returns that the enrolment type equals LegacyEnrolmentKey" in {
+      enrolmentId.enrolmentType mustEqual Constants.LegacyEnrolmentKey
+    }
+
   }
 
   "when EnrolmentId contains only a EORINumber" - {
@@ -51,6 +56,11 @@ class EnrolmentIdSpec extends SpecBase with Matchers {
     "returns that the enrolment is modern" in {
       enrolmentId.isModern mustEqual true
     }
+
+    "returns that the enrolment type equals NewEnrolmentKey" in {
+      enrolmentId.enrolmentType mustEqual Constants.NewEnrolmentKey
+    }
+
   }
 
   "when EnrolmentId contains a EORINumber and a TURN return the EORINumber" - {
@@ -61,6 +71,9 @@ class EnrolmentIdSpec extends SpecBase with Matchers {
       enrolmentId.isModern mustEqual true
     }
 
+    "returns that the enrolment type equals NewEnrolmentKey" in {
+      enrolmentId.enrolmentType mustEqual Constants.NewEnrolmentKey
+    }
   }
 
 }
