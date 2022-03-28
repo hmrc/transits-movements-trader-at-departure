@@ -43,7 +43,7 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.xml.NodeSeq
 
-class DeparturesController @Inject() (
+class DeparturesController @Inject()(
   cc: ControllerComponents,
   departureRepository: DepartureRepository,
   authenticate: AuthenticateActionProvider,
@@ -79,7 +79,7 @@ class DeparturesController @Inject() (
           getBox(request.headers.get(Constants.XClientIdHeader)).flatMap {
             boxOpt =>
               departureService
-                .createDeparture(request.enrolmentId.customerId, request.body, request.channel, boxOpt)
+                .createDeparture(request.enrolmentId, request.body, request.channel, boxOpt)
                 .flatMap {
                   case Left(error) =>
                     logger.error(error.message)

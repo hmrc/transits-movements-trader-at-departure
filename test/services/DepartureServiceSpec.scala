@@ -106,7 +106,7 @@ class DepartureServiceSpec extends SpecBase with JsonHelper with IntegrationPati
         notificationBox = None
       )
 
-      val result = service.createDeparture(enrolmentId.customerId, inputMovement, Api, None).futureValue
+      val result = service.createDeparture(enrolmentId, inputMovement, Api, None).futureValue
 
       result.right.get mustEqual expectedDeparture
     }
@@ -139,7 +139,7 @@ class DepartureServiceSpec extends SpecBase with JsonHelper with IntegrationPati
           </HEAHEA>
         </Foo>
 
-      service.createDeparture(enrolmentId.customerId, invalidPayload, Api, None).futureValue.isLeft mustBe true
+      service.createDeparture(enrolmentId, invalidPayload, Api, None).futureValue.isLeft mustBe true
     }
   }
 

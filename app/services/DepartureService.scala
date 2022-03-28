@@ -31,7 +31,7 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.xml.NodeSeq
 
-class DepartureService @Inject() (departureIdRepository: DepartureIdRepository)(implicit clock: Clock, ec: ExecutionContext) {
+class DepartureService @Inject()(departureIdRepository: DepartureIdRepository)(implicit clock: Clock, ec: ExecutionContext) {
   import XMLTransformer._
   import XmlMessageParser._
 
@@ -47,7 +47,7 @@ class DepartureService @Inject() (departureIdRepository: DepartureIdRepository)(
       xmlMessage <- updateMesSenMES3(departureId, messageCorrelationId)
     } yield MessageWithStatus(messageId, dateTime, messageType, xmlMessage, SubmissionPending, messageCorrelationId)
 
-  def createDeparture(customerId: String, nodeSeq: NodeSeq, channelType: ChannelType, boxOpt: Option[Box]): Future[ParseHandler[Departure]] =
+  def createDeparture(enrolmentId: EnrolmentId, nodeSeq: NodeSeq, channelType: ChannelType, boxOpt: Option[Box]): Future[ParseHandler[Departure]] =
     departureIdRepository
       .nextId()
       .map {
@@ -57,18 +57,19 @@ class DepartureService @Inject() (departureIdRepository: DepartureIdRepository)(
             dateTime  <- dateTimeOfPrepR
             reference <- referenceR
             message   <- makeMessageWithStatus(departureId, MessageId(1), 1, MessageType.DepartureDeclaration)
-          } yield Departure(
-            departureId,
-            channelType,
-            customerId,
-            None,
-            reference,
-            dateTime,
-            LocalDateTime.now(clock),
-            2,
-            NonEmptyList.one(message),
-            boxOpt
-          )).apply(nodeSeq)
+          } yield
+            Departure(
+              departureId,
+              channelType,
+              enrolmentId.customerId,
+              None,
+              reference,
+              dateTime,
+              LocalDateTime.now(clock),
+              2,
+              NonEmptyList.one(message),
+              boxOpt
+            )).apply(nodeSeq)
       }
 
   def makeMessage(messageId: MessageId, messageCorrelationId: Int, messageType: MessageType): ReaderT[ParseHandler, NodeSeq, MessageWithoutStatus] =
