@@ -93,7 +93,7 @@ class AuditServiceSpec extends SpecBase with ScalaCheckPropertyChecks with Befor
             .build()
           running(application) {
             val auditService = application.injector.instanceOf[AuditService]
-            auditService.auditEvent(auditType, enrolmentId.customerId, enrolmentId.enrolmentType, message, Api)
+            auditService.auditEvent(auditType, enrolmentId, message, Api)
             verify(mockAuditConnector, times(1)).sendExplicitAudit[AuditDetails](eqTo(auditType.toString), any())(any(), any(), any())
             reset(mockAuditConnector)
           }

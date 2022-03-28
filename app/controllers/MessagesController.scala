@@ -46,7 +46,7 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.xml.NodeSeq
 
-class MessagesController @Inject() (
+class MessagesController @Inject()(
   cc: ControllerComponents,
   authenticate: AuthenticateActionProvider,
   authenticateForReadWithMessages: AuthenticatedGetDepartureWithMessagesForReadActionProvider,
@@ -91,8 +91,7 @@ class MessagesController @Inject() (
                       case SubmissionProcessingResult.SubmissionSuccess =>
                         auditService.auditEvent(
                           DepartureCancellationRequestSubmitted,
-                          request.request.enrolmentId.customerId,
-                          request.request.enrolmentId.enrolmentType,
+                          request.request.enrolmentId,
                           message,
                           request.channel
                         )

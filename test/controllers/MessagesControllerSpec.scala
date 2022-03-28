@@ -19,6 +19,7 @@ package controllers
 import audit.AuditService
 import audit.AuditType._
 import base.SpecBase
+import cats.data.Ior
 import cats.data.NonEmptyList
 import connectors.MessageConnector
 import connectors.MessageConnector.EisSubmissionResult.ErrorInPayload
@@ -158,8 +159,7 @@ class MessagesControllerSpec
 
         verify(mockAuditService, times(1)).auditEvent(
           eqTo(DepartureCancellationRequestSubmitted),
-          any(),
-          any(),
+          EnrolmentId(eqTo(Ior.right(EORINumber("eori")))),
           any(),
           any()
         )(any())
