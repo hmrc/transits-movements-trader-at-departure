@@ -30,13 +30,12 @@ import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 import scala.xml.NodeSeq
 
-class AuditService @Inject()(auditConnector: AuditConnector, messageTranslator: MessageTranslation)(implicit ec: ExecutionContext) {
+class AuditService @Inject() (auditConnector: AuditConnector, messageTranslator: MessageTranslation)(implicit ec: ExecutionContext) {
 
   def authAudit(auditType: AuditType, details: AuthenticationDetails)(implicit hc: HeaderCarrier): Unit =
     auditConnector.sendExplicitAudit(auditType.toString, details)
 
-  def auditEvent(auditType: AuditType, customerId: String, enrolmentType: String, message: Message, channel: ChannelType)(implicit
-                                                                                                                          hc: HeaderCarrier): Unit = {
+  def auditEvent(auditType: AuditType, customerId: String, enrolmentType: String, message: Message, channel: ChannelType)(implicit hc: HeaderCarrier): Unit = {
     val details = AuthenticatedAuditDetails(channel, customerId, enrolmentType, messageTranslator.translate(toJson(message.message)))
     auditConnector.sendExplicitAudit(auditType.toString, details)
   }

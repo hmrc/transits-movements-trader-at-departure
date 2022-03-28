@@ -46,7 +46,7 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.xml.NodeSeq
 
-class MessagesController @Inject()(
+class MessagesController @Inject() (
   cc: ControllerComponents,
   authenticate: AuthenticateActionProvider,
   authenticateForReadWithMessages: AuthenticatedGetDepartureWithMessagesForReadActionProvider,

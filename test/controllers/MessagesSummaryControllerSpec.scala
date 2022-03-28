@@ -15,6 +15,7 @@
  */
 
 package controllers
+
 import base.SpecBase
 import generators.ModelGenerators
 import models.Departure

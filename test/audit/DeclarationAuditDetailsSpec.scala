@@ -105,7 +105,7 @@ class DeclarationAuditDetailsSpec extends SpecBase with ScalaCheckPropertyChecks
         "totalNoOfContainers"              -> 0,
         "totalNoOfCountriesOfRouting"      -> 0,
         "requestLength"                    -> requestLength
-    )
+      )
 
     "must include translated xml when request size is less than max size allowed and generate xml statistics" in {
 

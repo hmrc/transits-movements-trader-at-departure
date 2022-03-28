@@ -31,7 +31,7 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.xml.NodeSeq
 
-class DepartureService @Inject()(departureIdRepository: DepartureIdRepository)(implicit clock: Clock, ec: ExecutionContext) {
+class DepartureService @Inject() (departureIdRepository: DepartureIdRepository)(implicit clock: Clock, ec: ExecutionContext) {
   import XMLTransformer._
   import XmlMessageParser._
 
@@ -57,19 +57,18 @@ class DepartureService @Inject()(departureIdRepository: DepartureIdRepository)(i
             dateTime  <- dateTimeOfPrepR
             reference <- referenceR
             message   <- makeMessageWithStatus(departureId, MessageId(1), 1, MessageType.DepartureDeclaration)
-          } yield
-            Departure(
-              departureId,
-              channelType,
-              customerId,
-              None,
-              reference,
-              dateTime,
-              LocalDateTime.now(clock),
-              2,
-              NonEmptyList.one(message),
-              boxOpt
-            )).apply(nodeSeq)
+          } yield Departure(
+            departureId,
+            channelType,
+            customerId,
+            None,
+            reference,
+            dateTime,
+            LocalDateTime.now(clock),
+            2,
+            NonEmptyList.one(message),
+            boxOpt
+          )).apply(nodeSeq)
       }
 
   def makeMessage(messageId: MessageId, messageCorrelationId: Int, messageType: MessageType): ReaderT[ParseHandler, NodeSeq, MessageWithoutStatus] =
