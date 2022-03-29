@@ -26,12 +26,12 @@ import org.typelevel.discipline.scalatest.Discipline
 
 trait FreeSpecDiscipline extends Discipline {
   self: AnyFreeSpecLike with Configuration =>
+
   final def checkAll(name: String, ruleSet: Laws#RuleSet)(implicit config: PropertyCheckConfiguration, prettifier: Prettifier, pos: Position): Unit =
     s"$name" - {
-      for ((id, prop) <- ruleSet.all.properties) {
+      for ((id, prop) <- ruleSet.all.properties)
         s"$id" in {
           Checkers.check(prop)(convertConfiguration(config), prettifier, pos)
         }
-      }
     }
 }

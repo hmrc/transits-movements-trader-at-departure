@@ -39,7 +39,9 @@ class WeekLongCounter(clock: Clock, overallCounter: Counter) extends Meter with 
     } else {
       // We use -6 days as we want to remove a week prior, isBefore is the equivalent of a < b, not a <= b
       val latestDateToPrune = newDate.plusDays(-6)
-      val toRemove          = perDayCounters.filter(entry => entry._1.isBefore(latestDateToPrune))
+      val toRemove = perDayCounters.filter(
+        entry => entry._1.isBefore(latestDateToPrune)
+      )
       overallCounter.dec(toRemove.map(_._2.sum()).sum)
       toRemove.keys.foreach(perDayCounters.remove)
       new LongAdder()

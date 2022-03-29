@@ -26,10 +26,9 @@ case class TransitWrapper(xml: NodeSeq) {
 
   def toXml: Node = {
 
-    val transitWrapperNode: Node = {
+    val transitWrapperNode: Node =
       <transitRequest>
       </transitRequest>
-    }
 
     Elem(
       transitWrapperNode.prefix,

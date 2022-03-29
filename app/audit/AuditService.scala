@@ -37,7 +37,7 @@ object AuditService {
 
 }
 
-class AuditService @Inject() (auditConnector: AuditConnector, messageTranslator: MessageTranslation)(implicit ec: ExecutionContext) {
+class AuditService @Inject()(auditConnector: AuditConnector, messageTranslator: MessageTranslation)(implicit ec: ExecutionContext) {
 
   def authAudit(auditType: AuditType, details: AuthenticationDetails)(implicit hc: HeaderCarrier): Unit =
     auditConnector.sendExplicitAudit(auditType.toString, details)

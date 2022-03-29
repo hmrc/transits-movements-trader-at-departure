@@ -39,13 +39,11 @@ trait BaseGenerators {
     for {
       seq1 <- gen
       seq2 <- Gen.listOfN(seq1.length, genValue)
-    } yield {
-      seq1.toSeq.zip(seq2).foldRight("") {
-        case ((n, Some(v)), m) =>
-          m + n + v
-        case ((n, _), m) =>
-          m + n
-      }
+    } yield seq1.toSeq.zip(seq2).foldRight("") {
+      case ((n, Some(v)), m) =>
+        m + n + v
+      case ((n, _), m) =>
+        m + n
     }
   }
 
@@ -55,10 +53,14 @@ trait BaseGenerators {
   }
 
   def intsLargerThanMaxValue: Gen[BigInt] =
-    arbitrary[BigInt] suchThat (x => x > Int.MaxValue)
+    arbitrary[BigInt] suchThat (
+      x => x > Int.MaxValue
+    )
 
   def intsSmallerThanMinValue: Gen[BigInt] =
-    arbitrary[BigInt] suchThat (x => x < Int.MinValue)
+    arbitrary[BigInt] suchThat (
+      x => x < Int.MinValue
+    )
 
   def nonNumerics: Gen[String] =
     alphaStr suchThat (_.nonEmpty)

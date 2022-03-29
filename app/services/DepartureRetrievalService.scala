@@ -40,7 +40,8 @@ private[services] class DepartureRetrievalService @Inject()(repository: Departur
     }
 
   def getDepartureAndAuditDeletedDepartures(departureId: DepartureId, messageResponse: MessageResponse, xml: NodeSeq)(
-    implicit hc: HeaderCarrier): EitherT[Future, ErrorState, Departure] =
+    implicit
+    hc: HeaderCarrier): EitherT[Future, ErrorState, Departure] =
     EitherT(
       getDepartureById(departureId)
     ).leftSemiflatTap {

@@ -24,17 +24,17 @@ import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 class DepartureStatusSpec extends SpecBase with ScalaCheckDrivenPropertyChecks with ScalaCheckPropertyChecks with ModelGenerators {
 
   "DepartureStatus.values must contain" - {
-    "Initialized" in { DepartureStatus.values.contains(DepartureStatus.Initialized) }
-    "DepartureSubmitted" in { DepartureStatus.values.contains(DepartureStatus.DepartureSubmitted) }
-    "MrnAllocated" in { DepartureStatus.values.contains(DepartureStatus.MrnAllocated) }
-    "PositiveAcknowledgement" in { DepartureStatus.values.contains(DepartureStatus.PositiveAcknowledgement) }
-    "DepartureRejected" in { DepartureStatus.values.contains(DepartureStatus.DepartureRejected) }
-    "ControlDecisionNotification" in { DepartureStatus.values.contains(DepartureStatus.ControlDecisionNotification) }
-    "ReleaseForTransit" in { DepartureStatus.values.contains(DepartureStatus.ReleaseForTransit) }
-    "NoReleaseForTransit" in { DepartureStatus.values.contains(DepartureStatus.NoReleaseForTransit) }
-    "DeclarationCancellationRequest" in { DepartureStatus.values.contains(DepartureStatus.DeclarationCancellationRequest) }
-    "CancellationDecision" in { DepartureStatus.values.contains(DepartureStatus.CancellationDecision) }
-    "WriteOffNotification" in { DepartureStatus.values.contains(DepartureStatus.WriteOffNotification) }
+    "Initialized" in DepartureStatus.values.contains(DepartureStatus.Initialized)
+    "DepartureSubmitted" in DepartureStatus.values.contains(DepartureStatus.DepartureSubmitted)
+    "MrnAllocated" in DepartureStatus.values.contains(DepartureStatus.MrnAllocated)
+    "PositiveAcknowledgement" in DepartureStatus.values.contains(DepartureStatus.PositiveAcknowledgement)
+    "DepartureRejected" in DepartureStatus.values.contains(DepartureStatus.DepartureRejected)
+    "ControlDecisionNotification" in DepartureStatus.values.contains(DepartureStatus.ControlDecisionNotification)
+    "ReleaseForTransit" in DepartureStatus.values.contains(DepartureStatus.ReleaseForTransit)
+    "NoReleaseForTransit" in DepartureStatus.values.contains(DepartureStatus.NoReleaseForTransit)
+    "DeclarationCancellationRequest" in DepartureStatus.values.contains(DepartureStatus.DeclarationCancellationRequest)
+    "CancellationDecision" in DepartureStatus.values.contains(DepartureStatus.CancellationDecision)
+    "WriteOffNotification" in DepartureStatus.values.contains(DepartureStatus.WriteOffNotification)
   }
 
 }

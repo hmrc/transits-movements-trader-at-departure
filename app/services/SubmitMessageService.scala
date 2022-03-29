@@ -42,9 +42,8 @@ class SubmitMessageService @Inject()(
 )(implicit clock: Clock, ec: ExecutionContext)
     extends Logging {
 
-  def submitMessage(departureId: DepartureId, message: MessageWithStatus, channelType: ChannelType)(
-    implicit hc: HeaderCarrier
-  ): Future[SubmissionProcessingResult] =
+  def submitMessage(departureId: DepartureId, message: MessageWithStatus, channelType: ChannelType)(implicit
+                                                                                                    hc: HeaderCarrier): Future[SubmissionProcessingResult] =
     departureRepository
       .addNewMessage(departureId, message)
       .flatMap {

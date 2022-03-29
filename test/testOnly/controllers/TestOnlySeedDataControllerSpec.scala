@@ -74,12 +74,16 @@ class TestOnlySeedDataControllerSpec extends SpecBase with ScalaCheckPropertyChe
 
         val request: FakeRequest[AnyContentAsJson] = FakeRequest(POST, testOnly.controllers.routes.TestOnlySeedDataController.seedData.url)
           .withHeaders("channel" -> ChannelType.Web.toString)
-          .withJsonBody(Json.parse("""
+          .withJsonBody(
+            Json
+              .parse("""
                                      |{
                                      |  "numberOfUsers": 100,
                                      |  "movementsPerUser": 10,
                                      |  "startDepartureId": 10
-                                     |}""".stripMargin).as[JsObject])
+                                     |}""".stripMargin)
+              .as[JsObject]
+          )
 
         val result = route(app, request).value
 
@@ -105,13 +109,17 @@ class TestOnlySeedDataControllerSpec extends SpecBase with ScalaCheckPropertyChe
 
         val request: FakeRequest[AnyContentAsJson] = FakeRequest(POST, testOnly.controllers.routes.TestOnlySeedDataController.seedData.url)
           .withHeaders("channel" -> ChannelType.Web.toString)
-          .withJsonBody(Json.parse("""
+          .withJsonBody(
+            Json
+              .parse("""
                                      |{
                                      |  "startEori": "ZZ000000000021",
                                      |  "numberOfUsers": 100,
                                      |  "movementsPerUser": 10,
                                      |  "startDepartureId": 10
-                                     |}""".stripMargin).as[JsObject])
+                                     |}""".stripMargin)
+              .as[JsObject]
+          )
 
         val result = route(app, request).value
 

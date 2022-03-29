@@ -28,7 +28,7 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class FakeAuthenticateActionProvider @Inject()(defaultActionBuilder: DefaultActionBuilder, auth: FakeAuthenticateAction)() extends AuthenticateActionProvider {
+class FakeAuthenticateActionProvider @Inject() (defaultActionBuilder: DefaultActionBuilder, auth: FakeAuthenticateAction)() extends AuthenticateActionProvider {
 
   override def apply(): ActionBuilder[AuthenticatedRequest, AnyContent] =
     defaultActionBuilder andThen auth

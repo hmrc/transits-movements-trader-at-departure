@@ -26,6 +26,7 @@ sealed trait MessageStatus {
 object MessageStatus extends Enumerable.Implicits {
 
   case object SubmissionPending extends MessageStatus {
+
     override def transition(event: EisSubmissionResult): MessageStatus = event match {
       case EisSubmissionSuccessful => SubmissionSucceeded
       case _                       => SubmissionFailed
@@ -33,6 +34,7 @@ object MessageStatus extends Enumerable.Implicits {
   }
 
   case object SubmissionFailed extends MessageStatus {
+
     override def transition(event: EisSubmissionResult): MessageStatus = event match {
       case EisSubmissionSuccessful => SubmissionSucceeded
       case _                       => SubmissionFailed
@@ -50,5 +52,9 @@ object MessageStatus extends Enumerable.Implicits {
   )
 
   implicit val enumerable: Enumerable[MessageStatus] =
-    Enumerable(values.map(v => v.toString -> v): _*)
+    Enumerable(
+      values.map(
+        v => v.toString -> v
+      ): _*
+    )
 }

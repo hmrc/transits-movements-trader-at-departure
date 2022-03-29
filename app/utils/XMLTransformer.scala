@@ -54,6 +54,7 @@ object XMLTransformer extends Logging {
 
   private def createRuleTransformer(existingNode: String, key: String, value: String): RuleTransformer =
     new RuleTransformer(new RewriteRule {
+
       override def transform(n: Node): Seq[Node] = n match {
         case elem: Elem if elem.label.equalsIgnoreCase(key) =>
           NodeSeq.Empty

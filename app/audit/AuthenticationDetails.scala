@@ -23,6 +23,7 @@ import play.api.libs.json.OWrites
 case class AuthenticationDetails(channel: ChannelType, enrolmentType: String)
 
 object AuthenticationDetails {
+
   implicit val writes: OWrites[AuthenticationDetails] = (details: AuthenticationDetails) => {
     Json.obj(
       "channel"       -> details.channel,

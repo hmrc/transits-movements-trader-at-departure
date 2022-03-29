@@ -53,6 +53,9 @@ private[services] class LockService @Inject()(
       _       <- unlockDeparture(departureId)
     } yield perform) leftFlatMap {
       case e @ DepartureAlreadyLocked(_) => EitherT.fromEither(Left(e))
-      case e                             => unlockDeparture(departureId).transform(_ => Left(e))
+      case e =>
+        unlockDeparture(departureId).transform(
+          _ => Left(e)
+        )
     }
 }

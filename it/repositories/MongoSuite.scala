@@ -20,8 +20,10 @@ import com.typesafe.config.ConfigFactory
 import migrations.MigrationRunnerImpl
 import org.scalatest._
 import org.scalatest.concurrent._
-import org.scalatest.time.{Seconds, Span}
-import play.api.{Application, Configuration}
+import org.scalatest.time.Seconds
+import org.scalatest.time.Span
+import play.api.Application
+import play.api.Configuration
 import reactivemongo.api._
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -29,14 +31,18 @@ import scala.concurrent.Future
 
 object MongoSuite {
 
-  private lazy val config = Configuration(ConfigFactory.load(System.getProperty(
-    "config.resource"
-  )))
+  private lazy val config = Configuration(
+    ConfigFactory.load(
+      System.getProperty(
+        "config.resource"
+      )
+    )
+  )
 
-  private lazy val parsedUri =  
+  private lazy val parsedUri =
     MongoConnection.fromString(config.get[String]("mongodb.uri"))
-  
-  lazy val connection = parsedUri.flatMap {AsyncDriver().connect(_)}
+
+  lazy val connection = parsedUri.flatMap(AsyncDriver().connect(_))
 }
 
 trait MongoSuite extends ScalaFutures {
@@ -47,20 +53,23 @@ trait MongoSuite extends ScalaFutures {
   def started(app: Application): Future[Unit] = {
 
     val departureRepository = app.injector.instanceOf[DepartureRepository]
-    val lockRepository = app.injector.instanceOf[LockRepository]
-    val migrationRunner = app.injector.instanceOf[MigrationRunnerImpl]
+    val lockRepository      = app.injector.instanceOf[LockRepository]
+    val migrationRunner     = app.injector.instanceOf[MigrationRunnerImpl]
 
     val services = Seq(departureRepository.started, lockRepository.started, migrationRunner.migrationsCompleted)
 
-    Future.sequence(services).map(_ => ())
+    Future
+      .sequence(services)
+      .map(
+        _ => ()
+      )
   }
 
-  def database: Future[DefaultDB] = {
+  def database: Future[DefaultDB] =
     for {
-      uri <-MongoSuite.parsedUri
+      uri        <- MongoSuite.parsedUri
       connection <- MongoSuite.connection
-      database <- connection.database(uri.db.get)
+      database   <- connection.database(uri.db.get)
     } yield database
-  }
 
 }

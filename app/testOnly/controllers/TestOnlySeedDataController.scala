@@ -91,9 +91,14 @@ class TestOnlySeedDataController @Inject()(
           .grouped(50)
           .map(repository.bulkInsert)
       }
-      .flatMap(_ => updateLatestId())
+      .flatMap(
+        _ => updateLatestId()
+      )
       .recoverWith {
-        case e => updateLatestId().flatMap(_ => Future.failed(e))
+        case e =>
+          updateLatestId().flatMap(
+            _ => Future.failed(e)
+          )
       }
 
 }

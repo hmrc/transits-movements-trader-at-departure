@@ -24,7 +24,9 @@ import scala.util.Try
 case class DepartureId(index: Int) {}
 
 object DepartureId {
+
   implicit val formatsDepartureId: Format[DepartureId] = new Format[DepartureId] {
+
     override def reads(json: JsValue): JsResult[DepartureId] = json match {
       case JsNumber(number) =>
         Try(number.toInt)
@@ -40,6 +42,7 @@ object DepartureId {
   }
 
   implicit lazy val pathBindable: PathBindable[DepartureId] = new PathBindable[DepartureId] {
+
     override def bind(key: String, value: String): Either[String, DepartureId] =
       implicitly[PathBindable[Int]].bind(key, value).right.map(DepartureId(_))
 

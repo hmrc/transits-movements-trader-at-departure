@@ -57,13 +57,18 @@ class WeekLongCounterSpec extends AnyFreeSpec with Matchers {
                 val incrementRange = Range(0, increment);
 
                 // when we iterate over the number of days we want to advance
-                Range(0, value).foreach(_ => {
-                  incrementRange.foreach(_ => sut.inc())
-                  clock.wrappedClock = Clock.fixed(clock.wrappedClock.instant().plus(1, ChronoUnit.DAYS), clock.wrappedClock.getZone)
-                })
+                Range(0, value).foreach {
+                  _ =>
+                    incrementRange.foreach(
+                      _ => sut.inc()
+                    )
+                    clock.wrappedClock = Clock.fixed(clock.wrappedClock.instant().plus(1, ChronoUnit.DAYS), clock.wrappedClock.getZone)
+                }
 
                 // plus the final day
-                incrementRange.foreach(_ => sut.inc())
+                incrementRange.foreach(
+                  _ => sut.inc()
+                )
 
                 // then we should get the number of days we incremented on up to a maximum of a week, multiplied by the number of increments per day
                 sut.getCount mustBe math.min(value + 1, 7) * increment
@@ -96,13 +101,18 @@ class WeekLongCounterSpec extends AnyFreeSpec with Matchers {
                 val incrementRange = Range(0, increment);
 
                 // when we iterate over the number of half days we want to advance
-                Range(0, value).foreach(_ => {
-                  incrementRange.foreach(_ => sut.inc())
-                  clock.wrappedClock = Clock.fixed(clock.wrappedClock.instant().plus(12, ChronoUnit.HOURS), clock.wrappedClock.getZone)
-                })
+                Range(0, value).foreach {
+                  _ =>
+                    incrementRange.foreach(
+                      _ => sut.inc()
+                    )
+                    clock.wrappedClock = Clock.fixed(clock.wrappedClock.instant().plus(12, ChronoUnit.HOURS), clock.wrappedClock.getZone)
+                }
 
                 // plus the final half day
-                incrementRange.foreach(_ => sut.inc())
+                incrementRange.foreach(
+                  _ => sut.inc()
+                )
 
                 sut.getCount mustBe expectedMaximum
               }
@@ -139,8 +149,7 @@ class WeekLongCounterSpec extends AnyFreeSpec with Matchers {
 
 }
 
-/**
-  * Used for swapping out clocks in testing to test various behaviours.
+/** Used for swapping out clocks in testing to test various behaviours.
   *
   * @param wrappedClock The initial [[java.time.Clock]] to use.
   */

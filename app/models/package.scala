@@ -17,6 +17,7 @@
 import play.api.libs.json._
 
 package object models {
+
   implicit class RichJsObject(obj: JsObject) {
 
     def map(f: (String, JsValue) => (String, JsValue)): JsObject =
@@ -36,7 +37,9 @@ package object models {
           k -> v.filterNulls
         case (k, v) =>
           k -> v
-      }.filterNot((_, v) => v == JsNull || v == Json.obj() || v == JsArray())
+      }.filterNot(
+        (_, v) => v == JsNull || v == Json.obj() || v == JsArray()
+      )
   }
 
   implicit class RichJsArray(arr: JsArray) {
@@ -55,6 +58,8 @@ package object models {
         case v: JsObject => v.filterNulls
         case v: JsArray  => v.filterNulls
         case v           => v
-      }.filterNot(v => v == JsNull || v == Json.obj() || v == JsArray())
+      }.filterNot(
+        v => v == JsNull || v == Json.obj() || v == JsArray()
+      )
   }
 }

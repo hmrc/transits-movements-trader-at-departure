@@ -69,11 +69,11 @@ trait SpecBase extends AnyFreeSpec with Matchers with MockitoSugar with ScalaFut
         normalisedA == normalisedX
 
       case _ => false
-  }
+    }
 
   implicit val departureEquality: Equality[Departure] = (a: Departure, b: Any) =>
     b match {
-      case x: Departure => {
+      case x: Departure =>
         val unAppliedA = Departure.unapply(a).get
         val unAppliedX = Departure.unapply(x).get
 
@@ -90,7 +90,6 @@ trait SpecBase extends AnyFreeSpec with Matchers with MockitoSugar with ScalaFut
         val normalisedX = unAppliedX.copy(_9 = normalisedMessagesX)
 
         normalisedA == normalisedX
-      }
       case _ => false
-  }
+    }
 }

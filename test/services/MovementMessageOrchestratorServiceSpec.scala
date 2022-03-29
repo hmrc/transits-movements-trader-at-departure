@@ -56,6 +56,7 @@ import scala.xml.NodeSeq
 class MovementMessageOrchestratorServiceSpec extends SpecBase {
 
   class Setup {
+
     case object MockLockService extends LockService(null)(ExecutionContext.global) {
       override def withLock[T](departureId: DepartureId)(action: => EitherT[Future, ErrorState, T]): EitherT[Future, ErrorState, T] = action
     }

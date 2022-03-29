@@ -173,7 +173,7 @@ class XmlMessageParserSpec extends SpecBase with EitherValues {
       val movement =
         <CC015B>
           <DatOfPreMES9>{Format.dateFormatted(dateOfPrep)}</DatOfPreMES9>
-          <TimOfPreMES10>{Format.timeFormatted(timeOfPrep)  ++ "1" }</TimOfPreMES10>
+          <TimOfPreMES10>{Format.timeFormatted(timeOfPrep) ++ "1"}</TimOfPreMES10>
         </CC015B>
 
       val result = XmlMessageParser.dateTimeOfPrepR(movement)

@@ -56,7 +56,9 @@ class LockRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfig)(im
       .flatMap {
         _.indexesManager.ensure(createdIndex)
       }
-      .map(_ => ())
+      .map(
+        _ => ()
+      )
 
   def lock(departureId: DepartureId): Future[Boolean] = {
 
@@ -68,7 +70,9 @@ class LockRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfig)(im
     collection.flatMap {
       _.insert(ordered = false)
         .one(lock)
-        .map(_ => true)
+        .map(
+          _ => true
+        )
     } recover {
       case e: LastError if e.code.contains(documentExistsErrorCodeValue) =>
         false
@@ -85,7 +89,9 @@ class LockRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfig)(im
         maxTime = None,
         collation = None,
         arrayFilters = Nil
-      ).map(_ => ())
+      ).map(
+        _ => ()
+      )
     }
 }
 

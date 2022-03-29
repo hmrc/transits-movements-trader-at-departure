@@ -18,15 +18,26 @@ package api
 
 import api.helpers.ApiSpecBase
 import cats.data.NonEmptyList
-import models.{ChannelType, Departure, DepartureId, MessageId, MessageStatus, MessageType, MessageWithStatus, MessageWithoutStatus}
+import models.ChannelType
+import models.Departure
+import models.DepartureId
+import models.MessageId
+import models.MessageStatus
+import models.MessageType
+import models.MessageWithStatus
+import models.MessageWithoutStatus
 import play.api.Application
-import play.api.http.{ContentTypes, HeaderNames}
+import play.api.http.ContentTypes
+import play.api.http.HeaderNames
 import play.api.libs.ws.WSClient
-import play.api.test.Helpers.{BAD_GATEWAY, OK}
+import play.api.test.Helpers.BAD_GATEWAY
+import play.api.test.Helpers.OK
 import repositories.DepartureRepository
 import utils.JsonHelper
 
-import java.nio.file.{Files, Path, Paths}
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
 import java.time.LocalDateTime
 import java.util.UUID
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -49,7 +60,7 @@ class PDFRetrievalControllerISpec extends ApiSpecBase with JsonHelper {
     "should return a Tsad PDF if all data is present" in {
 
       val requestId: String = UUID.randomUUID().toString
-      val clientId: String = UUID.randomUUID().toString
+      val clientId: String  = UUID.randomUUID().toString
 
       val departure: Departure = Departure(
         DepartureId(12),
@@ -105,7 +116,8 @@ class PDFRetrievalControllerISpec extends ApiSpecBase with JsonHelper {
         url = "/transit-movements-trader-manage-documents/transit-security-accompanying-document",
         body = pdfFile,
         requestId = requestId,
-        extraHeaders = Seq(HeaderNames.CONTENT_TYPE -> ContentTypes.XML, HeaderNames.USER_AGENT -> "transits-movements-trader-at-departure", "X-Client-Id" -> clientId)
+        extraHeaders =
+          Seq(HeaderNames.CONTENT_TYPE -> ContentTypes.XML, HeaderNames.USER_AGENT -> "transits-movements-trader-at-departure", "X-Client-Id" -> clientId)
       )
 
       val response = wsClient
@@ -121,7 +133,7 @@ class PDFRetrievalControllerISpec extends ApiSpecBase with JsonHelper {
     "should return a Tad PDF if all data is present" in {
 
       val requestId: String = UUID.randomUUID().toString
-      val clientId: String = UUID.randomUUID().toString
+      val clientId: String  = UUID.randomUUID().toString
 
       val departure: Departure = Departure(
         DepartureId(12),
@@ -177,7 +189,8 @@ class PDFRetrievalControllerISpec extends ApiSpecBase with JsonHelper {
         url = "/transit-movements-trader-manage-documents/transit-accompanying-document",
         body = pdfFile,
         requestId = requestId,
-        extraHeaders = Seq(HeaderNames.CONTENT_TYPE -> ContentTypes.XML, HeaderNames.USER_AGENT -> "transits-movements-trader-at-departure", "X-Client-Id" -> clientId)
+        extraHeaders =
+          Seq(HeaderNames.CONTENT_TYPE -> ContentTypes.XML, HeaderNames.USER_AGENT -> "transits-movements-trader-at-departure", "X-Client-Id" -> clientId)
       )
 
       val response = wsClient
@@ -193,7 +206,7 @@ class PDFRetrievalControllerISpec extends ApiSpecBase with JsonHelper {
     "should return a BAD_GATEWAY if the call to the manage document service returns and unexpected result" in {
 
       val requestId: String = UUID.randomUUID().toString
-      val clientId: String = UUID.randomUUID().toString
+      val clientId: String  = UUID.randomUUID().toString
 
       val departure: Departure = Departure(
         DepartureId(12),
@@ -241,7 +254,8 @@ class PDFRetrievalControllerISpec extends ApiSpecBase with JsonHelper {
         url = "/transit-movements-trader-manage-documents/transit-accompanying-document",
         body = "Error Something Went Wrong".getBytes(),
         requestId = requestId,
-        extraHeaders = Seq(HeaderNames.CONTENT_TYPE -> ContentTypes.XML, HeaderNames.USER_AGENT -> "transits-movements-trader-at-departure", "X-Client-Id" -> clientId),
+        extraHeaders =
+          Seq(HeaderNames.CONTENT_TYPE -> ContentTypes.XML, HeaderNames.USER_AGENT -> "transits-movements-trader-at-departure", "X-Client-Id" -> clientId),
         status = 500
       )
 

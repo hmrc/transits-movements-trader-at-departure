@@ -322,7 +322,7 @@ class MessageTypeSpec extends SpecBase with ScalaCheckDrivenPropertyChecks with 
         ReleaseForTransit,
         DeclarationCancellationRequest,
         CancellationDecision,
-        WriteOffNotification,
+        WriteOffNotification
       )
 
       "is greater order than DepartureDeclaration, PositiveAcknowledgement, DeclarationRejected, MrnAllocated, NoReleaseForTransit, Control Decision, GuaranteeNotValid, XMLSubmissionNegativeAcknowledgement" in {
@@ -373,12 +373,12 @@ class MessageTypeSpec extends SpecBase with ScalaCheckDrivenPropertyChecks with 
         "GuaranteeNotValid, " +
         "ReleaseForTransit" in {
 
-        forAll(Gen.oneOf(lesserOrderValues)) {
-          status =>
-            Ordering[MessageType].max(DeclarationCancellationRequest, status) mustBe DeclarationCancellationRequest
-            Ordering[MessageType].max(status, DeclarationCancellationRequest) mustBe DeclarationCancellationRequest
+          forAll(Gen.oneOf(lesserOrderValues)) {
+            status =>
+              Ordering[MessageType].max(DeclarationCancellationRequest, status) mustBe DeclarationCancellationRequest
+              Ordering[MessageType].max(status, DeclarationCancellationRequest) mustBe DeclarationCancellationRequest
+          }
         }
-      }
 
       "in lesser order than any other status" in {
 
@@ -421,12 +421,12 @@ class MessageTypeSpec extends SpecBase with ScalaCheckDrivenPropertyChecks with 
         "XMLSubmissionNegativeAcknowledgement ," +
         "DeclarationCancellationRequest" in {
 
-        forAll(Gen.oneOf(lesserOrderValues)) {
-          status =>
-            Ordering[MessageType].max(CancellationDecision, status) mustBe CancellationDecision
-            Ordering[MessageType].max(status, CancellationDecision) mustBe CancellationDecision
+          forAll(Gen.oneOf(lesserOrderValues)) {
+            status =>
+              Ordering[MessageType].max(CancellationDecision, status) mustBe CancellationDecision
+              Ordering[MessageType].max(status, CancellationDecision) mustBe CancellationDecision
+          }
         }
-      }
 
       "in lesser order than any other status" in {
 
@@ -460,12 +460,12 @@ class MessageTypeSpec extends SpecBase with ScalaCheckDrivenPropertyChecks with 
         "DepartureDeclaration, " +
         "DeclarationCancellationRequest" in {
 
-        forAll(Gen.oneOf(lesserOrderValues)) {
-          status =>
-            Ordering[MessageType].max(XMLSubmissionNegativeAcknowledgement, status) mustBe XMLSubmissionNegativeAcknowledgement
-            Ordering[MessageType].max(status, XMLSubmissionNegativeAcknowledgement) mustBe XMLSubmissionNegativeAcknowledgement
+          forAll(Gen.oneOf(lesserOrderValues)) {
+            status =>
+              Ordering[MessageType].max(XMLSubmissionNegativeAcknowledgement, status) mustBe XMLSubmissionNegativeAcknowledgement
+              Ordering[MessageType].max(status, XMLSubmissionNegativeAcknowledgement) mustBe XMLSubmissionNegativeAcknowledgement
+          }
         }
-      }
 
       "in lesser order than any other status" in {
 
@@ -538,5 +538,7 @@ class MessageTypeSpec extends SpecBase with ScalaCheckDrivenPropertyChecks with 
   }
 
   def messageTypesExcluding(exclude: MessageType*): Gen[MessageType] =
-    arbitrary[MessageType].retryUntil(x => !exclude.toSet.contains(x))
+    arbitrary[MessageType].retryUntil(
+      x => !exclude.toSet.contains(x)
+    )
 }
