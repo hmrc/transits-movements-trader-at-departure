@@ -19,26 +19,24 @@ package controllers
 import audit.AuditService
 import audit.AuditType
 import base.SpecBase
-import cats.data.Ior
 import cats.data.NonEmptyList
 import config.Constants
 import connectors.MessageConnector.EisSubmissionResult.ErrorInPayload
 import generators.ModelGenerators
 import models.Box
 import models.BoxId
-import models.ChannelType.Api
-import models.ChannelType.Web
 import models.Departure
 import models.DepartureId
 import models.DepartureWithoutMessages
-import models.EORINumber
 import models.MessageId
 import models.MessageSender
-import models.MessageStatus.SubmissionPending
 import models.MessageType
 import models.MessageWithStatus
 import models.MovementReferenceNumber
 import models.SubmissionProcessingResult
+import models.ChannelType.Api
+import models.ChannelType.Web
+import models.MessageStatus.SubmissionPending
 import models.SubmissionProcessingResult.SubmissionFailureExternal
 import models.SubmissionProcessingResult.SubmissionFailureInternal
 import models.SubmissionProcessingResult.SubmissionFailureRejected
@@ -177,7 +175,8 @@ class DeparturesControllerSpec
 
           verify(mockAuditService, times(1)).auditDeclarationWithStatistics(
             eqTo(AuditType.DepartureDeclarationSubmitted),
-            eqTo(Ior.right(EORINumber(newDeparture.eoriNumber))),
+            any(),
+            any(),
             any(),
             any(),
             any(),
@@ -186,7 +185,8 @@ class DeparturesControllerSpec
 
           verify(mockAuditService, times(1)).auditDeclarationWithStatistics(
             eqTo(AuditType.MesSenMES3Added),
-            eqTo(Ior.right(EORINumber(newDeparture.eoriNumber))),
+            any(),
+            any(),
             any(),
             any(),
             any(),
@@ -241,7 +241,8 @@ class DeparturesControllerSpec
 
           verify(mockAuditService, times(1)).auditDeclarationWithStatistics(
             eqTo(AuditType.DepartureDeclarationSubmitted),
-            eqTo(Ior.right(EORINumber(newDeparture.eoriNumber))),
+            any(),
+            any(),
             any(),
             any(),
             any(),
@@ -250,7 +251,8 @@ class DeparturesControllerSpec
 
           verify(mockAuditService, times(1)).auditDeclarationWithStatistics(
             eqTo(AuditType.MesSenMES3Added),
-            eqTo(Ior.right(EORINumber(newDeparture.eoriNumber))),
+            any(),
+            any(),
             any(),
             any(),
             any(),

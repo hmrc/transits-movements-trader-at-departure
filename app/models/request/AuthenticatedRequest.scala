@@ -16,19 +16,18 @@
 
 package models.request
 
-import cats.data.Ior
 import models.ChannelType
 import models.Departure
+import models.DepartureMessages
 import models.DepartureWithoutMessages
-import models.EORINumber
-import models.TURN
+import models.EnrolmentId
 import play.api.mvc.Request
 import play.api.mvc.WrappedRequest
-import models.DepartureMessages
 
-case class AuthenticatedRequest[A](request: Request[A], channel: ChannelType, enrolmentId: Ior[TURN, EORINumber]) extends WrappedRequest[A](request) {
+case class AuthenticatedRequest[A](request: Request[A], channel: ChannelType, enrolmentId: EnrolmentId) extends WrappedRequest[A](request) {
+
   private def matchesEnrolmentId(eoriNumber: String): Boolean =
-    enrolmentId.fold(
+    enrolmentId.value.fold(
       vatReg => eoriNumber == vatReg.value,
       eori => eoriNumber == eori.value,
       (vatReg, eori) =>

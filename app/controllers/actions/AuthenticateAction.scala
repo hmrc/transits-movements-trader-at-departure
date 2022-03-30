@@ -25,6 +25,7 @@ import config.Constants._
 import metrics.HasMetrics
 import models.ChannelType
 import models.EORINumber
+import models.EnrolmentId
 import models.TURN
 import models.request.AuthenticatedRequest
 import play.api.Logging
@@ -44,7 +45,8 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
 private[actions] class AuthenticateAction @Inject()(override val authConnector: AuthConnector, val metrics: Metrics, auditService: AuditService)(
-  implicit val executionContext: ExecutionContext)
+  implicit
+  val executionContext: ExecutionContext)
     extends ActionRefiner[Request, AuthenticatedRequest]
     with AuthorisedFunctions
     with Logging
@@ -84,11 +86,10 @@ private[actions] class AuthenticateAction @Inject()(override val authConnector: 
             Ior
               .fromOptions(legacyEnrolmentId, newEnrolmentId)
               .map {
-                enrolmentId =>
-                  {
-                    track(channel, enrolmentId)
-                    Future.successful(Right(AuthenticatedRequest(request, channel, enrolmentId)))
-                  }
+                id =>
+                  val enrolmentId = EnrolmentId(id)
+                  track(channel, enrolmentId)
+                  Future.successful(Right(AuthenticatedRequest(request, channel, enrolmentId)))
               }
               .getOrElse {
                 Future.failed(InsufficientEnrolments(s"Unable to retrieve enrolment for either $NewEnrolmentKey or $LegacyEnrolmentKey"))
@@ -104,13 +105,9 @@ private[actions] class AuthenticateAction @Inject()(override val authConnector: 
       Left(Unauthorized)
   }
 
-  private def track(channel: ChannelType, enrolmentId: Ior[TURN, EORINumber])(implicit hc: HeaderCarrier) = {
+  private def track(channel: ChannelType, enrolmentId: EnrolmentId)(implicit hc: HeaderCarrier) = {
 
-    val enrolmentType = enrolmentId.fold(
-      _ => "Legacy",
-      _ => "Modern",
-      (_, _) => "Modern"
-    )
+    val enrolmentType = if (enrolmentId.isModern) "Modern" else "Legacy"
 
     val message = s"Auth Successful: $channel:$enrolmentType"
     logger.info(message)

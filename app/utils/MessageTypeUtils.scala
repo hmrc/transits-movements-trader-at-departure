@@ -31,7 +31,12 @@ object MessageTypeUtils extends Logging {
     drop: Int
   )(implicit mto: Ordering[MessageType]): Option[MessageTypeWithTime] = {
     implicit val ldto: Ordering[LocalDateTime] = _ compareTo _
-    messages.sortBy(m => (m.dateTime, m.messageType)).dropRight(drop).lastOption
+    messages
+      .sortBy(
+        m => (m.dateTime, m.messageType)
+      )
+      .dropRight(drop)
+      .lastOption
   }
 
   private def getLatestMessage(messages: List[MessageTypeWithTime]): Option[MessageTypeWithTime] =

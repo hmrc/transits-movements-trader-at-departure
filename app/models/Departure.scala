@@ -61,7 +61,9 @@ case class Departure(
   def nextMessageId: MessageId = MessageId(messages.length + 1)
 
   def messagesWithId: NonEmptyList[(Message, MessageId)] =
-    messages.map(msg => msg -> msg.messageId)
+    messages.map(
+      msg => msg -> msg.messageId
+    )
 
   override val messagesList: List[MessageTypeWithTime] = messages.toList
 }

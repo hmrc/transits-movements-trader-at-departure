@@ -251,7 +251,9 @@ class HasMetricsSpec extends AsyncWordSpecLike with Matchers with OptionValues w
             .withMetricsTimerResult(TestMetric) {
               Future.failed(new Exception)
             }
-            .transformWith(_ => verifyCompletedWithFailure(metrics))
+            .transformWith(
+              _ => verifyCompletedWithFailure(metrics)
+            )
       }
 
       "increment failure counter when the user throws an exception constructing their code block" in withTestMetrics {

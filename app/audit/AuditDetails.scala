@@ -54,12 +54,14 @@ object UnauthenticatedAuditDetails {
   )(unlift(UnauthenticatedAuditDetails.unapply))
 }
 
-case class DeclarationAuditDetails(channel: ChannelType,
-                                   customerId: String,
-                                   enrolmentType: String,
-                                   message: JsObject,
-                                   statistics: JsObject,
-                                   boxId: Option[BoxId])
+case class DeclarationAuditDetails(
+  channel: ChannelType,
+  customerId: String,
+  enrolmentType: String,
+  message: JsObject,
+  statistics: JsObject,
+  boxId: Option[BoxId]
+)
 
 object DeclarationAuditDetails {
 

@@ -43,32 +43,39 @@ class MovementMessageOrchestratorService @Inject()(
   saveMessageService: SaveMessageService,
   auditService: AuditService,
   pushPullNotificationService: PushPullNotificationService,
-  val metrics: Metrics,
+  val metrics: Metrics
 )(implicit ec: ExecutionContext)
     extends HasMetrics
     with Logging {
 
-  private def validateAndSaveMessage(messageResponse: MessageResponse,
-                                     xml: NodeSeq,
-                                     departure: Departure,
-                                     messageSender: MessageSender): EitherT[Future, ErrorState, SubmissionSuccess] =
+  private def validateAndSaveMessage(
+    messageResponse: MessageResponse,
+    xml: NodeSeq,
+    departure: Departure,
+    messageSender: MessageSender
+  ): EitherT[Future, ErrorState, SubmissionSuccess] =
     messageResponse match {
       case MrnAllocatedResponse =>
         for {
-          mrn <- EitherT.fromEither(XmlMessageParser.mrnR(xml).left.map[ErrorState](error => XMLMRNError(error.message)))
+          mrn <- EitherT.fromEither(
+            XmlMessageParser
+              .mrnR(xml)
+              .left
+              .map[ErrorState](
+                error => XMLMRNError(error.message)
+              )
+          )
           savedMessage <- EitherT(
             saveMessageService
               .validateXmlSaveMessageUpdateMrn(departure.nextMessageId, xml, messageSender, messageResponse, mrn)
-              .map(_.toEither(departure)))
+              .map(_.toEither(departure))
+          )
         } yield savedMessage
       case _ =>
         EitherT(saveMessageService.validateXmlAndSaveMessage(departure.nextMessageId, xml, messageSender, messageResponse).map(_.toEither(departure)))
     }
 
-  def saveNCTSMessage(messageSender: MessageSender)(
-    implicit hc: HeaderCarrier,
-    request: Request[NodeSeq]
-  ): Future[Either[ErrorState, SubmissionSuccess]] =
+  def saveNCTSMessage(messageSender: MessageSender)(implicit hc: HeaderCarrier, request: Request[NodeSeq]): Future[Either[ErrorState, SubmissionSuccess]] =
     lockService
       .withLock(messageSender.departureId)(for {
         inboundMessageResponse <- EitherT.fromEither(MessageResponse.fromRequest(request))

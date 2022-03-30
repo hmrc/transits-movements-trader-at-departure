@@ -40,15 +40,18 @@ import scala.concurrent.Future
 class DepartureServiceSpec extends SpecBase with JsonHelper with IntegrationPatience with StreamlinedXmlEquality {
 
   "createDeparture" - {
+
+    val eori        = "eoriNumber"
+    val enrolmentId = EnrolmentId(Ior.right(EORINumber(eori)))
+
     "creates a departure declaration with an internal ref number and a mrn, date and time of creation from the message submitted with a message id of 1 and next correlation id of 2" in {
       val dateOfPrep     = LocalDate.now()
       val timeOfPrep     = LocalTime.of(1, 1)
       val dateTime       = LocalDateTime.of(dateOfPrep, timeOfPrep)
       implicit val clock = Clock.fixed(dateTime.toInstant(ZoneOffset.UTC), ZoneOffset.UTC)
 
-      val id   = DepartureId(1)
-      val ref  = "ref"
-      val eori = "eoriNumber"
+      val id  = DepartureId(1)
+      val ref = "ref"
 
       val mockDepartureIdRepository = mock[DepartureIdRepository]
       when(mockDepartureIdRepository.nextId).thenReturn(Future.successful(id))
@@ -103,7 +106,7 @@ class DepartureServiceSpec extends SpecBase with JsonHelper with IntegrationPati
         notificationBox = None
       )
 
-      val result = service.createDeparture(Ior.right(EORINumber(eori)), inputMovement, Api, None).futureValue
+      val result = service.createDeparture(enrolmentId, inputMovement, Api, None).futureValue
 
       result.right.get mustEqual expectedDeparture
     }
@@ -112,7 +115,6 @@ class DepartureServiceSpec extends SpecBase with JsonHelper with IntegrationPati
 
       val id         = DepartureId(1)
       val ref        = "ref"
-      val eori       = "eoriNumber"
       val dateOfPrep = LocalDate.now()
       val timeOfPrep = LocalTime.of(1, 1)
 
@@ -137,7 +139,7 @@ class DepartureServiceSpec extends SpecBase with JsonHelper with IntegrationPati
           </HEAHEA>
         </Foo>
 
-      service.createDeparture(Ior.right(EORINumber(eori)), invalidPayload, Api, None).futureValue.isLeft mustBe true
+      service.createDeparture(enrolmentId, invalidPayload, Api, None).futureValue.isLeft mustBe true
     }
   }
 

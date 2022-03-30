@@ -51,7 +51,11 @@ class PDFRetrievalService @Inject()(
       EitherT(manageDocumentsConnector.getTadPDF(ie29Message.message))
     }
 
-    pdfResponse.leftMap(_ => UnexpectedError).value
+    pdfResponse
+      .leftMap(
+        _ => UnexpectedError
+      )
+      .value
   }
 
   def getAccompanyingDocumentPDF(message: Message)(implicit hc: HeaderCarrier): Future[Either[PDFGenerationResponse, PdfDocument]] =

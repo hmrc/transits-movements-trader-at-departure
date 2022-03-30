@@ -41,9 +41,9 @@ class DepartureMessageNotificationSpec extends SpecBase with ScalaCheckDrivenPro
   val responseGenerator = Gen.oneOf(MessageResponse.values)
 
   "fromRequest" - {
-    val testBody   = <text></text>
-    val bodyLength = testBody.toString.getBytes(StandardCharsets.UTF_8).length
-
+    val testBody    = <text></text>
+    val bodyLength  = testBody.toString.getBytes(StandardCharsets.UTF_8).length
+    val enrolmentId = EnrolmentId(Ior.right(EORINumber("eori")))
     "produces the expected model" in {
       val response = responseGenerator.sample.value
 
@@ -57,7 +57,7 @@ class DepartureMessageNotificationSpec extends SpecBase with ScalaCheckDrivenPro
             .withBody[NodeSeq](testBody)
             .withHeaders(HeaderNames.CONTENT_LENGTH -> bodyLength.toString),
           departureWithoutMessages.channel,
-          Ior.right(EORINumber("eori"))
+          enrolmentId
         )
 
       val departureWithoutMessagesRequest = DepartureWithoutMessagesRequest(request, departureWithoutMessages, Api)
@@ -96,7 +96,7 @@ class DepartureMessageNotificationSpec extends SpecBase with ScalaCheckDrivenPro
             .withBody[NodeSeq](testBody)
             .withHeaders(HeaderNames.CONTENT_LENGTH -> "100001"),
           departureWithoutMessages.channel,
-          Ior.right(EORINumber("eori"))
+          enrolmentId
         )
 
       val departureRequest = DepartureWithoutMessagesRequest(request, departureWithoutMessages, Api)

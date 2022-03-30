@@ -148,7 +148,8 @@ class MessagesControllerSpec
         status(result) mustEqual ACCEPTED
 
         header("Location", result).value must be(
-          routes.MessagesController.getMessage(departureWithoutMessages.departureId, MessageId(departureWithoutMessages.nextMessageCorrelationId)).url)
+          routes.MessagesController.getMessage(departureWithoutMessages.departureId, MessageId(departureWithoutMessages.nextMessageCorrelationId)).url
+        )
 
         verify(mockSubmitMessageService, times(1)).submitMessage(
           eqTo(departureWithoutMessages.departureId),
@@ -158,7 +159,7 @@ class MessagesControllerSpec
 
         verify(mockAuditService, times(1)).auditEvent(
           eqTo(DepartureCancellationRequestSubmitted),
-          eqTo(Ior.right(EORINumber(departureWithoutMessages.eoriNumber))),
+          EnrolmentId(eqTo(Ior.right(EORINumber("eori")))),
           any(),
           any()
         )(any())

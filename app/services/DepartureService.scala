@@ -35,17 +35,19 @@ class DepartureService @Inject()(departureIdRepository: DepartureIdRepository)(i
   import XMLTransformer._
   import XmlMessageParser._
 
-  def makeMessageWithStatus(departureId: DepartureId,
-                            messageId: MessageId,
-                            messageCorrelationId: Int,
-                            messageType: MessageType): ReaderT[ParseHandler, NodeSeq, MessageWithStatus] =
+  def makeMessageWithStatus(
+    departureId: DepartureId,
+    messageId: MessageId,
+    messageCorrelationId: Int,
+    messageType: MessageType
+  ): ReaderT[ParseHandler, NodeSeq, MessageWithStatus] =
     for {
       _          <- correctRootNodeR(messageType)
       dateTime   <- dateTimeOfPrepR
       xmlMessage <- updateMesSenMES3(departureId, messageCorrelationId)
     } yield MessageWithStatus(messageId, dateTime, messageType, xmlMessage, SubmissionPending, messageCorrelationId)
 
-  def createDeparture(enrolmentId: Ior[TURN, EORINumber], nodeSeq: NodeSeq, channelType: ChannelType, boxOpt: Option[Box]): Future[ParseHandler[Departure]] =
+  def createDeparture(enrolmentId: EnrolmentId, nodeSeq: NodeSeq, channelType: ChannelType, boxOpt: Option[Box]): Future[ParseHandler[Departure]] =
     departureIdRepository
       .nextId()
       .map {
@@ -59,12 +61,7 @@ class DepartureService @Inject()(departureIdRepository: DepartureIdRepository)(i
             Departure(
               departureId,
               channelType,
-              // Prefer to use EORI number
-              enrolmentId.fold(
-                turn => turn.value,
-                eoriNumber => eoriNumber.value,
-                (_, eoriNumber) => eoriNumber.value
-              ),
+              enrolmentId.customerId,
               None,
               reference,
               dateTime,

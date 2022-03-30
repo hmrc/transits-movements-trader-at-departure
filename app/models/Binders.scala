@@ -21,11 +21,11 @@ import java.time.format.DateTimeFormatter
 import play.api.mvc.QueryStringBindable
 
 object Binders {
-  implicit val offsetDateTimeQueryStringBindable: QueryStringBindable[OffsetDateTime] = {
+
+  implicit val offsetDateTimeQueryStringBindable: QueryStringBindable[OffsetDateTime] =
     new QueryStringBindable.Parsing[OffsetDateTime](
       OffsetDateTime.parse(_),
       dt => DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(dt),
       (param, exc) => s"Cannot parse parameter $param as OffsetDateTime: ${exc.getMessage}"
     )
-  }
 }

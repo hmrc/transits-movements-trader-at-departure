@@ -63,7 +63,8 @@ class XMLTransformerSpec extends AnyFreeSpec with Matchers with StreamlinedXmlEq
         val movement = <node></node>
 
         XMLTransformer.updateMesSenMES3(DepartureId(1), 1)(movement).left.get mustBe MesSenMES3Failure(
-          s"Failed to set MesSenMES3 because SynVerNumMES2 is missing")
+          s"Failed to set MesSenMES3 because SynVerNumMES2 is missing"
+        )
       }
 
       "add MesSenMES3 node if SynVerNumMES2 exists" in {

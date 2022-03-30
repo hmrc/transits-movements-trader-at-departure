@@ -28,15 +28,17 @@ import play.api.libs.json.Json
 import play.api.libs.json.OWrites
 import java.time.OffsetDateTime
 
-case class ResponseDepartureWithMessages(departureId: DepartureId,
-                                         location: String,
-                                         messagesLocation: String,
-                                         movementReferenceNumber: Option[MovementReferenceNumber],
-                                         referenceNumber: String,
-                                         status: DepartureStatus,
-                                         created: LocalDateTime,
-                                         updated: LocalDateTime,
-                                         messages: Seq[ResponseMessage])
+case class ResponseDepartureWithMessages(
+  departureId: DepartureId,
+  location: String,
+  messagesLocation: String,
+  movementReferenceNumber: Option[MovementReferenceNumber],
+  referenceNumber: String,
+  status: DepartureStatus,
+  created: LocalDateTime,
+  updated: LocalDateTime,
+  messages: Seq[ResponseMessage]
+)
 
 object ResponseDepartureWithMessages {
 

@@ -28,10 +28,14 @@ class SeedDataParametersSpec extends SpecBase with ScalaCheckDrivenPropertyCheck
   implicit def dontShrink[A]: Shrink[A] = Shrink.shrinkAny
 
   implicit val orderingSeedEori: Ordering[SeedEori] =
-    Ordering.fromLessThan[SeedEori]((x, y) => x.suffix < y.suffix)
+    Ordering.fromLessThan[SeedEori](
+      (x, y) => x.suffix < y.suffix
+    )
 
   implicit val orderingDepartureId: Ordering[DepartureId] =
-    Ordering.fromLessThan[DepartureId]((x, y) => x.index < y.index)
+    Ordering.fromLessThan[DepartureId](
+      (x, y) => x.index < y.index
+    )
 
   "SeedDataParameters" - {
     "seedData" - {
@@ -117,7 +121,7 @@ class SeedDataParametersSpec extends SpecBase with ScalaCheckDrivenPropertyCheck
             DepartureId(106)
           )
 
-          result must contain theSameElementsInOrderAs (expectedDepartureIds)
+          result must contain theSameElementsInOrderAs expectedDepartureIds
         }
       }
 
@@ -126,7 +130,11 @@ class SeedDataParametersSpec extends SpecBase with ScalaCheckDrivenPropertyCheck
           val movementsPerUser   = 3
           val seedDataParameters = SeedDataParameters(2, movementsPerUser, DepartureId(0), None, None)
 
-          val result = seedDataParameters.seedData.map(x => x._2).toList
+          val result = seedDataParameters.seedData
+            .map(
+              x => x._2
+            )
+            .toList
 
           val expected = List(
             SeedEori("ZZ", 1, 12),
@@ -137,7 +145,7 @@ class SeedDataParametersSpec extends SpecBase with ScalaCheckDrivenPropertyCheck
             SeedEori("ZZ", 2, 12)
           )
 
-          result must contain theSameElementsInOrderAs (expected)
+          result must contain theSameElementsInOrderAs expected
         }
       }
     }

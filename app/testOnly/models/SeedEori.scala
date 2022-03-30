@@ -35,17 +35,18 @@ private[testOnly] object SeedEori {
       __.read[String].map(_.substring(0, 2)) and
         __.read[String]
           .map(_.substring(2))
-          .filter(s => """[0-9]{12}""".r.findFirstMatchIn(s).isDefined)
+          .filter(
+            s => """[0-9]{12}""".r.findFirstMatchIn(s).isDefined
+          )
           .map(_.toLong) and
         __.read[String].map(_.substring(2).length)
     )(SeedEori(_, _, _))
 
-  implicit val writes: Writes[SeedEori] = Writes[SeedEori](
-    x => {
+  implicit val writes: Writes[SeedEori] = Writes[SeedEori] {
+    x =>
       val addPadding = s"%0${x.padLength}d".format(x.suffix)
 
       JsString(x.prefix + addPadding)
-    }
-  )
+  }
 
 }

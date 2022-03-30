@@ -308,8 +308,8 @@ class PushPullNotificationServiceSpec extends SpecBase with BeforeAndAfterEach w
 
         Await.result(service.sendPushNotificationIfBoxExists(departure, ReleaseForTransitResponse, request), 30.seconds).mustEqual(())
 
-        verify(mockConnector).postNotification(BoxId(ArgumentMatchers.eq(testBoxId)), any[DepartureMessageNotification])(any[ExecutionContext],
-                                                                                                                         any[HeaderCarrier])
+        verify(mockConnector)
+          .postNotification(BoxId(ArgumentMatchers.eq(testBoxId)), any[DepartureMessageNotification])(any[ExecutionContext], any[HeaderCarrier])
       }
 
       "should not post if invalid xml is passed in" in {

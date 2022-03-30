@@ -24,12 +24,14 @@ import reactivemongo.api.indexes.IndexType
 
 object IndexUtils {
 
-  def index(key: Seq[(String, IndexType)],
-            name: Option[String],
-            unique: Boolean = false,
-            sparse: Boolean = false,
-            background: Boolean = false,
-            options: BSONDocument = BSONDocument.empty): Aux[BSONSerializationPack.type] = Index(
+  def index(
+    key: Seq[(String, IndexType)],
+    name: Option[String],
+    unique: Boolean = false,
+    sparse: Boolean = false,
+    background: Boolean = false,
+    options: BSONDocument = BSONDocument.empty
+  ): Aux[BSONSerializationPack.type] = Index(
     key = key,
     unique = unique,
     name = name,

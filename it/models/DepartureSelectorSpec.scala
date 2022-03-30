@@ -19,7 +19,10 @@ package models
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
-import play.api.libs.json.{JsArray, JsNumber, JsObject, Json}
+import play.api.libs.json.JsArray
+import play.api.libs.json.JsNumber
+import play.api.libs.json.JsObject
+import play.api.libs.json.Json
 
 class DepartureSelectorSpec extends AnyFreeSpec with Matchers with ScalaFutures {
 
@@ -43,7 +46,7 @@ class DepartureSelectorSpec extends AnyFreeSpec with Matchers with ScalaFutures 
           "$and" ->
             JsArray(
               Seq(
-                Json.obj("_id" -> 1),
+                Json.obj("_id"               -> 1),
                 Json.obj("messages.0.status" -> Json.obj("$exists" -> true))
               )
             )

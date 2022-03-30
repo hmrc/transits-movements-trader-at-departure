@@ -57,7 +57,9 @@ class TestOnlySeedDataServiceSpec extends SpecBase with ScalaCheckDrivenProperty
         testOnlySeedDataService
           .seedDepartures(seedDataParameters)
           .toSeq
-          .map(x => (x.departureId, x.eoriNumber))
+          .map(
+            x => (x.departureId, x.eoriNumber)
+          )
 
       result mustBe expectedResult
     }

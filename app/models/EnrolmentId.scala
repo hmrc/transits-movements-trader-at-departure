@@ -16,20 +16,20 @@
 
 package models
 
-import play.api.libs.json._
+import cats.data.Ior
+import config.Constants
 
-case class EORINumber(value: String) extends AnyVal
+case class EnrolmentId(value: Ior[TURN, EORINumber]) extends AnyVal {
 
-object EORINumber {
+  // Prefer to use EORI number
+  def customerId: String = value.fold(
+    turn => turn.value,
+    eoriNumber => eoriNumber.value,
+    (_, eoriNumber) => eoriNumber.value
+  )
 
-  implicit val format: Format[EORINumber] = new Format[EORINumber] {
+  def isModern: Boolean = !value.isLeft
 
-    override def reads(json: JsValue): JsResult[EORINumber] = json match {
-      case JsString(eori) => JsSuccess(EORINumber(eori))
-      case e              => JsError(s"Error in deserialization of Json value to an EORINumber, expected JsString got ${e.getClass}")
-    }
-
-    override def writes(eoriNumber: EORINumber): JsString = JsString(eoriNumber.value)
-  }
+  def enrolmentType: String = if (isModern) Constants.NewEnrolmentKey else Constants.LegacyEnrolmentKey
 
 }

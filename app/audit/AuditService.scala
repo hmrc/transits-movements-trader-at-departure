@@ -17,8 +17,6 @@
 package audit
 
 import audit.AuditType._
-import cats.data.Ior
-import config.Constants
 import models._
 import models.request.AuthenticatedRequest
 import play.api.libs.json.JsObject
@@ -44,15 +42,16 @@ class AuditService @Inject()(auditConnector: AuditConnector, messageTranslator: 
   def authAudit(auditType: AuditType, details: AuthenticationDetails)(implicit hc: HeaderCarrier): Unit =
     auditConnector.sendExplicitAudit(auditType.toString, details)
 
-  def auditEvent(auditType: AuditType, ior: Ior[TURN, EORINumber], message: Message, channel: ChannelType)(implicit hc: HeaderCarrier): Unit = {
-    val details = AuthenticatedAuditDetails(channel, customerId(ior), enrolmentType(ior), messageTranslator.translate(toJson(message.message)))
+  def auditEvent(auditType: AuditType, enrolmentId: EnrolmentId, message: Message, channel: ChannelType)(implicit hc: HeaderCarrier): Unit = {
+    val details = AuthenticatedAuditDetails(channel, enrolmentId.customerId, enrolmentId.enrolmentType, messageTranslator.translate(toJson(message.message)))
     auditConnector.sendExplicitAudit(auditType.toString, details)
   }
 
   def auditCustomerRequestedMissingMovementEvent(request: AuthenticatedRequest[_], departureId: DepartureId): Unit = {
     implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
     val details =
-      AuthenticatedAuditDetails(request.channel, customerId(request.enrolmentId), enrolmentType(request.enrolmentId), Json.obj("departureId" -> departureId))
+      AuthenticatedAuditDetails(request.channel, request.enrolmentId.customerId, request.enrolmentId.enrolmentType, Json.obj("departureId" -> departureId))
+
     auditConnector.sendExplicitAudit(CustomerRequestedMissingMovement.toString, details)
   }
 
@@ -87,12 +86,15 @@ class AuditService @Inject()(auditConnector: AuditConnector, messageTranslator: 
     case XMLSubmissionNegativeAcknowledgementResponse => XMLSubmissionNegativeAcknowledgement
   }
 
-  def auditDeclarationWithStatistics(auditType: AuditType,
-                                     enrolmentId: Ior[TURN, EORINumber],
-                                     message: Message,
-                                     channel: ChannelType,
-                                     requestLength: Int,
-                                     boxOpt: Option[BoxId])(implicit hc: HeaderCarrier): Unit = {
+  def auditDeclarationWithStatistics(
+    auditType: AuditType,
+    customerId: String,
+    enrolmentType: String,
+    message: Message,
+    channel: ChannelType,
+    requestLength: Int,
+    boxOpt: Option[BoxId]
+  )(implicit hc: HeaderCarrier): Unit = {
 
     val messageNodes: NodeSeq = message.message
     val statistics: JsObject = Json.obj(
@@ -120,7 +122,8 @@ class AuditService @Inject()(auditConnector: AuditConnector, messageTranslator: 
       if (requestLength > AuditService.maxRequestLength) Json.obj("declaration" -> "Departure declaration too large to be included")
       else messageTranslator.translate(toJson(message.message))
 
-    val details = DeclarationAuditDetails(channel, customerId(enrolmentId), enrolmentType(enrolmentId), json, statistics, boxOpt)
+    val details = DeclarationAuditDetails(channel, customerId, enrolmentType, json, statistics, boxOpt)
+
     auditConnector.sendExplicitAudit(auditType.toString, details)
   }
 
@@ -128,21 +131,4 @@ class AuditService @Inject()(auditConnector: AuditConnector, messageTranslator: 
     if (fieldOccurrenceCount(message, field) == 0) "NULL" else (message \\ field).text
 
   private def fieldOccurrenceCount(message: NodeSeq, field: String): Int = (message \\ field).length
-
-  // Temporary, awaiting CTDA-1885
-
-  def customerId(enrolmentId: Ior[TURN, EORINumber]): String =
-    enrolmentId.fold(
-      turn => turn.value,
-      eoriNumber => eoriNumber.value,
-      (_, eoriNumber) => eoriNumber.value
-    )
-
-  def enrolmentType(enrolmentId: Ior[TURN, EORINumber]): String =
-    enrolmentId.fold(
-      _ => Constants.LegacyEnrolmentKey,
-      _ => Constants.NewEnrolmentKey,
-      (_, _) => Constants.NewEnrolmentKey
-    )
-
 }

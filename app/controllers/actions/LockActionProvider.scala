@@ -46,7 +46,7 @@ private[actions] class LockAction(
 
   override def invokeBlock[A](request: Request[A], block: Request[A] => Future[Result]): Future[Result] =
     lockRepository.lock(departureId).flatMap {
-      case true => {
+      case true =>
         block(request)
           .flatMap {
             result =>
@@ -62,7 +62,6 @@ private[actions] class LockAction(
                   InternalServerError
               }
           }
-      }
       case false =>
         Future.successful(Locked)
     }
