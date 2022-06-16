@@ -68,37 +68,38 @@ class MovementsChangeLogSpec extends SpecBase with IntegrationPatience with Befo
 
       _ <- coll.insert.many {
         for (id <- departureIds)
-          yield Json.obj(
-            "_id"                      -> id.index,
-            "channel"                  -> ChannelType.Web.toString,
-            "eoriNumber"               -> eori,
-            "referenceNumber"          -> Random.alphanumeric.take(20).mkString,
-            "status"                   -> DepartureStatus.DepartureSubmitted.toString,
-            "created"                  -> LocalDateTime.of(2021, 7, 15, 12, 12),
-            "lastUpdated"              -> LocalDateTime.of(2021, 7, 15, 12, 13),
-            "nextMessageCorrelationId" -> 2,
-            "messages" -> Json.arr(
-              Json.obj(
-                "dateTime"             -> LocalDateTime.of(2021, 7, 15, 12, 12),
-                "messageType"          -> MessageType.DepartureDeclaration.toString,
-                "message"              -> NodeSeq.fromSeq(Seq(<CC015B></CC015B>)),
-                "status"               -> MessageStatus.SubmissionSucceeded.toString,
-                "messageCorrelationId" -> 1
-              ),
-              Json.obj(
-                "dateTime"             -> LocalDateTime.of(2021, 7, 15, 12, 12),
-                "messageType"          -> MessageType.PositiveAcknowledgement.toString,
-                "message"              -> NodeSeq.fromSeq(Seq(<CC928A></CC928A>)),
-                "messageCorrelationId" -> 1
-              ),
-              Json.obj(
-                "dateTime"             -> LocalDateTime.of(2021, 7, 15, 12, 13),
-                "messageType"          -> MessageType.MrnAllocated.toString,
-                "message"              -> NodeSeq.fromSeq(Seq(<CC028A></CC028A>)),
-                "messageCorrelationId" -> 1
+          yield
+            Json.obj(
+              "_id"                      -> id.index,
+              "channel"                  -> ChannelType.Web.toString,
+              "eoriNumber"               -> eori,
+              "referenceNumber"          -> Random.alphanumeric.take(20).mkString,
+              "status"                   -> DepartureStatus.DepartureSubmitted.toString,
+              "created"                  -> LocalDateTime.of(2021, 7, 15, 12, 12),
+              "lastUpdated"              -> LocalDateTime.of(2021, 7, 15, 12, 13),
+              "nextMessageCorrelationId" -> 2,
+              "messages" -> Json.arr(
+                Json.obj(
+                  "dateTime"             -> LocalDateTime.of(2021, 7, 15, 12, 12),
+                  "messageType"          -> MessageType.DepartureDeclaration.toString,
+                  "message"              -> NodeSeq.fromSeq(Seq(<CC015B></CC015B>)),
+                  "status"               -> MessageStatus.SubmissionSucceeded.toString,
+                  "messageCorrelationId" -> 1
+                ),
+                Json.obj(
+                  "dateTime"             -> LocalDateTime.of(2021, 7, 15, 12, 12),
+                  "messageType"          -> MessageType.PositiveAcknowledgement.toString,
+                  "message"              -> NodeSeq.fromSeq(Seq(<CC928A></CC928A>)),
+                  "messageCorrelationId" -> 1
+                ),
+                Json.obj(
+                  "dateTime"             -> LocalDateTime.of(2021, 7, 15, 12, 13),
+                  "messageType"          -> MessageType.MrnAllocated.toString,
+                  "message"              -> NodeSeq.fromSeq(Seq(<CC028A></CC028A>)),
+                  "messageCorrelationId" -> 1
+                )
               )
             )
-          )
       }
     } yield ()
 

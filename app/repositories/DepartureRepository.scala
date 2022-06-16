@@ -20,6 +20,7 @@ import cats.data.Ior
 import cats.syntax.all._
 import com.kenshoo.play.metrics.Metrics
 import config.AppConfig
+import logging.Logging
 import metrics.HasMetrics
 import models._
 import models.response.ResponseDeparture
@@ -57,6 +58,7 @@ class DepartureRepository @Inject()(
 )(implicit ec: ExecutionContext, clock: Clock)
     extends MongoDateTimeFormats
     with HasMetrics
+    with Logging
     with Repository {
 
   private lazy val eoriNumberIndex: Aux[BSONSerializationPack.type] = IndexUtils.index(
@@ -74,9 +76,10 @@ class DepartureRepository @Inject()(
     name = Some("reference-number-index")
   )
 
+  private lazy val lastUpdatedIndexName = "last-updated-index"
   private lazy val lastUpdatedIndex: Aux[BSONSerializationPack.type] = IndexUtils.index(
     key = Seq("lastUpdated" -> IndexType.Ascending),
-    name = Some("last-updated-index"),
+    name = Some(lastUpdatedIndexName),
     options = BSONDocument("expireAfterSeconds" -> appConfig.cacheTtl)
   )
 
@@ -95,6 +98,7 @@ class DepartureRepository @Inject()(
       .flatMap {
         jsonCollection =>
           for {
+            _   <- dropLastUpdatedIndex(jsonCollection)
             _   <- jsonCollection.indexesManager.ensure(channelIndex)
             _   <- jsonCollection.indexesManager.ensure(eoriNumberIndex)
             _   <- jsonCollection.indexesManager.ensure(referenceNumberIndex)
@@ -107,7 +111,7 @@ class DepartureRepository @Inject()(
         _ => ()
       )
 
-  private lazy val collectionName = DepartureRepository.collectionName
+  lazy val collectionName = DepartureRepository.collectionName
 
   private def collection: Future[JSONCollection] =
     mongo.database.map(_.collection[JSONCollection](collectionName))
@@ -554,6 +558,29 @@ class DepartureRepository @Inject()(
         }
     }
   }
+
+  private def dropLastUpdatedIndex(collection: JSONCollection): Future[Boolean] =
+    collection.indexesManager.list.flatMap {
+      indexes =>
+        val indexToDrop = indexes
+          .filter(_.name.contains(lastUpdatedIndexName))
+          .filter(x => x.expireAfterSeconds.map(_ != appConfig.cacheTtl).getOrElse(false))
+          .headOption
+        indexToDrop match {
+          case Some(index) =>
+            val ttl = index.expireAfterSeconds.map(x => s"$x seconds").getOrElse("unset")
+            logger.warn(s"Dropping $lastUpdatedIndexName index with TTL $ttl")
+
+            collection.indexesManager
+              .drop(lastUpdatedIndexName)
+              .map(
+                _ => true
+              )
+          case None =>
+            logger.info(s"$lastUpdatedIndexName does not exist or is currently valid")
+            Future.successful(true)
+        }
+    }
 }
 
 object DepartureRepository {
