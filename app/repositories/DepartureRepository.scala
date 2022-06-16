@@ -565,7 +565,7 @@ class DepartureRepository @Inject()(
         val indexToDrop = indexes
           .filter(_.name.contains(lastUpdatedIndexName))
           .filter(x => x.expireAfterSeconds.map(_ != appConfig.cacheTtl).getOrElse(false))
-          .get(0)
+          .headOption
         indexToDrop match {
           case Some(index) =>
             val ttl = index.expireAfterSeconds.map(x => s"$x seconds").getOrElse("unset")
