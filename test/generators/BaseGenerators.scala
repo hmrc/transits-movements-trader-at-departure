@@ -39,12 +39,13 @@ trait BaseGenerators {
     for {
       seq1 <- gen
       seq2 <- Gen.listOfN(seq1.length, genValue)
-    } yield seq1.toSeq.zip(seq2).foldRight("") {
-      case ((n, Some(v)), m) =>
-        m + n + v
-      case ((n, _), m) =>
-        m + n
-    }
+    } yield
+      seq1.toSeq.zip(seq2).foldRight("") {
+        case ((n, Some(v)), m) =>
+          m + n + v
+        case ((n, _), m) =>
+          m + n
+      }
   }
 
   def intsInRangeWithCommas(min: Int, max: Int): Gen[String] = {

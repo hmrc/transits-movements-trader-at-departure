@@ -87,7 +87,7 @@ class MessageRetrievalServiceSpec extends SpecBase with JsonHelper {
                     ),
                     MessageId(3)
                   )
-                )
+              )
             )
           )
 

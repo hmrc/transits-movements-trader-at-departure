@@ -278,7 +278,7 @@ class AuditServiceSpec extends SpecBase with ScalaCheckPropertyChecks with Befor
           "totalNoOfContainers"              -> 0,
           "totalNoOfCountriesOfRouting"      -> 0,
           "requestLength"                    -> requestLength
-        )
+      )
 
       Seq(arbitraryBox.arbitrary.sample, None).foreach {
         boxOpt =>

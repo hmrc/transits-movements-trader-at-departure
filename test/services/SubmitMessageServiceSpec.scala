@@ -89,11 +89,12 @@ class SubmitMessageServiceSpec extends SpecBase with JsonHelper with ScalaCheckD
 
   val departureWithOneMessage: Gen[Departure] = for {
     departure <- arbitrary[Departure]
-  } yield departure.copy(
-    eoriNumber = "eori",
-    messages = NonEmptyList.one(movementMessage),
-    nextMessageCorrelationId = movementMessage.messageCorrelationId
-  )
+  } yield
+    departure.copy(
+      eoriNumber = "eori",
+      messages = NonEmptyList.one(movementMessage),
+      nextMessageCorrelationId = movementMessage.messageCorrelationId
+    )
 
   "submit a new message" - {
     "return SubmissionSuccess and set the message status to submitted when the message is successfully saved, submitted" in {

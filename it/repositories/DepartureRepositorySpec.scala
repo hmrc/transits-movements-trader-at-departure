@@ -19,6 +19,7 @@ package repositories
 import cats.data.Chain
 import cats.data.Ior
 import cats.data.NonEmptyList
+import com.kenshoo.play.metrics.Metrics
 import config.AppConfig
 import generators.ModelGenerators
 import models.ChannelType.Api
@@ -37,23 +38,30 @@ import org.scalatest.exceptions.StackDepthException
 import org.scalatest.exceptions.TestFailedException
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Application
+import play.api.Configuration
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import play.api.test.Helpers.running
+import play.modules.reactivemongo.ReactiveMongoApi
+import reactivemongo.api.indexes.Index
 import reactivemongo.play.json.collection.Helpers.idWrites
 import reactivemongo.play.json.collection.JSONCollection
 import utils.Format
 import utils.JsonHelper
 
 import java.time._
+import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 import scala.reflect.ClassTag
 import scala.util.Failure
 import scala.util.Success
 import scala.xml.NodeSeq
+import utils.TestMetrics
 
 class DepartureRepositorySpec
     extends AnyFreeSpec
@@ -64,7 +72,8 @@ class DepartureRepositorySpec
     with MongoSuite
     with GuiceOneAppPerSuite
     with MongoDateTimeFormats
-    with JsonHelper {
+    with JsonHelper
+    with MockitoSugar {
 
   implicit override lazy val app: Application = GuiceApplicationBuilder()
     .configure("feature-flags.testOnly.enabled" -> true)
@@ -130,6 +139,86 @@ class DepartureRepositorySpec
   private val departureId4 = departureId3.copy(index = departureId3.index + 1)
 
   "DepartureRepository" - {
+        "started -- testing change in TTL" - {
+
+      val indexUnderTest = "last-updated-index";
+
+      class Harness(
+        cn: String,
+        mongo: ReactiveMongoApi,
+        appConfig: AppConfig,
+        config: Configuration,
+        clock: Clock,
+        override val metrics: Metrics
+      )(implicit ec: ExecutionContext)
+       extends DepartureRepository(mongo, appConfig, config, metrics)(ec, clock) {
+         override lazy val collectionName: String = cn
+      }
+
+      def createHarness(app: Application, name: String) =
+        new Harness(
+          name,
+          app.injector.instanceOf[ReactiveMongoApi],
+          app.injector.instanceOf[AppConfig],
+          app.injector.instanceOf[Configuration],
+          app.injector.instanceOf[Clock],
+          new TestMetrics(),
+        )(app.materializer.executionContext)
+
+      def runTest(name: String, ttl1: Int, ttl2: Int): Future[List[Index]] = {
+        // avoids starting the "real" repository, as index changes occur in the initialiser.
+        val builder = GuiceApplicationBuilder()
+          .configure("feature-flags.testOnly.enabled" -> true)
+          .overrides(
+            bind[DepartureRepository].to(mock[DepartureRepository]),
+            bind[Metrics].to[TestMetrics]
+          ) 
+        val mongo   = builder.injector.instanceOf[ReactiveMongoApi]
+
+        def callHarness(ttl: Int): Harness = {
+          val app = builder
+            .configure(Configuration("mongodb.timeToLiveInSeconds" -> ttl))
+            .build()
+
+          createHarness(app, name)
+        }
+
+        // We run the harness once to create the collection,
+        // then run it again to simulate re-connecting to it.
+        callHarness(ttl1)
+          .started
+          .flatMap(_ => callHarness(ttl2).started)
+          .flatMap(_ => mongo.database)
+          .flatMap(_.collection[JSONCollection](name).indexesManager.list)
+      }
+
+      "must persist the same TTL if required" in {
+        whenReady(runTest("ttl-same", 200, 200)) {
+          indexes =>
+            val filtered: Option[Index] = indexes.filter(_.name.contains(indexUnderTest)).headOption
+            filtered match {
+              case Some(x) =>
+                x.expireAfterSeconds.get mustBe 200
+              case None =>
+                fail(s"Index $indexUnderTest does not exist or does not have a TTL")
+            }
+        }
+      }
+
+      "must use the new TTL if required" in {
+        whenReady(runTest("ttl-different", 200, 300)) {
+          indexes =>
+            val filtered: Option[Index] = indexes.filter(_.name.contains(indexUnderTest)).headOption
+            filtered match {
+              case Some(x) =>
+                x.expireAfterSeconds.get mustBe 300
+              case None =>
+                fail(s"Index $indexUnderTest does not exist or does not have a TTL")
+            }
+        }
+      }
+
+    }
 
     "insert" - {
       "must persist Departure within mongoDB" in {

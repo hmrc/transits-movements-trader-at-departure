@@ -164,19 +164,20 @@ trait ModelGenerators extends BaseGenerators with JavaTimeGenerators with JsonHe
         lastUpdated     <- arbitrary[LocalDateTime]
         messageMetaData <- nonEmptyListOfMaxLength[MessageMetaData](2)
         notificationBox <- arbitrary[Option[Box]]
-      } yield DepartureWithoutMessages(
-        id,
-        channel,
-        eN,
-        mrn,
-        rN,
-        created,
-        lastUpdated,
-        notificationBox,
-        MessageId(messageMetaData.length + 1),
-        messageMetaData.length + 1,
-        messageMetaData.toList
-      )
+      } yield
+        DepartureWithoutMessages(
+          id,
+          channel,
+          eN,
+          mrn,
+          rN,
+          created,
+          lastUpdated,
+          notificationBox,
+          MessageId(messageMetaData.length + 1),
+          messageMetaData.length + 1,
+          messageMetaData.toList
+        )
     }
 
   implicit lazy val arbitraryFailure: Arbitrary[SubmissionFailure] =
