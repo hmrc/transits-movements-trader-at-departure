@@ -122,7 +122,12 @@ class PDFRetrievalControllerISpec extends ApiSpecBase with JsonHelper {
 
       val response = wsClient
         .url(s"http://localhost:$port/transits-movements-trader-at-departure/movements/departures/12/accompanying-document")
-        .withHttpHeaders("channel" -> "web", "X-Client-Id" -> clientId, "X-Request-ID" -> requestId)
+        .withHttpHeaders(
+          "channel"       -> "web",
+          "X-Client-Id"   -> clientId,
+          "X-Request-ID"  -> requestId,
+          "Authorization" -> "Bearer token"
+        )
         .get()
         .futureValue
 
@@ -195,7 +200,12 @@ class PDFRetrievalControllerISpec extends ApiSpecBase with JsonHelper {
 
       val response = wsClient
         .url(s"http://localhost:$port/transits-movements-trader-at-departure/movements/departures/12/accompanying-document")
-        .withHttpHeaders("channel" -> "web", "X-Client-Id" -> clientId, "X-Request-ID" -> requestId)
+        .withHttpHeaders(
+          "channel"       -> "web",
+          "X-Client-Id"   -> clientId,
+          "X-Request-ID"  -> requestId,
+          "Authorization" -> "Bearer token"
+        )
         .get()
         .futureValue
 
@@ -261,7 +271,12 @@ class PDFRetrievalControllerISpec extends ApiSpecBase with JsonHelper {
 
       val response = wsClient
         .url(s"http://localhost:$port/transits-movements-trader-at-departure/movements/departures/12/accompanying-document")
-        .withHttpHeaders("channel" -> "web", "X-Client-Id" -> clientId, "X-Request-ID" -> requestId)
+        .withHttpHeaders(
+          "channel"       -> "web",
+          "X-Client-Id"   -> clientId,
+          "X-Request-ID"  -> requestId,
+          "Authorization" -> "Bearer token"
+        )
         .get()
         .futureValue
 
