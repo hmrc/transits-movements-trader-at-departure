@@ -26,6 +26,7 @@ import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks.forAll
 import play.api.libs.json.Json
 
 import java.time.LocalDateTime
+import java.time.temporal.ChronoUnit
 
 class DepartureWithoutMessagesSpec extends SpecBase with ModelGenerators with MongoDateTimeFormats {
 
@@ -35,7 +36,7 @@ class DepartureWithoutMessagesSpec extends SpecBase with ModelGenerators with Mo
 
       forAll(arbitrary[Departure]) {
         departure =>
-          val localDateTimeNow = LocalDateTime.now()
+          val localDateTimeNow = LocalDateTime.now().truncatedTo(ChronoUnit.MILLIS)
 
           val json = Json.obj(
             "_id"                      -> departure.departureId,
