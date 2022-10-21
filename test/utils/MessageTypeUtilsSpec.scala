@@ -26,10 +26,11 @@ import org.scalatest.Assertion
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import java.time.LocalDateTime
+import java.time.temporal.ChronoUnit
 
 class MessageTypeUtilsSpec extends SpecBase with ScalaCheckDrivenPropertyChecks with ModelGenerators {
 
-  private def localDateTime: LocalDateTime = LocalDateTime.now()
+  private def localDateTime: LocalDateTime = LocalDateTime.now().truncatedTo(ChronoUnit.MILLIS)
 
   "latestDepartureStatus" - {
     "when there is only the message from the user" - {

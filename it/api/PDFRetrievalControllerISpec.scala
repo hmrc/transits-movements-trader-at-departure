@@ -39,6 +39,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.time.LocalDateTime
+import java.time.temporal.ChronoUnit
 import java.util.UUID
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -68,13 +69,13 @@ class PDFRetrievalControllerISpec extends ApiSpecBase with JsonHelper {
         "1234567",
         None,
         "SomeReference",
-        LocalDateTime.now(),
-        LocalDateTime.now(),
+        LocalDateTime.now().truncatedTo(ChronoUnit.MILLIS),
+        LocalDateTime.now().truncatedTo(ChronoUnit.MILLIS),
         3,
         NonEmptyList(
           MessageWithStatus(
             MessageId(1),
-            LocalDateTime.now(),
+            LocalDateTime.now().truncatedTo(ChronoUnit.MILLIS),
             MessageType.DepartureDeclaration,
             <departure></departure>,
             MessageStatus.SubmissionSucceeded,
@@ -83,7 +84,7 @@ class PDFRetrievalControllerISpec extends ApiSpecBase with JsonHelper {
           List(
             MessageWithoutStatus(
               MessageId(2),
-              LocalDateTime.now(),
+              LocalDateTime.now().truncatedTo(ChronoUnit.MILLIS),
               MessageType.ReleaseForTransit,
               <released><HEAHEA><SecHEA358>1</SecHEA358></HEAHEA></released>,
               2
@@ -146,13 +147,13 @@ class PDFRetrievalControllerISpec extends ApiSpecBase with JsonHelper {
         "1234567",
         None,
         "SomeReference",
-        LocalDateTime.now(),
-        LocalDateTime.now(),
+        LocalDateTime.now().truncatedTo(ChronoUnit.MILLIS),
+        LocalDateTime.now().truncatedTo(ChronoUnit.MILLIS),
         3,
         NonEmptyList(
           MessageWithStatus(
             MessageId(1),
-            LocalDateTime.now(),
+            LocalDateTime.now().truncatedTo(ChronoUnit.MILLIS),
             MessageType.DepartureDeclaration,
             <departure></departure>,
             MessageStatus.SubmissionSucceeded,
@@ -161,7 +162,7 @@ class PDFRetrievalControllerISpec extends ApiSpecBase with JsonHelper {
           List(
             MessageWithoutStatus(
               MessageId(2),
-              LocalDateTime.now(),
+              LocalDateTime.now().truncatedTo(ChronoUnit.MILLIS),
               MessageType.ReleaseForTransit,
               <released></released>,
               2
@@ -224,19 +225,19 @@ class PDFRetrievalControllerISpec extends ApiSpecBase with JsonHelper {
         "1234567",
         None,
         "SomeReference",
-        LocalDateTime.now(),
-        LocalDateTime.now(),
+        LocalDateTime.now().truncatedTo(ChronoUnit.MILLIS),
+        LocalDateTime.now().truncatedTo(ChronoUnit.MILLIS),
         3,
         NonEmptyList(
           MessageWithStatus(
             MessageId(1),
-            LocalDateTime.now(),
+            LocalDateTime.now().truncatedTo(ChronoUnit.MILLIS),
             MessageType.DepartureDeclaration,
             <departure></departure>,
             MessageStatus.SubmissionSucceeded,
             1
           ),
-          List(MessageWithoutStatus(MessageId(2), LocalDateTime.now(), MessageType.ReleaseForTransit, <released></released>, 2))
+          List(MessageWithoutStatus(MessageId(2), LocalDateTime.now().truncatedTo(ChronoUnit.MILLIS), MessageType.ReleaseForTransit, <released></released>, 2))
         ),
         None
       )
