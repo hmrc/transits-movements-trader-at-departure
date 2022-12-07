@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 HM Revenue & Customs
+ * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,15 +39,17 @@ class DepartureService @Inject()(departureIdRepository: DepartureIdRepository)(i
     departureId: DepartureId,
     messageId: MessageId,
     messageCorrelationId: Int,
-    messageType: MessageType
+    messageType: MessageType,
+    received: LocalDateTime
   ): ReaderT[ParseHandler, NodeSeq, MessageWithStatus] =
     for {
       _          <- correctRootNodeR(messageType)
       dateTime   <- dateTimeOfPrepR
       xmlMessage <- updateMesSenMES3(departureId, messageCorrelationId)
-    } yield MessageWithStatus(messageId, dateTime, messageType, xmlMessage, SubmissionPending, messageCorrelationId)
+    } yield MessageWithStatus(messageId, dateTime, Some(received), messageType, xmlMessage, SubmissionPending, messageCorrelationId)
 
-  def createDeparture(enrolmentId: EnrolmentId, nodeSeq: NodeSeq, channelType: ChannelType, boxOpt: Option[Box]): Future[ParseHandler[Departure]] =
+  def createDeparture(enrolmentId: EnrolmentId, nodeSeq: NodeSeq, channelType: ChannelType, boxOpt: Option[Box]): Future[ParseHandler[Departure]] = {
+    val received = LocalDateTime.now(clock)
     departureIdRepository
       .nextId()
       .map {
@@ -56,7 +58,7 @@ class DepartureService @Inject()(departureIdRepository: DepartureIdRepository)(i
             _         <- correctRootNodeR(MessageType.DepartureDeclaration)
             dateTime  <- dateTimeOfPrepR
             reference <- referenceR
-            message   <- makeMessageWithStatus(departureId, MessageId(1), 1, MessageType.DepartureDeclaration)
+            message   <- makeMessageWithStatus(departureId, MessageId(1), 1, MessageType.DepartureDeclaration, received)
           } yield
             Departure(
               departureId,
@@ -65,19 +67,25 @@ class DepartureService @Inject()(departureIdRepository: DepartureIdRepository)(i
               None,
               reference,
               dateTime,
-              LocalDateTime.now(clock),
+              received,
               2,
               NonEmptyList.one(message),
               boxOpt
             )).apply(nodeSeq)
       }
+  }
 
-  def makeMessage(messageId: MessageId, messageCorrelationId: Int, messageType: MessageType): ReaderT[ParseHandler, NodeSeq, MessageWithoutStatus] =
+  def makeMessage(
+    messageId: MessageId,
+    messageCorrelationId: Int,
+    messageType: MessageType,
+    received: LocalDateTime
+  ): ReaderT[ParseHandler, NodeSeq, MessageWithoutStatus] =
     for {
       _          <- correctRootNodeR(messageType)
       dateTime   <- dateTimeOfPrepR
       xmlMessage <- ReaderT[ParseHandler, NodeSeq, NodeSeq](nodeSeqToEither)
-    } yield MessageWithoutStatus(messageId, dateTime, messageType, xmlMessage, messageCorrelationId)
+    } yield MessageWithoutStatus(messageId, dateTime, Some(received), messageType, xmlMessage, messageCorrelationId)
 
   private[this] def nodeSeqToEither(xml: NodeSeq): ParseHandler[NodeSeq] =
     if (xml != null) {

@@ -81,6 +81,7 @@ class SubmitMessageServiceSpec extends SpecBase with JsonHelper with ScalaCheckD
   val movementMessage = MessageWithStatus(
     messageId,
     localDateTime,
+    Some(localDateTime),
     MessageType.DepartureDeclaration,
     requestXmlBody,
     SubmissionPending,

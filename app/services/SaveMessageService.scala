@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 HM Revenue & Customs
+ * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,8 @@ import models._
 import play.api.Logging
 import repositories.DepartureRepository
 
+import java.time.Clock
+import java.time.LocalDateTime
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.util.Failure
@@ -31,7 +33,9 @@ import scala.util.Success
 import scala.xml.NodeSeq
 
 class SaveMessageService @Inject()(departureRepository: DepartureRepository, departureService: DepartureService, xmlValidationService: XmlValidationService)(
-  implicit ec: ExecutionContext
+  implicit
+  ec: ExecutionContext,
+  clock: Clock
 ) extends Logging {
 
   def validateXmlAndSaveMessage(
@@ -42,10 +46,11 @@ class SaveMessageService @Inject()(departureRepository: DepartureRepository, dep
   ): Future[SubmissionProcessingResult] =
     xmlValidationService.validate(messageXml.toString(), messageResponse.xsdFile) match {
       case Success(_) =>
-        departureService.makeMessage(nextMessageId, messageSender.messageCorrelationId, messageResponse.messageType)(messageXml) match {
+        val received = LocalDateTime.now(clock)
+        departureService.makeMessage(nextMessageId, messageSender.messageCorrelationId, messageResponse.messageType, received)(messageXml) match {
           case Right(message) =>
             departureRepository
-              .addResponseMessage(messageSender.departureId, message)
+              .addResponseMessage(messageSender.departureId, message, received)
               .map {
                 case Success(_) => SubmissionSuccess
                 case Failure(_) => SubmissionFailureInternal
@@ -66,10 +71,11 @@ class SaveMessageService @Inject()(departureRepository: DepartureRepository, dep
   ): Future[SubmissionProcessingResult] =
     xmlValidationService.validate(messageXml.toString(), messageResponse.xsdFile) match {
       case Success(_) =>
-        departureService.makeMessage(nextMessageId, messageSender.messageCorrelationId, messageResponse.messageType)(messageXml) match {
+        val received = LocalDateTime.now(clock)
+        departureService.makeMessage(nextMessageId, messageSender.messageCorrelationId, messageResponse.messageType, received)(messageXml) match {
           case Right(message) =>
             departureRepository
-              .setMrnAndAddResponseMessage(messageSender.departureId, message, mrn)
+              .setMrnAndAddResponseMessage(messageSender.departureId, message, mrn, received)
               .map {
                 case Success(_) => SubmissionSuccess
                 case Failure(_) => SubmissionFailureInternal

@@ -55,6 +55,7 @@ class NCTSMessageControllerSpec extends SpecBase with ScalaCheckPropertyChecks w
         MessageWithStatus(
           MessageId(1),
           LocalDateTime.of(2021, 2, 2, 2, 2),
+          Some(LocalDateTime.of(2021, 2, 2, 2, 2)),
           MessageType.DepartureDeclaration,
           <CC015></CC015>,
           MessageStatus.SubmissionPending,

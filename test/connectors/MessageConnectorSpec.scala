@@ -90,10 +90,12 @@ class MessageConnectorSpec
                     .withStatus(202)
                 )
             )
+
             val app = appBuilder.build()
             val postValue = MessageWithStatus(
               MessageId(1),
               LocalDateTime.now(),
+              Some(LocalDateTime.now()),
               messageType,
               <CC007A>test</CC007A>,
               MessageStatus.SubmissionPending,
@@ -132,6 +134,7 @@ class MessageConnectorSpec
             val postValue = MessageWithStatus(
               MessageId(1),
               LocalDateTime.now(),
+              Some(LocalDateTime.now()),
               messageType,
               <CC007A>test</CC007A>,
               MessageStatus.SubmissionPending,
@@ -172,6 +175,7 @@ class MessageConnectorSpec
             val postValue = MessageWithStatus(
               MessageId(1),
               LocalDateTime.now(),
+              Some(LocalDateTime.now()),
               messageType,
               <CC007A>test</CC007A>,
               MessageStatus.SubmissionPending,
@@ -209,10 +213,10 @@ class MessageConnectorSpec
                     .withStatus(418)
                 )
             )
-
             val postValue = MessageWithStatus(
               MessageId(1),
               LocalDateTime.now(),
+              Some(LocalDateTime.now()),
               messageType,
               <CC007A>test</CC007A>,
               MessageStatus.SubmissionPending,

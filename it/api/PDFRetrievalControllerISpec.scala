@@ -76,6 +76,7 @@ class PDFRetrievalControllerISpec extends ApiSpecBase with JsonHelper {
           MessageWithStatus(
             MessageId(1),
             LocalDateTime.now().truncatedTo(ChronoUnit.MILLIS),
+            Some(LocalDateTime.now().truncatedTo(ChronoUnit.MILLIS)),
             MessageType.DepartureDeclaration,
             <departure></departure>,
             MessageStatus.SubmissionSucceeded,
@@ -85,6 +86,7 @@ class PDFRetrievalControllerISpec extends ApiSpecBase with JsonHelper {
             MessageWithoutStatus(
               MessageId(2),
               LocalDateTime.now().truncatedTo(ChronoUnit.MILLIS),
+              Some(LocalDateTime.now().truncatedTo(ChronoUnit.MILLIS)),
               MessageType.ReleaseForTransit,
               <released><HEAHEA><SecHEA358>1</SecHEA358></HEAHEA></released>,
               2
@@ -154,6 +156,7 @@ class PDFRetrievalControllerISpec extends ApiSpecBase with JsonHelper {
           MessageWithStatus(
             MessageId(1),
             LocalDateTime.now().truncatedTo(ChronoUnit.MILLIS),
+            Some(LocalDateTime.now().truncatedTo(ChronoUnit.MILLIS)),
             MessageType.DepartureDeclaration,
             <departure></departure>,
             MessageStatus.SubmissionSucceeded,
@@ -163,6 +166,7 @@ class PDFRetrievalControllerISpec extends ApiSpecBase with JsonHelper {
             MessageWithoutStatus(
               MessageId(2),
               LocalDateTime.now().truncatedTo(ChronoUnit.MILLIS),
+              Some(LocalDateTime.now().truncatedTo(ChronoUnit.MILLIS)),
               MessageType.ReleaseForTransit,
               <released></released>,
               2
@@ -232,12 +236,22 @@ class PDFRetrievalControllerISpec extends ApiSpecBase with JsonHelper {
           MessageWithStatus(
             MessageId(1),
             LocalDateTime.now().truncatedTo(ChronoUnit.MILLIS),
+            Some(LocalDateTime.now().truncatedTo(ChronoUnit.MILLIS)),
             MessageType.DepartureDeclaration,
             <departure></departure>,
             MessageStatus.SubmissionSucceeded,
             1
           ),
-          List(MessageWithoutStatus(MessageId(2), LocalDateTime.now().truncatedTo(ChronoUnit.MILLIS), MessageType.ReleaseForTransit, <released></released>, 2))
+          List(
+            MessageWithoutStatus(
+              MessageId(2),
+              LocalDateTime.now().truncatedTo(ChronoUnit.MILLIS),
+              Some(LocalDateTime.now().truncatedTo(ChronoUnit.MILLIS)),
+              MessageType.ReleaseForTransit,
+              <released></released>,
+              2
+            )
+          )
         ),
         None
       )

@@ -27,6 +27,7 @@ import models.MessageId
 import models.MessageType
 import models.MessageWithoutStatus
 import org.mockito.Mockito.when
+
 import java.time.LocalDateTime
 import utils.JsonHelper
 
@@ -53,6 +54,7 @@ class MessageRetrievalServiceSpec extends SpecBase with JsonHelper {
             MessageWithoutStatus(
               MessageId(1),
               LocalDateTime.now(),
+              Some(LocalDateTime.now()),
               MessageType.DepartureDeclaration,
               <departure></departure>,
               1
@@ -61,6 +63,7 @@ class MessageRetrievalServiceSpec extends SpecBase with JsonHelper {
               MessageWithoutStatus(
                 MessageId(2),
                 LocalDateTime.now(),
+                Some(LocalDateTime.now()),
                 MessageType.ReleaseForTransit,
                 <released></released>,
                 2
@@ -81,6 +84,7 @@ class MessageRetrievalServiceSpec extends SpecBase with JsonHelper {
                     MessageWithoutStatus(
                       MessageId(3),
                       date,
+                      Some(date),
                       MessageType.ReleaseForTransit,
                       <released></released>,
                       2
@@ -93,7 +97,7 @@ class MessageRetrievalServiceSpec extends SpecBase with JsonHelper {
 
         service
           .getReleaseForTransitMessage(departure)
-          .value mustBe MessageWithoutStatus(MessageId(3), date, MessageType.ReleaseForTransit, <released></released>, 2)
+          .value mustBe MessageWithoutStatus(MessageId(3), date, Some(date), MessageType.ReleaseForTransit, <released></released>, 2)
       }
       "Return a None if releaseFromTransit message is not present" in new Setup {
         val departure: Departure = Departure(
@@ -109,6 +113,7 @@ class MessageRetrievalServiceSpec extends SpecBase with JsonHelper {
             MessageWithoutStatus(
               MessageId(1),
               LocalDateTime.now(),
+              Some(LocalDateTime.now()),
               MessageType.DepartureDeclaration,
               <departure></departure>,
               1

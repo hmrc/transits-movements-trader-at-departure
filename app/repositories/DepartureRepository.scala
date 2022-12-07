@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 HM Revenue & Customs
+ * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,6 +77,7 @@ class DepartureRepository @Inject()(
   )
 
   private lazy val lastUpdatedIndexName = "last-updated-index"
+
   private lazy val lastUpdatedIndex: Aux[BSONSerializationPack.type] = IndexUtils.index(
     key = Seq("lastUpdated" -> IndexType.Ascending),
     name = Some(lastUpdatedIndexName),
@@ -155,7 +156,7 @@ class DepartureRepository @Inject()(
     val modifier =
       Json.obj(
         "$set" -> Json.obj(
-          "lastUpdated" -> LocalDateTime.now(clock)
+          "lastUpdated" -> message.received.get
         ),
         "$inc" -> Json.obj(
           "nextMessageCorrelationId" -> 1
@@ -371,7 +372,7 @@ class DepartureRepository @Inject()(
           .headOption
     }
 
-  def addResponseMessage(departureId: DepartureId, message: Message): Future[Try[Unit]] = {
+  def addResponseMessage(departureId: DepartureId, message: Message, lastUpdated: LocalDateTime): Future[Try[Unit]] = {
     val selector = Json.obj(
       "_id" -> departureId
     )
@@ -379,7 +380,7 @@ class DepartureRepository @Inject()(
     val modifier =
       Json.obj(
         "$set" -> Json.obj(
-          "lastUpdated" -> LocalDateTime.now(clock)
+          "lastUpdated" -> lastUpdated
         ),
         "$push" -> Json.obj(
           "messages" -> Json.toJson(message)
@@ -410,7 +411,7 @@ class DepartureRepository @Inject()(
     }
   }
 
-  def setMrnAndAddResponseMessage(departureId: DepartureId, message: Message, mrn: MovementReferenceNumber): Future[Try[Unit]] = {
+  def setMrnAndAddResponseMessage(departureId: DepartureId, message: Message, mrn: MovementReferenceNumber, lastUpdated: LocalDateTime): Future[Try[Unit]] = {
     val selector = Json.obj(
       "_id" -> departureId
     )
@@ -418,7 +419,7 @@ class DepartureRepository @Inject()(
     val modifier =
       Json.obj(
         "$set" -> Json.obj(
-          "lastUpdated"             -> LocalDateTime.now(clock),
+          "lastUpdated"             -> lastUpdated,
           "movementReferenceNumber" -> mrn
         ),
         "$push" -> Json.obj(
@@ -564,11 +565,17 @@ class DepartureRepository @Inject()(
       indexes =>
         val indexToDrop = indexes
           .filter(_.name.contains(lastUpdatedIndexName))
-          .filter(x => x.expireAfterSeconds.map(_ != appConfig.cacheTtl).getOrElse(false))
+          .filter(
+            x => x.expireAfterSeconds.map(_ != appConfig.cacheTtl).getOrElse(false)
+          )
           .headOption
         indexToDrop match {
           case Some(index) =>
-            val ttl = index.expireAfterSeconds.map(x => s"$x seconds").getOrElse("unset")
+            val ttl = index.expireAfterSeconds
+              .map(
+                x => s"$x seconds"
+              )
+              .getOrElse("unset")
             logger.warn(s"Dropping $lastUpdatedIndexName index with TTL $ttl")
 
             collection.indexesManager

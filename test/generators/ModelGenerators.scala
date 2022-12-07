@@ -18,21 +18,14 @@ package generators
 
 import config.Constants
 import connectors.MessageConnector.EisSubmissionResult
-import connectors.MessageConnector.EisSubmissionResult.DownstreamInternalServerError
-import connectors.MessageConnector.EisSubmissionResult.EisSubmissionFailure
-import connectors.MessageConnector.EisSubmissionResult.EisSubmissionFailureDownstream
-import connectors.MessageConnector.EisSubmissionResult.EisSubmissionRejected
-import connectors.MessageConnector.EisSubmissionResult.EisSubmissionSuccessful
-import connectors.MessageConnector.EisSubmissionResult.ErrorInPayload
-import connectors.MessageConnector.EisSubmissionResult.UnexpectedHttpResponse
-import connectors.MessageConnector.EisSubmissionResult.VirusFoundOrInvalidToken
+import connectors.MessageConnector.EisSubmissionResult._
 import models.MessageStatus.SubmissionPending
 import models.SubmissionProcessingResult.SubmissionFailure
 import models.SubmissionProcessingResult.SubmissionFailureExternal
 import models.SubmissionProcessingResult.SubmissionFailureInternal
 import models._
-import org.scalacheck.Arbitrary
 import org.scalacheck.Arbitrary.arbitrary
+import org.scalacheck.Arbitrary
 import org.scalacheck.Gen
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import utils.JsonHelper
@@ -92,7 +85,7 @@ trait ModelGenerators extends BaseGenerators with JavaTimeGenerators with JsonHe
         xml         <- Gen.const(<blankXml>message</blankXml>)
         messageType <- arbitrary[MessageType]
         status = SubmissionPending
-      } yield MessageWithStatus(messageId, LocalDateTime.of(date, time), messageType, xml, status, 1)
+      } yield MessageWithStatus(messageId, LocalDateTime.of(date, time), Some(LocalDateTime.of(date, time)), messageType, xml, status, 1)
     }
 
   implicit lazy val arbitraryMessageWithoutStateXml: Arbitrary[MessageWithoutStatus] =
@@ -104,7 +97,7 @@ trait ModelGenerators extends BaseGenerators with JavaTimeGenerators with JsonHe
         xml         <- Gen.const(<blankXml>message</blankXml>)
         messageType <- arbitrary[MessageType]
 
-      } yield MessageWithoutStatus(messageId, LocalDateTime.of(date, time), messageType, xml, 1)
+      } yield MessageWithoutStatus(messageId, LocalDateTime.of(date, time), Some(LocalDateTime.of(date, time)), messageType, xml, 1)
     }
 
   implicit lazy val arbitraryState: Arbitrary[DepartureStatus] =
