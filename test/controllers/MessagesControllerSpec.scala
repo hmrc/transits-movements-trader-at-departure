@@ -517,15 +517,19 @@ class MessagesControllerSpec
             .arbitrary[MessageWithStatus]
             .sample
             .value
-            .copy(messageId = MessageId(1), status = SubmissionSucceeded, dateTime = LocalDateTime.of(2021, 5, 11, 15, 10, 32))
+            .copy(
+              messageId = MessageId(1),
+              status = SubmissionSucceeded,
+              received = Some(LocalDateTime.of(2021, 5, 11, 15, 10, 32))
+            )
         val message2 =
-          Arbitrary.arbitrary[MessageWithStatus].sample.value.copy(messageId = MessageId(2), status = SubmissionSucceeded, dateTime = requestedDateTime)
+          Arbitrary.arbitrary[MessageWithStatus].sample.value.copy(messageId = MessageId(2), status = SubmissionSucceeded, received = Some(requestedDateTime))
         val message3 =
           Arbitrary
             .arbitrary[MessageWithStatus]
             .sample
             .value
-            .copy(messageId = MessageId(3), status = SubmissionSucceeded, dateTime = LocalDateTime.of(2021, 5, 12, 17, 5, 24))
+            .copy(messageId = MessageId(3), status = SubmissionSucceeded, received = Some(LocalDateTime.of(2021, 5, 12, 17, 5, 24)))
 
         val departure = Arbitrary.arbitrary[Departure].sample.value.copy(messages = NonEmptyList.of(message1, message2, message3), eoriNumber = "eori")
 

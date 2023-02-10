@@ -96,6 +96,7 @@ class DepartureServiceSpec extends SpecBase with JsonHelper with IntegrationPati
           MessageWithStatus(
             MessageId(1),
             dateTime,
+            Some(dateTime),
             MessageType.DepartureDeclaration,
             savedMovement,
             MessageStatus.SubmissionPending,
@@ -181,13 +182,20 @@ class DepartureServiceSpec extends SpecBase with JsonHelper with IntegrationPati
         MessageWithStatus(
           MessageId(1),
           LocalDateTime.of(dateOfPrep, timeOfPrep),
+          Some(LocalDateTime.of(dateOfPrep, timeOfPrep)),
           MessageType.DepartureDeclaration,
           savedMovement,
           SubmissionPending,
           messageCorrelationId
         )
 
-      val result = service.makeMessageWithStatus(id, expectedMessage.messageId, messageCorrelationId, MessageType.DepartureDeclaration)(movement)
+      val result = service.makeMessageWithStatus(
+        id,
+        expectedMessage.messageId,
+        messageCorrelationId,
+        MessageType.DepartureDeclaration,
+        LocalDateTime.of(2021, 2, 2, 2, 2)
+      )(movement)
       result.right.get mustEqual expectedMessage
     }
 
@@ -207,7 +215,8 @@ class DepartureServiceSpec extends SpecBase with JsonHelper with IntegrationPati
           <TimOfPreMES10>{Format.timeFormatted(timeOfPrep)}</TimOfPreMES10>
         </Foo>
 
-      val result = service.makeMessageWithStatus(DepartureId(1), MessageId(1), 1, MessageType.DepartureDeclaration)(movement)
+      val result =
+        service.makeMessageWithStatus(DepartureId(1), MessageId(1), 1, MessageType.DepartureDeclaration, LocalDateTime.of(2021, 2, 2, 2, 2))(movement)
       result.isLeft mustBe true
     }
   }

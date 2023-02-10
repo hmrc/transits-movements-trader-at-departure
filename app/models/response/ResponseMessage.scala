@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 HM Revenue & Customs
+ * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,12 +27,12 @@ import utils.NodeSeqFormat
 
 import scala.xml.NodeSeq
 
-case class ResponseMessage(location: String, dateTime: LocalDateTime, messageType: String, message: NodeSeq)
+case class ResponseMessage(location: String, dateTime: LocalDateTime, messageType: String, message: NodeSeq, received: Option[LocalDateTime])
 
 object ResponseMessage extends NodeSeqFormat {
 
   def build(d: DepartureId, m: Message) =
-    ResponseMessage(routes.MessagesController.getMessage(d, m.messageId).url, m.dateTime, m.messageType.code, m.message)
+    ResponseMessage(routes.MessagesController.getMessage(d, m.messageId).url, m.dateTime, m.messageType.code, m.message, m.received)
 
   implicit val writes: OWrites[ResponseMessage] = Json.writes[ResponseMessage]
 }

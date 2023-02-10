@@ -54,6 +54,7 @@ class DepartureWithoutMessagesSpec extends SpecBase with ModelGenerators with Mo
               Json.obj(
                 "messageId"            -> 1,
                 "dateTime"             -> localDateTimeNow.minusHours(2),
+                "received"             -> localDateTimeNow.minusHours(2),
                 "messageType"          -> "IE928",
                 "message"              -> "<foo></foo>",
                 "messageCorrelationId" -> 1
@@ -61,6 +62,7 @@ class DepartureWithoutMessagesSpec extends SpecBase with ModelGenerators with Mo
               Json.obj(
                 "messageId"            -> 2,
                 "dateTime"             -> localDateTimeNow,
+                "received"             -> localDateTimeNow,
                 "messageType"          -> "IE015",
                 "message"              -> "<foo></foo>",
                 "messageCorrelationId" -> 1
@@ -68,6 +70,7 @@ class DepartureWithoutMessagesSpec extends SpecBase with ModelGenerators with Mo
               Json.obj(
                 "messageId"            -> 3,
                 "dateTime"             -> localDateTimeNow.minusDays(5),
+                "received"             -> localDateTimeNow.minusDays(5),
                 "messageType"          -> "IE016",
                 "message"              -> "<foo></foo>",
                 "messageCorrelationId" -> 1

@@ -107,6 +107,7 @@ class DeparturesControllerSpec
   def movementMessage(messageCorrelationId: Int): MessageWithStatus = MessageWithStatus(
     MessageId(1),
     localDateTime,
+    Some(localDateTime),
     MessageType.DepartureDeclaration,
     savedXmlMessage(messageCorrelationId).map(trim),
     SubmissionPending,

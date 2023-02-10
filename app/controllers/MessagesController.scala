@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 HM Revenue & Customs
+ * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,8 @@ import services.DepartureService
 import services.SubmitMessageService
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
+import java.time.Clock
+import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import javax.inject.Inject
 import scala.annotation.nowarn
@@ -56,7 +58,7 @@ class MessagesController @Inject()(
   submitMessageService: SubmitMessageService,
   departureRepository: DepartureRepository,
   val metrics: Metrics
-)(implicit ec: ExecutionContext)
+)(implicit ec: ExecutionContext, clock: Clock)
     extends BackendController(cc)
     with Logging
     with HasActionMetrics {
@@ -74,7 +76,8 @@ class MessagesController @Inject()(
                   request.departure.departureId,
                   request.departure.nextMessageId,
                   request.departure.nextMessageCorrelationId,
-                  MessageType.DeclarationCancellationRequest
+                  MessageType.DeclarationCancellationRequest,
+                  LocalDateTime.now(clock)
                 )(
                   request.body
                 ) match {

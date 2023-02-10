@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 HM Revenue & Customs
+ * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,18 +33,20 @@ trait MessageTypeWithTime {
 sealed trait Message extends MessageTypeWithTime {
   def messageId: MessageId
   def dateTime: LocalDateTime
+  def received: Option[LocalDateTime]
   def messageType: MessageType
   def message: NodeSeq
   def messageCorrelationId: Int
   def optStatus: Option[MessageStatus]
 
   def receivedBefore(requestedDate: OffsetDateTime): Boolean =
-    dateTime.atOffset(ZoneOffset.UTC).isBefore(requestedDate)
+    received.getOrElse(dateTime).atOffset(ZoneOffset.UTC).isBefore(requestedDate)
 }
 
 final case class MessageWithStatus(
   messageId: MessageId,
   dateTime: LocalDateTime,
+  received: Option[LocalDateTime],
   messageType: MessageType,
   message: NodeSeq,
   status: MessageStatus,
@@ -54,6 +56,7 @@ final case class MessageWithStatus(
 final case class MessageWithoutStatus(
   messageId: MessageId,
   dateTime: LocalDateTime,
+  received: Option[LocalDateTime],
   messageType: MessageType,
   message: NodeSeq,
   messageCorrelationId: Int
@@ -86,11 +89,12 @@ object MessageWithStatus extends NodeSeqFormat with MongoDateTimeFormats {
     (
       (__ \ "messageId").read[MessageId] and
         (__ \ "dateTime").read[LocalDateTime] and
+        (__ \ "received").readNullable[LocalDateTime] and
         (__ \ "messageType").read[MessageType] and
         (__ \ "message").read[NodeSeq] and
         (__ \ "status").read[MessageStatus] and
         (__ \ "messageCorrelationId").read[Int]
-    )(MessageWithStatus(_, _, _, _, _, _))
+    )(MessageWithStatus(_, _, _, _, _, _, _))
 
   implicit val writesMessageWithStatus: OWrites[MessageWithStatus] =
     Json.writes[MessageWithStatus]
@@ -103,10 +107,11 @@ object MessageWithoutStatus extends NodeSeqFormat with MongoDateTimeFormats {
     (
       (__ \ "messageId").read[MessageId] and
         (__ \ "dateTime").read[LocalDateTime] and
+        (__ \ "received").readNullable[LocalDateTime] and
         (__ \ "messageType").read[MessageType] and
         (__ \ "message").read[NodeSeq] and
         (__ \ "messageCorrelationId").read[Int]
-    )(MessageWithoutStatus(_, _, _, _, _))
+    )(MessageWithoutStatus(_, _, _, _, _, _))
 
   implicit val writesMessageWithoutStatus: OWrites[MessageWithoutStatus] =
     Json.writes[MessageWithoutStatus]

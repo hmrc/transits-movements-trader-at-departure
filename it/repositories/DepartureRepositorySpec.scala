@@ -139,7 +139,7 @@ class DepartureRepositorySpec
   private val departureId4 = departureId3.copy(index = departureId3.index + 1)
 
   "DepartureRepository" - {
-        "started -- testing change in TTL" - {
+    "started -- testing change in TTL" - {
 
       val indexUnderTest = "last-updated-index";
 
@@ -151,8 +151,8 @@ class DepartureRepositorySpec
         clock: Clock,
         override val metrics: Metrics
       )(implicit ec: ExecutionContext)
-       extends DepartureRepository(mongo, appConfig, config, metrics)(ec, clock) {
-         override lazy val collectionName: String = cn
+          extends DepartureRepository(mongo, appConfig, config, metrics)(ec, clock) {
+        override lazy val collectionName: String = cn
       }
 
       def createHarness(app: Application, name: String) =
@@ -162,7 +162,7 @@ class DepartureRepositorySpec
           app.injector.instanceOf[AppConfig],
           app.injector.instanceOf[Configuration],
           app.injector.instanceOf[Clock],
-          new TestMetrics(),
+          new TestMetrics()
         )(app.materializer.executionContext)
 
       def runTest(name: String, ttl1: Int, ttl2: Int): Future[List[Index]] = {
@@ -172,8 +172,8 @@ class DepartureRepositorySpec
           .overrides(
             bind[DepartureRepository].to(mock[DepartureRepository]),
             bind[Metrics].to[TestMetrics]
-          ) 
-        val mongo   = builder.injector.instanceOf[ReactiveMongoApi]
+          )
+        val mongo = builder.injector.instanceOf[ReactiveMongoApi]
 
         def callHarness(ttl: Int): Harness = {
           val app = builder
@@ -185,10 +185,13 @@ class DepartureRepositorySpec
 
         // We run the harness once to create the collection,
         // then run it again to simulate re-connecting to it.
-        callHarness(ttl1)
-          .started
-          .flatMap(_ => callHarness(ttl2).started)
-          .flatMap(_ => mongo.database)
+        callHarness(ttl1).started
+          .flatMap(
+            _ => callHarness(ttl2).started
+          )
+          .flatMap(
+            _ => mongo.database
+          )
           .flatMap(_.collection[JSONCollection](name).indexesManager.list)
       }
 
@@ -299,6 +302,7 @@ class DepartureRepositorySpec
       val message = MessageWithStatus(
         MessageId(1),
         dateTime,
+        Some(dateTime),
         MessageType.ReleaseForTransit,
         node,
         MessageStatus.SubmissionSucceeded,
@@ -308,6 +312,7 @@ class DepartureRepositorySpec
       val otherMessage = MessageWithStatus(
         MessageId(2),
         dateTime,
+        Some(dateTime),
         MessageType.NoReleaseForTransit,
         node,
         MessageStatus.SubmissionSucceeded,
@@ -633,13 +638,14 @@ class DepartureRepositorySpec
           MessageWithStatus(
             MessageId(1),
             LocalDateTime.of(2021, 2, 2, 2, 2, 2),
+            Some(LocalDateTime.of(2021, 2, 2, 2, 2, 2)),
             MessageType.DepartureDeclaration,
             <CC015></CC015>,
             MessageStatus.SubmissionPending,
             1
           )
         )
-        val departure = arbitrary[Departure].sample.value.copy(messages = declarationMessages)
+        val departure = arbitrary[Departure].sample.value.copy(messages = declarationMessages, lastUpdated = LocalDateTime.of(2021, 2, 2, 2, 2, 2))
 
         val dateOfPrep = LocalDate.now(clock)
         val timeOfPrep = LocalTime.of(1, 1)
@@ -657,6 +663,7 @@ class DepartureRepositorySpec
           MessageWithoutStatus(
             departure.nextMessageId,
             dateTime,
+            Some(dateTime),
             MessageType.DepartureDeclaration,
             messageBody,
             departure.nextMessageCorrelationId
@@ -690,6 +697,7 @@ class DepartureRepositorySpec
           MessageWithStatus(
             MessageId(1),
             LocalDateTime.of(2021, 2, 2, 2, 2),
+            Some(LocalDateTime.of(2021, 2, 2, 2, 2)),
             MessageType.DepartureDeclaration,
             <CC015></CC015>,
             MessageStatus.SubmissionPending,
@@ -713,6 +721,7 @@ class DepartureRepositorySpec
           MessageWithoutStatus(
             departure.nextMessageId,
             LocalDateTime.of(dateOfPrep, timeOfPrep),
+            Some(LocalDateTime.of(dateOfPrep, timeOfPrep)),
             MessageType.DepartureDeclaration,
             messageBody,
             messageCorrelationId = 1
@@ -747,13 +756,14 @@ class DepartureRepositorySpec
           MessageWithoutStatus(
             departure.nextMessageId,
             dateTime,
+            Some(dateTime),
             MessageType.DeclarationRejected,
             messageBody,
             departure.nextMessageCorrelationId
           )
 
         service.insert(departure).futureValue
-        val addMessageResult = service.addResponseMessage(departure.departureId, declarationRejectedMessage).futureValue
+        val addMessageResult = service.addResponseMessage(departure.departureId, declarationRejectedMessage, dateTime).futureValue
 
         val selector = Json.obj("_id" -> departure.departureId)
 
@@ -777,6 +787,7 @@ class DepartureRepositorySpec
           MessageWithStatus(
             MessageId(1),
             LocalDateTime.of(2021, 2, 2, 2, 2),
+            Some(LocalDateTime.of(2021, 2, 2, 2, 2)),
             MessageType.DepartureDeclaration,
             <CC015></CC015>,
             MessageStatus.SubmissionPending,
@@ -801,13 +812,14 @@ class DepartureRepositorySpec
           MessageWithoutStatus(
             departure.nextMessageId,
             LocalDateTime.of(dateOfPrep, timeOfPrep),
+            Some(LocalDateTime.of(dateOfPrep, timeOfPrep)),
             MessageType.DeclarationRejected,
             messageBody,
             messageCorrelationId = 1
           )
 
         service.insert(departure).futureValue
-        val result = service.addResponseMessage(DepartureId(2), declarationRejected).futureValue
+        val result = service.addResponseMessage(DepartureId(2), declarationRejected, LocalDateTime.of(dateOfPrep, timeOfPrep)).futureValue
 
         result mustBe a[Failure[_]]
       }
@@ -836,6 +848,7 @@ class DepartureRepositorySpec
           MessageWithoutStatus(
             departure.nextMessageId,
             dateTime,
+            Some(dateTime),
             MessageType.MrnAllocated,
             messageBody,
             departure.nextMessageCorrelationId
@@ -843,7 +856,7 @@ class DepartureRepositorySpec
 
         service.insert(departure).futureValue
         val addMessageResult =
-          service.setMrnAndAddResponseMessage(departure.departureId, mrnAllocatedMessage, MovementReferenceNumber(mrn)).futureValue
+          service.setMrnAndAddResponseMessage(departure.departureId, mrnAllocatedMessage, MovementReferenceNumber(mrn), dateTime).futureValue
 
         val selector = Json.obj("_id" -> departure.departureId)
 
@@ -869,6 +882,7 @@ class DepartureRepositorySpec
           MessageWithStatus(
             MessageId(1),
             LocalDateTime.of(2021, 2, 2, 2, 2),
+            Some(LocalDateTime.of(2021, 2, 2, 2, 2)),
             MessageType.DepartureDeclaration,
             <CC015></CC015>,
             MessageStatus.SubmissionPending,
@@ -893,13 +907,16 @@ class DepartureRepositorySpec
           MessageWithoutStatus(
             departure.nextMessageId,
             LocalDateTime.of(dateOfPrep, timeOfPrep),
+            Some(LocalDateTime.of(dateOfPrep, timeOfPrep)),
             MessageType.MrnAllocated,
             messageBody,
             departure.nextMessageCorrelationId
           )
 
         service.insert(departure).futureValue
-        val addMessageResult = service.setMrnAndAddResponseMessage(DepartureId(2), mrnAllocatedMessage, MovementReferenceNumber(mrn)).futureValue
+        val addMessageResult = service
+          .setMrnAndAddResponseMessage(DepartureId(2), mrnAllocatedMessage, MovementReferenceNumber(mrn), LocalDateTime.of(dateOfPrep, timeOfPrep))
+          .futureValue
 
         addMessageResult mustBe a[Failure[_]]
       }

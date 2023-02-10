@@ -81,6 +81,7 @@ class MovementsChangeLogSpec extends SpecBase with IntegrationPatience with Befo
               "messages" -> Json.arr(
                 Json.obj(
                   "dateTime"             -> LocalDateTime.of(2021, 7, 15, 12, 12),
+                  "received"             -> LocalDateTime.of(2021, 7, 15, 12, 12),
                   "messageType"          -> MessageType.DepartureDeclaration.toString,
                   "message"              -> NodeSeq.fromSeq(Seq(<CC015B></CC015B>)),
                   "status"               -> MessageStatus.SubmissionSucceeded.toString,
@@ -88,12 +89,14 @@ class MovementsChangeLogSpec extends SpecBase with IntegrationPatience with Befo
                 ),
                 Json.obj(
                   "dateTime"             -> LocalDateTime.of(2021, 7, 15, 12, 12),
+                  "received"             -> LocalDateTime.of(2021, 7, 15, 12, 12),
                   "messageType"          -> MessageType.PositiveAcknowledgement.toString,
                   "message"              -> NodeSeq.fromSeq(Seq(<CC928A></CC928A>)),
                   "messageCorrelationId" -> 1
                 ),
                 Json.obj(
                   "dateTime"             -> LocalDateTime.of(2021, 7, 15, 12, 13),
+                  "received"             -> LocalDateTime.of(2021, 7, 15, 12, 12),
                   "messageType"          -> MessageType.MrnAllocated.toString,
                   "message"              -> NodeSeq.fromSeq(Seq(<CC028A></CC028A>)),
                   "messageCorrelationId" -> 1

@@ -45,7 +45,7 @@ class SaveMessageServiceSpec extends SpecBase with BeforeAndAfterEach {
   "validateXmlAndSaveMessage" - {
 
     "Returns Success when we successfully save a message" in {
-      when(mockDepartureRepository.addResponseMessage(any(), any())).thenReturn(Future.successful(Success(())))
+      when(mockDepartureRepository.addResponseMessage(any(), any(), any())).thenReturn(Future.successful(Success(())))
       when(mockXmlValidationService.validate(any(), any())).thenReturn(Success(()))
 
       val application = baseApplicationBuilder
@@ -76,12 +76,12 @@ class SaveMessageServiceSpec extends SpecBase with BeforeAndAfterEach {
           .futureValue
 
       result mustBe SubmissionProcessingResult.SubmissionSuccess
-      verify(mockDepartureRepository, times(1)).addResponseMessage(eqTo(departureId), any())
+      verify(mockDepartureRepository, times(1)).addResponseMessage(eqTo(departureId), any(), any())
       verify(mockXmlValidationService, times(1)).validate(any(), any())
     }
 
     "return Failure when we cannot save the message" in {
-      when(mockDepartureRepository.addResponseMessage(any(), any())).thenReturn(Future.successful(Failure(new Exception)))
+      when(mockDepartureRepository.addResponseMessage(any(), any(), any())).thenReturn(Future.successful(Failure(new Exception)))
       when(mockXmlValidationService.validate(any(), any())).thenReturn(Success(()))
 
       val application = baseApplicationBuilder
@@ -112,7 +112,7 @@ class SaveMessageServiceSpec extends SpecBase with BeforeAndAfterEach {
           .futureValue
 
       result mustBe SubmissionProcessingResult.SubmissionFailureInternal
-      verify(mockDepartureRepository, times(1)).addResponseMessage(any(), any())
+      verify(mockDepartureRepository, times(1)).addResponseMessage(any(), any(), any())
       verify(mockXmlValidationService, times(1)).validate(any(), any())
     }
 
@@ -139,7 +139,7 @@ class SaveMessageServiceSpec extends SpecBase with BeforeAndAfterEach {
         .futureValue
 
       result mustBe SubmissionProcessingResult.SubmissionFailureExternal
-      verify(mockDepartureRepository, never()).addResponseMessage(any(), any())
+      verify(mockDepartureRepository, never()).addResponseMessage(any(), any(), any())
       verify(mockXmlValidationService, times(1)).validate(any(), any())
     }
 
@@ -172,14 +172,14 @@ class SaveMessageServiceSpec extends SpecBase with BeforeAndAfterEach {
         .futureValue
 
       result mustBe SubmissionProcessingResult.SubmissionFailureExternal
-      verify(mockDepartureRepository, never()).addResponseMessage(any(), any())
+      verify(mockDepartureRepository, never()).addResponseMessage(any(), any(), any())
       verify(mockXmlValidationService, times(1)).validate(any(), any())
     }
   }
 
   "validateXmlSaveMessageUpdateMrn" - {
     "Returns Success when we successfully save a message" in {
-      when(mockDepartureRepository.setMrnAndAddResponseMessage(any(), any(), any())).thenReturn(Future.successful(Success(())))
+      when(mockDepartureRepository.setMrnAndAddResponseMessage(any(), any(), any(), any())).thenReturn(Future.successful(Success(())))
       when(mockXmlValidationService.validate(any(), any())).thenReturn(Success(()))
 
       val application = baseApplicationBuilder
@@ -225,13 +225,13 @@ class SaveMessageServiceSpec extends SpecBase with BeforeAndAfterEach {
 
       result mustBe SubmissionProcessingResult.SubmissionSuccess
 
-      verify(mockDepartureRepository, times(1)).setMrnAndAddResponseMessage(eqTo(departureId), any(), eqTo(MovementReferenceNumber(mrn)))
+      verify(mockDepartureRepository, times(1)).setMrnAndAddResponseMessage(eqTo(departureId), any(), eqTo(MovementReferenceNumber(mrn)), any())
       verify(mockXmlValidationService, times(1)).validate(any(), any())
 
     }
 
     "return Failure when we cannot save the message" in {
-      when(mockDepartureRepository.setMrnAndAddResponseMessage(any(), any(), any())).thenReturn(Future.successful(Failure(new Exception)))
+      when(mockDepartureRepository.setMrnAndAddResponseMessage(any(), any(), any(), any())).thenReturn(Future.successful(Failure(new Exception)))
       when(mockXmlValidationService.validate(any(), any())).thenReturn(Success(()))
 
       val application = baseApplicationBuilder
@@ -264,7 +264,7 @@ class SaveMessageServiceSpec extends SpecBase with BeforeAndAfterEach {
         .futureValue
 
       result mustBe SubmissionProcessingResult.SubmissionFailureInternal
-      verify(mockDepartureRepository, times(1)).setMrnAndAddResponseMessage(eqTo(departureId), any(), eqTo(MovementReferenceNumber(mrn)))
+      verify(mockDepartureRepository, times(1)).setMrnAndAddResponseMessage(eqTo(departureId), any(), eqTo(MovementReferenceNumber(mrn)), any())
       verify(mockXmlValidationService, times(1)).validate(any(), any())
     }
 
@@ -292,7 +292,7 @@ class SaveMessageServiceSpec extends SpecBase with BeforeAndAfterEach {
         .futureValue
 
       result mustBe SubmissionProcessingResult.SubmissionFailureExternal
-      verify(mockDepartureRepository, never()).addResponseMessage(any(), any())
+      verify(mockDepartureRepository, never()).addResponseMessage(any(), any(), any())
       verify(mockXmlValidationService, times(1)).validate(any(), any())
     }
 
@@ -329,7 +329,7 @@ class SaveMessageServiceSpec extends SpecBase with BeforeAndAfterEach {
         .futureValue
 
       result mustBe SubmissionProcessingResult.SubmissionFailureExternal
-      verify(mockDepartureRepository, never()).addResponseMessage(any(), any())
+      verify(mockDepartureRepository, never()).addResponseMessage(any(), any(), any())
       verify(mockXmlValidationService, times(1)).validate(any(), any())
     }
 
