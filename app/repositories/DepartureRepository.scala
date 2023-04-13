@@ -49,6 +49,7 @@ import scala.concurrent.Future
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
+import scala.util.matching.Regex
 
 class DepartureRepository @Inject()(
   mongo: ReactiveMongoApi,
@@ -482,6 +483,7 @@ class DepartureRepository @Inject()(
           }
 
         val lrnSelector = lrn
+          .map(Regex.quote)
           .map {
             lrn =>
               Json.obj("referenceNumber" -> Json.obj("$regex" -> lrn, "$options" -> "i"))
