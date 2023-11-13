@@ -16,86 +16,63 @@
 
 package repositories
 
+import com.google.inject.ImplementedBy
+import com.mongodb.MongoWriteException
 import config.AppConfig
 import models.DepartureId
-import models.MongoDateTimeFormats._
-import play.api.libs.json.Json
-import play.modules.reactivemongo.ReactiveMongoApi
-import reactivemongo.api.WriteConcern
-import reactivemongo.api.bson.BSONDocument
-import reactivemongo.api.bson.collection.BSONSerializationPack
-import reactivemongo.api.commands.LastError
-import reactivemongo.api.indexes.Index.Aux
-import reactivemongo.api.indexes.IndexType
-import reactivemongo.play.json.collection.Helpers.idWrites
-import reactivemongo.play.json.collection.JSONCollection
-import utils.IndexUtils
+import models.DepartureLock
+import org.mongodb.scala.model.Filters
+import org.mongodb.scala.model.IndexModel
+import org.mongodb.scala.model.IndexOptions
+import org.mongodb.scala.model.Indexes
+import uk.gov.hmrc.mongo.MongoComponent
+import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 
 import java.time.LocalDateTime
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
+import javax.inject.Singleton
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
-class LockRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfig)(implicit ec: ExecutionContext) {
+@ImplementedBy(classOf[LockRepositoryImpl])
+trait LockRepository {
+  def lock(departureId: DepartureId): Future[Boolean]
+  def unlock(departureId: DepartureId): Future[Unit]
+}
 
+@Singleton
+class LockRepositoryImpl @Inject() (mongoComponent: MongoComponent, appConfig: AppConfig)(implicit ec: ExecutionContext)
+    extends PlayMongoRepository[DepartureLock](
+      mongoComponent = mongoComponent,
+      collectionName = "locks",
+      domainFormat = DepartureLock.format,
+      indexes = Seq(
+        IndexModel(
+          Indexes.ascending("created"),
+          IndexOptions().name("created-index").expireAfter(appConfig.lockRepositoryTtl, TimeUnit.SECONDS).unique(false).sparse(false).background(false)
+        )
+      )
+    )
+    with LockRepository {
   private val documentExistsErrorCodeValue = 11000
 
-  private val ttl = appConfig.lockRepositoryTtl
-
-  private def collection: Future[JSONCollection] =
-    mongo.database.map(_.collection[JSONCollection](LockRepository.collectionName))
-
-  private val createdIndex: Aux[BSONSerializationPack.type] = IndexUtils.index(
-    key = Seq("created" -> IndexType.Ascending),
-    name = Some("created-index"),
-    options = BSONDocument("expireAfterSeconds" -> ttl)
-  )
-
-  val started: Future[Unit] =
+  override def lock(departureId: DepartureId): Future[Boolean] =
     collection
-      .flatMap {
-        _.indexesManager.ensure(createdIndex)
-      }
+      .insertOne(DepartureLock(departureId.index.toString, LocalDateTime.now()))
+      .head()
+      .map(
+        result => result.wasAcknowledged()
+      ) recover {
+      case e: MongoWriteException if e.getError.getCode == documentExistsErrorCodeValue =>
+        false
+    }
+
+  override def unlock(departureId: DepartureId): Future[Unit] =
+    collection
+      .findOneAndDelete(Filters.eq("_id", departureId.index))
+      .toFuture()
       .map(
         _ => ()
       )
-
-  def lock(departureId: DepartureId): Future[Boolean] = {
-
-    val lock = Json.obj(
-      "_id"     -> departureId,
-      "created" -> LocalDateTime.now
-    )
-
-    collection.flatMap {
-      _.insert(ordered = false)
-        .one(lock)
-        .map(
-          _ => true
-        )
-    } recover {
-      case e: LastError if e.code.contains(documentExistsErrorCodeValue) =>
-        false
-    }
-  }
-
-  def unlock(departureId: DepartureId): Future[Unit] =
-    collection.flatMap {
-      _.findAndRemove(
-        selector = Json.obj("_id" -> departureId),
-        sort = None,
-        fields = None,
-        writeConcern = WriteConcern.Default,
-        maxTime = None,
-        collation = None,
-        arrayFilters = Nil
-      ).map(
-        _ => ()
-      )
-    }
-}
-
-object LockRepository {
-
-  val collectionName = "locks"
 }

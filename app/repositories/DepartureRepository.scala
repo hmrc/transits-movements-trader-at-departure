@@ -28,16 +28,7 @@ import models.response.ResponseDepartures
 import play.api.Configuration
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
-import play.modules.reactivemongo.ReactiveMongoApi
-import reactivemongo.api.Cursor
-import reactivemongo.api.WriteConcern
-import reactivemongo.api.bson.BSONDocument
-import reactivemongo.api.bson.collection.BSONSerializationPack
-import reactivemongo.api.commands.WriteResult
-import reactivemongo.api.indexes.Index.Aux
-import reactivemongo.api.indexes.IndexType
-import reactivemongo.play.json.collection.Helpers.idWrites
-import reactivemongo.play.json.collection.JSONCollection
+
 import utils.IndexUtils
 
 import java.time.Clock
