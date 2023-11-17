@@ -18,46 +18,34 @@ package testOnly.controllers
 
 import play.api.Configuration
 import play.api.i18n.MessagesApi
-import play.api.libs.json.Json
 import play.api.mvc.Action
 import play.api.mvc.AnyContent
 import play.api.mvc.ControllerComponents
-import play.modules.reactivemongo.ReactiveMongoApi
-import reactivemongo.play.json.collection.Helpers.idWrites
-import reactivemongo.play.json.collection.JSONCollection
-import repositories.DepartureRepository
+import repositories.DepartureRepositoryImpl
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
-class TestOnlyController @Inject()(override val messagesApi: MessagesApi, mongo: ReactiveMongoApi, cc: ControllerComponents, config: Configuration)(
-  implicit
-  ec: ExecutionContext)
-    extends BackendController(cc) {
+class TestOnlyController @Inject()(override val messagesApi: MessagesApi, mongo: DepartureRepositoryImpl, cc: ControllerComponents, config: Configuration)(
+  implicit ec: ExecutionContext
+) extends BackendController(cc) {
 
   private val featureFlag: Boolean = config.get[Boolean]("feature-flags.testOnly.enabled")
 
   def dropDepartureCollection: Action[AnyContent] = Action.async {
     _ =>
       if (featureFlag) {
-        mongo.database
-          .map(_.collection[JSONCollection](DepartureRepository.collectionName))
-          .flatMap(
-            _.delete(ordered = false).one(Json.obj()).map {
-              result =>
-                if (result.ok) {
-                  Ok(s"Cleared '${DepartureRepository.collectionName}' Mongo collection")
-                } else {
-                  Ok(
-                    s"Collection '${DepartureRepository.collectionName}' does not exist or something gone wrong: ${result.writeErrors.map(_.errmsg).mkString("[", ", ", "]")}"
-                  )
-                }
-            }
+        mongo.collection
+          .drop()
+          .toFuture()
+          .map(
+            _ => Ok
           )
+
       } else {
-        Future.successful(NotImplemented(s"Feature disabled, cannot drop ${DepartureRepository.collectionName}"))
+        Future.successful(NotImplemented(s"Feature disabled, cannot drop ${mongo.collection}"))
       }
   }
 

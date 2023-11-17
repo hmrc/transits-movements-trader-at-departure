@@ -42,7 +42,7 @@ trait LockRepository {
 }
 
 @Singleton
-class LockRepositoryImpl @Inject() (mongoComponent: MongoComponent, appConfig: AppConfig)(implicit ec: ExecutionContext)
+class LockRepositoryImpl @Inject()(mongoComponent: MongoComponent, appConfig: AppConfig)(implicit ec: ExecutionContext)
     extends PlayMongoRepository[DepartureLock](
       mongoComponent = mongoComponent,
       collectionName = "locks",
@@ -70,7 +70,7 @@ class LockRepositoryImpl @Inject() (mongoComponent: MongoComponent, appConfig: A
 
   override def unlock(departureId: DepartureId): Future[Unit] =
     collection
-      .findOneAndDelete(Filters.eq("_id", departureId.index))
+      .findOneAndDelete(Filters.eq("_id", departureId))
       .toFuture()
       .map(
         _ => ()

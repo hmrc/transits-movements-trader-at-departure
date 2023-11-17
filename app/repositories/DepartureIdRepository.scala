@@ -16,92 +16,68 @@
 
 package repositories
 
+import com.google.inject.ImplementedBy
+import com.mongodb.client.model.Filters
+import com.mongodb.client.model.Updates
 import models.DepartureId
+import org.mongodb.scala.model.FindOneAndUpdateOptions
+import org.mongodb.scala.model.UpdateOptions
 import play.api.Configuration
-import play.api.libs.json.Json
-import play.api.libs.json.Reads
-import play.modules.reactivemongo.ReactiveMongoApi
-import reactivemongo.api.WriteConcern
-import reactivemongo.play.json.collection.Helpers.idWrites
-import reactivemongo.play.json.collection.JSONCollection
+import uk.gov.hmrc.mongo.MongoComponent
+import uk.gov.hmrc.mongo.play.json.Codecs
+import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 
 import javax.inject.Inject
-import scala.concurrent.ExecutionContext.Implicits._
+import javax.inject.Singleton
+import scala.collection.immutable.Seq
+import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
-class DepartureIdRepository @Inject()(mongo: ReactiveMongoApi, config: Configuration) {
+@ImplementedBy(classOf[DepartureIdRepositoryImpl])
+trait DepartureIdRepository {
+  def nextId(): Future[DepartureId]
+  def setLatestId(nextId: Int): Future[Unit]
+}
 
-  private val lastIndexKey = "last-index"
-  private val primaryValue = "record_id"
+@Singleton
+class DepartureIdRepositoryImpl @Inject()(mongoComponent: MongoComponent, config: Configuration)(implicit ec: ExecutionContext)
+    extends PlayMongoRepository[DepartureId](
+      mongoComponent = mongoComponent,
+      collectionName = "departure-ids-new",
+      domainFormat = DepartureId.formatsDepartureId,
+      indexes = Seq(),
+      extraCodecs = Seq(Codecs.playFormatCodec(DepartureId.formatsDepartureId))
+    )
+    with DepartureIdRepository {
 
-  private val collectionName: String = DepartureIdRepository.collectionName
-
-  private val indexKeyReads: Reads[DepartureId] = {
-    import play.api.libs.json._
-    (__ \ lastIndexKey).read[DepartureId]
-  }
-
+  private val lastIndexKey         = "last-index"
+  private val primaryValue         = "record_id"
   private val featureFlag: Boolean = config.get[Boolean]("feature-flags.testOnly.enabled")
 
-  private def collection: Future[JSONCollection] =
-    mongo.database.map(_.collection[JSONCollection](collectionName))
+  def nextId(): Future[DepartureId] = {
+    val update   = Updates.inc(lastIndexKey, 1)
+    val selector = Filters.eq("_id", primaryValue)
+    collection.findOneAndUpdate(filter = selector, update = update, options = FindOneAndUpdateOptions().upsert(true).bypassDocumentValidation(false)).toFuture()
+  }
 
   def setLatestId(nextId: Int): Future[Unit] =
     if (featureFlag) {
-      val update = Json.obj(
-        "$set" -> Json.obj(lastIndexKey -> nextId)
-      )
+      val update = Updates.set(lastIndexKey, nextId)
 
-      val selector = Json.obj("_id" -> primaryValue)
+      val selector = Filters.eq("_id", primaryValue)
+      collection
+        .updateOne(filter = selector, update = update, options = UpdateOptions().upsert(true).bypassDocumentValidation(false))
+        .toFuture()
+        .map {
+          result =>
+            if (result.wasAcknowledged()) {
+              if (result.getModifiedCount == 0) Future.failed(new Exception())
+              else Future.unit
+            } else {
+              Future.failed(new Exception("Unable to update next DepartureId"))
+            }
+        }
 
-      collection.flatMap(
-        _.update(ordered = false)
-          .one(selector, update, upsert = true)
-          .flatMap {
-            result =>
-              if (result.ok)
-                Future.unit
-              else
-                result.errmsg
-                  .map(
-                    x => Future.failed(new Exception(x))
-                  )
-                  .getOrElse(Future.failed(new Exception("Unable to update next DepartureId")))
-          }
-      )
-    } else {
+    } else
       Future.failed(new Exception("Feature disabled, cannot set next DepartureId"))
-    }
-
-  def nextId(): Future[DepartureId] = {
-
-    val update = Json.obj(
-      "$inc" -> Json.obj(lastIndexKey -> 1)
-    )
-
-    val selector = Json.obj("_id" -> primaryValue)
-
-    collection.flatMap(
-      _.findAndUpdate(
-        selector = selector,
-        update = update,
-        fetchNewObject = true,
-        upsert = true,
-        sort = None,
-        fields = None,
-        bypassDocumentValidation = false,
-        writeConcern = WriteConcern.Default,
-        maxTime = None,
-        collation = None,
-        arrayFilters = Nil
-      ).map(
-        _.result(indexKeyReads)
-          .getOrElse(throw new Exception(s"Unable to generate DepartureId"))
-      )
-    )
-  }
-}
-
-object DepartureIdRepository {
-  val collectionName = "departure-ids"
 }
