@@ -10,6 +10,7 @@ lazy val microservice = Project(appName, file("."))
   .enablePlugins(play.sbt.PlayScala, SbtAutoBuildPlugin, SbtGitVersioning, SbtDistributablesPlugin)
   .disablePlugins(JUnitXmlReportPlugin) //Required to prevent https://github.com/scalatest/scalatest/issues/1427
   .configs(IntegrationTest)
+  .settings(DefaultBuildSettings.integrationTestSettings())
   .settings(inConfig(IntegrationTest)(itSettings))
   .settings(inConfig(IntegrationTest)(scalafmtSettings))
   .settings(inConfig(Test)(testSettings))
