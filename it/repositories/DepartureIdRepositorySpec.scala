@@ -21,6 +21,8 @@ import models.DepartureIdWrapper
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import play.api.inject.guice.GuiceApplicationBuilder
+import play.api.Application
 import play.api.Configuration
 import uk.gov.hmrc.mongo.test.DefaultPlayMongoRepositorySupport
 
@@ -28,10 +30,16 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 class DepartureIdRepositorySpec extends AnyFreeSpec with Matchers with GuiceOneAppPerSuite with DefaultPlayMongoRepositorySupport[DepartureIdWrapper] {
 
-  private val appConfig: Configuration = app.injector.instanceOf[Configuration]
+  override lazy val fakeApplication: Application =
+    new GuiceApplicationBuilder()
+      .configure(
+        "play.http.router"               -> "testOnlyDoNotUseInAppConf.Routes",
+        "feature-flags.testOnly.enabled" -> false
+      )
+      .build()
 
-  override lazy val repository  = new DepartureIdRepositoryImpl(mongoComponent, appConfig)
-  override def afterAll(): Unit = dropDatabase()
+  private val config: Configuration = fakeApplication.injector.instanceOf[Configuration]
+  override lazy val repository      = new DepartureIdRepositoryImpl(mongoComponent, config)
 
   "DepartureIdRepository" - {
 

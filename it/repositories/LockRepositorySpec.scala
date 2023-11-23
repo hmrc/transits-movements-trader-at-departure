@@ -19,10 +19,8 @@ package repositories
 import com.mongodb.client.model.Filters
 import config.AppConfig
 import generators.ModelGenerators
-import models.DepartureId
-import models.DepartureLock
-import org.scalatest.EitherValues
-import org.scalatest.OptionValues
+import models.{DepartureId, DepartureLock}
+import org.scalatest.{EitherValues, OptionValues}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
@@ -42,14 +40,15 @@ class LockRepositorySpec
     with DefaultPlayMongoRepositorySupport[DepartureLock] {
   private val appConfig: AppConfig = app.injector.instanceOf[AppConfig]
   override lazy val repository     = new LockRepositoryImpl(mongoComponent, appConfig)
-  override def afterAll(): Unit    = dropDatabase()
 
   "lock" - {
     "must lock an departureId when it is not already locked" in {
       val departureId = DepartureId(1)
       val result      = repository.lock(departureId).futureValue
+
       result mustEqual true
-      val selector = Filters.eq("_id", departureId)
+
+      val selector = Filters.eq("_id", departureId.index.toString)
 
       val lock = repository.collection.find(selector).head().futureValue
 
@@ -73,13 +72,14 @@ class LockRepositorySpec
     "must remove an existing lock" in {
 
       val departureId = DepartureId(1)
+
       repository.lock(departureId).futureValue
       repository.unlock(departureId).futureValue
 
       val selector      = Filters.eq("_id", departureId)
       val remainingLock = repository.collection.find(selector).head().futureValue
 
-      // remainingLock must not be defined[DepartureLock]
+      remainingLock mustEqual null
 
     }
     "must not fail when asked to remove a lock that doesn't exist" in {
@@ -95,10 +95,10 @@ class LockRepositorySpec
 
       result mustEqual true
 
-      val selector = Filters.and(Filters.eq("_id", departureId), Filters.`type`("created", "date"))
+      val selector = Filters.and(Filters.eq("_id", departureId.index.toString), Filters.`type`("created", "date"))
 
-      //repository.collection.find(selector).head().futureValue must be(defined[DepartureLock])
-
+      val lock = repository.collection.find(selector).head().futureValue
+      lock.id mustEqual departureId.index.toString
     }
 
   }

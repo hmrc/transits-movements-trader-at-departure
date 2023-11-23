@@ -18,6 +18,7 @@ package repositories
 
 import com.google.inject.ImplementedBy
 import com.mongodb.client.model.Filters
+import com.mongodb.client.model.ReturnDocument
 import com.mongodb.client.model.Updates
 import models.DepartureId
 import models.DepartureIdWrapper
@@ -62,20 +63,19 @@ class DepartureIdRepositoryImpl @Inject()(mongoComponent: MongoComponent, config
       .findOneAndUpdate(
         filter = selector,
         update = update,
-        options = FindOneAndUpdateOptions().upsert(true).bypassDocumentValidation(false)
+        options = FindOneAndUpdateOptions().upsert(true).returnDocument(ReturnDocument.AFTER)
       )
       .toFuture()
       .map {
         lastIndex =>
-          println("last index" + lastIndex.recordId); DepartureId(lastIndex.recordId)
+          DepartureId(lastIndex.recordId)
       }
 
   }
 
   def setLatestId(nextId: Int): Future[Unit] =
     if (featureFlag) {
-      val update = Updates.set(lastIndexKey, nextId)
-
+      val update   = Updates.set(lastIndexKey, nextId)
       val selector = Filters.eq("_id", primaryValue)
       collection
         .updateOne(filter = selector, update = update, options = UpdateOptions().upsert(true).bypassDocumentValidation(false))
@@ -83,8 +83,10 @@ class DepartureIdRepositoryImpl @Inject()(mongoComponent: MongoComponent, config
         .map {
           result =>
             if (result.wasAcknowledged()) {
-              if (result.getModifiedCount == 0) Future.failed(new Exception())
-              else Future.unit
+              if (result.getModifiedCount > 0 || result.getUpsertedId != null) Future.unit
+              else
+                Future.failed(new Exception())
+
             } else {
               Future.failed(new Exception("Unable to update next DepartureId"))
             }

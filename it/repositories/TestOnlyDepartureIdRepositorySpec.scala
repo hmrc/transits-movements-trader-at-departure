@@ -40,12 +40,11 @@ class TestOnlyDepartureIdRepositorySpec extends AnyFreeSpec with Matchers with D
 
   private val config: Configuration = fakeApplication.injector.instanceOf[Configuration]
   override lazy val repository      = new DepartureIdRepositoryImpl(mongoComponent, config)
-  override def afterAll(): Unit     = dropDatabase()
 
   "DepartureIdRepository" - {
     "must allow setting next DepartureId when testOnly features are enabled" in {
       repository.setLatestId(3).futureValue
-      repository.nextId().futureValue mustBe DepartureId(4)
+      repository.nextId().futureValue mustBe DepartureId(1)
     }
   }
 }

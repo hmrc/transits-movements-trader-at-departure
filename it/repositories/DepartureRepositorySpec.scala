@@ -71,14 +71,13 @@ class DepartureRepositorySpec
     .configure("feature-flags.testOnly.enabled" -> true)
     .build()
 
-  private val config            = app.injector.instanceOf[Configuration]
-  private val appConfig         = app.injector.instanceOf[AppConfig]
-  val localDate                 = LocalDate.now()
-  val localTime                 = LocalTime.of(1, 1)
-  val localDateTime             = LocalDateTime.of(localDate, localTime)
-  implicit val clock            = Clock.fixed(localDateTime.toInstant(ZoneOffset.UTC), ZoneOffset.UTC)
-  override lazy val repository  = new DepartureRepositoryImpl(mongoComponent, appConfig, config, new TestMetrics())
-  override def afterAll(): Unit = dropDatabase()
+  private val config           = app.injector.instanceOf[Configuration]
+  private val appConfig        = app.injector.instanceOf[AppConfig]
+  val localDate                = LocalDate.now()
+  val localTime                = LocalTime.of(1, 1)
+  val localDateTime            = LocalDateTime.of(localDate, localTime)
+  implicit val clock           = Clock.fixed(localDateTime.toInstant(ZoneOffset.UTC), ZoneOffset.UTC)
+  override lazy val repository = new DepartureRepositoryImpl(mongoComponent, appConfig, config, new TestMetrics())
 
   def typeMatchOnTestValue[A, B](testValue: A)(test: B => Unit)(implicit bClassTag: ClassTag[B]) = testValue match {
     case result: B => test(result)

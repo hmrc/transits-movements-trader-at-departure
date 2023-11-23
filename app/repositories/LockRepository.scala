@@ -46,7 +46,7 @@ trait LockRepository {
 class LockRepositoryImpl @Inject()(mongoComponent: MongoComponent, appConfig: AppConfig)(implicit ec: ExecutionContext)
     extends PlayMongoRepository[DepartureLock](
       mongoComponent = mongoComponent,
-      collectionName = "locks",
+      collectionName = "locks-test",
       domainFormat = DepartureLock.format,
       indexes = Seq(
         IndexModel(
