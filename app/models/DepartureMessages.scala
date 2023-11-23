@@ -16,7 +16,9 @@
 
 package models
 
+import models.Message.writes
 import play.api.libs.functional.syntax._
+import play.api.libs.json.Reads._
 import play.api.libs.json._
 
 case class DepartureMessages(departureId: DepartureId, eoriNumber: EORINumber, messages: List[Message])
@@ -30,4 +32,19 @@ object DepartureMessages {
         (__ \ "messages").read[List[Message]]
     )(DepartureMessages.apply _)
 
+  implicit val write: OWrites[DepartureMessages] =
+    (
+      (__ \ "_id").write[DepartureId] and
+        (__ \ "eoriNumber").write[EORINumber] and
+        (__ \ "messages").write[List[Message]]
+    )(unlift(DepartureMessages.unapply))
+
+  implicit val formatsDeparture: Format[DepartureMessages] =
+    Format(read, write)
+
+  val projection: JsObject = Json.obj(
+    "_id"        -> 1,
+    "eoriNumber" -> 1,
+    "messages"   -> 1
+  )
 }

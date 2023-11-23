@@ -17,27 +17,28 @@
 package repositories
 
 import models.DepartureId
+import models.DepartureIdWrapper
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import play.api.libs.json.Json
-import reactivemongo.play.json.collection.Helpers.idWrites
-import reactivemongo.play.json.collection.JSONCollection
+import play.api.Configuration
+import uk.gov.hmrc.mongo.test.DefaultPlayMongoRepositorySupport
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class DepartureIdRepositorySpec extends AnyFreeSpec with Matchers with MongoSuite with GuiceOneAppPerSuite {
+class DepartureIdRepositorySpec extends AnyFreeSpec with Matchers with GuiceOneAppPerSuite with DefaultPlayMongoRepositorySupport[DepartureIdWrapper] {
 
-  private val service = app.injector.instanceOf[DepartureIdRepository]
+  private val appConfig: Configuration = app.injector.instanceOf[Configuration]
+
+  override lazy val repository  = new DepartureIdRepositoryImpl(mongoComponent, appConfig)
+  override def afterAll(): Unit = dropDatabase()
 
   "DepartureIdRepository" - {
 
     "must generate sequential DepartureIds starting at 1 when no record exists within the database" in {
 
-      database.flatMap(_.drop()).futureValue
-
-      val first  = service.nextId().futureValue
-      val second = service.nextId().futureValue
+      val first  = repository.nextId().futureValue
+      val second = repository.nextId().futureValue
 
       first mustBe DepartureId(1)
       second mustBe DepartureId(2)
@@ -45,23 +46,10 @@ class DepartureIdRepositorySpec extends AnyFreeSpec with Matchers with MongoSuit
 
     "must generate sequential DepartureIds when a record exists within the database" in {
 
-      database.flatMap {
-        db =>
-          db.drop().flatMap {
-            _ =>
-              db.collection[JSONCollection](DepartureIdRepository.collectionName)
-                .insert(ordered = false)
-                .one(
-                  Json.obj(
-                    "_id"        -> "record_id",
-                    "last-index" -> 1
-                  )
-                )
-          }
-      }.futureValue
+      repository.collection.insertOne(DepartureIdWrapper("record_id", 1)).toFuture().futureValue
 
-      val first  = service.nextId().futureValue
-      val second = service.nextId().futureValue
+      val first  = repository.nextId().futureValue
+      val second = repository.nextId().futureValue
 
       first mustBe DepartureId(2)
       second mustBe DepartureId(3)
@@ -69,7 +57,7 @@ class DepartureIdRepositorySpec extends AnyFreeSpec with Matchers with MongoSuit
 
     "must not allow setting next DepartureId when testOnly features are disabled" in {
       intercept[Exception] {
-        service.setLatestId(3).futureValue
+        repository.setLatestId(3).futureValue
       }
     }
   }

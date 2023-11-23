@@ -16,6 +16,8 @@
 
 package models
 
+import models.MessageWithStatus.readsMessagWithStatus
+import models.MessageWithoutStatus.readsMessagWithoutStatus
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 import utils.NodeSeqFormat
@@ -80,7 +82,7 @@ object Message extends NodeSeqFormat with MongoDateTimeFormats {
     case ns: MessageWithStatus    => Json.toJsObject(ns)(MessageWithStatus.writesMessageWithStatus)
     case ws: MessageWithoutStatus => Json.toJsObject(ws)(MessageWithoutStatus.writesMessageWithoutStatus)
   }
-
+  implicit lazy val format: Format[Message] = Format(reads, writes)
 }
 
 object MessageWithStatus extends NodeSeqFormat with MongoDateTimeFormats {
@@ -98,7 +100,7 @@ object MessageWithStatus extends NodeSeqFormat with MongoDateTimeFormats {
 
   implicit val writesMessageWithStatus: OWrites[MessageWithStatus] =
     Json.writes[MessageWithStatus]
-
+  implicit lazy val format: OFormat[MessageWithStatus] = OFormat(readsMessagWithStatus, writesMessageWithStatus)
 }
 
 object MessageWithoutStatus extends NodeSeqFormat with MongoDateTimeFormats {
@@ -115,5 +117,5 @@ object MessageWithoutStatus extends NodeSeqFormat with MongoDateTimeFormats {
 
   implicit val writesMessageWithoutStatus: OWrites[MessageWithoutStatus] =
     Json.writes[MessageWithoutStatus]
-
+  implicit lazy val format: OFormat[MessageWithoutStatus] = OFormat(readsMessagWithoutStatus, writesMessageWithoutStatus)
 }

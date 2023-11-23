@@ -34,6 +34,7 @@ trait NodeSeqFormat {
       case _               => JsError("Value cannot be parsed as XML")
     }
   }
+
 }
 
 object NodeSeqFormat extends NodeSeqFormat

@@ -109,9 +109,8 @@ class SubmitMessageService @Inject()(
     messageId: MessageId,
     messageState: MessageStatus = MessageStatus.SubmissionSucceeded
   ): Future[SubmissionProcessingResult] = {
-    val selector = DepartureIdSelector(departureId)
     val modifier = MessageStatusUpdate(messageId, messageState)
-    updateDeparture(selector, modifier)(
+    updateDeparture(departureId, modifier)(
       _ => SubmissionProcessingResult.SubmissionSuccess
     )(SubmissionProcessingResult.SubmissionFailureInternal)
   }
@@ -121,13 +120,12 @@ class SubmitMessageService @Inject()(
     message: MessageWithStatus,
     submissionResult: EisSubmissionResult
   )(processResult: Try[Unit] => SubmissionProcessingResult)(defaultResult: SubmissionProcessingResult): Future[SubmissionProcessingResult] = {
-    val selector = MessageSelector(departureId, message.messageId)
     val modifier = MessageStatusUpdate(message.messageId, message.status.transition(submissionResult))
-    updateDeparture(selector, modifier)(processResult)(defaultResult)
+    updateDeparture(departureId, modifier)(processResult)(defaultResult)
   }
 
   private def updateDeparture(
-    selector: DepartureSelector,
+    selector: DepartureId,
     modifier: MessageStatusUpdate
   )(processResult: Try[Unit] => SubmissionProcessingResult)(defaultResult: SubmissionProcessingResult): Future[SubmissionProcessingResult] =
     departureRepository

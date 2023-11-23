@@ -18,6 +18,7 @@ package models
 
 import connectors.MessageConnector.EisSubmissionResult
 import connectors.MessageConnector.EisSubmissionResult.EisSubmissionSuccessful
+import play.api.libs.json._
 
 sealed trait MessageStatus {
   def transition(event: EisSubmissionResult): MessageStatus

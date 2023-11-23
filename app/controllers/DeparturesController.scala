@@ -126,7 +126,8 @@ class DeparturesController @Inject()(
                       }
                 }
                 .recover {
-                  case _ =>
+                  case e: Exception =>
+                    println("error occured" + e.getMessage)
                     InternalServerError
                 }
           }

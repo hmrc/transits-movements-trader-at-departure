@@ -16,15 +16,14 @@
 
 package config
 
-import java.time.Clock
-
 import com.google.inject.AbstractModule
 import controllers.actions._
-import repositories.DepartureIdRepository
-import repositories.DepartureRepository
 import migrations.MigrationRunner
 import migrations.MigrationRunnerImpl
+import repositories.DepartureIdRepository
+import repositories.DepartureRepository
 import utils.MessageTranslation
+
 import java.time.Clock
 
 class Module extends AbstractModule {

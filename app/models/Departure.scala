@@ -70,12 +70,13 @@ case class Departure(
 
 object Departure {
 
-  implicit def formatsNonEmptyList[A](implicit listReads: Reads[List[A]], listWrites: Writes[List[A]]): Format[NonEmptyList[A]] =
-    new Format[NonEmptyList[A]] {
-      override def writes(o: NonEmptyList[A]): JsValue = Json.toJson(o.toList)
-
-      override def reads(json: JsValue): JsResult[NonEmptyList[A]] = json.validate(listReads).map(NonEmptyList.fromListUnsafe)
-    }
+  implicit def nonEmptyListFormat[A: Format]: Format[NonEmptyList[A]] =
+    Format
+      .of[List[A]]
+      .inmap(
+        NonEmptyList.fromListUnsafe,
+        _.toList
+      )
 
   implicit val readsDeparture: Reads[Departure] =
     (
@@ -100,8 +101,8 @@ object Departure {
         (__ \ "eoriNumber").write[String] and
         (__ \ "movementReferenceNumber").writeNullable[MovementReferenceNumber] and
         (__ \ "referenceNumber").write[String] and
-        (__ \ "created").write(write) and
-        (__ \ "lastUpdated").write(write) and
+        (__ \ "created").write(MongoDateTimeFormats.localDateTimeWrite) and
+        (__ \ "lastUpdated").write(MongoDateTimeFormats.localDateTimeWrite) and
         (__ \ "nextMessageCorrelationId").write[Int] and
         (__ \ "messages").write[NonEmptyList[Message]] and
         (__ \ "notificationBox").writeNullable[Box]

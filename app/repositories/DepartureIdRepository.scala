@@ -20,6 +20,7 @@ import com.google.inject.ImplementedBy
 import com.mongodb.client.model.Filters
 import com.mongodb.client.model.Updates
 import models.DepartureId
+import models.DepartureIdWrapper
 import org.mongodb.scala.model.FindOneAndUpdateOptions
 import org.mongodb.scala.model.UpdateOptions
 import play.api.Configuration
@@ -41,11 +42,11 @@ trait DepartureIdRepository {
 
 @Singleton
 class DepartureIdRepositoryImpl @Inject()(mongoComponent: MongoComponent, config: Configuration)(implicit ec: ExecutionContext)
-    extends PlayMongoRepository[DepartureId](
+    extends PlayMongoRepository[DepartureIdWrapper](
       mongoComponent = mongoComponent,
       collectionName = "departure-ids-new",
-      domainFormat = DepartureId.formatsDepartureId,
-      indexes = Seq(),
+      domainFormat = DepartureIdWrapper.format,
+      indexes = Nil,
       extraCodecs = Seq(Codecs.playFormatCodec(DepartureId.formatsDepartureId))
     )
     with DepartureIdRepository {
@@ -57,7 +58,18 @@ class DepartureIdRepositoryImpl @Inject()(mongoComponent: MongoComponent, config
   def nextId(): Future[DepartureId] = {
     val update   = Updates.inc(lastIndexKey, 1)
     val selector = Filters.eq("_id", primaryValue)
-    collection.findOneAndUpdate(filter = selector, update = update, options = FindOneAndUpdateOptions().upsert(true).bypassDocumentValidation(false)).toFuture()
+    collection
+      .findOneAndUpdate(
+        filter = selector,
+        update = update,
+        options = FindOneAndUpdateOptions().upsert(true).bypassDocumentValidation(false)
+      )
+      .toFuture()
+      .map {
+        lastIndex =>
+          println("last index" + lastIndex.recordId); DepartureId(lastIndex.recordId)
+      }
+
   }
 
   def setLatestId(nextId: Int): Future[Unit] =

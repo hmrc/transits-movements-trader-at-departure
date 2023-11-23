@@ -26,6 +26,7 @@ import org.mongodb.scala.model.IndexModel
 import org.mongodb.scala.model.IndexOptions
 import org.mongodb.scala.model.Indexes
 import uk.gov.hmrc.mongo.MongoComponent
+import uk.gov.hmrc.mongo.play.json.Codecs
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 
 import java.time.LocalDateTime
@@ -52,7 +53,8 @@ class LockRepositoryImpl @Inject()(mongoComponent: MongoComponent, appConfig: Ap
           Indexes.ascending("created"),
           IndexOptions().name("created-index").expireAfter(appConfig.lockRepositoryTtl, TimeUnit.SECONDS).unique(false).sparse(false).background(false)
         )
-      )
+      ),
+      extraCodecs = Seq(Codecs.playFormatCodec(DepartureId.formatsDepartureId))
     )
     with LockRepository {
   private val documentExistsErrorCodeValue = 11000

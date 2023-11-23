@@ -16,25 +16,4 @@
 
 package models
 
-import play.api.libs.json.Json
-import play.api.libs.json.Writes
-
-import java.time.Clock
-import java.time.LocalDateTime
-
 final case class MessageStatusUpdate(messageId: MessageId, messageStatus: MessageStatus)
-
-object MessageStatusUpdate extends MongoDateTimeFormats {
-
-  implicit def departureStateUpdate(implicit clock: Clock, writes: Writes[MessageStatus]): DepartureModifier[MessageStatusUpdate] =
-    DepartureModifier(
-      value =>
-        Json.obj(
-          "$set" ->
-            Json.obj(
-              s"messages.${value.messageId.index}.status" -> value.messageStatus,
-              "lastUpdated"                               -> Json.toJson(LocalDateTime.now(clock))
-            )
-      )
-    )
-}

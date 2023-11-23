@@ -19,6 +19,7 @@ package repositories
 import cats.data.Ior
 import com.google.inject.ImplementedBy
 import com.kenshoo.play.metrics.Metrics
+import com.mongodb.client.model.Filters.empty
 import com.mongodb.client.model.Updates
 import config.AppConfig
 import logging.Logging
@@ -26,11 +27,16 @@ import metrics.HasMetrics
 import models._
 import models.response.ResponseDeparture
 import models.response.ResponseDepartures
+import org.bson.conversions.Bson
+import org.mongodb.scala.bson.BsonArray
+import org.mongodb.scala.bson.BsonDocument
+import org.mongodb.scala.bson.Document
 import org.mongodb.scala.model.Sorts.descending
 import org.mongodb.scala.model._
 import play.api.Configuration
 import play.api.libs.json.Json
 import play.api.libs.json.OFormat.oFormatFromReadsAndOWrites
+import repositories.DepartureRepositoryImpl.EPOCH_TIME
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.Codecs
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
@@ -38,13 +44,16 @@ import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 import java.time.Clock
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
+import java.time.ZoneOffset
+import java.util.Collections
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
+import javax.inject.Singleton
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.util.Failure
 import scala.util.Success
-import scala.util.matching.Regex
+import scala.util.Try
 
 @ImplementedBy(classOf[DepartureRepositoryImpl])
 trait DepartureRepository {
@@ -52,7 +61,7 @@ trait DepartureRepository {
   val started: Future[Unit]
   def bulkInsert(departures: Seq[Departure]): Future[Unit]
   def insert(departure: Departure): Future[Unit]
-  def addNewMessage(departureId: DepartureId, message: Message): Future[Unit]
+  def addNewMessage(departureId: DepartureId, message: Message): Future[Try[Unit]]
   def setMessageState(departureId: DepartureId, messageId: Int, messageStatus: MessageStatus): Future[Unit]
   def getMaxDepartureId: Future[Option[DepartureId]]
   def get(departureId: DepartureId): Future[Option[Departure]]
@@ -61,9 +70,9 @@ trait DepartureRepository {
   def getWithoutMessages(departureId: DepartureId, channelFilter: ChannelType): Future[Option[DepartureWithoutMessages]]
   def getMessagesOfType(departureId: DepartureId, channelFilter: ChannelType, messageTypes: List[MessageType]): Future[Option[DepartureMessages]]
   def getMessage(departureId: DepartureId, channelFilter: ChannelType, messageId: MessageId): Future[Option[Message]]
-  def addResponseMessage(departureId: DepartureId, message: Message, lastUpdated: LocalDateTime): Future[Unit]
-  def setMrnAndAddResponseMessage(departureId: DepartureId, message: Message, mrn: MovementReferenceNumber, lastUpdated: LocalDateTime): Future[Unit]
-  def updateDeparture[A](selector: DepartureSelector, modifier: A)(implicit ev: DepartureModifier[A]): Future[Unit]
+  def addResponseMessage(departureId: DepartureId, message: Message, lastUpdated: LocalDateTime): Future[Try[Unit]]
+  def setMrnAndAddResponseMessage(departureId: DepartureId, message: Message, mrn: MovementReferenceNumber, lastUpdated: LocalDateTime): Future[Try[Unit]]
+  def updateDeparture(selector: DepartureId, modifier: MessageStatusUpdate): Future[Try[Unit]]
 
   def fetchAllDepartures(
     enrolmentId: Ior[TURN, EORINumber],
@@ -73,6 +82,10 @@ trait DepartureRepository {
     pageSize: Option[Int] = None,
     page: Option[Int] = None
   ): Future[ResponseDepartures]
+}
+
+object DepartureRepositoryImpl {
+  val EPOCH_TIME: LocalDateTime = LocalDateTime.ofEpochSecond(0, 0, ZoneOffset.UTC)
 }
 
 @Singleton
@@ -114,12 +127,23 @@ class DepartureRepositoryImpl @Inject()(
       ),
       extraCodecs = Seq(
         Codecs.playFormatCodec(DepartureId.formatsDepartureId),
+        Codecs.playFormatCodec(ChannelType.formats),
+        Codecs.playFormatCodec(MovementReferenceNumber.mrnFormat),
+        Codecs.playFormatCodec(Box.formatsBox),
+        Codecs.playFormatCodec(Box.optionBoxFormats),
         Codecs.playFormatCodec(MessageId.formatMessageId),
-        Codecs.playFormatCodec(EORINumber.format)
+        Codecs.playFormatCodec(EORINumber.format),
+        Codecs.playFormatCodec(Departure.formatsDeparture),
+        Codecs.playFormatCodec(Message.format),
+        Codecs.playFormatCodec(MessageWithStatus.format),
+        Codecs.playFormatCodec(MessageWithoutStatus.format),
+        Codecs.playFormatCodec(DepartureWithoutMessages.formatsDeparture),
+        Codecs.playFormatCodec(MongoDateTimeFormats.localDateTimeFormat),
+        Codecs.playFormatCodec(MongoDateTimeFormats.offsetDateTimeFormat),
+        Codecs.playFormatCodec(DepartureMessages.formatsDeparture)
       )
     )
     with DepartureRepository
-    with MongoDateTimeFormats
     with HasMetrics
     with Logging {
 
@@ -154,13 +178,12 @@ class DepartureRepositoryImpl @Inject()(
       collection.find().sort(descending("_id")).limit(1).headOption().map(_.map(_.departureId))
     } else Future.successful(None)
 
-  def addNewMessage(departureId: DepartureId, message: Message): Future[Unit] =
+  def addNewMessage(departureId: DepartureId, message: Message): Future[Try[Unit]] =
     collection
       .updateOne(
         filter = Filters.eq("_id", departureId),
         update =
-          Updates.combine(Updates.set("lastUpdated", message.received.get), Updates.inc("nextMessageCorrelationId", 1), Updates.push("messages", message)),
-        options = UpdateOptions().upsert(false).bypassDocumentValidation(false)
+          Updates.combine(Updates.set("lastUpdated", message.received.get), Updates.inc("nextMessageCorrelationId", 1), Updates.push("messages", message))
       )
       .toFuture()
       .map {
@@ -197,7 +220,7 @@ class DepartureRepositoryImpl @Inject()(
 
   def get(departureId: DepartureId, channelFilter: ChannelType): Future[Option[Departure]] =
     collection
-      .find(Filters.and(Filters.eq("_id", departureId), Filters.eq("channel", channelFilter)))
+      .find(Filters.and(Filters.eq("_id", departureId), Filters.eq("channel", channelFilter.toString)))
       .headOption()
 
   def getWithoutMessages(departureId: DepartureId): Future[Option[DepartureWithoutMessages]] = {
@@ -221,7 +244,7 @@ class DepartureRepositoryImpl @Inject()(
     val nextMessageId = Json.obj("nextMessageId" -> Json.obj("$size" -> "$messages"))
 
     val projection       = DepartureWithoutMessages.projection ++ nextMessageId
-    val filter           = Filters.and(Filters.eq("_id", departureId), Filters.eq("channel", channelFilter))
+    val filter           = Filters.and(Filters.eq("_id", departureId), Filters.eq("channel", channelFilter.toString))
     val aggregatesFilter = Aggregates.filter(filter)
     val aggregates       = Seq(aggregatesFilter, Aggregates.project(Codecs.toBson(projection).asDocument()))
     collection
@@ -237,11 +260,16 @@ class DepartureRepositoryImpl @Inject()(
   }
 
   def getMessagesOfType(departureId: DepartureId, channelFilter: ChannelType, messageTypes: List[MessageType]): Future[Option[DepartureMessages]] = {
-    val filter          = Aggregates.filter(Filters.and(Filters.eq("_id", departureId), Filters.eq("channel", channelFilter)))
-    val project         = Aggregates.project(Codecs.toBson(Json.obj("_id" -> 1, "eoriNumber" -> 1, "messages" -> 1)).asDocument())
-    val inFilter        = Json.obj("$in" -> Json.arr("$$message.messageType", messageTypes.map(_.code).toSeq))
-    val messagesFilter  = Json.obj("$filter" -> Json.obj("input" -> "$messages", "as" -> "message", "cond" -> inFilter))
-    val secondaryFilter = Aggregates.addFields(fields = Field("messages", messagesFilter))
+    val filter  = Aggregates.filter(Filters.and(Filters.eq("_id", departureId), Filters.eq("channel", channelFilter.toString)))
+    val project = Aggregates.project(Codecs.toBson(DepartureMessages.projection).asDocument())
+    val messagesFilter = BsonDocument(
+      "$filter" -> Document(
+        "input" -> "$messages",
+        "as"    -> "message",
+        "cond"  -> Document("$in" -> BsonArray("$$message.messageType", messageTypes.map(_.code).toSeq))
+      )
+    )
+    val secondaryFilter = Aggregates.addFields(Field("messages", messagesFilter))
 
     val aggregates = Seq(filter, project, secondaryFilter)
     collection.aggregate[DepartureMessages](aggregates).allowDiskUse(true).headOption()
@@ -249,21 +277,24 @@ class DepartureRepositoryImpl @Inject()(
 
   def getMessage(departureId: DepartureId, channelFilter: ChannelType, messageId: MessageId): Future[Option[Message]] = {
     val initialFilter = Aggregates.filter(
-      Filters.and(Filters.eq("_id", departureId), Filters.eq("channel", channelFilter), Filters.elemMatch("messages", Filters.eq("messageId", messageId.value)))
+      Filters.and(
+        Filters.eq("_id", departureId),
+        Filters.eq("channel", channelFilter.toString),
+        Filters.elemMatch("messages", Filters.eq("messageId", messageId.value))
+      )
     )
     val unwindMessages  = Aggregates.unwind("$messages")
     val secondaryFilter = Aggregates.filter(Filters.eq("messages.messageId", messageId.value))
-    // val groupById = Aggregates.group("_id", )
-    val replaceRoot = Aggregates.replaceRoot("$messages")
-    val aggregates  = Seq(initialFilter, unwindMessages, secondaryFilter, replaceRoot)
+    val replaceRoot     = Aggregates.replaceRoot("$messages")
+    val aggregates      = Seq(initialFilter, unwindMessages, secondaryFilter, replaceRoot)
     collection.aggregate[Message](aggregates).allowDiskUse(true).headOption()
   }
 
-  def addResponseMessage(departureId: DepartureId, message: Message, lastUpdated: LocalDateTime): Future[Unit] = {
+  def addResponseMessage(departureId: DepartureId, message: Message, lastUpdated: LocalDateTime): Future[Try[Unit]] = {
     val selector = Filters.eq("_id", departureId)
-    val modifier = Updates.combine(Updates.set("lastUpdated", lastUpdated), Updates.push("messages", Json.toJson(message)))
+    val modifier = Updates.combine(Updates.set("lastUpdated", lastUpdated), Updates.push("messages", message))
     collection
-      .updateOne(filter = selector, update = modifier, options = UpdateOptions().upsert(false).bypassDocumentValidation(false))
+      .updateOne(filter = selector, update = modifier)
       .toFuture()
       .map {
         result =>
@@ -275,12 +306,13 @@ class DepartureRepositoryImpl @Inject()(
       }
   }
 
-  def setMrnAndAddResponseMessage(departureId: DepartureId, message: Message, mrn: MovementReferenceNumber, lastUpdated: LocalDateTime): Future[Unit] = {
+  def setMrnAndAddResponseMessage(departureId: DepartureId, message: Message, mrn: MovementReferenceNumber, lastUpdated: LocalDateTime): Future[Try[Unit]] = {
+
     val selector = Filters.eq("_id", departureId)
     val modifier =
-      Updates.combine(Updates.set("lastUpdated", lastUpdated), Updates.set("movementReferenceNumber", mrn), Updates.push("messages", Json.toJson(message)))
+      Updates.combine(Updates.set("lastUpdated", lastUpdated), Updates.set("movementReferenceNumber", mrn), Updates.push("messages", message))
     collection
-      .updateOne(filter = selector, update = modifier, options = UpdateOptions().upsert(false).bypassDocumentValidation(false))
+      .updateOne(filter = selector, update = modifier)
       .toFuture()
       .map {
         result =>
@@ -291,6 +323,12 @@ class DepartureRepositoryImpl @Inject()(
 
       }
   }
+
+  private def lrnFilter(movementReferenceNumber: Option[String]): Bson =
+    movementReferenceNumber match {
+      case Some(movementReferenceNumber) => Filters.regex("referenceNumber", s"\\Q$movementReferenceNumber\\E", "i")
+      case _                             => empty()
+    }
 
   def fetchAllDepartures(
     enrolmentId: Ior[TURN, EORINumber],
@@ -306,28 +344,13 @@ class DepartureRepositoryImpl @Inject()(
         eoriNumber => List(eoriNumber.value),
         (turn, eoriNumber) => List(eoriNumber.value, turn.value)
       )
-      val baseSelector = Filters.and(Filters.in("eoriNumber", enrolmentIds), Filters.eq("channel", channelFilter))
-      val dateSelector = Filters.gte(
-        "lastUpdated",
-        updatedSince
-          .map {
-            date =>
-              date
-          }
-          .getOrElse(Filters.empty())
-      )
-      val lrnSelector = Filters.regex(
-        "referenceNumber",
-        lrn
-          .map(Regex.quote)
-          .map {
-            lrn =>
-              lrn
-          }
-          .getOrElse(Filters.empty()),
-        "i"
-      )
-      val fullSelector = Filters.and(dateSelector, lrnSelector)
+
+      val baseSelector = Filters.and(Filters.in("eoriNumber", enrolmentIds.map(_.toString): _*), Filters.eq("channel", channelFilter.toString))
+
+      val dateTimeFilter: Bson =
+        Filters.gte("lastUpdated", updatedSince.map(_.toLocalDateTime).getOrElse(EPOCH_TIME))
+      val fullSelector =
+        Filters.and(Filters.in("eoriNumber", enrolmentIds.map(_.toString): _*), Filters.eq("channel", channelFilter.toString), lrnFilter(lrn), dateTimeFilter)
 
       val nextMessageId = Json.obj("nextMessageId" -> Json.obj("$size" -> "$messages"))
 
@@ -347,7 +370,6 @@ class DepartureRepositoryImpl @Inject()(
           Seq(matchStage) ++ Seq(projectStage, sortStage, skipStage, limitStage)
         else
           Seq(matchStage) ++ Seq(projectStage, sortStage, limitStage)
-
       val fetchResults = collection
         .aggregate[DepartureWithoutMessages](restStages)
         .allowDiskUse(true)
@@ -364,8 +386,13 @@ class DepartureRepositoryImpl @Inject()(
       } yield ResponseDepartures(fetchResults, fetchResults.length, fetchCount, fetchMatchCount)
   }
 
-  def updateDeparture[A](selector: DepartureSelector, modifier: A)(implicit ev: DepartureModifier[A]): Future[Unit] =
-    collection.updateOne(Codecs.toBson(selector).asDocument(), Seq(Codecs.toBson(ev.toJson(modifier)).asDocument())).toFuture().map {
+  def updateDeparture(selector: DepartureId, modifier: MessageStatusUpdate): Future[Try[Unit]] = {
+    val filter     = Filters.eq("_id", selector)
+    val setUpdated = Updates.set("lastUpdated", LocalDateTime.now(clock))
+
+    val arrayFilters = new UpdateOptions().arrayFilters(Collections.singletonList(Filters.in("element.messageId", modifier.messageId.value)))
+    val setStatus    = Updates.set("messages.$[element].status", modifier.messageStatus.toString)
+    collection.updateOne(filter = filter, update = Updates.combine(setStatus, setUpdated), options = arrayFilters).toFuture().map {
       result =>
         if (result.wasAcknowledged()) {
           if (result.getModifiedCount == 0) Failure(new Exception("Unable to update message status"))
@@ -373,4 +400,5 @@ class DepartureRepositoryImpl @Inject()(
         } else Failure(new Exception("Unable to update message status"))
 
     }
+  }
 }

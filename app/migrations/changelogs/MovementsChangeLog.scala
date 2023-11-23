@@ -23,7 +23,6 @@ import com.mongodb.client.MongoDatabase
 import com.mongodb.client.model._
 import org.bson.BsonNull
 import org.bson.Document
-import repositories.DepartureRepository
 
 import scala.collection.JavaConverters._
 
@@ -32,7 +31,7 @@ class MovementsChangeLog {
 
   @ChangeSet(order = "001", id = "addMessageIdToMessages", author = "transits-movements-trader-at-departure", runAlways = true)
   def addMessageIdToMessages(mongo: MongoDatabase): Unit = {
-    val collection = mongo.getCollection(DepartureRepository.collectionName)
+    val collection = mongo.getCollection("departuresNew")
 
     collection
       .find(Filters.eq("messages.messageId", BsonNull.VALUE))

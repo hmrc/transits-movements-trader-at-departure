@@ -16,21 +16,43 @@
 
 package models
 
+import play.api.libs.json._
+import play.api.mvc.PathBindable
+
 sealed abstract class ChannelType(name: String) {
   override def toString: String = name
 }
 
-object ChannelType extends Enumerable.Implicits {
+object ChannelType {
   object Web extends ChannelType("web")
   object Api extends ChannelType("api")
 
-  val values: Seq[ChannelType] = Seq(Web, Api)
+  val values: Set[ChannelType] = Set(Web, Api)
 
-  implicit val enumerable: Enumerable[ChannelType] =
-    Enumerable(
-      values.map(
-        v => v.toString -> v
-      ): _*
-    )
+  implicit val enumerable: Enumerable[ChannelType] = Enumerable(
+    values.toSeq.map(
+      v => v.toString -> v
+    ): _*
+  )
 
+  implicit val formats: Format[ChannelType] = new Format[ChannelType] {
+
+    override def reads(json: JsValue): JsResult[ChannelType] = json match {
+      case JsString("web") => JsSuccess(Web)
+      case JsString("api") => JsSuccess(Api)
+      case _               => JsError("error.invalid")
+    }
+
+    override def writes(o: ChannelType): JsValue = JsString(o.toString)
+  }
+
+  implicit def pathBindable[ChannelType](implicit ev: Enumerable[ChannelType]): PathBindable[ChannelType] =
+    new PathBindable[ChannelType] {
+
+      override def bind(key: String, value: String): Either[String, ChannelType] =
+        ev.withName(value).toRight("error.invalid")
+
+      override def unbind(key: String, value: ChannelType): String =
+        value.toString
+    }
 }

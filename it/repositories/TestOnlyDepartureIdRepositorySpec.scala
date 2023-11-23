@@ -17,15 +17,18 @@
 package repositories
 
 import models.DepartureId
+import models.DepartureIdWrapper
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Application
+import play.api.Configuration
 import play.api.inject.guice.GuiceApplicationBuilder
+import uk.gov.hmrc.mongo.test.DefaultPlayMongoRepositorySupport
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class TestOnlyDepartureIdRepositorySpec extends AnyFreeSpec with Matchers with MongoSuite with GuiceOneAppPerSuite {
+class TestOnlyDepartureIdRepositorySpec extends AnyFreeSpec with Matchers with DefaultPlayMongoRepositorySupport[DepartureIdWrapper] with GuiceOneAppPerSuite {
 
   override lazy val fakeApplication: Application =
     new GuiceApplicationBuilder()
@@ -35,13 +38,14 @@ class TestOnlyDepartureIdRepositorySpec extends AnyFreeSpec with Matchers with M
       )
       .build()
 
-  private val service = app.injector.instanceOf[DepartureIdRepository]
+  private val config: Configuration = fakeApplication.injector.instanceOf[Configuration]
+  override lazy val repository      = new DepartureIdRepositoryImpl(mongoComponent, config)
+  override def afterAll(): Unit     = dropDatabase()
 
   "DepartureIdRepository" - {
     "must allow setting next DepartureId when testOnly features are enabled" in {
-      database.flatMap(_.drop()).futureValue
-      service.setLatestId(3).futureValue
-      service.nextId().futureValue mustBe DepartureId(4)
+      repository.setLatestId(3).futureValue
+      repository.nextId().futureValue mustBe DepartureId(4)
     }
   }
 }

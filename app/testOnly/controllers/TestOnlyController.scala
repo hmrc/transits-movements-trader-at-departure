@@ -41,7 +41,7 @@ class TestOnlyController @Inject()(override val messagesApi: MessagesApi, mongo:
           .drop()
           .toFuture()
           .map(
-            _ => Ok
+            _ => Ok(s"Cleared '${mongo.collectionName}' Mongo collection")
           )
 
       } else {
