@@ -383,7 +383,6 @@ class DepartureRepositoryImpl @Inject()(
         fetchResults    <- fetchResults
         fetchCount      <- fetchCount
         fetchMatchCount <- fetchMatchCount
-        _ = println("Retirvied" + fetchResults + "total departure" + fetchCount + "matched departure" + fetchMatchCount)
       } yield ResponseDepartures(fetchResults, fetchResults.length, fetchCount, fetchMatchCount)
   }
 
