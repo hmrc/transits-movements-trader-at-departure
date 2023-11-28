@@ -43,7 +43,7 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.xml.NodeSeq
 
-class DeparturesController @Inject() (
+class DeparturesController @Inject()(
   cc: ControllerComponents,
   departureRepository: DepartureRepository,
   authenticate: AuthenticateActionProvider,
