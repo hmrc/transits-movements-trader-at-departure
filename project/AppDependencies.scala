@@ -3,14 +3,15 @@ import sbt._
 
 object AppDependencies {
 
-  private val catsVersion    = "2.7.0"
-  private val mongockVersion = "4.3.8"
+  private val catsVersion      = "2.7.0"
+  private val mongockVersion   = "4.3.8"
+  private val bootstrapVersion = "7.23.0"
 
   val compile = Seq(
     "uk.gov.hmrc.mongo"            %% "hmrc-mongo-play-28"        % "0.74.0",
-    "uk.gov.hmrc"                  %% "bootstrap-backend-play-28" % "5.24.0",
+    "uk.gov.hmrc"                  %% "bootstrap-backend-play-28" % bootstrapVersion,
     "org.typelevel"                %% "cats-core"                 % catsVersion,
-    "org.json"                      % "json"                      % "20210307",
+    "org.json"                      % "json"                      % "20230227",
     "com.github.cloudyrock.mongock" % "mongock-standalone"        % mongockVersion,
     "com.github.cloudyrock.mongock" % "mongodb-sync-v4-driver"    % mongockVersion,
     "org.mongodb"                   % "mongodb-driver-sync"       % "4.6.0"
@@ -27,12 +28,13 @@ object AppDependencies {
     "org.typelevel"          %% "cats-laws"                  % catsVersion,
     "org.typelevel"          %% "discipline-core"            % "1.1.5",
     "org.typelevel"          %% "discipline-scalatest"       % "2.1.5",
-    "com.vladsch.flexmark"    % "flexmark-all"               % "0.62.2",
+    "com.vladsch.flexmark"    % "flexmark-all"               % "0.64.6",
     "com.typesafe.akka"      %% "akka-testkit"               % "2.6.21",
     "com.typesafe.akka"      %% "akka-stream-testkit"        % "2.6.21",
     "com.typesafe.akka"      %% "akka-actor-typed"           % "2.6.21",
     "com.typesafe.akka"      %% "akka-serialization-jackson" % "2.6.21",
     "com.typesafe.akka"      %% "akka-slf4j"                 % "2.6.21",
-    "uk.gov.hmrc.mongo"      %% "hmrc-mongo-test-play-28"    % "0.74.0"
+    "uk.gov.hmrc.mongo"      %% "hmrc-mongo-test-play-28"    % "0.74.0",
+    "uk.gov.hmrc"            %% "bootstrap-test-play-28"     % bootstrapVersion
   ).map(_ % "test, it")
 }

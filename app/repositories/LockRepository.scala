@@ -40,6 +40,7 @@ import scala.concurrent.Future
 trait LockRepository {
   def lock(departureId: DepartureId): Future[Boolean]
   def unlock(departureId: DepartureId): Future[Unit]
+  val started: Future[Unit]
 }
 
 @Singleton
@@ -57,7 +58,12 @@ class LockRepositoryImpl @Inject()(mongoComponent: MongoComponent, appConfig: Ap
       extraCodecs = Seq(Codecs.playFormatCodec(DepartureId.formatsDepartureId))
     )
     with LockRepository {
+
   private val documentExistsErrorCodeValue = 11000
+
+  override val started: Future[Unit] = ensureIndexes.map(
+    _ => ()
+  )
 
   override def lock(departureId: DepartureId): Future[Boolean] =
     collection
@@ -72,7 +78,7 @@ class LockRepositoryImpl @Inject()(mongoComponent: MongoComponent, appConfig: Ap
 
   override def unlock(departureId: DepartureId): Future[Unit] =
     collection
-      .findOneAndDelete(Filters.eq("_id", departureId))
+      .findOneAndDelete(Filters.eq("_id", departureId.index.toString))
       .toFuture()
       .map(
         _ => ()

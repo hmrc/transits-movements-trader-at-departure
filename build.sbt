@@ -1,8 +1,6 @@
 import play.sbt.routes.RoutesKeys
 import scoverage.ScoverageKeys
 import uk.gov.hmrc.DefaultBuildSettings
-import sbt.Tests.Group
-import sbt.Tests.SubProcess
 
 val appName = "transits-movements-trader-at-departure"
 
@@ -11,7 +9,6 @@ lazy val microservice = Project(appName, file("."))
   .disablePlugins(JUnitXmlReportPlugin) //Required to prevent https://github.com/scalatest/scalatest/issues/1427
   .configs(IntegrationTest)
   .settings(DefaultBuildSettings.integrationTestSettings())
-  .settings(SbtDistributablesPlugin.publishingSettings)
   .settings(inConfig(IntegrationTest)(itSettings))
   .settings(inConfig(IntegrationTest)(scalafmtSettings))
   .settings(inConfig(Test)(testSettings))

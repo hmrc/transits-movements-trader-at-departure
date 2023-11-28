@@ -19,8 +19,10 @@ package repositories
 import com.mongodb.client.model.Filters
 import config.AppConfig
 import generators.ModelGenerators
-import models.{DepartureId, DepartureLock}
-import org.scalatest.{EitherValues, OptionValues}
+import models.DepartureId
+import models.DepartureLock
+import org.scalatest.EitherValues
+import org.scalatest.OptionValues
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
@@ -76,10 +78,10 @@ class LockRepositorySpec
       repository.lock(departureId).futureValue
       repository.unlock(departureId).futureValue
 
-      val selector      = Filters.eq("_id", departureId)
-      val remainingLock = repository.collection.find(selector).head().futureValue
+      val selector      = Filters.eq("_id", departureId.index.toString)
+      val remainingLock = repository.collection.find(selector).headOption().futureValue
 
-      remainingLock mustEqual null
+      remainingLock mustEqual None
 
     }
     "must not fail when asked to remove a lock that doesn't exist" in {
