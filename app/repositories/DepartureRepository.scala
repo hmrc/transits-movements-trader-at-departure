@@ -62,7 +62,7 @@ trait DepartureRepository {
   def bulkInsert(departures: Seq[Departure]): Future[Unit]
   def insert(departure: Departure): Future[Unit]
   def addNewMessage(departureId: DepartureId, message: Message): Future[Try[Unit]]
-  def setMessageState(departureId: DepartureId, messageId: Int, messageStatus: MessageStatus): Future[Unit]
+  def setMessageState(departureId: DepartureId, messageId: Int, messageStatus: MessageStatus): Future[Try[Unit]]
   def getMaxDepartureId: Future[Option[DepartureId]]
   def get(departureId: DepartureId): Future[Option[Departure]]
   def get(departureId: DepartureId, channelFilter: ChannelType): Future[Option[Departure]]
@@ -195,7 +195,7 @@ class DepartureRepositoryImpl @Inject()(
 
       }
 
-  def setMessageState(departureId: DepartureId, messageId: Int, messageStatus: MessageStatus): Future[Unit] = {
+  def setMessageState(departureId: DepartureId, messageId: Int, messageStatus: MessageStatus): Future[Try[Unit]] = {
 
     val selector = Filters.and(Filters.eq("_id", departureId), Filters.exists(s"messages.$messageId.status", true))
 
@@ -207,7 +207,8 @@ class DepartureRepositoryImpl @Inject()(
         result =>
           if (result.wasAcknowledged()) {
             if (result.getModifiedCount == 0) Failure(new Exception("Unable to update message status"))
-            else Success(())
+            else
+              Success(())
           } else Failure(new Exception("Unable to update message status"))
 
       }
@@ -378,11 +379,11 @@ class DepartureRepositoryImpl @Inject()(
           response =>
             response.map(ResponseDeparture.fromDepartureWithoutMessage)
         }
-
       for {
         fetchResults    <- fetchResults
         fetchCount      <- fetchCount
         fetchMatchCount <- fetchMatchCount
+        _ = println("Retirvied" + fetchResults + "total departure" + fetchCount + "matched departure" + fetchMatchCount)
       } yield ResponseDepartures(fetchResults, fetchResults.length, fetchCount, fetchMatchCount)
   }
 

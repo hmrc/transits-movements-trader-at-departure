@@ -16,31 +16,28 @@
 
 package models
 
-import play.api.libs.functional.syntax.toFunctionalBuilderOps
-import play.api.libs.json.OFormat
-import play.api.libs.json.OWrites
-import play.api.libs.json.Reads
-import play.api.libs.json.__
+import play.api.libs.json._
 
-case class DepartureIdWrapper(id: String, recordId: Int)
+case class DepartureIdWrapper(recordId: Int)
 
 object DepartureIdWrapper {
 
-  val departureIdWrapperReader: Reads[DepartureIdWrapper] =
-    (
-      (__ \ "_id").read[String] and (__ \ "last-index").read[Int]
-    )(DepartureIdWrapper.apply _)
+  val mongoFormat: Format[DepartureIdWrapper] = {
+    val reads: Reads[DepartureIdWrapper] =
+      (__ \ "last-index")
+        .read[Int]
+        .map(
+          x => DepartureIdWrapper(x)
+        )
 
-  val departureIdWrapperWriter: OWrites[DepartureIdWrapper] =
-    (
-      __.write[String] and (__ \ "last-index").write[Int]
-    )(
+    val writes: Writes[DepartureIdWrapper] = Writes {
       departureIdWrapper =>
-        (
-          departureIdWrapper.id,
-          departureIdWrapper.recordId
-      )
-    )
+        Json.obj(
+          "_id"        -> "record_id",
+          "last-index" -> departureIdWrapper.recordId
+        )
+    }
 
-  implicit lazy val format: OFormat[DepartureIdWrapper] = OFormat(departureIdWrapperReader, departureIdWrapperWriter)
+    Format(reads, writes)
+  }
 }

@@ -44,7 +44,7 @@ class TestOnlyDepartureIdRepositorySpec extends AnyFreeSpec with Matchers with D
   "DepartureIdRepository" - {
     "must allow setting next DepartureId when testOnly features are enabled" in {
       repository.setLatestId(3).futureValue
-      repository.nextId().futureValue mustBe DepartureId(1)
+      repository.nextId().futureValue mustBe DepartureId(4)
     }
   }
 }

@@ -54,7 +54,7 @@ class DepartureIdRepositorySpec extends AnyFreeSpec with Matchers with GuiceOneA
 
     "must generate sequential DepartureIds when a record exists within the database" in {
 
-      repository.collection.insertOne(DepartureIdWrapper("record_id", 1)).toFuture().futureValue
+      repository.collection.insertOne(DepartureIdWrapper(1)).toFuture().futureValue
 
       val first  = repository.nextId().futureValue
       val second = repository.nextId().futureValue
