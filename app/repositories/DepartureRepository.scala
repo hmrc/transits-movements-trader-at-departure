@@ -97,7 +97,7 @@ class DepartureRepositoryImpl @Inject()(
 )(implicit ec: ExecutionContext, clock: Clock)
     extends PlayMongoRepository[Departure](
       mongoComponent = mongoComponent,
-      collectionName = "departuresNew",
+      collectionName = "departures",
       domainFormat = Departure.formatsDeparture,
       indexes = Seq(
         IndexModel(
@@ -350,6 +350,7 @@ class DepartureRepositoryImpl @Inject()(
 
       val dateTimeFilter: Bson =
         Filters.gte("lastUpdated", updatedSince.map(_.toLocalDateTime).getOrElse(EPOCH_TIME))
+
       val fullSelector =
         Filters.and(Filters.in("eoriNumber", enrolmentIds.map(_.toString): _*), Filters.eq("channel", channelFilter.toString), lrnFilter(lrn), dateTimeFilter)
 

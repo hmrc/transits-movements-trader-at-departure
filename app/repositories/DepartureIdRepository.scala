@@ -45,7 +45,7 @@ trait DepartureIdRepository {
 class DepartureIdRepositoryImpl @Inject()(mongoComponent: MongoComponent, config: Configuration)(implicit ec: ExecutionContext)
     extends PlayMongoRepository[DepartureIdWrapper](
       mongoComponent = mongoComponent,
-      collectionName = "departure-ids-new",
+      collectionName = "departure-ids",
       domainFormat = DepartureIdWrapper.mongoFormat,
       indexes = Nil,
       extraCodecs = Seq(Codecs.playFormatCodec(DepartureId.formatsDepartureId))

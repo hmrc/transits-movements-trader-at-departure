@@ -789,13 +789,20 @@ class DepartureRepositorySpec
     }
 
     "fetchAllDepartures" - {
+
       "return DeparturesWithoutMessages that match an eoriNumber and channel type" in {
 
         val eoriNumber: String = arbitrary[String].sample.value
-
-        val departure1 = arbitrary[Departure].sample.value.copy(departureId = departureId1, eoriNumber = eoriNumber, channel = Api)
-        val departure2 = arbitrary[Departure].suchThat(_.eoriNumber != eoriNumber).sample.value.copy(departureId = departureId2, channel = Api)
-        val departure3 = arbitrary[Departure].sample.value.copy(departureId = departureId3, eoriNumber = eoriNumber, channel = Web)
+        val now                = LocalDateTime.now(clock)
+        val departure1 =
+          arbitrary[Departure].sample.value.copy(departureId = departureId1, eoriNumber = eoriNumber, channel = Api, lastUpdated = now.withSecond(1))
+        val departure2 = arbitrary[Departure]
+          .suchThat(_.eoriNumber != eoriNumber)
+          .sample
+          .value
+          .copy(departureId = departureId2, channel = Api, lastUpdated = now.withSecond(2))
+        val departure3 =
+          arbitrary[Departure].sample.value.copy(departureId = departureId3, eoriNumber = eoriNumber, channel = Web, lastUpdated = now.withSecond(3))
 
         val departure1WithoutMessage = departureWithoutMessages(departure1)
         val departure3WithoutMessage = departureWithoutMessages(departure3)
@@ -817,13 +824,15 @@ class DepartureRepositorySpec
           1
         )
       }
+
       "return DeparturesWithoutMessages with eoriNumber that match legacy TURN and channel type" in {
 
         val turn: String = arbitrary[String].sample.value
-
-        val departure1 = arbitrary[Departure].sample.value.copy(departureId = departureId1, eoriNumber = turn, channel = Api)
-        val departure2 = arbitrary[Departure].suchThat(_.eoriNumber != turn).sample.value.copy(channel = Api, departureId = departureId2)
-        val departure3 = arbitrary[Departure].sample.value.copy(eoriNumber = turn, channel = Web, departureId = departureId3)
+        val now          = LocalDateTime.now(clock)
+        val departure1   = arbitrary[Departure].sample.value.copy(departureId = departureId1, eoriNumber = turn, channel = Api, lastUpdated = now.withSecond(1))
+        val departure2 =
+          arbitrary[Departure].suchThat(_.eoriNumber != turn).sample.value.copy(channel = Api, departureId = departureId2, lastUpdated = now.withSecond(2))
+        val departure3 = arbitrary[Departure].sample.value.copy(eoriNumber = turn, channel = Web, departureId = departureId3, lastUpdated = now.withSecond(3))
 
         val departure1WithoutMessage = departureWithoutMessages(departure1)
         val departure3WithoutMessage = departureWithoutMessages(departure3)
@@ -851,15 +860,17 @@ class DepartureRepositorySpec
         val turn: String     = arbitrary[String].sample.value
         val ids: Set[String] = Set(eori, turn)
 
-        val departure1 = arbitrary[Departure].sample.value.copy(departureId = departureId1, eoriNumber = eori, channel = Api)
+        val now = LocalDateTime.now(clock)
+
+        val departure1 = arbitrary[Departure].sample.value.copy(departureId = departureId1, eoriNumber = eori, channel = Api, lastUpdated = now.withSecond(1))
         val departure2 = arbitrary[Departure]
           .suchThat(
             departure => !ids.contains(departure.eoriNumber)
           )
           .sample
           .value
-          .copy(departureId = departureId2, channel = Api)
-        val departure3 = arbitrary[Departure].sample.value.copy(departureId = departureId3, eoriNumber = turn, channel = Web)
+          .copy(departureId = departureId2, channel = Api, lastUpdated = now.withSecond(2))
+        val departure3 = arbitrary[Departure].sample.value.copy(departureId = departureId3, eoriNumber = turn, channel = Web, lastUpdated = now.withSecond(3))
 
         val departure1WithoutMessage = departureWithoutMessages(departure1)
         val departure3WithoutMessage = departureWithoutMessages(departure3)
@@ -879,12 +890,93 @@ class DepartureRepositorySpec
           1
         )
       }
-      "must return an empty sequence when there are no movements with the same eori" in {
+
+      "must fetch all results based on pageSize 5 for page number 2" in {
+
+        val eoriNumber: String = arbitrary[String].sample.value
+        val lrn: String        = Gen.listOfN(10, Gen.alphaChar).map(_.mkString).sample.value
+        val now                = LocalDateTime.now(clock)
+        lazy val allDepartures = nonEmptyListOfSize[Departure](10)(
+          (departure, id) => departure.copy(departureId = DepartureId(id), lastUpdated = now.withSecond(id))
+        )
+          .map(_.toList)
+          .sample
+          .value
+          .map(
+            _.copy(
+              eoriNumber = eoriNumber,
+              channel = Web,
+              referenceNumber = lrn
+            )
+          )
+
+        val pageSize = 5
+        val page     = 2
+
+        val departuresWithoutMessage = allDepartures.map(departureWithoutMessages)
+
+        val expectedAllDepartures =
+          departuresWithoutMessage.map(ResponseDeparture.fromDepartureWithoutMessage).sortBy(_.updated)(_ compareTo _).reverse.slice(5, 10)
+        await(repository.bulkInsert(allDepartures))
+
+        val departures =
+          await(repository.fetchAllDepartures(Ior.right(EORINumber(eoriNumber)), Web, None, None, Some(pageSize), Some(page)))
+
+        departures mustBe ResponseDepartures(expectedAllDepartures, pageSize, allDepartures.size, allDepartures.size)
+      }
+
+      "must filter results by lastUpdated when updatedSince parameter is provided" in {
 
         val eoriNumber: String = arbitrary[String].sample.value
 
-        val departure1 = arbitrary[Departure].suchThat(_.eoriNumber != eoriNumber).sample.value.copy(departureId = departureId1, channel = Api)
-        val departure2 = arbitrary[Departure].suchThat(_.eoriNumber != eoriNumber).sample.value.copy(departureId = departureId2, channel = Api)
+        val departure1 = arbitrary[Departure].sample.value.copy(
+          departureId = departureId1,
+          eoriNumber = eoriNumber,
+          channel = Api,
+          lastUpdated = LocalDateTime.of(2021, 4, 30, 9, 30, 31)
+        )
+        val departure2 = arbitrary[Departure].sample.value.copy(
+          departureId = departureId2,
+          eoriNumber = eoriNumber,
+          channel = Api,
+          lastUpdated = LocalDateTime.of(2021, 4, 30, 9, 35, 32)
+        )
+        val departure3 = arbitrary[Departure].sample.value.copy(
+          departureId = departureId3,
+          eoriNumber = eoriNumber,
+          channel = Api,
+          lastUpdated = LocalDateTime.of(2021, 4, 30, 9, 30, 21)
+        )
+        val departure4 = arbitrary[Departure].sample.value.copy(
+          departureId = departureId4,
+          eoriNumber = eoriNumber,
+          channel = Api,
+          lastUpdated = LocalDateTime.of(2021, 4, 30, 10, 15, 16)
+        )
+
+        val departure2WithoutMessage = departureWithoutMessages(departure2)
+        val departure4WithoutMessage = departureWithoutMessages(departure4)
+
+        val allMovements = Seq(departure1, departure2, departure3, departure4)
+
+        await(repository.bulkInsert(allMovements))
+
+        val dateTime   = OffsetDateTime.of(LocalDateTime.of(2021, 4, 30, 9, 30, 32), ZoneOffset.ofHours(1))
+        val departures = await(repository.fetchAllDepartures(Ior.right(EORINumber(eoriNumber)), Api, Some(dateTime)))
+
+        departures mustBe ResponseDepartures(
+          Seq(departure4WithoutMessage, departure2WithoutMessage).map(ResponseDeparture.fromDepartureWithoutMessage),
+          2,
+          4,
+          2
+        )
+      }
+
+      "must return an empty sequence when there are no movements with the same eori" in {
+
+        val eoriNumber: String = arbitrary[String].sample.value
+        val departure1         = arbitrary[Departure].suchThat(_.eoriNumber != eoriNumber).sample.value.copy(departureId = departureId1, channel = Api)
+        val departure2         = arbitrary[Departure].suchThat(_.eoriNumber != eoriNumber).sample.value.copy(departureId = departureId2, channel = Api)
 
         val allDepartures = Seq(departure1, departure2)
         await(repository.bulkInsert(allDepartures))
@@ -950,53 +1042,6 @@ class DepartureRepositorySpec
         departures.retrievedDepartures mustBe maxRows
 
         departures mustBe ResponseDepartures(Seq(departure3WithoutMessage).map(ResponseDeparture.fromDepartureWithoutMessage), 1, 3, 3)
-      }
-
-      "must filter results by lastUpdated when updatedSince parameter is provided" in {
-
-        val eoriNumber: String = arbitrary[String].sample.value
-
-        val departure1 = arbitrary[Departure].sample.value.copy(
-          departureId = departureId1,
-          eoriNumber = eoriNumber,
-          channel = Api,
-          lastUpdated = LocalDateTime.of(2021, 4, 30, 9, 30, 31)
-        )
-        val departure2 = arbitrary[Departure].sample.value.copy(
-          departureId = departureId2,
-          eoriNumber = eoriNumber,
-          channel = Api,
-          lastUpdated = LocalDateTime.of(2021, 4, 30, 9, 35, 32)
-        )
-        val departure3 = arbitrary[Departure].sample.value.copy(
-          departureId = departureId3,
-          eoriNumber = eoriNumber,
-          channel = Api,
-          lastUpdated = LocalDateTime.of(2021, 4, 30, 9, 30, 21)
-        )
-        val departure4 = arbitrary[Departure].sample.value.copy(
-          departureId = departureId4,
-          eoriNumber = eoriNumber,
-          channel = Api,
-          lastUpdated = LocalDateTime.of(2021, 4, 30, 10, 15, 16)
-        )
-
-        val departure2WithoutMessage = departureWithoutMessages(departure2)
-        val departure4WithoutMessage = departureWithoutMessages(departure4)
-
-        val allMovements = Seq(departure1, departure2, departure3, departure4)
-
-        await(repository.bulkInsert(allMovements))
-
-        val dateTime   = OffsetDateTime.of(LocalDateTime.of(2021, 4, 30, 10, 30, 32), ZoneOffset.ofHours(1))
-        val departures = await(repository.fetchAllDepartures(Ior.right(EORINumber(eoriNumber)), Api, Some(dateTime)))
-
-        departures mustBe ResponseDepartures(
-          Seq(departure4WithoutMessage, departure2WithoutMessage).map(ResponseDeparture.fromDepartureWithoutMessage),
-          2,
-          4,
-          2
-        )
       }
 
       "must filter results by lrn when lrn search parameter provided matches" in {
@@ -1272,41 +1317,6 @@ class DepartureRepositorySpec
         )
       }
 
-      "must fetch all results based on pageSize 5 for page number 2" in {
-
-        val eoriNumber: String = arbitrary[String].sample.value
-        val lrn: String        = Gen.listOfN(10, Gen.alphaChar).map(_.mkString).sample.value
-
-        lazy val allDepartures = nonEmptyListOfSize[Departure](10)(
-          (departure, id) => departure.copy(departureId = DepartureId(id))
-        )
-          .map(_.toList)
-          .sample
-          .value
-          .map(
-            _.copy(
-              eoriNumber = eoriNumber,
-              channel = Web,
-              referenceNumber = lrn
-            )
-          )
-
-        val pageSize = 5
-        val page     = 2
-
-        val departuresWithoutMessage = allDepartures.map(departureWithoutMessages)
-
-        val expectedAllDepartures =
-          departuresWithoutMessage.map(ResponseDeparture.fromDepartureWithoutMessage).sortBy(_.updated)(_ compareTo _).reverse.slice(5, 10)
-
-        await(repository.bulkInsert(allDepartures))
-
-        val departures =
-          await(repository.fetchAllDepartures(Ior.right(EORINumber(eoriNumber)), Web, None, None, Some(pageSize), Some(page)))
-
-        departures mustBe ResponseDepartures(expectedAllDepartures, pageSize, allDepartures.size, allDepartures.size)
-      }
-
     }
 
     "getMessage" - {
@@ -1352,4 +1362,6 @@ class DepartureRepositorySpec
       }
     }
   }
+
+  object GetMovementsSetup {}
 }
