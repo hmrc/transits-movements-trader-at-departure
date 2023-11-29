@@ -35,7 +35,4 @@ object DepartureLock {
       ~ (__ \ "created").format[LocalDateTime])(DepartureLock.apply, unlift(DepartureLock.unapply))
   }
 
-  val id      = "_id"
-  val created = "created"
-
 }

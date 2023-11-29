@@ -86,6 +86,7 @@ trait DepartureRepository {
 
 object DepartureRepositoryImpl {
   val EPOCH_TIME: LocalDateTime = LocalDateTime.ofEpochSecond(0, 0, ZoneOffset.UTC)
+  val collectionName            = "departures"
 }
 
 @Singleton
