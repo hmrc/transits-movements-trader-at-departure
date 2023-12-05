@@ -89,5 +89,15 @@ class MessageSenderSpec extends AnyFreeSpec with Matchers with ScalaCheckPropert
 
       pathBindable.unbind("key", messageSender) mustEqual messageSender.toString
     }
+
+    "must adapt padding based on length" in {
+      val result100 = MessageSender(DepartureId(123), 100).toString
+      result100.length mustEqual 35
+      result100 mustEqual "MDTP-DEP-0000000000000000000123-100"
+
+      val result1000 = MessageSender(DepartureId(123), 1000).toString
+      result1000.length mustEqual 35
+      result1000 mustEqual "MDTP-DEP-000000000000000000123-1000"
+    }
   }
 }

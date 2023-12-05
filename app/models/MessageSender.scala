@@ -22,8 +22,11 @@ import scala.util.Try
 
 final case class MessageSender(departureId: DepartureId, messageCorrelationId: Int) {
 
-  override val toString: String =
-    s"MDTP-DEP-${pad(departureId.index, 23)}-${pad(messageCorrelationId, 2)}"
+  override val toString: String = {
+    val mCIPadLength = math.max(messageCorrelationId.toString.length, 2)
+    val dIDPadLength = 25 - mCIPadLength
+    s"MDTP-DEP-${pad(departureId.index, dIDPadLength)}-${pad(messageCorrelationId, mCIPadLength)}"
+  }
 
   private def pad(value: Int, length: Int): String =
     s"%0${length}d".format(value)
