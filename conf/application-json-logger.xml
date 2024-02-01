@@ -6,10 +6,6 @@
     </appender>
 
     <logger name="uk.gov" level="WARN"/>
-    <logger name="helpers.XmlBuilderHelper" level="INFO"/>
-    <logger name="controllers.DeparturesController" level="ERROR"/>
-    <logger name="controllers.MessagesController" level="ERROR"/>
-    <logger name="migrations.MigrationRunnerImpl" level="INFO"/>
 
     <root level="WARN">
         <appender-ref ref="STDOUT"/>
