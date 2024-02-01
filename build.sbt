@@ -1,8 +1,6 @@
 import play.sbt.routes.RoutesKeys
 import scoverage.ScoverageKeys
 import uk.gov.hmrc.DefaultBuildSettings
-import sbt.Tests.Group
-import sbt.Tests.SubProcess
 
 val appName = "transits-movements-trader-at-departure"
 
@@ -19,7 +17,7 @@ lazy val microservice = Project(appName, file("."))
   .settings(scalacSettings)
   .settings(
     majorVersion := 0,
-    scalaVersion := "2.12.15",
+    scalaVersion := "2.13.8",
     resolvers += Resolver.jcenterRepo,
     PlayKeys.playDefaultPort := 9490,
     libraryDependencies ++= AppDependencies.compile ++ AppDependencies.test,

@@ -26,10 +26,9 @@ import reactivemongo.play.json.collection.Helpers.idWrites
 import reactivemongo.play.json.collection.JSONCollection
 
 import javax.inject.Inject
-import scala.concurrent.ExecutionContext.Implicits._
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
-class DepartureIdRepository @Inject()(mongo: ReactiveMongoApi, config: Configuration) {
+class DepartureIdRepository @Inject()(mongo: ReactiveMongoApi, config: Configuration)(implicit ec: ExecutionContext) {
 
   private val lastIndexKey = "last-index"
   private val primaryValue = "record_id"

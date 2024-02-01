@@ -30,22 +30,25 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.util.control.NonFatal
 
-private[services] class LockService @Inject()(
+private[services] class LockService @Inject() (
   lockRepository: LockRepository
-)(implicit ec: ExecutionContext) extends Logging{
+)(implicit ec: ExecutionContext)
+    extends Logging {
 
   private def lockDeparture(departureId: DepartureId)(implicit ec: ExecutionContext): EitherT[Future, ErrorState, Unit] =
     EitherT(lockRepository.lock(departureId).map {
       case true  => Right(())
       case false => Left(DepartureAlreadyLocked(departureId))
     } recover {
-      case NonFatal(e) => logger.error(s"failed to lock departure: ${e.getMessage}", e)
+      case NonFatal(e) =>
+        logger.error(s"failed to lock departure: ${e.getMessage}", e)
         Left(new FailedToLock(departureId, e))
     })
 
   private def unlockDeparture(departureId: DepartureId)(implicit ec: ExecutionContext): EitherT[Future, ErrorState, Unit] =
     EitherT(lockRepository.unlock(departureId).map(Right.apply) recover {
-      case NonFatal(e) => logger.error(s"failed to unlock departure: ${e.getMessage}", e)
+      case NonFatal(e) =>
+        logger.error(s"failed to unlock departure: ${e.getMessage}", e)
         Left(new FailedToUnlock(departureId, e))
     })
 
