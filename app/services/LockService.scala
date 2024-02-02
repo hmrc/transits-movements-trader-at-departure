@@ -29,7 +29,7 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.util.control.NonFatal
 
-private[services] class LockService @Inject() (
+private[services] class LockService @Inject()(
   lockRepository: LockRepository
 )(implicit ec: ExecutionContext) {
 
