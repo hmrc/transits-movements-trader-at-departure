@@ -1,8 +1,6 @@
 import play.sbt.routes.RoutesKeys
 import scoverage.ScoverageKeys
 import uk.gov.hmrc.DefaultBuildSettings
-import sbt.Tests.Group
-import sbt.Tests.SubProcess
 
 val appName = "transits-movements-trader-at-departure"
 
